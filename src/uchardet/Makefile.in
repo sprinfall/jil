@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="GENERATOR" content="lxr-1998-06-10: http://lxr.linux.no">
+<link rel="icon" href="/mxr.png" type="image/png">
+<title>mozilla mozilla/extensions/universalchardet/src/base/Makefile.in</title>
+<link rel='stylesheet' title='' href='http://mxr.mozilla.org/mozilla/style/style.css' type='text/css'>
+
+<script src='http://mxr.mozilla.org/coloration.js'></script>
+<script src='http://mxr.mozilla.org/script.js'></script>
+</head>
+
+<body   bgcolor="#FFFFFF" text="#000000"
+	link="#0000EE" vlink="#551A8B" alink="#FF0000">
+
+<table class=banner bgcolor="#000000" width="100%" border=0 cellpadding=0 cellspacing=0>
+<tr><td><a class="logo" href="//www.mozilla.org/"><img
+ src="//www.mozilla.org/images/mozilla-banner.gif" alt=""
+ border=0 width=600 height=58></a></td></tr></table>
+
+<table class=header border=0 cellpadding=12 cellspacing=0 width="100%">
+ <tr>
+  <td align=left valign=middle>
+   <nobr><font size="+2"><b><a href="http://mxr.mozilla.org">Mozilla Cross-Reference</a></b>
+</nobr><i><a href="http://mxr.mozilla.org/mozilla">mozilla</a></i>
+</font>
+   <br><b><a href="/mozilla/source/">mozilla</a>/ <a href="/mozilla/source/extensions/">extensions</a>/ <a href="/mozilla/source/extensions/universalchardet/">universalchardet</a>/ <a href="/mozilla/source/extensions/universalchardet/src/">src</a>/ <a href="/mozilla/source/extensions/universalchardet/src/base/">base</a>/ <a href="/mozilla/source/extensions/universalchardet/src/base/Makefile.in">Makefile.in</a> </b>
+  </TD>
+
+  <td align=right valign=top width="1%">
+   <table border cellpadding=12 cellspacing=0>
+    <tr>
+     <td nowrap bgcolor="#FAFAFA">
+
+
+      <a href="http://bonsai.mozilla.org/cvslog.cgi?file=mozilla/extensions/universalchardet/src/base/Makefile.in&amp;rev=HEAD&amp;mark=1.2"
+>CVS Log</a><br>
+      <a href="http://bonsai.mozilla.org/cvsblame.cgi?file=mozilla/extensions/universalchardet/src/base/Makefile.in&amp;rev=1.2"
+onfocus='updateBonsaiBlameHash(this, event)'
+onmouseover='updateBonsaiBlameHash(this, event)'
+>CVS Blame</a><br>
+      <a href="http://bonsai.mozilla.org/cvsgraph.cgi?file=mozilla/extensions/universalchardet/src/base/Makefile.in&amp;rev=1.2"
+>CVS Graph</a><br>
+
+
+
+
+
+
+
+
+      <a href="http://mxr.mozilla.org/mozilla/diff?file=/extensions/universalchardet/src/base/Makefile.in">Diff file</a><br>
+      <a href="http://mxr.mozilla.org/mozilla/source/extensions/universalchardet/src/base/Makefile.in?raw=1">Raw file</a><br>
+     </TD>
+    </TR>
+   </table>
+  </TD>
+
+
+  <td align=right valign=top width="1%">
+   <table border cellpadding=6 cellspacing=0>
+    <tr>
+     <td bgcolor="#FAFAFA">
+      <table border=0 cellpadding=6 cellspacing=0>
+       <tr>
+        <td nowrap align=left>
+         changes to<br>this file in<br>the last:
+        </TD>
+        <td nowrap>
+         <a href="http://bonsai.mozilla.org/cvsquery.cgi?branch=HEAD&amp;file=mozilla/extensions/universalchardet/src/base/Makefile.in&amp;date=day">day</a><br>
+         <a href="http://bonsai.mozilla.org/cvsquery.cgi?branch=HEAD&amp;file=mozilla/extensions/universalchardet/src/base/Makefile.in&amp;date=week">week</a><br>
+         <a href="http://bonsai.mozilla.org/cvsquery.cgi?branch=HEAD&amp;file=mozilla/extensions/universalchardet/src/base/Makefile.in&amp;date=month">month</a><br>
+        </TD>
+       </TR>
+      </table>
+     </TD>
+    </TR>
+   </table>
+  </TD>
+
+
+ </TR>
+</table>
+
+<form name='source' id='source' class='beforecontent'
+>view using tree:
+<select name='tree' id='tree' onchange='changetarget("http://mxr.mozilla.org/mozilla/", "mozilla/")'>
+<option value="firefox">firefox</option>
+<option value="mozilla" selected=1>mozilla</option>
+<option value="mozilla-aurora">mozilla-aurora</option>
+<option value="mozilla-beta">mozilla-beta</option>
+<option value="mozilla-central">mozilla-central</option>
+<option value="mozilla-esr10">mozilla-esr10</option>
+<option value="mozilla-release">mozilla-release</option>
+<option value="mozilla1.9.1">mozilla1.9.1</option>
+<option value="mozilla1.9.2">mozilla1.9.2</option>
+<option value="mozilla2.0">mozilla2.0</option>
+<option value="seamonkey">seamonkey</option>
+
+</select></form>
+
+
+
+<pre lang='en'><style>.d2:before{content:' '} .d1:before{content:'  '} .d0:before{content:'   '} </style><span id='the-code'><a class='l d0' name=1 href="#1">1</a> #
+<a class='l d0' name=2 href="#2">2</a> # ***** BEGIN LICENSE BLOCK *****
+<a class='l d0' name=3 href="#3">3</a> # Version: MPL 1.1/GPL 2.0/LGPL 2.1
+<a class='l d0' name=4 href="#4">4</a> #
+<a class='l d0' name=5 href="#5">5</a> # The contents of this file are subject to the Mozilla Public License Version
+<a class='l d0' name=6 href="#6">6</a> # 1.1 (the "License"); you may not use this file except in compliance with
+<a class='l d0' name=7 href="#7">7</a> # the License. You may obtain a copy of the License at
+<a class='l d0' name=8 href="#8">8</a> # <a href="http://www.mozilla.org/MPL/">http://www.mozilla.org/MPL/</a>
+<a class='l d0' name=9 href="#9">9</a> #
+<a class='l d1' name=10 href="#10">10</a> # Software distributed under the License is distributed on an "AS IS" basis,
+<a class='l d1' name=11 href="#11">11</a> # WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+<a class='l d1' name=12 href="#12">12</a> # for the specific language governing rights and limitations under the
+<a class='l d1' name=13 href="#13">13</a> # License.
+<a class='l d1' name=14 href="#14">14</a> #
+<a class='l d1' name=15 href="#15">15</a> # The Original Code is Mozilla Universal charset detector code.
+<a class='l d1' name=16 href="#16">16</a> #
+<a class='l d1' name=17 href="#17">17</a> # The Initial Developer of the Original Code is
+<a class='l d1' name=18 href="#18">18</a> # Netscape Communications Corporation.
+<a class='l d1' name=19 href="#19">19</a> # Portions created by the Initial Developer are Copyright (C) 1998
+<a class='l d1' name=20 href="#20">20</a> # the Initial Developer. All Rights Reserved.
+<a class='l d1' name=21 href="#21">21</a> #
+<a class='l d1' name=22 href="#22">22</a> # Contributor(s):
+<a class='l d1' name=23 href="#23">23</a> #          Simon Montagu &lt;smontagu@smontagu.org&gt;
+<a class='l d1' name=24 href="#24">24</a> #          Shy Shalom &lt;shooshX@gmail.com&gt;
+<a class='l d1' name=25 href="#25">25</a> #          Proofpoint, Inc.
+<a class='l d1' name=26 href="#26">26</a> #
+<a class='l d1' name=27 href="#27">27</a> # Alternatively, the contents of this file may be used under the terms of
+<a class='l d1' name=28 href="#28">28</a> # either the GNU General Public License Version 2 or later (the "GPL"), or
+<a class='l d1' name=29 href="#29">29</a> # the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+<a class='l d1' name=30 href="#30">30</a> # in which case the provisions of the GPL or the LGPL are applicable instead
+<a class='l d1' name=31 href="#31">31</a> # of those above. If you wish to allow use of your version of this file only
+<a class='l d1' name=32 href="#32">32</a> # under the terms of either the GPL or the LGPL, and not to allow others to
+<a class='l d1' name=33 href="#33">33</a> # use your version of this file under the terms of the MPL, indicate your
+<a class='l d1' name=34 href="#34">34</a> # decision by deleting the provisions above and replace them with the notice
+<a class='l d1' name=35 href="#35">35</a> # and other provisions required by the GPL or the LGPL. If you do not delete
+<a class='l d1' name=36 href="#36">36</a> # the provisions above, a recipient may use your version of this file under
+<a class='l d1' name=37 href="#37">37</a> # the terms of any one of the MPL, the GPL or the LGPL.
+<a class='l d1' name=38 href="#38">38</a> #
+<a class='l d1' name=39 href="#39">39</a> # ***** END LICENSE BLOCK *****
+<a class='l d1' name=40 href="#40">40</a> 
+<a class='l d1' name=41 href="#41">41</a> DEPTH		= ../../../..
+<a class='l d1' name=42 href="#42">42</a> topsrcdir	= @top_srcdir@
+<a class='l d1' name=43 href="#43">43</a> srcdir		= @srcdir@
+<a class='l d1' name=44 href="#44">44</a> VPATH		= @srcdir@
+<a class='l d1' name=45 href="#45">45</a> 
+<a class='l d1' name=46 href="#46">46</a> include $(DEPTH)/config/autoconf.mk
+<a class='l d1' name=47 href="#47">47</a> 
+<a class='l d1' name=48 href="#48">48</a> MODULE		= universalchardet_s
+<a class='l d1' name=49 href="#49">49</a> LIBRARY_NAME	= universalchardet_s
+<a class='l d1' name=50 href="#50">50</a> 
+<a class='l d1' name=51 href="#51">51</a> CPPSRCS = \
+<a class='l d1' name=52 href="#52">52</a> 		CharDistribution.cpp \
+<a class='l d1' name=53 href="#53">53</a> 		JpCntx.cpp \
+<a class='l d1' name=54 href="#54">54</a> 		LangBulgarianModel.cpp \
+<a class='l d1' name=55 href="#55">55</a> 		LangCyrillicModel.cpp \
+<a class='l d1' name=56 href="#56">56</a> 		LangGreekModel.cpp \
+<a class='l d1' name=57 href="#57">57</a> 		LangHungarianModel.cpp \
+<a class='l d1' name=58 href="#58">58</a> 		LangHebrewModel.cpp \
+<a class='l d1' name=59 href="#59">59</a> 		nsHebrewProber.cpp \
+<a class='l d1' name=60 href="#60">60</a> 		nsCharSetProber.cpp \
+<a class='l d1' name=61 href="#61">61</a> 		nsBig5Prober.cpp \
+<a class='l d1' name=62 href="#62">62</a> 		nsEUCJPProber.cpp \
+<a class='l d1' name=63 href="#63">63</a> 		nsEUCKRProber.cpp \
+<a class='l d1' name=64 href="#64">64</a> 		nsEUCTWProber.cpp \
+<a class='l d1' name=65 href="#65">65</a> 		nsEscCharsetProber.cpp \
+<a class='l d1' name=66 href="#66">66</a> 		nsEscSM.cpp \
+<a class='l d1' name=67 href="#67">67</a> 		nsGB2312Prober.cpp \
+<a class='l d1' name=68 href="#68">68</a> 		nsMBCSGroupProber.cpp \
+<a class='l d1' name=69 href="#69">69</a> 		nsMBCSSM.cpp \
+<a class='l d1' name=70 href="#70">70</a> 		nsSBCSGroupProber.cpp \
+<a class='l d1' name=71 href="#71">71</a> 		nsSBCharSetProber.cpp \
+<a class='l d1' name=72 href="#72">72</a> 		nsSJISProber.cpp \
+<a class='l d1' name=73 href="#73">73</a> 		nsUTF8Prober.cpp \
+<a class='l d1' name=74 href="#74">74</a> 		nsLatin1Prober.cpp \
+<a class='l d1' name=75 href="#75">75</a> 		nsUniversalDetector.cpp \
+<a class='l d1' name=76 href="#76">76</a>                $(NULL)
+<a class='l d1' name=77 href="#77">77</a> 
+<a class='l d1' name=78 href="#78">78</a> # Not built on win32. Not sure why not
+<a class='l d1' name=79 href="#79">79</a> ifneq ($(OS_ARCH),WINNT)
+<a class='l d1' name=80 href="#80">80</a> CPPSRCS	+= LangThaiModel.cpp
+<a class='l d1' name=81 href="#81">81</a> endif
+<a class='l d1' name=82 href="#82">82</a> 
+<a class='l d1' name=83 href="#83">83</a> FORCE_STATIC_LIB = 1
+<a class='l d1' name=84 href="#84">84</a> # This library is used by other shared libs in a static build
+<a class='l d1' name=85 href="#85">85</a> FORCE_USE_PIC = 1
+<a class='l d1' name=86 href="#86">86</a> 
+<a class='l d1' name=87 href="#87">87</a> include $(topsrcdir)/config/rules.mk
+</span></pre>
+</html>

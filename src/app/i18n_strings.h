@@ -1,0 +1,73 @@
+#ifndef JIL_I18N_STRINGS_H_
+#define JIL_I18N_STRINGS_H_
+#pragma once
+
+#include "wx/intl.h"
+#include "wx/string.h"
+#include "app/compile_config.h"
+
+#define kTrError              _("Error")
+#define kTrWarning            _("Warning")
+
+#define kTrComingSoon         _("Coming soon...")
+#define kTrFailedToLoad       _("Failed to load:")
+
+// Menu labels.
+
+#define kTrMenuFile           _("&File")
+#define kTrMenuEdit           _("&Edit")
+#define kTrMenuTools          _("&Tools")
+#define kTrMenuHelp           _("&Help")
+
+#define kTrFileNew            _("&New")
+#if JIL_MULTIPLE_WINDOW
+#define kTrFileNewFrame       _("New &Window")
+#endif  // JIL_MULTIPLE_WINDOW
+#define kTrFileOpen           _("&Open")
+#define kTrFileClose          _("&Close")
+#define kTrFileCloseAll       _("Close A&ll")
+#define kTrFileCloseFormat    _("&Close %s")
+#define kTrFileSave           _("&Save")
+#define kTrFileSaveFormat     _("&Save %s")
+#define kTrFileSaveAs         _("Save &As...")
+#define kTrFileSaveAsFormat   _("Save %s &As...")
+#define kTrFileSaveAll        _("Save A&ll")
+#define kTrFileExit           _("E&xit")
+
+#define kTrEditUndo           _("&Undo")
+#define kTrEditRedo           _("&Redo")
+#define kTrEditCut            _("Cu&t")
+#define kTrEditCopy           _("&Copy")
+#define kTrEditPaste          _("&Paste")
+#define kTrEditLine           _("&Line")
+#define kTrEditIncreaseIndent _("&Increase Indent")
+#define kTrEditDecreaseIndent _("&Decrease Indent")
+#define kTrEditAutoIndent     _("&Auto Indent")
+#define kTrEditComment        _("&Comment")
+#define kTrEditUncomment      _("&Uncomment")
+#define kTrEditToggleComment  _("&Toggle Comment")
+#define kTrEditFind           _("&Find")
+#define kTrEditReplace        _("Rep&lace")
+#define kTrEditGoto           _("&Goto...")
+#define kTrEditFormat         _("&Format")
+
+#define kTrToolsOptions       _("&Options...")
+
+#define kTrHelpViewOnline     _("&View Online Help")
+#define kTrHelpAbout          _("&About Jil")
+
+// Right click floating menu labels.
+
+#define kTrRClickSave               _("Save")
+#define kTrRClickClose              _("Close")
+#define kTrRClickCloseAll           _("Close All")
+#define kTrRClickCloseAllButThis    _("Close All But This")
+#define kTrRClickCopyFilePath       _("Copy File Path")
+#ifdef __WXMAC__
+#define kTrRClickOpenFolder         _("View In Finder")
+#else
+#define kTrRClickOpenFolder         _("Open Containing Folder")
+#endif
+#define kTrRClickNewFile            _("New File")
+
+#endif  // JIL_I18N_STRINGS_H_

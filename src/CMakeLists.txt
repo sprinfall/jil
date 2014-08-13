@@ -1,0 +1,6 @@
+add_subdirectory(base)
+add_subdirectory(libconfig)
+add_subdirectory(pugixml)
+add_subdirectory(uchardet)
+add_subdirectory(editor)
+add_subdirectory(app)
