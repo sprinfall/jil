@@ -15,7 +15,8 @@ namespace jil {
 // Names of application options.
 const char* const CJK = "cjk";
 const char* const FILE_ENCODING = "file_encoding";
-const char* const FONT = "font";
+const char* const FONT_NAME = "font_name";
+const char* const FONT_SIZE = "font_size";
 const char* const THEME = "theme";
 const char* const SWITCH_CWD = "switch_cwd";
 

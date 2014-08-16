@@ -45,9 +45,10 @@ protected:
   virtual wxSize DoGetBestSize() const {
     int max_width = 0;
 
-    for (const wxString& tip_str : tip_model_->tips) {
+    for (size_t i = 0; i < tip_model_->tips.size(); ++i) {
       int tip_w = 0;
-      GetTextExtent(tip_str, &tip_w, NULL, NULL, NULL);
+      GetTextExtent(tip_model_->tips[i], &tip_w, NULL, NULL, NULL);
+
       if (max_width < tip_w) {
         max_width = tip_w;
       }

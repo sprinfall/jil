@@ -18,7 +18,7 @@ const int kDefaultFontSize = 10;
 const int kMinFontSize = 8;
 
 // Get a default preferred font.
-wxString GetDefaultFont();
+wxString GetDefaultFontName();
 
 }  // namespace jil
 

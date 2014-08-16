@@ -115,6 +115,10 @@ class BookFrame : public wxFrame {
   void FindAllInAllPages(const std::wstring& str, int flags);
 #endif  // 0
 
+  void ReplaceInActivePage(const std::wstring& str,
+                           const std::wstring& replace_str,
+                           int flags);
+
  private:
   // Return the matched result range.
   editor::TextRange Find(TextPage* text_page,

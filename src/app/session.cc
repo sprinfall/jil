@@ -67,8 +67,10 @@ void SetStringArray(Setting parent,
   parent.Remove(name);
 
   Setting setting = parent.Add(name, Setting::kArray);
-  for (const wxString& str : strings) {
-    setting.Add(NULL, Setting::kString).SetString(str.ToUTF8().data());
+
+  std::list<wxString>::const_iterator it = strings.begin();
+  for (; it != strings.end(); ++it) {
+    setting.Add(NULL, Setting::kString).SetString(it->ToUTF8().data());
   }
 }
 
@@ -79,9 +81,11 @@ void SetStringArray(Setting parent,
   parent.Remove(name);
 
   Setting setting = parent.Add(name, Setting::kArray);
+
   size_t index = 0;
-  for (const wxString& str : strings) {
-    setting.Add(NULL, Setting::kString).SetString(str.ToUTF8().data());
+  std::list<wxString>::const_iterator it = strings.begin();
+  for (; it != strings.end(); ++it) {
+    setting.Add(NULL, Setting::kString).SetString(it->ToUTF8().data());
     if (++index >= limit) {
       break;
     }

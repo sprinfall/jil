@@ -108,6 +108,7 @@ class BookCtrl : public wxPanel {
   };
 
   typedef std::list<Tab*> TabList;
+  typedef TabList::iterator TabIter;
 
  public:
   explicit BookCtrl(const editor::SharedTheme& theme);

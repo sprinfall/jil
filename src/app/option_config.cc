@@ -6,6 +6,7 @@
 #include "uchardet/nsUniversalDetector.h"
 #include "wx/log.h"
 #include "wx/filename.h"
+#include "wx/settings.h"
 #include "editor/util.h"
 #include "editor/option.h"
 #include "app/config.h"
@@ -153,14 +154,28 @@ void ParseAppOptions(const Setting& setting, Options* options) {
   options->file_encoding = editor::EncodingFromName(fenc_str);
 
   // Font
-  wxString font_str;
-  GetWxString(setting_map, FONT, &font_str);
-  if (!font_str.IsEmpty()) {
-    options->font.SetNativeFontInfoUserDesc(font_str);
+  wxFont font;
+
+  int font_size = kDefaultFontSize;
+  GetInt(setting_map, FONT_SIZE, &font_size);
+  if (font_size < kMinFontSize) {
+    font_size = kMinFontSize;
   }
-  if (!options->font.IsOk()) {
-    options->font = GetGlobalFont(kDefaultFontSize, GetDefaultFont());
+
+  wxString font_name;
+  GetWxString(setting_map, FONT_NAME, &font_name);
+
+  if (font_name.IsEmpty()) {
+    font_name = GetDefaultFontName();
+    wxLogInfo(wxT("Font is not configured. Default is: %s."), font_name);
+    font = GetGlobalFont(font_size, font_name);
+  } else {
+    // The font might not exist. But GetGlobalFont() will always return
+    // a valid font.
+    font = GetGlobalFont(font_size, font_name);
   }
+  
+  options->font = font;
 
   // Switch CWD
   GetBool(setting_map, SWITCH_CWD, &options->switch_cwd);

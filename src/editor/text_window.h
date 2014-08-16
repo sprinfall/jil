@@ -203,9 +203,21 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
   // If there's any selection, the selected text will be deleted.
   void InsertString(const std::wstring& str);
 
+  void InsertString(const TextPoint& point,
+                    const std::wstring& str,
+                    bool grouped);
+
   void Move(TextUnit text_unit, SeekType seek_type);
+
   void DeleteText(TextUnit text_unit, SeekType seek_type);
+
+  void DeleteRange(const TextRange& range,
+                   TextDir dir,
+                   bool grouped,
+                   bool selected);
+
   void SelectText(TextUnit text_unit, SeekType seek_type);
+
   void ScrollText(TextUnit text_unit, SeekType seek_type);
 
   // Scroll if necessary to make sure the point is inside the client area.
@@ -295,16 +307,7 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
                   TextDir dir,
                   bool grouped);
 
-  void InsertString(const TextPoint& point,
-                    const std::wstring& str,
-                    bool grouped);
-
   void DeleteString(const TextPoint& point, Coord count, bool grouped);
-
-  void DeleteRange(const TextRange& range,
-                   TextDir dir,
-                   bool grouped,
-                   bool selected);
 
   //----------------------------------------------------------------------------
   // Delegated event handlers from TextArea.

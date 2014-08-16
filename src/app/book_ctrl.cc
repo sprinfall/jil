@@ -167,9 +167,10 @@ bool BookCtrl::Create(wxWindow* parent, wxWindowID id) {
 }
 
 BookCtrl::~BookCtrl() {
-  for (Tab* tab : tabs_) {
-    Disconnect(tab->page->Page_Window()->GetId());
-    delete tab;
+  TabList::iterator it = tabs_.begin();
+  for (; it != tabs_.end(); ++it) {
+    Disconnect((*it)->page->Page_Window()->GetId());
+    delete (*it);
   }
   tabs_.clear();
 }
@@ -179,8 +180,9 @@ bool BookCtrl::HasFocus() const {
     return true;
   }
 
-  for (Tab* tab : tabs_) {
-    if (tab->page->Page_Window()->HasFocus()) {
+  TabList::const_iterator it = tabs_.begin();
+  for (; it != tabs_.end(); ++it) {
+    if ((*it)->page->Page_Window()->HasFocus()) {
       return true;
     }
   }
@@ -376,8 +378,9 @@ void BookCtrl::SwitchToPrevStackPage() {
 std::vector<BookPage*> BookCtrl::Pages() const {
   std::vector<BookPage*> pages;
 
-  for (BookCtrl::Tab* tab : tabs_) {
-    pages.push_back(tab->page);
+  TabList::const_iterator it = tabs_.begin();
+  for (; it != tabs_.end(); ++it) {
+    pages.push_back((*it)->page);
   }
 
   return pages;
@@ -401,31 +404,33 @@ BookPage* BookCtrl::NextPage(const BookPage* page) const {
   }
 }
 
-void BookCtrl::ResizeTabs(bool refresh/*=true*/) {
+void BookCtrl::ResizeTabs(bool refresh) {
   if (tabs_.empty()) {
     return;
   }
 
-  free_size_ = 0; // Reset
+  free_size_ = 0;  // Reset
 
   const int client_size = tab_area_->GetClientSize().GetWidth();
 
   int sum_prev_size = 0;
   int sum_best_size = 0;
-  for (Tab* tab : tabs_) {
-    sum_prev_size += tab->size;
-    sum_best_size += tab->best_size;
-    // Reset size.
-    tab->size = tab->best_size;
+
+  for (TabIter it = tabs_.begin(); it != tabs_.end(); ++it) {
+    sum_prev_size += (*it)->size;
+    sum_best_size += (*it)->best_size;
+
+    // Reset tab size to its best size.
+    (*it)->size = (*it)->best_size;
   }
 
   if (sum_best_size < client_size) {
     // Give more size to small tabs.
 
     TabList small_tabs;
-    for (Tab* tab : tabs_) {
-      if (tab->size < tab_default_size_) {
-        small_tabs.push_back(tab);
+    for (TabIter it = tabs_.begin(); it != tabs_.end(); ++it) {
+      if ((*it)->size < tab_default_size_) {
+        small_tabs.push_back(*it);
       }
     }
 
@@ -437,33 +442,32 @@ void BookCtrl::ResizeTabs(bool refresh/*=true*/) {
 
       if (avg_free_size == 0) {
         // Give 1px to each small tab.
-        for (Tab* tab : small_tabs) {
+        for (TabIter it = small_tabs.begin(); it != small_tabs.end(); ++it) {
           if (free_size == 0) {
             break;
           }
-          ++tab->size;
+          ++(*it)->size;
           --free_size;
         }
         break;
       }
 
-      TabList::iterator it = small_tabs.begin();
-      while (it != small_tabs.end()) {
-        Tab* tab = *it;
-        int needed_size = tab_default_size_ - tab->size;
+      for (TabIter it = small_tabs.begin(); it != small_tabs.end(); ) {
+        Tab* small_tab = *it;
+        int needed_size = tab_default_size_ - small_tab->size;
         if (needed_size > avg_free_size) {
-          tab->size += avg_free_size;
+          small_tab->size += avg_free_size;
           ++it;
         } else {
           // This tab doesn't need that much size.
-          tab->size = tab_default_size_;
+          small_tab->size = tab_default_size_;
           // Return extra free size back.
           free_size += avg_free_size - needed_size;
-          // This tab is not small any more, remove it from small tab list.
+          // This tab is not small any more.
           it = small_tabs.erase(it);
         }
       }
-    }
+    }  // while (!small_tabs.empty())
 
     // Save free size.
     free_size_ = free_size;
@@ -471,15 +475,17 @@ void BookCtrl::ResizeTabs(bool refresh/*=true*/) {
 
   } else {  // sum_best_size >= client_size
     // Reduce the size of large tabs (except the active one).
+
     int lack_size = sum_best_size - client_size;
 
     for (int large_size = tab_default_size_;
          large_size > tab_min_size_ && lack_size > 0;
          large_size /= 2) {
       TabList large_tabs;
-      for (Tab* tab : tabs_) {
-        if (tab->size > large_size && !tab->active) {
-          large_tabs.push_back(tab);
+      for (TabIter it = tabs_.begin(); it != tabs_.end(); ++it) {
+        Tab* large_tab = *it;
+        if (large_tab->size > large_size && !large_tab->active) {
+          large_tabs.push_back(large_tab);
         }
       }
 
@@ -493,29 +499,28 @@ void BookCtrl::ResizeTabs(bool refresh/*=true*/) {
 
         if (avg_lack_size == 0) {
           // Take 1px from first "lack_size" number of large tabs.
-          for (Tab* tab : large_tabs) {
+          for (TabIter it = large_tabs.begin(); it != large_tabs.end(); ++it) {
             if (lack_size == 0) {
               break;
             }
-            --tab->size;
+            --(*it)->size;
             --lack_size;
           }
           break;
         }
 
-        TabList::iterator it = large_tabs.begin();
-        while (it != large_tabs.end()) {
-          Tab* tab = *it;
-          int givable_size = tab->size - large_size;
+        for (TabIter it = large_tabs.begin(); it != large_tabs.end(); ) {
+          Tab* large_tab = *it;
+          int givable_size = large_tab->size - large_size;
           if (givable_size > avg_lack_size) {
-            tab->size -= avg_lack_size;
+            large_tab->size -= avg_lack_size;
             ++it;
           } else {
             // This tab cannot give that much size. Give all it can give.
-            tab->size = large_size;
+            large_tab->size = large_size;
             // Return extra lack size back.
             lack_size += avg_lack_size - givable_size;
-            // This tab is not large any more, remove it from large tab list.
+            // This tab is not large any more.
             it = large_tabs.erase(it);
           }
         }
@@ -526,9 +531,10 @@ void BookCtrl::ResizeTabs(bool refresh/*=true*/) {
   if (refresh) {
     // Refresh if the size of tabs is changed.
     int sum_size = 0;
-    for (Tab* tab : tabs_) {
-      sum_size += tab->size;
+    for (TabIter it = tabs_.begin(); it != tabs_.end(); ++it) {
+      sum_size += (*it)->size;
     }
+
     if (sum_size != sum_prev_size) {
       RefreshTabArea();
     }
@@ -648,9 +654,9 @@ void BookCtrl::DrawBackground(wxGraphicsContext* gc) {
 
   int x = rect.GetLeft();
 
-  for (Tab* tab : tabs_) {
-    DrawTabBackground(tab, gc, x);
-    x += tab->size;
+  for (TabList::iterator it = tabs_.begin(); it != tabs_.end(); ++it) {
+    DrawTabBackground(*it, gc, x);
+    x += (*it)->size;
   }
 
   if (x <= rect.GetRight()) {
@@ -673,8 +679,8 @@ void BookCtrl::DrawForeground(wxGraphicsContext* gc, wxDC& dc) {
   for (TabList::iterator it = tabs_.begin(); it != tabs_.end(); ++it) {
     Tab* tab = *it;
 
-    const wxColour& tab_fg =
-        theme_->GetColor(tab->active ? ACTIVE_TAB_FG : TAB_FG);
+    ColorId fg_color_id = tab->active ? ACTIVE_TAB_FG : TAB_FG;
+    const wxColour& tab_fg = theme_->GetColor(fg_color_id);
 
     gc->SetFont(tab_area_->GetFont(), tab_fg);
 
@@ -911,15 +917,13 @@ BookCtrl::TabList::iterator BookCtrl::TabByPos(int pos_x) {
 BookCtrl::Tab* BookCtrl::GetTabByWindow(wxWindow* window, size_t* index) {
   size_t i = 0;
 
-  for (Tab* tab : tabs_) {
-    if (tab->page->Page_Window() == window) {
+  for (TabList::iterator it = tabs_.begin(); it != tabs_.end(); ++it, ++i) {
+    if ((*it)->page->Page_Window() == window) {
       if (index != NULL) {
         *index = i;
       }
-      return tab;
+      return (*it);
     }
-
-    ++i;
   }
 
   return NULL;

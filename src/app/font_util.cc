@@ -32,32 +32,33 @@ public:
 };
 
 // Some preferred fixed-width fonts.
-#define kFontDejaVuSansMono _T("DejaVu Sans Mono")
-#define kFontBitstreamVeraSansMono _T("Bitstream Vera Sans Mono")
-#define kFontCourierNew _T("Courier New")
+static const wxString kBestFonts[] = {
+  wxT("DejaVu Sans Mono"),
+  wxT("Bitstream Vera Sans Mono"),
+  wxT("Consolas"),
+  wxT("Courier New"),
+};
 
-static wxString DoGetDefaultFont() {
+static wxString DoGetDefaultFontName() {
   FontEnumerator fe;
   fe.EnumerateFacenames(wxFONTENCODING_SYSTEM, true);
-  if (fe.facenames.empty()) {  // No fixed-width fonts.
-    // Use system font.
+  if (fe.facenames.empty()) {
+    // No fixed-width fonts? Use system font.
     return wxSystemSettings::GetFont(wxSYS_SYSTEM_FONT).GetFaceName();
   }
 
-  if (fe.facenames.find(kFontDejaVuSansMono) != fe.facenames.end()) {
-    return kFontDejaVuSansMono;
+  size_t count = sizeof(kBestFonts) / sizeof(wxString);
+  for (size_t i = 0; i < count; ++i) {
+    if (fe.facenames.find(kBestFonts[i]) != fe.facenames.end()) {
+      return kBestFonts[i];
+    }
   }
-  if (fe.facenames.find(kFontBitstreamVeraSansMono) != fe.facenames.end()) {
-    return kFontBitstreamVeraSansMono;
-  }
-  if (fe.facenames.find(kFontCourierNew) != fe.facenames.end()) {
-    return kFontCourierNew;
-  }
+
   return *(fe.facenames.begin());
 }
 
-wxString GetDefaultFont() {
-  static wxString font = DoGetDefaultFont();
+wxString GetDefaultFontName() {
+  static wxString font = DoGetDefaultFontName();
   return font;
 }
 

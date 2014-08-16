@@ -1040,14 +1040,14 @@ void TextBuffer::Notify(LineChangeType type, const LineChangeData& data) {
     }
   }
 
-  for (BufferListener* listener : listeners_) {
-    listener->OnBufferLineChange(type, data);
+  for (size_t i = 0; i < listeners_.size(); ++i) {
+    listeners_[i]->OnBufferLineChange(type, data);
   }
 }
 
 void TextBuffer::Notify(ChangeType type) {
-  for (BufferListener* listener : listeners_) {
-    listener->OnBufferChange(type);
+  for (size_t i = 0; i < listeners_.size(); ++i) {
+    listeners_[i]->OnBufferChange(type);
   }
 }
 

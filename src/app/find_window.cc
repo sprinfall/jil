@@ -158,10 +158,16 @@ bool FindWindow::Create(BookFrame* book_frame, wxWindowID id) {
   //----------------------------------------------------------------------------
 
   find_combobox_ = new wxComboBox(panel_, kFindComboBoxId);
+
   // Initialize find combobox with find history.
-  for (const wxString& str : session_->recent_find_strings()) {
-    find_combobox_->Append(str);
+  const std::list<wxString>& find_strings = session_->recent_find_strings();
+  {
+    std::list<wxString>::const_iterator it = find_strings.begin();
+    for (; it != find_strings.end(); ++it) {
+      find_combobox_->Append(*it);
+    }
   }
+
   if (!find_combobox_->IsListEmpty()) {
     find_combobox_->Select(0);
   }
@@ -171,9 +177,14 @@ bool FindWindow::Create(BookFrame* book_frame, wxWindowID id) {
   replace_combobox_ = new wxComboBox(panel_, kReplaceComboBoxId);
 
   // Initialize replace combobox with replace history.
-  for (const wxString& str : session_->recent_replace_strings()) {
-    replace_combobox_->Append(str);
+  const std::list<wxString>& replace_strings = session_->recent_replace_strings();
+  {
+    std::list<wxString>::const_iterator it = replace_strings.begin();
+    for (; it != replace_strings.end(); ++it) {
+      replace_combobox_->Append(*it);
+    }
   }
+
   if (!replace_combobox_->IsListEmpty()) {
     replace_combobox_->Select(0);
   }
@@ -327,11 +338,19 @@ void FindWindow::OnFindAll(wxCommandEvent& evt) {
   book_frame_->FindAllInActivePage(str.ToStdWstring(), flags_);
 }
 
-// TODO
 void FindWindow::OnReplace(wxCommandEvent& evt) {
-  wxString replace_string = replace_combobox_->GetValue();
+  wxString str = find_combobox_->GetValue();
+  if (str.IsEmpty()) {
+    return;
+  }
 
-  AddReplaceString(replace_string);
+  wxString replace_str = replace_combobox_->GetValue();
+
+  AddReplaceString(replace_str);
+
+  book_frame_->ReplaceInActivePage(str.ToStdWstring(),
+                                   replace_str.ToStdWstring(),
+                                   flags_);
 }
 
 // TODO

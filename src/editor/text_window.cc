@@ -435,6 +435,8 @@ void TextWindow::NewLineAbove() {
 }
 
 void TextWindow::InsertString(const std::wstring& str) {
+  assert(!str.empty());
+
   bool grouped = false;
 
   if (!selection_.IsEmpty()) {
@@ -457,6 +459,15 @@ void TextWindow::InsertString(const std::wstring& str) {
   }
 
   InsertString(caret_point_, str, grouped);
+}
+
+void TextWindow::InsertString(const TextPoint& point,
+                              const std::wstring& str,
+                              bool grouped) {
+  InsertStringAction* isa = new InsertStringAction(buffer_, point, str);
+  isa->set_caret_point(caret_point_);
+  isa->set_grouped(grouped);
+  Exec(isa);
 }
 
 void TextWindow::Move(TextUnit text_unit, SeekType seek_type) {
@@ -518,6 +529,16 @@ void TextWindow::DeleteText(TextUnit text_unit, SeekType seek_type) {
     action->set_caret_point(caret_point_);
     Exec(action);
   }
+}
+
+void TextWindow::DeleteRange(const TextRange& range,
+                             TextDir dir,
+                             bool grouped,
+                             bool selected) {
+  DeleteRangeAction* dra = new DeleteRangeAction(buffer_, range, dir, selected);
+  dra->set_caret_point(caret_point_);
+  dra->set_grouped(grouped);
+  Exec(dra);
 }
 
 void TextWindow::ScrollText(TextUnit text_unit, SeekType seek_type) {
@@ -994,30 +1015,11 @@ void TextWindow::InsertChar(const TextPoint& point,
   UpdateCaretPoint(caret_point, false, true, true);
 }
 
-void TextWindow::InsertString(const TextPoint& point,
-                              const std::wstring& str,
-                              bool grouped) {
-  InsertStringAction* isa = new InsertStringAction(buffer_, point, str);
-  isa->set_caret_point(caret_point_);
-  isa->set_grouped(grouped);
-  Exec(isa);
-}
-
 void TextWindow::DeleteString(const TextPoint& point,
                               Coord count,
                               bool grouped) {
   TextRange range(point, TextPoint(point.x + count, point.y));
   DeleteRange(range, kForward, grouped, false);
-}
-
-void TextWindow::DeleteRange(const TextRange& range,
-                             TextDir dir,
-                             bool grouped,
-                             bool selected) {
-  DeleteRangeAction* dra = new DeleteRangeAction(buffer_, range, dir, selected);
-  dra->set_caret_point(caret_point_);
-  dra->set_grouped(grouped);
-  Exec(dra);
 }
 
 //------------------------------------------------------------------------------
@@ -1143,8 +1145,8 @@ void TextWindow::HandleTextPaint(Renderer& renderer) {
   if (!options_.rulers.empty()) {
     renderer.SetPen(wxPen(theme_->GetColor(RULER)), true);
 
-    for (int ruler : options_.rulers) {
-      int ruler_x = x + char_width_ * ruler;
+    for (size_t i = 0; i < options_.rulers.size(); ++i) {
+      int ruler_x = x + char_width_ * options_.rulers[i];
       renderer.DrawLine(ruler_x, y1, ruler_x, y2);
     }
 
@@ -1209,8 +1211,8 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
 
       y2 -= line_padding;
 
-      for (int ruler : options_.rulers) {
-        int ruler_x = x + char_width_ * ruler;
+      for (size_t i = 0; i < options_.rulers.size(); ++i) {
+        int ruler_x = x + char_width_ * options_.rulers[i];
         renderer.DrawLine(ruler_x, y1, ruler_x, y2);
       }
 
@@ -1240,8 +1242,8 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
         renderer.SetPen(wxPen(theme_->GetColor(RULER)), true);
 
         int y2 = y + h;
-        for (int ruler : options_.rulers) {
-          int ruler_x = x + char_width_ * ruler;
+        for (size_t i = 0; i < options_.rulers.size(); ++i) {
+          int ruler_x = x + char_width_ * options_.rulers[i];
           renderer.DrawLine(ruler_x, y, ruler_x, y2);
         }
 
@@ -1299,7 +1301,10 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
     CharRange select_char_range = selection_.range.GetCharRange(ln);
     int _y = y;
 
-    for (CharRange& sub_range : sub_ranges) {
+    std::vector<CharRange>::iterator range_it = sub_ranges.begin();
+    for (; range_it != sub_ranges.end(); ++range_it) {
+      CharRange& sub_range = *range_it;
+
       CharRange sub_select_char_range = sub_range.Intersect(select_char_range);
       if (sub_select_char_range.IsEmpty()) {
         _y += line_height_;
@@ -1333,7 +1338,10 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
     // For calculating spaces occupied by a tab.
     Coord chars = 0;
 
-    for (CharRange& sub_range : sub_ranges) {
+    std::vector<CharRange>::iterator range_it = sub_ranges.begin();
+    for (; range_it != sub_ranges.end(); ++range_it) {
+      CharRange& sub_range = *range_it;
+
       if (sub_range.end() == kInvalidCoord) {  // Last sub range
         sub_range.set_end(line_data.size());
       }
@@ -1360,7 +1368,10 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
 
       Coord i = sub_range.begin();
 
-      for (const LexElement* le : lex_elements) {
+      std::list<const LexElement*>::iterator le_it = lex_elements.begin();
+      for (; le_it != lex_elements.end(); ++le_it) {
+        const LexElement* le = *le_it;
+
         // Draw the line piece before the lex element.
         if (i < le->off) {
           Coord j = le->off;
@@ -1391,7 +1402,10 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
     // For calculating spaces occupied by a tab.
     Coord chars = 0;
 
-    for (CharRange& sub_range : sub_ranges) {
+    std::vector<CharRange>::iterator range_it = sub_ranges.begin();
+    for (; range_it != sub_ranges.end(); ++range_it) {
+      CharRange& sub_range = *range_it;
+
       if (sub_range.end() == kInvalidCoord) {  // Last sub range
         sub_range.set_end(line_data.size());
       }
@@ -1439,7 +1453,10 @@ void TextWindow::DrawTextLine(Renderer& renderer,
   Coord i = 0;
   Coord j = 0;
 
-  for (const LexElement* le : lex_elements) {
+  std::list<LexElement*>::const_iterator le_it = lex_elements.begin();
+  for (; le_it != lex_elements.end(); ++le_it) {
+    const LexElement* le = *le_it;
+
     if (i < le->off) {
       // Line piece (spaces, operators, plain-text, etc.) with no lex.
       DrawTextLinePiece(renderer, line_data, i, le->off, Lex(), _x, _y, chars);

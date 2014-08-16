@@ -221,6 +221,7 @@ IMPLEMENT_APP_NO_MAIN(App)
 App::App()
     : instance_checker_(NULL)
     , server_(NULL)
+    , log_file_(NULL)
     , style_(new editor::Style)
     , binding_(new editor::Binding) {
 }
@@ -299,6 +300,12 @@ bool App::OnInit() {
     wxMkdir(user_data_dir, 777);
   }
 
+  // Set log target to file.
+  wxString log_file_path = UserDataFile(wxT("log.txt"));
+  log_file_ = wxFopen(log_file_path, "w+");
+  wxLog* default_log = wxLog::SetActiveTarget(new wxLogStderr(log_file_));
+  delete default_log;
+
   LoadStatusFields();
   if (status_fields_.empty()) {
     UseDefaultStatusFields();
@@ -346,6 +353,12 @@ bool App::OnInit() {
 
 int App::OnExit() {
   session_.Save(UserDataFile(kSessionFile));
+
+  delete wxLog::SetActiveTarget(NULL);
+  if (log_file_ != NULL) {
+    fclose(log_file_);
+  }
+
   return wxApp::OnExit();
 }
 
@@ -800,8 +813,10 @@ void App::RestoreLastOpenedFiles(BookFrame* book_frame) {
   const std::list<wxString>& last_opened_files = session_.last_opened_files();
   if (!last_opened_files.empty()) {
     wxArrayString files;
-    for (const wxString& file : last_opened_files) {
-      files.Add(file);
+
+    std::list<wxString>::const_iterator it = last_opened_files.begin();
+    for (; it != last_opened_files.end(); ++it) {
+      files.Add(*it);
     }
 
     // The last opened files might not exist any more. Silently open them.

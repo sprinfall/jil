@@ -2,6 +2,9 @@
 #define JIL_EDITOR_COMPILE_CONFIG_H_
 #pragma once
 
+// Use C++11 features or not.
+#define JIL_USE_CPP11 0
+
 // The quote start might have to be matched using regex, which is less
 // efficient.
 // Currently, no language needs this. So disable it.

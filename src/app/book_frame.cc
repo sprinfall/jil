@@ -360,9 +360,10 @@ void BookFrame::FileSaveAs() {
 void BookFrame::FileSaveAll() {
   for (size_t i = 0; i < text_books_.size(); ++i) {
     std::vector<TextPage*> text_pages = BookTextPages(text_books_[i]);
-    for (TextPage* text_page : text_pages) {
-      if (text_page != NULL) {
-        DoSaveBuffer(text_page->buffer());
+
+    for (size_t j = 0; j < text_pages.size(); ++j) {
+      if (text_pages[j] != NULL) {
+        DoSaveBuffer(text_pages[j]->buffer());
       }
     }
   }
@@ -564,6 +565,58 @@ void BookFrame::FindAllInAllPages(const std::wstring& str, int flags) {
 }
 #endif  // 0
 
+void BookFrame::ReplaceInActivePage(const std::wstring& str,
+                                    const std::wstring& replace_str,
+                                    int flags) {
+  using namespace editor;
+
+  TextPage* text_page = ActiveTextPage();
+  if (text_page == NULL) {
+    return;
+  }
+
+  // Backup the selection.
+  Selection selection = text_page->selection();
+
+  TextPoint point = text_page->caret_point();
+
+  // If there's any selected text, the find start point has to be adjusted to
+  // the begin point of the selection.
+  if (!selection.IsEmpty()) {
+    point = selection.begin();
+  }
+
+  TextRange result_range = Find(text_page, str, point, flags, true);
+  if (result_range.IsEmpty()) {
+    return;
+  }
+
+  // If the find result is not the current selection, select it.
+  if (result_range != selection.range) {
+    text_page->SetSelection(result_range, kForward, false);
+    text_page->Goto(result_range.line_first());
+    return;
+  }
+
+  // The find result is the current selection, replace it.
+  text_page->ClearSelection();
+
+  if (replace_str.empty()) {
+    text_page->DeleteRange(selection.range, selection.dir, false, false);
+  } else {
+    text_page->DeleteRange(selection.range, selection.dir, true, false);
+    text_page->InsertString(text_page->caret_point(), replace_str, true);
+  }
+
+  // Go to next match.
+  point = text_page->caret_point();
+  result_range = Find(text_page, str, point, flags, true);
+  if (!result_range.IsEmpty()) {
+    text_page->SetSelection(result_range, kForward, false);
+    text_page->Goto(result_range.line_first());
+  }
+}
+
 editor::TextRange BookFrame::Find(TextPage* text_page,
                                   const std::wstring& str,
                                   const editor::TextPoint& point,
@@ -672,7 +725,10 @@ void BookFrame::FindAll(const std::wstring& str,
   std::wstring ln_str_buf;
   ln_str_buf.resize(ln_size);
 
-  for (const TextRange& range : result_ranges) {
+  std::list<TextRange>::iterator range_it = result_ranges.begin();
+  for (; range_it != result_ranges.end(); ++range_it) {
+    const TextRange& range = *range_it;
+
     Coord ln = range.point_begin().y;
     swprintf(&ln_str_buf[0], ln_str_format.c_str(), ln);
 
@@ -700,9 +756,8 @@ void BookFrame::FindAll(const std::wstring& str,
 
   // Add match count line.
   // Example: >> 4
-  std::wstring match_count =
-      L">> " +
-      base::LexicalCast<std::wstring>(result_ranges.size());
+  std::wstring match_count = L">> ";
+  match_count += base::LexicalCast<std::wstring>(result_ranges.size());
   fr_line = fr_page->buffer()->AppendLine(match_count);
   fr_line->set_id(kNpos);  // Clear line ID.
 }
@@ -960,9 +1015,10 @@ void BookFrame::OnClose(wxCloseEvent& evt) {
   TextBook* text_book = ActiveTextBook();
   if (text_book->PageCount() > 0) {
     std::vector<TextPage*> text_pages = BookTextPages(text_book);
-    for (TextPage* text_page : text_pages) {
-      if (!text_page->buffer()->new_created()) {
-        opened_files.push_back(text_page->buffer()->file_path_name());
+
+    for (size_t i = 0; i < text_pages.size(); ++i) {
+      if (!text_pages[i]->buffer()->new_created()) {
+        opened_files.push_back(text_pages[i]->buffer()->file_path_name());
       }
     }
 
@@ -1674,9 +1730,10 @@ TextPage* BookFrame::CreateTextPage(editor::TextBuffer* buffer,
 TextPage* BookFrame::TextPageByFileName(const wxFileName& fn_object) const {
   for (size_t i = 0; i < text_books_.size(); ++i) {
     std::vector<TextPage*> text_pages = BookTextPages(text_books_[i]);
-    for (TextPage* text_page : text_pages) {
-      if (fn_object == text_page->buffer()->file_name_object()) {
-        return text_page;
+
+    for (size_t j = 0; j < text_pages.size(); ++j) {
+      if (fn_object == text_pages[j]->buffer()->file_name_object()) {
+        return text_pages[j];
       }
     }
   }

@@ -144,6 +144,8 @@ class App : public wxApp {
   wxSingleInstanceChecker* instance_checker_;
   wxServer* server_;
 
+  FILE* log_file_;
+
   // Files specified via command line argument.
   // TODO: Avoid this.
   wxArrayString cmdline_files_;

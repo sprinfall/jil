@@ -198,7 +198,10 @@ std::list<const LexElement*> TextLine::lex_elements(
     adjusted_char_range.set_end(Length());
   }
 
-  for (const LexElement* le : lex_elements_) {
+  std::list<LexElement*>::const_iterator it = lex_elements_.begin();
+  for (; it != lex_elements_.end(); ++it) {
+    const LexElement* le = *it;
+
     if (le->off >= adjusted_char_range.end()) {
       break;
     }
@@ -233,7 +236,10 @@ Quote* TextLine::UnendedQuote(bool multi_line) const {
 }
 
 bool TextLine::EndsQuote(Quote* quote) const {
-  for (const QuoteInfo& qi : quote_infos_) {
+  std::list<QuoteInfo>::const_iterator it = quote_infos_.begin();
+  for (; it != quote_infos_.end(); ++it) {
+    const QuoteInfo& qi = *it;
+
     if (qi.quote == quote) {
       if (qi.part == Quote::kEnd) {
         return true;
@@ -242,6 +248,7 @@ bool TextLine::EndsQuote(Quote* quote) const {
       }
     }
   }
+
   return false;
 }
 
