@@ -132,7 +132,7 @@ bool LoadThemeFile(const wxString& theme_file,
     tb_theme->SetColor(BookCtrl::ACTIVE_TAB_BORDER,
                        tb_setting.GetColor("active_tab_border"));
 
-    wxFont tab_font = GetFont(tb_setting, "tab_font");
+    wxFont tab_font = tb_setting.GetFont("tab_font");
     if (!tab_font.IsOk()) {
       tab_font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
     }
@@ -157,7 +157,7 @@ bool LoadThemeFile(const wxString& theme_file,
     sb_theme->SetColor(StatusBar::FG, sb_setting.GetColor("fg"));
     sb_theme->SetColor(StatusBar::BG, sb_setting.GetColor("bg"));
 
-    wxFont font = GetFont(sb_setting, "font");
+    wxFont font = sb_setting.GetFont("font");
     if (!font.IsOk()) {
       font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
     }

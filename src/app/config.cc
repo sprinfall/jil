@@ -3,8 +3,6 @@
 
 namespace jil {
 
-// Setting
-
 Setting Setting::Get(const char* name, int type, bool recreate) {
   Setting child = Get(name);
   if (child && child.type() != type) {
@@ -66,24 +64,4 @@ bool Config::Save(const wxString& filename) {
   return true;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
-// TODO: Different platform has different font description.
-
-wxFont GetFont(Setting setting) {
-  wxFont font;
-  font.SetNativeFontInfoUserDesc(wxString::FromUTF8(setting.GetString()));
-  return font;
-}
-
-wxFont GetFont(Setting parent, const char* name) {
-  wxFont font;
-  font.SetNativeFontInfoUserDesc(wxString::FromUTF8(parent.GetString(name)));
-  return font;
-}
-
-void SetFont(Setting parent, const char* name, const wxFont& font) {
-  parent.SetString(name, font.GetNativeFontInfoUserDesc().ToUTF8().data());
-}
-
-} // namespace jil
+}  // namespace jil

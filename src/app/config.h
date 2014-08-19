@@ -17,19 +17,20 @@ namespace jil {
 class Setting;
 typedef std::map<std::string, Setting> SettingMap;
 
+// Wrapper of config_setting_t.
 class Setting {
  public:
   enum Type {
     // Make type names simpler.
-    kNone = CONFIG_TYPE_NONE,
-    kGroup = CONFIG_TYPE_GROUP,
-    kInt = CONFIG_TYPE_INT,
-    kInt64 = CONFIG_TYPE_INT64,
-    kFloat = CONFIG_TYPE_FLOAT,
-    kString = CONFIG_TYPE_STRING,
-    kBool = CONFIG_TYPE_BOOL,
-    kArray = CONFIG_TYPE_ARRAY,
-    kList = CONFIG_TYPE_LIST,
+    kNone     = CONFIG_TYPE_NONE,
+    kGroup    = CONFIG_TYPE_GROUP,
+    kInt      = CONFIG_TYPE_INT,
+    kInt64    = CONFIG_TYPE_INT64,
+    kFloat    = CONFIG_TYPE_FLOAT,
+    kString   = CONFIG_TYPE_STRING,
+    kBool     = CONFIG_TYPE_BOOL,
+    kArray    = CONFIG_TYPE_ARRAY,
+    kList     = CONFIG_TYPE_LIST,
   };
 
   Setting(config_setting_t* ref = NULL) : ref_(ref) {
@@ -122,6 +123,18 @@ class Setting {
     return color;
   }
 
+  wxFont GetFont() const {
+    wxFont font;
+    // NOTE: Different platforms have different font description.
+    font.SetNativeFontInfoUserDesc(wxString::FromUTF8(GetString()));
+    return font;
+  }
+
+  void SetFont(const wxFont& font) {
+    // NOTE: Different platforms have different font description.
+    SetString(font.GetNativeFontInfoUserDesc().ToUTF8().data());
+  }
+
   // For group setting.
 
   int GetInt(const char* name) const {
@@ -174,6 +187,18 @@ class Setting {
     return color;
   }
 
+  wxFont GetFont(const char* name) const {
+    wxFont font;
+    // NOTE: Different platforms have different font description.
+    font.SetNativeFontInfoUserDesc(wxString::FromUTF8(GetString(name)));
+    return font;
+  }
+
+  void SetFont(const char* name, const wxFont& font) {
+    // NOTE: Different platforms have different font description.
+    SetString(name, font.GetNativeFontInfoUserDesc().ToUTF8().data());
+  }
+
   void AsMap(SettingMap* setting_map) const;
 
  private:
@@ -181,12 +206,12 @@ class Setting {
     ref_ = ref;
   }
 
-  // A reference only.
-  config_setting_t* ref_;
+  config_setting_t* ref_;  // Reference only.
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// Wrapper of config_t.
 class Config {
  public:
   Config() {
@@ -211,13 +236,6 @@ class Config {
  private:
   config_t cfg_;
 };
-
-////////////////////////////////////////////////////////////////////////////////
-// Utilities.
-
-wxFont GetFont(Setting setting);
-wxFont GetFont(Setting parent, const char* name);
-void SetFont(Setting parent, const char* name, const wxFont& font);
 
 }  // namespace jil
 
