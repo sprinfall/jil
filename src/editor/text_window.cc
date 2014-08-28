@@ -295,8 +295,8 @@ Mode TextWindow::mode() const {
 }
 
 void TextWindow::Exec(Action* action) {
-  // The returned action might be a new action if it's merged to the
-  // previous action, or NULL if it's not effective.
+  // The returned action might be a new one if it's merged to the previous
+  // action, or NULL if it's not effective.
   action = buffer_->AddAction(action);
 
   if (action != NULL) {
@@ -310,6 +310,7 @@ void TextWindow::SetFileFormat(FileFormat file_format) {
                                                         caret_point_,
                                                         file_format);
     sffa->set_caret_point(caret_point_);
+    sffa->set_update_caret(false);
     Exec(sffa);
   }
 }
@@ -330,14 +331,14 @@ void TextWindow::Undo() {
   Action* action = buffer_->Undo();
   UpdateAfterUndo(action);
 
-  if (action->grouped()) {  // Group begin
+  if (action->grouped()) {
     while (true) {
       Action* action = buffer_->Undo();
       if (action == NULL) {
         break;
       }
       UpdateAfterUndo(action);
-      if (action->grouped()) {  // Group end
+      if (action->grouped()) {
         break;
       }
     }
@@ -352,14 +353,14 @@ void TextWindow::Redo() {
   Action* action = buffer_->Redo();
   UpdateAfterExec(action);
 
-  if (action->grouped()) {  // Group begin
+  if (action->grouped()) {
     while (true) {
       Action* action = buffer_->Redo();
       if (action == NULL) {
         break;
       }
       UpdateAfterExec(action);
-      if (action->grouped()) {  // Group end
+      if (action->grouped()) {
         break;
       }
     }
@@ -392,7 +393,7 @@ void TextWindow::InsertChar(wchar_t c) {
 
   if (!selection_.IsEmpty()) {
     // NOTE: This might change the caret point.
-    DeleteRange(selection_.range, selection_.dir, true, true);
+    DeleteRange(selection_.range, selection_.dir, true, true, true);
     grouped = true;
   }
 
@@ -402,12 +403,14 @@ void TextWindow::InsertChar(wchar_t c) {
   Coord line_length = buffer_->LineLength(caret_point_.y);
   if (caret_point_.x > line_length) {
     if (c == LF) {
-      // No spaces will be inserted.
+      // Break a new line, no spaces will be inserted.
       point.x = line_length;
     } else {
       // Fill virtual spaces before insert the char.
       std::wstring spaces(caret_point_.x - line_length, kSpaceChar);
-      InsertString(TextPoint(line_length, caret_point_.y), spaces, !grouped);
+      TextPoint p(line_length, caret_point_.y);
+      InsertString(p, spaces, !grouped, false);
+
       if (!grouped) {
         grouped = true;
       }
@@ -415,6 +418,11 @@ void TextWindow::InsertChar(wchar_t c) {
   }
 
   InsertChar(point, c, kForward, grouped);
+}
+
+void TextWindow::NewLineBreak() {
+  // NOTE: If there's any text selected, it will be deleted.
+  InsertChar(LF);
 }
 
 void TextWindow::NewLineBelow() {
@@ -439,9 +447,10 @@ void TextWindow::InsertString(const std::wstring& str) {
 
   bool grouped = false;
 
+  // Delete the selected text.
   if (!selection_.IsEmpty()) {
-    // Note that DeleteRange might change the caret point.
-    DeleteRange(selection_.range, selection_.dir, true, true);
+    // NOTE: This might change the caret point.
+    DeleteRange(selection_.range, selection_.dir, true, true, true);
     grouped = true;
   }
 
@@ -449,23 +458,25 @@ void TextWindow::InsertString(const std::wstring& str) {
   Coord line_length = buffer_->LineLength(caret_point_.y);
   if (caret_point_.x > line_length) {
     std::wstring spaces(caret_point_.x - line_length, kSpaceChar);
+    TextPoint point(line_length, caret_point_.y);
 
-    TextPoint p(line_length, caret_point_.y);
-    InsertString(p, spaces, !grouped);
+    InsertString(point, spaces, !grouped, false);
 
     if (!grouped) {
       grouped = true;
     }
   }
 
-  InsertString(caret_point_, str, grouped);
+  InsertString(caret_point_, str, grouped, true);
 }
 
 void TextWindow::InsertString(const TextPoint& point,
                               const std::wstring& str,
-                              bool grouped) {
+                              bool grouped,
+                              bool update_caret) {
   InsertStringAction* isa = new InsertStringAction(buffer_, point, str);
   isa->set_caret_point(caret_point_);
+  isa->set_update_caret(update_caret);
   isa->set_grouped(grouped);
   Exec(isa);
 }
@@ -527,6 +538,7 @@ void TextWindow::DeleteText(TextUnit text_unit, SeekType seek_type) {
 
   if (action != NULL) {
     action->set_caret_point(caret_point_);
+    action->set_update_caret(true);
     Exec(action);
   }
 }
@@ -534,9 +546,11 @@ void TextWindow::DeleteText(TextUnit text_unit, SeekType seek_type) {
 void TextWindow::DeleteRange(const TextRange& range,
                              TextDir dir,
                              bool grouped,
-                             bool selected) {
+                             bool selected,
+                             bool update_caret) {
   DeleteRangeAction* dra = new DeleteRangeAction(buffer_, range, dir, selected);
   dra->set_caret_point(caret_point_);
+  dra->set_update_caret(update_caret);
   dra->set_grouped(grouped);
   Exec(dra);
 }
@@ -969,10 +983,12 @@ void TextWindow::UpdateAfterExec(Action* action) {
     }
   }
 
-  // Normally, there should be no virtual space after an action is executed.
-  // Don't allow virtual space.
-  bool vspace = false;
-  UpdateCaretPoint(action->CaretPointAfterExec(), false, true, vspace);
+  if (action->update_caret()) {
+    // Normally, there should be no virtual space after an action is executed.
+    // Don't allow virtual space.
+    bool vspace = false;
+    UpdateCaretPoint(action->CaretPointAfterExec(), false, true, vspace);
+  }
 }
 
 void TextWindow::UpdateAfterUndo(Action* action) {
@@ -982,9 +998,11 @@ void TextWindow::UpdateAfterUndo(Action* action) {
     SetSelection(ra->range(), ra->dir());
   } else {
     ClearSelection();
-    // Allow virtual space!
-    bool vspace = true;
-    UpdateCaretPoint(action->caret_point(), false, true, vspace);
+    
+    if (action->update_caret()) {
+      // NOTE: Allow virtual spaces.
+      UpdateCaretPoint(action->caret_point(), false, true, true);
+    }
   }
 }
 
@@ -1015,12 +1033,12 @@ void TextWindow::InsertChar(const TextPoint& point,
   UpdateCaretPoint(caret_point, false, true, true);
 }
 
-void TextWindow::DeleteString(const TextPoint& point,
-                              Coord count,
-                              bool grouped) {
-  TextRange range(point, TextPoint(point.x + count, point.y));
-  DeleteRange(range, kForward, grouped, false);
-}
+//void TextWindow::DeleteString(const TextPoint& point,
+//                              Coord count,
+//                              bool grouped) {
+//  TextRange range(point, TextPoint(point.x + count, point.y));
+//  DeleteRange(range, kForward, grouped, false);
+//}
 
 //------------------------------------------------------------------------------
 // Delegated event handlers from TextArea.

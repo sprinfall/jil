@@ -148,29 +148,30 @@ void Paste(TextWindow* tw) {
     return;
   }
 
-  wxChar c1 = text[text.size() - 2];
-  wxChar c2 = text[text.size() - 1];
-
-  TextBuffer* buffer = tw->buffer();
-
   if (tw->selection().IsEmpty()) {
     TextPoint point = tw->caret_point();
     if (by_line) {
       point.x = 0;
     }
-
-    tw->Exec(new InsertTextAction(buffer, point, text));
+    InsertTextAction* ita = new InsertTextAction(tw->buffer(), point, text);
+    ita->set_caret_point(tw->caret_point());
+    ita->set_update_caret(true);
+    tw->Exec(ita);
   } else {
-    DeleteRangeAction* dra = new DeleteRangeAction(buffer,
+    DeleteRangeAction* dra = new DeleteRangeAction(tw->buffer(),
                                                    tw->selection().range,
                                                    tw->selection().dir,
                                                    true);
+    dra->set_caret_point(tw->caret_point());
+    dra->set_update_caret(true);
     dra->set_grouped(true);
     tw->Exec(dra);
 
-    InsertTextAction* ita = new InsertTextAction(buffer,
+    InsertTextAction* ita = new InsertTextAction(tw->buffer(),
                                                  tw->caret_point(),
                                                  text);
+    ita->set_caret_point(tw->caret_point());
+    ita->set_update_caret(true);
     ita->set_grouped(true);
     tw->Exec(ita);
   }
@@ -193,6 +194,7 @@ void AutoIndent(TextWindow* tw) {
                                                tw->selection().dir,
                                                selected);
   iia->set_caret_point(tw->caret_point());
+  iia->set_update_caret(true);
   tw->Exec(iia);
 }
 
@@ -215,6 +217,7 @@ void IncreaseIndent(TextWindow* tw) {
                                                        tw->selection().dir,
                                                        selected);
   iia->set_caret_point(tw->caret_point());
+  iia->set_update_caret(true);
   tw->Exec(iia);
 }
 
@@ -235,6 +238,7 @@ void DecreaseIndent(TextWindow* tw) {
                                                        tw->selection().dir,
                                                        selected);
   dia->set_caret_point(tw->caret_point());
+  dia->set_update_caret(true);
   tw->Exec(dia);
 }
 
@@ -288,7 +292,7 @@ void Format(TextWindow* tw) {
 }
 
 void NewLineBreak(TextWindow* tw) {
-  tw->InsertChar(LF);
+  tw->NewLineBreak();
 }
 
 void NewLineBelow(TextWindow* tw) {

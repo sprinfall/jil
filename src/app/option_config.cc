@@ -192,12 +192,13 @@ void ParseEditorOptions(const Setting& setting, editor::Options* options) {
   setting.AsMap(&setting_map);
 
   GetBool(setting_map, WRAP, &options->wrap);
-  GetInt(setting_map, SHIFT_WIDTH, &options->shift_width);
-  GetInt(setting_map, TAB_STOP, &options->tab_stop);
   GetBool(setting_map, EXPAND_TAB, &options->expand_tab);
   GetBool(setting_map, SHOW_NUMBER, &options->show_number);
   GetBool(setting_map, SHOW_SPACE, &options->show_space);
   GetBool(setting_map, SHOW_HSCROLLBAR, &options->show_hscrollbar);
+
+  GetInt(setting_map, SHIFT_WIDTH, &options->shift_width);
+  GetInt(setting_map, TAB_STOP, &options->tab_stop);
 
   Setting rulers_setting = GetSetting(setting_map, RULERS, Setting::kArray);
   if (rulers_setting) {

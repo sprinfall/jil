@@ -23,6 +23,7 @@
 
 #include "base/string_util.h"
 
+#include "editor/action.h"
 #include "editor/util.h"
 #include "editor/option.h"
 #include "editor/lex.h"
@@ -601,11 +602,10 @@ void BookFrame::ReplaceInActivePage(const std::wstring& str,
   // The find result is the current selection, replace it.
   text_page->ClearSelection();
 
-  if (replace_str.empty()) {
-    text_page->DeleteRange(selection.range, selection.dir, false, false);
-  } else {
-    text_page->DeleteRange(selection.range, selection.dir, true, false);
-    text_page->InsertString(text_page->caret_point(), replace_str, true);
+  bool grouped = !replace_str.empty();
+  text_page->DeleteRange(result_range, kForward, grouped, false, false);
+  if (!replace_str.empty()) {
+    text_page->InsertString(result_range.point_begin(), replace_str, grouped, false);
   }
 
   // Go to next match.
@@ -614,6 +614,64 @@ void BookFrame::ReplaceInActivePage(const std::wstring& str,
   if (!result_range.IsEmpty()) {
     text_page->SetSelection(result_range, kForward, false);
     text_page->Goto(result_range.line_first());
+  }
+}
+
+void BookFrame::ReplaceAllInActivePage(const std::wstring& str,
+                                       const std::wstring& replace_str,
+                                       int flags) {
+  using namespace editor;
+
+  TextPage* text_page = ActiveTextPage();
+  if (text_page == NULL) {
+    return;
+  }
+
+  TextBuffer* buffer = text_page->buffer();
+
+  bool use_regex = GetBit(flags, kFindUseRegex);
+  bool case_sensitive = GetBit(flags, kFindCaseSensitive);
+  bool match_whole_word = GetBit(flags, kFindMatchWholeWord);
+
+  TextRange source_range = buffer->range();
+  TextRange result_range;
+
+  size_t count = 0;
+
+  while (true) {
+    result_range = buffer->FindString(str,
+                                      source_range,
+                                      use_regex,
+                                      case_sensitive,
+                                      match_whole_word,
+                                      false);
+
+    if (result_range.IsEmpty()) {
+      break;
+    }
+
+    if (count == 0) {
+      text_page->Exec(new GroupAction(text_page->buffer()));
+    }
+
+    ++count;
+
+    text_page->DeleteRange(result_range, kForward, false, false, false);
+    if (!replace_str.empty()) {
+      text_page->InsertString(result_range.point_begin(),
+                              replace_str,
+                              false,
+                              false);
+    }
+
+    // Update source range and find next.
+    TextPoint point_begin = result_range.point_begin();
+    point_begin.x += CoordCast(replace_str.length());
+    source_range.Set(point_begin, source_range.point_end());
+  }
+
+  if (count > 0) {
+    text_page->Exec(new GroupAction(text_page->buffer()));
   }
 }
 

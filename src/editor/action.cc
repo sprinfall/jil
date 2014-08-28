@@ -14,6 +14,7 @@ Action::Action(TextBuffer* buffer, const TextPoint& point)
     , point_(point)
     , delta_point_(0, 0)
     , caret_point_(point)
+    , update_caret_(true)
     , effective_(true)
     , grouped_(false) {
 }
@@ -30,6 +31,24 @@ Action::Action(const Action& rhs)
 }
 
 Action::~Action() {
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+GroupAction::GroupAction(TextBuffer* buffer)
+    : Action(buffer, TextPoint()) {
+  update_caret_ = false;
+  effective_ = true;
+  grouped_ = true;
+}
+
+GroupAction::~GroupAction() {
+}
+
+void GroupAction::Exec() {
+}
+
+void GroupAction::Undo() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////

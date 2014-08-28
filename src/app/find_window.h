@@ -47,7 +47,9 @@ class FindWindow : public wxMiniFrame {
     mode_ = mode;
   }
 
-  int flags() const { return flags_; }
+  int flags() const {
+    return flags_;
+  }
 
   void UpdateLayout();
 
@@ -85,6 +87,7 @@ class FindWindow : public wxMiniFrame {
 
  private:
   Session* session_;
+
   BookFrame* book_frame_;
 
   int mode_;  // enum Mode

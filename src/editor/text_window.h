@@ -189,9 +189,13 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
   void Undo();
   void Redo();
 
+ private:
   // Insert a char at the caret point.
   // If there's any selection, the selected text will be deleted.
   void InsertChar(wchar_t c);
+
+ public:
+  void NewLineBreak();
 
   // Break a new line below.
   void NewLineBelow();
@@ -199,13 +203,17 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
   // Break a new line above.
   void NewLineAbove();
 
+ private:  // TODO
   // Insert a string at the caret point.
   // If there's any selection, the selected text will be deleted.
+  // The caret point will be updated.
   void InsertString(const std::wstring& str);
 
+ public:
   void InsertString(const TextPoint& point,
                     const std::wstring& str,
-                    bool grouped);
+                    bool grouped,
+                    bool update_caret);
 
   void Move(TextUnit text_unit, SeekType seek_type);
 
@@ -214,7 +222,8 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
   void DeleteRange(const TextRange& range,
                    TextDir dir,
                    bool grouped,
-                   bool selected);
+                   bool selected,
+                   bool update_caret);
 
   void SelectText(TextUnit text_unit, SeekType seek_type);
 
@@ -307,7 +316,8 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
                   TextDir dir,
                   bool grouped);
 
-  void DeleteString(const TextPoint& point, Coord count, bool grouped);
+  // TODO
+  //void DeleteString(const TextPoint& point, Coord count, bool grouped);
 
   //----------------------------------------------------------------------------
   // Delegated event handlers from TextArea.

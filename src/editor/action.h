@@ -51,25 +51,52 @@ class Action {
  public:
   virtual ~Action();
 
-  bool saved() const { return saved_; }
-  void set_saved(bool saved) { saved_ = saved; }
+  bool saved() const {
+    return saved_;
+  }
+  void set_saved(bool saved) {
+    saved_ = saved;
+  }
 
-  const wxDateTime& timestamp() const { return timestamp_; }
+  const wxDateTime& timestamp() const {
+    return timestamp_;
+  }
 
-  const TextPoint& point() const { return point_; }
-  void set_point(const TextPoint& point) { point_ = point; }
+  const TextPoint& point() const {
+    return point_;
+  }
+  void set_point(const TextPoint& point) {
+    point_ = point;
+  }
 
-  const TextPoint& delta_point() const { return delta_point_; }
+  const TextPoint& delta_point() const {
+    return delta_point_;
+  }
 
-  const TextPoint& caret_point() const { return caret_point_; }
+  const TextPoint& caret_point() const {
+    return caret_point_;
+  }
   void set_caret_point(const TextPoint& caret_point) {
     caret_point_ = caret_point;
   }
 
-  bool effective() const { return effective_; }
+  bool update_caret() const {
+    return update_caret_;
+  }
+  void set_update_caret(bool update_caret) {
+    update_caret_ = update_caret;
+  }
 
-  bool grouped() const { return grouped_; }
-  void set_grouped(bool grouped) { grouped_ = grouped; }
+  bool effective() const {
+    return effective_;
+  }
+
+  bool grouped() const {
+    return grouped_;
+  }
+  void set_grouped(bool grouped) {
+    grouped_ = grouped;
+  }
 
   virtual void Exec() = 0;
   virtual void Undo() = 0;
@@ -78,7 +105,9 @@ class Action {
     return point_ + delta_point_;
   }
 
-  virtual RangeAction* AsRangeAction() { return NULL; }
+  virtual RangeAction* AsRangeAction() {
+    return NULL;
+  }
 
  protected:
   Action(TextBuffer* buffer, const TextPoint& point);
@@ -104,6 +133,9 @@ class Action {
   // functions). Keep it here for restoring caret point after undo.
   TextPoint caret_point_;
 
+  // If this action updates the caret point or not.
+  bool update_caret_;
+
   // If the text buffer is changed or not after the execution of this action.
   bool effective_;
 
@@ -114,6 +146,24 @@ class Action {
   //              \__/  \_____/
   //               G       G
   bool grouped_;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Only used to group other actions.
+// Usage:
+//   buffer->AddAction(new GroupAction(buffer));
+//   buffer->AddAction(...);
+//   buffer->AddAction(...);
+//   ...
+//   buffer->AddAction(new GroupAction(buffer));
+class GroupAction : public Action {
+ public:
+  explicit GroupAction(TextBuffer* buffer);
+  virtual ~GroupAction();
+
+  virtual void Exec() override;
+  virtual void Undo() override;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

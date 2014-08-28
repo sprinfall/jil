@@ -106,7 +106,7 @@ bool FindWindow::Create(BookFrame* book_frame, wxWindowID id) {
 
   // Panel has style wxTAB_TRAVERSAL by default.
   panel_ = new wxPanel(this);
-  panel_->SetBackgroundColour(*wxWHITE);
+  panel_->SetBackgroundColour(*wxWHITE);  // TODO
 
   // Create controls.
 
@@ -344,17 +344,36 @@ void FindWindow::OnReplace(wxCommandEvent& evt) {
     return;
   }
 
+  AddFindString(str);
+
   wxString replace_str = replace_combobox_->GetValue();
 
-  AddReplaceString(replace_str);
+  if (!replace_str.IsEmpty()) {
+    AddReplaceString(replace_str);
+  }
 
   book_frame_->ReplaceInActivePage(str.ToStdWstring(),
                                    replace_str.ToStdWstring(),
                                    flags_);
 }
 
-// TODO
 void FindWindow::OnReplaceAll(wxCommandEvent& evt) {
+  wxString str = find_combobox_->GetValue();
+  if (str.IsEmpty()) {
+    return;
+  }
+
+  AddFindString(str);
+
+  wxString replace_str = replace_combobox_->GetValue();
+
+  if (!replace_str.IsEmpty()) {
+    AddReplaceString(replace_str);
+  }
+
+  book_frame_->ReplaceAllInActivePage(str.ToStdWstring(),
+                                      replace_str.ToStdWstring(),
+                                      flags_);
 }
 
 void FindWindow::AddFindString(const wxString& string) {
