@@ -44,20 +44,16 @@ TextPage* TextBook::ActiveTextPage() const {
   return AsTextPage(ActivePage());
 }
 
-void TextBook::HandleTabMouseLeftUp(wxMouseEvent& evt) {
+void TextBook::HandleTabMouseLeftDown(wxMouseEvent& evt) {
   TabList::iterator it = TabByPos(evt.GetPosition().x);
   if (it != tabs_.end()) {
-    if (!evt.CmdDown()) {
-      ActivatePage(it);
-    } else {
-      // Close file.
-      rclicked_tab_ = *it;
-      wxCommandEvent cmd_evt(wxEVT_COMMAND_MENU_SELECTED,
-                             ID_MENU_BOOK_RCLICK_CLOSE);
-      // NOTE: Post the event to text book itself instead of its parent.
-      GetEventHandler()->AddPendingEvent(cmd_evt);
-    }
-  } else {
+    ActivatePage(it);
+  }
+}
+
+void TextBook::HandleTabMouseLeftUp(wxMouseEvent& evt) {
+  TabList::iterator it = TabByPos(evt.GetPosition().x);
+  if (it == tabs_.end()) {
     if (evt.CmdDown()) {
       // New file.
       wxCommandEvent cmd_evt(wxEVT_COMMAND_MENU_SELECTED,

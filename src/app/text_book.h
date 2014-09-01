@@ -21,6 +21,7 @@ class TextBook : public BookCtrl {
   TextPage* ActiveTextPage() const;
 
  protected:
+  virtual void HandleTabMouseLeftDown(wxMouseEvent& evt) override;
   virtual void HandleTabMouseLeftUp(wxMouseEvent& evt) override;
   virtual void HandleTabMouseRightUp(wxMouseEvent& evt) override;
   virtual void HandleTabMouseLeftDClick(wxMouseEvent& evt) override;
