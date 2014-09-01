@@ -53,6 +53,8 @@ class FindWindow : public wxMiniFrame {
 
   void UpdateLayout();
 
+  void SetFindString(const wxString& find_string);
+
  protected:
   void OnActivate(wxActivateEvent& evt);
   void OnClose(wxCloseEvent& evt);

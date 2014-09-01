@@ -266,6 +266,11 @@ void FindWindow::UpdateLayout() {
   }
 }
 
+void FindWindow::SetFindString(const wxString& find_string) {
+  find_combobox_->SetValue(find_string);
+  AddFindString(find_string);
+}
+
 // Update control values on activate.
 void FindWindow::OnActivate(wxActivateEvent& evt) {
   // Focus and select the text so the user can change it directly.

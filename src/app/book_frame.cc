@@ -1525,7 +1525,21 @@ void BookFrame::ShowFindWindow(int find_window_mode) {
     find_window->Show();
   }
 
-  // Activate it
+  // Find the selected text.
+  TextPage* text_page = ActiveTextPage();
+  if (text_page != NULL && !text_page->selection().IsEmpty()) {
+    editor::TextRange select_range = text_page->selection().range;
+
+    if (select_range.LineCount() == 1) {
+      // If there is any text selected in the active page and the selection is
+      // inside a single line, it might be what the user wants to find.
+      std::wstring find_string;
+      text_page->buffer()->GetText(select_range, &find_string);
+      find_window->SetFindString(wxString(find_string.c_str()));
+    }
+  }
+
+  // Activate it.
   find_window->Raise();
 }
 
