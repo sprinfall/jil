@@ -271,11 +271,8 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
   //----------------------------------------------------------------------------
   // Selection
 
-  // \param scroll Scroll to the new caret point.
-  void SetSelection(const TextRange& range, TextDir dir, bool scroll = true);
-
-  // NOTE: point_from might > point_to
-  void SetSelection(const TextPoint& point_from, const TextPoint& point_to);
+  // NOTE: Caret point won't be updated.
+  void SetSelection(const TextRange& range, TextDir dir);
 
   void ClearSelection(bool refresh = true);
 
@@ -477,6 +474,9 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
 
   //----------------------------------------------------------------------------
   // Selection
+
+  // NOTE: point_from might > point_to.
+  void SetSelection(const TextPoint& point_from, const TextPoint& point_to);
 
   void ExtendSelection(const TextPoint& point_to);
   void ExtendSelectionByWord(const TextPoint& point_to);
