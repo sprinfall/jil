@@ -12,6 +12,7 @@ set(HEADERS
     line_nr_area.h
     option.h
     renderer.h
+    selection.h
     status_bar.h
     style.h
     text_area.h
@@ -40,6 +41,7 @@ set(SRCS
     lex.cc
     line_nr_area.cc
     renderer.cc
+    selection.cc
     status_bar.cc
     style.cc
     text_area.cc

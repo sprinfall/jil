@@ -15,6 +15,8 @@ namespace editor {
 
 class TextBuffer;
 
+////////////////////////////////////////////////////////////////////////////////
+
 // Base class for actions operating a range of text.
 class RangeAction {
  public:

@@ -5,13 +5,14 @@
 #include <list>
 #include <string>
 #include "wx/scrolwin.h"
-#include "editor/buffer_listener.h"
-#include "editor/defs.h"
-#include "editor/compile_config.h"
-#include "editor/option.h"
 #include "editor/binding.h"
-#include "editor/theme.h"
+#include "editor/buffer_listener.h"
+#include "editor/compile_config.h"
+#include "editor/defs.h"
 #include "editor/lex.h"
+#include "editor/option.h"
+#include "editor/selection.h"
+#include "editor/theme.h"
 
 class wxTimer;
 class wxTimerEvent;
@@ -31,58 +32,6 @@ class Style;
 class StyleValue;
 class Options;
 class Action;
-
-////////////////////////////////////////////////////////////////////////////////
-
-// Text selection.
-class Selection {
- public:
-  Selection() : dir(kForward) {
-  }
-
-  bool IsEmpty() const {
-    return range.IsEmpty();
-  }
-
-  void Reset() {
-    range.Reset();
-  }
-
-  const TextPoint& begin() const {
-    return range.point_begin();
-  }
-
-  const TextPoint& end() const {
-    return range.point_end();
-  }
-
-  const TextPoint& GetFromPoint() const {
-    return (dir == kForward ? begin() : end());
-  }
-
-  const TextPoint& GetToPoint() const {
-    return (dir == kForward ? end() : begin());
-  }
-
-  void Set(const TextRange _range, TextDir _dir) {
-    range = _range;
-    dir = _dir;
-  }
-
-  LineRange GetLineRange() const {
-    return range.GetLineRange();
-  }
-
-  CharRange GetCharRange(Coord ln) const {
-    return range.GetCharRange(ln);
-  }
-
-  TextRange range;
-  TextDir dir;
-  bool rect;
-};
-
-////////////////////////////////////////////////////////////////////////////////
 
 class TextWindow : public wxScrolledWindow, public BufferListener {
   DECLARE_CLASS(TextWindow)
@@ -272,7 +221,7 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
   // Selection
 
   // NOTE: Caret point won't be updated.
-  void SetSelection(const TextRange& range, TextDir dir);
+  void SetSelection(const TextRange& range, TextDir dir, bool rect);
 
   void ClearSelection(bool refresh = true);
 
@@ -475,10 +424,19 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
   //----------------------------------------------------------------------------
   // Selection
 
-  // NOTE: point_from might > point_to.
-  void SetSelection(const TextPoint& point_from, const TextPoint& point_to);
+  // Select from one point to another.
+  // The caret point will be updated to the point_to.
+  // And point_from might > point_to.
+  // \param vspace Allow virtual space or not when update the caret point.
+  void SetSelection(const TextPoint& point_from,
+                    const TextPoint& point_to,
+                    bool vspace);
 
-  void ExtendSelection(const TextPoint& point_to);
+  // Extend the current selection to the given point.
+  // The caret point will be updated to the point_to.
+  // \param vspace Allow virtual space or not when update the caret point.
+  void ExtendSelection(const TextPoint& point_to, bool vspace);
+
   void ExtendSelectionByWord(const TextPoint& point_to);
   void ExtendSelectionByLine(Coord ln_to);
 

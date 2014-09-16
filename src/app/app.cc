@@ -300,11 +300,17 @@ bool App::OnInit() {
     wxMkdir(user_data_dir, 777);
   }
 
+#ifdef __WXMSW__
+#  ifndef __WXDEBUG__
+
   // Set log target to file.
   wxString log_file_path = UserDataFile(wxT("log.txt"));
   log_file_ = wxFopen(log_file_path, "w+");
   wxLog* default_log = wxLog::SetActiveTarget(new wxLogStderr(log_file_));
   delete default_log;
+
+#  endif  // __WXDEBUG__
+#endif  // __WXMSW__
 
   LoadStatusFields();
   if (status_fields_.empty()) {

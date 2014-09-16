@@ -379,13 +379,13 @@ void TextWindow::SelectText(TextUnit text_unit, SeekType seek_type) {
     Coord line_count = buffer_->LineCount();
     TextPoint point_begin(0, 1);
     TextPoint point_end(buffer_->LineLength(line_count), line_count);
-    SetSelection(point_begin, point_end);
+    SetSelection(point_begin, point_end, false);
     return;
   }
 
   TextPoint point = buffer_->Seek(caret_point_, text_unit, seek_type);
   if (point != caret_point_) {
-    ExtendSelection(point);
+    ExtendSelection(point, false);
   }
 }
 
@@ -738,14 +738,14 @@ void TextWindow::UpdateCaretPoint(const TextPoint& point,
 //------------------------------------------------------------------------------
 // Selection
 
-void TextWindow::SetSelection(const TextRange& range, TextDir dir) {
+void TextWindow::SetSelection(const TextRange& range, TextDir dir, bool rect) {
   if (range.IsEmpty()) {
     ClearSelection();
     return;
   }
 
   TextRange old_range = selection_.range;
-  selection_.Set(range, dir);
+  selection_.Set(range, dir, rect);
 
   const TextRange& new_range = selection_.range;
 
@@ -762,6 +762,13 @@ void TextWindow::SetSelection(const TextRange& range, TextDir dir) {
   if (intersected.IsEmpty()) {
     RefreshTextByLineRange(old_line_range, true);
     RefreshTextByLineRange(new_line_range, true);
+    return;
+  }
+
+  // When two line ranges are intersected, and the selection is by rect,
+  // refresh the combined lines.
+  if (selection_.rect) {
+    RefreshTextByLineRange(old_line_range.Union(new_line_range), true);
     return;
   }
 
@@ -963,7 +970,7 @@ void TextWindow::UpdateAfterExec(Action* action) {
     if (range.IsEmpty()) {
       ClearSelection();
     } else {
-      SetSelection(range, ra->dir());
+      SetSelection(range, ra->dir(), false);
     }
   }
 
@@ -979,7 +986,7 @@ void TextWindow::UpdateAfterUndo(Action* action) {
   RangeAction* ra = action->AsRangeAction();
   if (ra != NULL && ra->selected()) {
     // Restore the selection.
-    SetSelection(ra->range(), ra->dir());
+    SetSelection(ra->range(), ra->dir(), false);  // TODO: rect
   } else {
     ClearSelection();
 
@@ -1264,7 +1271,7 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
     renderer.SetBrush(wxBrush(visual_bg), true);
     renderer.SetPen(wxPen(visual_bg), true);
 
-    CharRange char_range = selection_.range.GetCharRange(ln);
+    CharRange char_range = selection_.GetCharRange(ln);
 
     int x_begin = GetLineWidth(ln, 0, char_range.begin());
     int x_end = GetLineWidth(ln, 0, char_range.end());
@@ -1300,7 +1307,7 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
     renderer.SetBrush(wxBrush(visual_bg), true);
     renderer.SetPen(wxPen(visual_bg), true);
 
-    CharRange select_char_range = selection_.range.GetCharRange(ln);
+    CharRange select_char_range = selection_.range.GetCharRange(ln);  // TODO
     int _y = y;
 
     std::vector<CharRange>::iterator range_it = sub_ranges.begin();
@@ -1669,7 +1676,8 @@ void TextWindow::HandleTextLeftDown_Ctrl() {
 
     if (!bracket_pair_range.IsEmpty()) {
       SetSelection(bracket_pair_range.point_begin(),
-                   bracket_pair_range.point_end());
+                   bracket_pair_range.point_end(),
+                   false);
     }
   } else {  // Click on unselected text.
     // Select the word under the down point.
@@ -1703,7 +1711,7 @@ void TextWindow::HandleTextLeftDown_Alt() {
 
 void TextWindow::HandleTextLeftDown_Shift() {
   // Extend the selection to the down point by word.
-  ExtendSelection(down_point_);
+  ExtendSelection(down_point_, false);
 
   down_modifiers_ = wxMOD_SHIFT;
 }
@@ -1745,12 +1753,16 @@ void TextWindow::HandleTextMotion(wxMouseEvent& evt) {
 
 void TextWindow::SelectByDragging() {
   // TODO
-  if ((down_modifiers_ & wxMOD_ALT) != 0) {  // Select by rectangle.
+  if ((down_modifiers_ & wxMOD_ALT) != 0) {
+    // Select by rectangle.
     TextPoint move_point = CalcCaretPoint(move_position_, true);
-
-    if ((down_modifiers_ & wxMOD_CONTROL) != 0) {
-    } else {
+    if (move_point != caret_point_) {
+      ExtendSelection(move_point, true);
     }
+
+    //if ((down_modifiers_ & wxMOD_CONTROL) != 0) {
+    //} else {
+    //}
   } else {
     TextPoint move_point = CalcCaretPoint(move_position_, false);
 
@@ -1759,11 +1771,11 @@ void TextWindow::SelectByDragging() {
       bool fw = move_point >= down_point_;
       TextPoint from = buffer_->Seek(down_point_, kWord, fw ? kBegin : kEnd);
       TextPoint to = buffer_->Seek(move_point, kWord, fw ? kEnd : kBegin);
-      SetSelection(from, to);
+      SetSelection(from, to, false);
     } else {
       // Select text by char.
       if (move_point != caret_point_) {
-        ExtendSelection(move_point);
+        ExtendSelection(move_point, false);
       }
     }
   }
@@ -2558,25 +2570,22 @@ void TextWindow::UpdateCaretPosition() {
 // Selection
 
 void TextWindow::SetSelection(const TextPoint& point_from,
-                              const TextPoint& point_to) {
+                              const TextPoint& point_to,
+                              bool vspace) {
   if (point_from <= point_to) {
-    SetSelection(TextRange(point_from, point_to), kForward);
+    SetSelection(TextRange(point_from, point_to), kForward, vspace);
   } else {
-    SetSelection(TextRange(point_to, point_from), kBackward);
+    SetSelection(TextRange(point_to, point_from), kBackward, vspace);
   }
-  UpdateCaretPoint(point_to, false, true, false);  // TODO: vspace
+  UpdateCaretPoint(point_to, false, true, vspace);
 }
 
-void TextWindow::ExtendSelection(const TextPoint& point_to) {
-  if (selection_.IsEmpty()) {
-    SetSelection(caret_point_, point_to);
-  } else {
-    if (selection_.dir == kForward) {
-      SetSelection(selection_.begin(), point_to);
-    } else {
-      SetSelection(selection_.end(), point_to);
-    }
+void TextWindow::ExtendSelection(const TextPoint& point_to, bool vspace) {
+  TextPoint point_from = caret_point_;
+  if (!selection_.IsEmpty()) {
+    point_from = selection_.GetFromPoint();
   }
+  SetSelection(point_from, point_to, vspace);
 }
 
 void TextWindow::ExtendSelectionByWord(const TextPoint& point_to) {
@@ -2618,11 +2627,11 @@ void TextWindow::SelectByWord(const TextPoint& point_from,
   if (point_from <= point_to) {
     TextPoint word_point_begin = buffer_->Seek(point_from, kWord, kBegin);
     TextPoint word_point_end = buffer_->Seek(point_to, kWord, kEnd);
-    SetSelection(word_point_begin, word_point_end);
+    SetSelection(word_point_begin, word_point_end, false);
   } else {
     TextPoint word_point_begin = buffer_->Seek(point_to, kWord, kBegin);
     TextPoint word_point_end = buffer_->Seek(point_from, kWord, kEnd);
-    SetSelection(word_point_end, word_point_begin);
+    SetSelection(word_point_end, word_point_begin, false);
   }
 }
 
@@ -2644,9 +2653,9 @@ void TextWindow::SelectByLine(Coord ln_from, Coord ln_to) {
   }
 
   if (dir == kForward) {
-    SetSelection(point_begin, point_end);
+    SetSelection(point_begin, point_end, false);
   } else {
-    SetSelection(point_end, point_begin);
+    SetSelection(point_end, point_begin, false);
   }
 }
 

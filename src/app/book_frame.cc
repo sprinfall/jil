@@ -445,7 +445,7 @@ void BookFrame::FindInActivePage(const std::wstring& str, int flags) {
     return;
   }
 
-  text_page->SetSelection(result_range, kForward);
+  text_page->SetSelection(result_range, kForward, false);
   // Don't scroll right now, scroll later.
   text_page->UpdateCaretPoint(result_range.point_end(), false, false, false);
 
@@ -595,7 +595,7 @@ void BookFrame::ReplaceInActivePage(const std::wstring& str,
 
   // If the find result is not the current selection, select it.
   if (result_range != selection.range) {
-    text_page->SetSelection(result_range, kForward);
+    text_page->SetSelection(result_range, kForward, false);
     text_page->UpdateCaretPoint(result_range.point_end(), false, false, false);
     text_page->Goto(result_range.line_first());
     return;
@@ -614,7 +614,7 @@ void BookFrame::ReplaceInActivePage(const std::wstring& str,
   point = text_page->caret_point();
   result_range = Find(text_page, str, point, flags, true);
   if (!result_range.IsEmpty()) {
-    text_page->SetSelection(result_range, kForward);
+    text_page->SetSelection(result_range, kForward, false);
     text_page->UpdateCaretPoint(result_range.point_end(), false, false, false);
     text_page->Goto(result_range.line_first());
   }
