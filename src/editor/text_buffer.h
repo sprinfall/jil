@@ -234,6 +234,7 @@ class TextBuffer {
 
   void GetText(std::wstring* text) const;
   void GetText(const TextRange& range, std::wstring* text) const;
+  void GetRectText(const TextRange& range, std::wstring* text) const;
 
   TextPoint InsertChar(const TextPoint& point, wchar_t c);
 
@@ -242,7 +243,7 @@ class TextBuffer {
   TextPoint InsertString(const TextPoint& point, const std::wstring& str);
 
   void DeleteString(const TextPoint& point,
-                    size_t count,
+                    Coord count,
                     std::wstring* str = NULL);
 
   // The new line will be with the given line number.
@@ -256,6 +257,7 @@ class TextBuffer {
   TextPoint InsertText(const TextPoint& point, const std::wstring& text);
 
   void DeleteText(const TextRange& range, std::wstring* text = NULL);
+  void DeleteRectText(const TextRange& range, std::wstring* text = NULL);
 
   //----------------------------------------------------------------------------
 

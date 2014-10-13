@@ -594,6 +594,7 @@ void BookFrame::ReplaceInActivePage(const std::wstring& str,
   }
 
   // If the find result is not the current selection, select it.
+  // TODO: Rect selection.
   if (result_range != selection.range) {
     text_page->SetSelection(result_range, kForward, false);
     text_page->UpdateCaretPoint(result_range.point_end(), false, false, false);
@@ -605,7 +606,7 @@ void BookFrame::ReplaceInActivePage(const std::wstring& str,
   text_page->ClearSelection();
 
   bool grouped = !replace_str.empty();
-  text_page->DeleteRange(result_range, kForward, grouped, false, false);
+  text_page->DeleteSelection(grouped, false);
   if (!replace_str.empty()) {
     text_page->InsertString(result_range.point_begin(), replace_str, grouped, false);
   }
@@ -659,7 +660,7 @@ void BookFrame::ReplaceAllInActivePage(const std::wstring& str,
 
     ++count;
 
-    text_page->DeleteRange(result_range, kForward, false, false, false);
+    text_page->DeleteRange(result_range, kForward, false, false, false, false);
     if (!replace_str.empty()) {
       text_page->InsertString(result_range.point_begin(),
                               replace_str,

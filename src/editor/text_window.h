@@ -170,9 +170,13 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
 
   void DeleteRange(const TextRange& range,
                    TextDir dir,
+                   bool rect,
                    bool grouped,
                    bool selected,
                    bool update_caret);
+
+  // Delete the current selection.
+  void DeleteSelection(bool grouped, bool update_caret);
 
   void SelectText(TextUnit text_unit, SeekType seek_type);
 

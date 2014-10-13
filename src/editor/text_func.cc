@@ -41,11 +41,18 @@ void Redo(TextWindow* tw) {
 
 // Clipboard
 
-static const wxDataFormat kCustomTextDataFormat("jilcustomtextdataformat");
+enum ClipboardFormat {
+  kClipboard_Normal = 0,
+  kClipboard_Line,
+  kClipboard_Rect,
+};
 
-static std::wstring GetClipboardText(bool* by_line) {
+static const wxDataFormat kLineTextDataFormat("jil_line_textdataformat");
+static const wxDataFormat kRectTextDataFormat("jil_rect_textdataformat");
+
+static std::wstring GetClipboardText(ClipboardFormat* clipboard_format) {
   std::wstring text;
-  *by_line = false;
+  *clipboard_format = kClipboard_Normal;
 
   if (wxTheClipboard->Open()) {
     if (wxTheClipboard->IsSupported(wxDF_TEXT)) {
@@ -53,8 +60,10 @@ static std::wstring GetClipboardText(bool* by_line) {
       wxTheClipboard->GetData(data);
       text = data.GetText().ToStdWstring();
 
-      if (wxTheClipboard->IsSupported(kCustomTextDataFormat)) {
-        *by_line = true;
+      if (wxTheClipboard->IsSupported(kLineTextDataFormat)) {
+        *clipboard_format = kClipboard_Line;
+      } else if (wxTheClipboard->IsSupported(kRectTextDataFormat)) {
+        *clipboard_format = kClipboard_Rect;
       }
     }
 
@@ -64,19 +73,26 @@ static std::wstring GetClipboardText(bool* by_line) {
   return text;
 }
 
-static bool SetClipboardText(const std::wstring& text, bool by_line) {
+static bool SetClipboardText(const std::wstring& text,
+                             ClipboardFormat clipboard_format) {
   if (!wxTheClipboard->Open()) {
     return false;
   }
 
   wxTextDataObject* text_data = new wxTextDataObject(wxString(text));
 
-  if (!by_line) {
+  if (clipboard_format == kClipboard_Normal) {
     wxTheClipboard->SetData(text_data);
   } else {
     wxDataObjectComposite* composite_data = new wxDataObjectComposite;
     composite_data->Add(text_data);
-    composite_data->Add(new wxDataObjectSimple(kCustomTextDataFormat));
+
+    if (clipboard_format == kClipboard_Line)  {
+      composite_data->Add(new wxDataObjectSimple(kLineTextDataFormat));
+    } else {  // kClipboard_Rect
+      composite_data->Add(new wxDataObjectSimple(kRectTextDataFormat));
+    }
+
     wxTheClipboard->SetData(composite_data);
   }
 
@@ -90,16 +106,24 @@ void Cut(TextWindow* tw) {
   TextBuffer* buffer = tw->buffer();
 
   std::wstring text;
-  bool by_line = false;
+  ClipboardFormat clipboard_format = kClipboard_Normal;
 
-  if (!tw->selection().IsEmpty()) {
-    buffer->GetText(tw->selection().range, &text);
+  const Selection& selection = tw->selection();
+
+  if (!selection.IsEmpty()) {
+    if (selection.rect) {
+      clipboard_format = kClipboard_Rect;
+      buffer->GetRectText(selection.range, &text);
+    } else {
+      buffer->GetText(selection.range, &text);
+    }
+
     Delete(tw, kSelected, kWhole);
   } else {
     // Cut the current line.
     TextPoint caret_point = tw->caret_point();
     text = buffer->LineData(caret_point.y);
-    by_line = true;
+    clipboard_format = kClipboard_Line;
 
     if (caret_point.y < buffer->LineCount()) {
       Delete(tw, kLine, kWhole);
@@ -113,7 +137,7 @@ void Cut(TextWindow* tw) {
   }
 
   if (!text.empty()) {
-    SetClipboardText(text, by_line);
+    SetClipboardText(text, clipboard_format);
   }
 }
 
@@ -121,15 +145,22 @@ void Copy(TextWindow* tw) {
   TextBuffer* buffer = tw->buffer();
 
   std::wstring text;
-  bool by_line = false;
+  ClipboardFormat clipboard_format = kClipboard_Normal;
 
-  if (!tw->selection().IsEmpty()) {
-    buffer->GetText(tw->selection().range, &text);
+  const Selection& selection = tw->selection();
+
+  if (!selection.IsEmpty()) {
+    if (selection.rect) {
+      clipboard_format = kClipboard_Rect;
+      buffer->GetRectText(selection.range, &text);
+    } else {
+      buffer->GetText(selection.range, &text);
+    }
   } else {
     // Copy the current line.
     TextPoint caret_point = tw->caret_point();
     text = buffer->LineData(caret_point.y);
-    by_line = true;
+    clipboard_format = kClipboard_Line;
 
     if (caret_point.y < buffer->LineCount()) {
       text += GetEol(FF_DEFAULT);
@@ -137,44 +168,53 @@ void Copy(TextWindow* tw) {
   }
 
   if (!text.empty()) {
-    SetClipboardText(text, by_line);
+    SetClipboardText(text, clipboard_format);
   }
 }
 
 void Paste(TextWindow* tw) {
-  bool by_line = false;
-  std::wstring text = GetClipboardText(&by_line);
+  ClipboardFormat clipboard_format = kClipboard_Normal;
+  std::wstring text = GetClipboardText(&clipboard_format);
   if (text.empty()) {
     return;
   }
 
-  if (tw->selection().IsEmpty()) {
-    TextPoint point = tw->caret_point();
-    if (by_line) {
-      point.x = 0;
-    }
-    InsertTextAction* ita = new InsertTextAction(tw->buffer(), point, text);
-    ita->set_caret_point(tw->caret_point());
-    ita->set_update_caret(true);
-    tw->Exec(ita);
-  } else {
+  tw->Exec(new GroupAction(tw->buffer()));
+
+  const Selection& selection = tw->selection();
+  if (!selection.IsEmpty()) {
     DeleteRangeAction* dra = new DeleteRangeAction(tw->buffer(),
-                                                   tw->selection().range,
-                                                   tw->selection().dir,
+                                                   selection.range,
+                                                   selection.dir,
+                                                   selection.rect,
                                                    true);
     dra->set_caret_point(tw->caret_point());
     dra->set_update_caret(true);
-    dra->set_grouped(true);
     tw->Exec(dra);
-
-    InsertTextAction* ita = new InsertTextAction(tw->buffer(),
-                                                 tw->caret_point(),
-                                                 text);
-    ita->set_caret_point(tw->caret_point());
-    ita->set_update_caret(true);
-    ita->set_grouped(true);
-    tw->Exec(ita);
   }
+
+
+  TextPoint point = tw->caret_point();
+
+  if (clipboard_format == kClipboard_Line) {
+    point.x = 0;
+  }
+
+  InsertTextAction* ita = new InsertTextAction(tw->buffer(), point, text);
+  ita->set_caret_point(tw->caret_point());
+  ita->set_update_caret(true);
+
+  if (clipboard_format == kClipboard_Line) {
+    ita->set_use_delta(false, true);
+  } else if (clipboard_format == kClipboard_Rect) {
+    ita->set_use_delta(false, false);
+  } else {
+    ita->set_use_delta(true, true);
+  }
+
+  tw->Exec(ita);
+
+  tw->Exec(new GroupAction(tw->buffer()));
 }
 
 void AutoIndent(TextWindow* tw) {
@@ -192,6 +232,7 @@ void AutoIndent(TextWindow* tw) {
   AutoIndentAction* iia = new AutoIndentAction(tw->buffer(),
                                                text_range,
                                                tw->selection().dir,
+                                               tw->selection().rect,
                                                selected);
   iia->set_caret_point(tw->caret_point());
   iia->set_update_caret(true);
@@ -211,10 +252,12 @@ void IncreaseIndent(TextWindow* tw) {
     return;
   }
 
-  const bool selected = !tw->selection().IsEmpty();
+  const Selection& selection = tw->selection();
+  bool selected = !selection.IsEmpty();
   IncreaseIndentAction* iia = new IncreaseIndentAction(tw->buffer(),
                                                        text_range,
-                                                       tw->selection().dir,
+                                                       selection.dir,
+                                                       selection.rect,
                                                        selected);
   iia->set_caret_point(tw->caret_point());
   iia->set_update_caret(true);
@@ -232,10 +275,12 @@ void DecreaseIndent(TextWindow* tw) {
     return;
   }
 
-  const bool selected = !tw->selection().IsEmpty();
+  const Selection& selection = tw->selection();
+  const bool selected = !selection.IsEmpty();
   DecreaseIndentAction* dia = new DecreaseIndentAction(tw->buffer(),
                                                        text_range,
-                                                       tw->selection().dir,
+                                                       selection.dir,
+                                                       selection.rect,
                                                        selected);
   dia->set_caret_point(tw->caret_point());
   dia->set_update_caret(true);

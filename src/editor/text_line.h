@@ -33,11 +33,21 @@ class TextLine {
   size_t id() const { return id_; }
   void set_id(size_t id) { id_ = id; }
 
-  const std::wstring& data() const { return data_; }
+  const std::wstring& data() const {
+    return data_;
+  }
 
-  Coord Length() const { return CoordCast(data_.length()); }
+  Coord Length() const {
+    return CoordCast(data_.length());
+  }
 
   wchar_t Char(Coord off) const;
+
+  std::wstring Sub(Coord off, Coord count) const;
+
+  std::wstring Sub(const CharRange& char_range) const {
+    return Sub(char_range.begin(), char_range.CharCount());
+  }
 
   // Return line length on failure.
   Coord FirstNonSpaceChar(Coord off = 0) const;
@@ -69,7 +79,7 @@ class TextLine {
   void DeleteChar(Coord off, wchar_t* c = NULL);
 
   void InsertString(Coord off, const std::wstring& str);
-  void DeleteString(Coord off, size_t count, std::wstring* str = NULL);
+  void DeleteString(Coord off, Coord count, std::wstring* str = NULL);
 
   void Append(const std::wstring& str);
 

@@ -25,13 +25,15 @@ class RangeAction {
 
   const TextRange& range() const { return range_; }
   TextDir dir() const { return dir_; }
+  bool rect() const { return rect_; }
+
   bool selected() const { return selected_; }
 
   virtual TextRange SelectionAfterExec() const = 0;
 
  protected:
-  RangeAction(const TextRange& range, TextDir dir, bool selected)
-      : range_(range), dir_(dir), selected_(selected) {
+  RangeAction(const TextRange& range, TextDir dir, bool rect, bool selected)
+      : range_(range), dir_(dir), rect_(rect), selected_(selected) {
   }
 
  protected:
@@ -39,6 +41,9 @@ class RangeAction {
 
   // The direction of the text range.
   TextDir dir_;
+
+  // Rectangle range or not.
+  bool rect_;
 
   // If the text range is selected or not.
   bool selected_;
@@ -230,8 +235,26 @@ class InsertTextAction : public Action {
   virtual void Exec() override;
   virtual void Undo() override;
 
+  virtual TextPoint CaretPointAfterExec() const override;
+
+  void set_use_delta_x(bool use_delta_x) {
+    use_delta_x_ = use_delta_x;
+  }
+
+  void set_use_delta_y(bool use_delta_y) {
+    use_delta_y_ = use_delta_y;
+  }
+
+  void set_use_delta(bool use_delta_x, bool use_delta_y) {
+    use_delta_x_ = use_delta_x;
+    use_delta_y_ = use_delta_y;
+  }
+
  private:
   std::wstring text_;
+
+  bool use_delta_x_;
+  bool use_delta_y_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -280,6 +303,7 @@ class DeleteRangeAction : public Action, public RangeAction {
   DeleteRangeAction(TextBuffer* buffer,
                     const TextRange& range,
                     TextDir dir,
+                    bool rect,
                     bool selected);
   virtual ~DeleteRangeAction();
 
@@ -305,11 +329,13 @@ class DeleteRangeAction : public Action, public RangeAction {
 // Indent can be implemented by a group of InsertChar actions. But defining
 // a specific action for it has the advantage of better performance and
 // easier caret point handling.
+// TODO: Rect range.
 class IncreaseIndentAction : public Action, public RangeAction {
  public:
   IncreaseIndentAction(TextBuffer* buffer,
                        const TextRange& range,
                        TextDir dir,
+                       bool rect,
                        bool selected);
   virtual ~IncreaseIndentAction();
 
@@ -359,11 +385,13 @@ class IncreaseIndentAction : public Action, public RangeAction {
 ////////////////////////////////////////////////////////////////////////////////
 
 // Decrease indent of a range of lines.
+// TODO: Rect range.
 class DecreaseIndentAction : public Action, public RangeAction {
  public:
   DecreaseIndentAction(TextBuffer* buffer,
                        const TextRange& range,
                        TextDir dir,
+                       bool rect,
                        bool selected);
   virtual ~DecreaseIndentAction();
 
@@ -392,6 +420,7 @@ class AutoIndentAction : public Action, public RangeAction {
   AutoIndentAction(TextBuffer* buffer,
                    const TextRange& range,
                    TextDir dir,
+                   bool rect,
                    bool selected);
   virtual ~AutoIndentAction();
 

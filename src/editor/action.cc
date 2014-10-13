@@ -92,11 +92,11 @@ InsertStringAction::~InsertStringAction() {
 
 void InsertStringAction::Exec() {
   buffer_->InsertString(point_, str_);
-  delta_point_.x = static_cast<int>(str_.size());
+  delta_point_.x = CoordCast(str_.size());
 }
 
 void InsertStringAction::Undo() {
-  buffer_->DeleteString(point_, str_.size());
+  buffer_->DeleteString(point_, CoordCast(str_.size()));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -105,7 +105,9 @@ InsertTextAction::InsertTextAction(TextBuffer* buffer,
                                    const TextPoint& point,
                                    const std::wstring& text)
     : Action(buffer, point)
-    , text_(text) {
+    , text_(text)
+    , use_delta_x_(true)
+    , use_delta_y_(true) {
 }
 
 InsertTextAction::~InsertTextAction() {
@@ -118,6 +120,19 @@ void InsertTextAction::Exec() {
 
 void InsertTextAction::Undo() {
   buffer_->DeleteText(TextRange(point_, point_ + delta_point_), NULL);
+}
+
+TextPoint InsertTextAction::CaretPointAfterExec() const {
+  TextPoint caret_point = caret_point_;
+
+  if (use_delta_x_) {
+    caret_point.x += delta_point_.x;
+  }
+  if (use_delta_y_) {
+    caret_point.y += delta_point_.y;
+  }
+
+  return caret_point;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -226,9 +241,10 @@ TextPoint DeleteAction::Seek(const TextPoint& point,
 DeleteRangeAction::DeleteRangeAction(TextBuffer* buffer,
                                      const TextRange& range,
                                      TextDir dir,
+                                     bool rect,
                                      bool selected)
     : Action(buffer, dir == kForward ? range.point_end() : range.point_begin())
-    , RangeAction(range, dir, selected) {
+    , RangeAction(range, dir, rect, selected) {
 }
 
 DeleteRangeAction::~DeleteRangeAction() {
@@ -240,9 +256,17 @@ void DeleteRangeAction::Exec() {
   }
 
   if (!text_.empty()) {  // Ever executed.
-    buffer_->DeleteText(range_);
+    if (rect_) {
+      buffer_->DeleteRectText(range_);
+    } else {
+      buffer_->DeleteText(range_);
+    }
   } else {
-    buffer_->DeleteText(range_, &text_);
+    if (rect_) {
+      buffer_->DeleteRectText(range_, &text_);
+    } else {
+      buffer_->DeleteText(range_, &text_);
+    }
   }
 
   if (dir_ == kForward) {
@@ -261,9 +285,10 @@ void DeleteRangeAction::Undo() {
 IncreaseIndentAction::IncreaseIndentAction(TextBuffer* buffer,
                                            const TextRange& range,
                                            TextDir dir,
+                                           bool rect,
                                            bool selected)
     : Action(buffer, TextPoint())
-    , RangeAction(range, dir, selected) {
+    , RangeAction(range, dir, rect, selected) {
 }
 
 IncreaseIndentAction::~IncreaseIndentAction() {
@@ -306,7 +331,7 @@ void IncreaseIndentAction::Undo() {
 
   for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
     if (!buffer_->IsLineEmpty(ln, true)) {  // Skip empty lines.
-      buffer_->DeleteString(TextPoint(0, ln), spaces_.size());
+      buffer_->DeleteString(TextPoint(0, ln), CoordCast(spaces_.size()));
     }
   }
 
@@ -342,9 +367,10 @@ TextRange IncreaseIndentAction::SelectionAfterExec() const {
 DecreaseIndentAction::DecreaseIndentAction(TextBuffer* buffer,
                                            const TextRange& range,
                                            TextDir dir,
+                                           bool rect,
                                            bool selected)
     : Action(buffer, TextPoint())
-    , RangeAction(range, dir, selected) {
+    , RangeAction(range, dir, rect, selected) {
   spaces_array_.resize(range.LineCount());
 }
 
@@ -438,7 +464,7 @@ bool DecreaseIndentAction::DecreaseIndentLine(Coord ln) {
   const Options& options = buffer_->ft_plugin()->options();
 
   // Delete from the front of line.
-  size_t count = 0;
+  Coord count = 0;
   if (line->Char(0) == kTabChar) {
     count = 1;
   } else {
@@ -457,9 +483,10 @@ bool DecreaseIndentAction::DecreaseIndentLine(Coord ln) {
 AutoIndentAction::AutoIndentAction(TextBuffer* buffer,
                                    const TextRange& range,
                                    TextDir dir,
+                                   bool rect,
                                    bool selected)
     : Action(buffer, TextPoint())
-    , RangeAction(range, dir, selected) {
+    , RangeAction(range, dir, rect, selected) {
   Coord line_count = range.LineCount();
   old_indent_strs_.resize(line_count);
   new_indent_strs_.resize(line_count);
@@ -494,7 +521,8 @@ void AutoIndentAction::Undo() {
     int i = ln - range_.line_first();
     if (new_indent_strs_[i] != old_indent_strs_[i]) {
       if (!new_indent_strs_[i].empty()) {
-        buffer_->DeleteString(TextPoint(0, ln), new_indent_strs_[i].size());
+        buffer_->DeleteString(TextPoint(0, ln),
+                              CoordCast(new_indent_strs_[i].size()));
       }
       if (!old_indent_strs_[i].empty()) {
         buffer_->InsertString(TextPoint(0, ln), old_indent_strs_[i]);
@@ -575,7 +603,8 @@ bool AutoIndentAction::AutoIndentLine(Coord ln) {
 
   // Delete old indent.
   if (!old_indent_strs_[ln_off].empty()) {
-    buffer_->DeleteString(TextPoint(0, ln), old_indent_strs_[ln_off].size());
+    buffer_->DeleteString(TextPoint(0, ln),
+                          CoordCast(old_indent_strs_[ln_off].size()));
   }
 
   // Insert new indent.

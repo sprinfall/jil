@@ -31,6 +31,22 @@ wchar_t TextLine::Char(Coord off) const {
   return data_[off];
 }
 
+std::wstring TextLine::Sub(Coord off, Coord count) const {
+  if (off >= Length()) {
+    return L"";
+  }
+
+  if (count == kInvalidCoord) {
+    return data_.substr(off, std::wstring::npos);
+  }
+
+  if (off + count > Length()) {
+    return data_.substr(off, std::wstring::npos);
+  }
+
+  return data_.substr(off, count);
+}
+
 bool TextLine::IsEmpty(bool ignore_spaces) const {
   return data_.find_first_not_of(L" \t") == std::wstring::npos;
 }
@@ -136,10 +152,25 @@ void TextLine::InsertString(Coord off, const std::wstring& str) {
   data_.insert(off, str);
 }
 
-void TextLine::DeleteString(Coord off, size_t count, std::wstring* str) {
-  if (str != NULL) {
-    *str = data_.substr(off, count);
+void TextLine::DeleteString(Coord off, Coord count, std::wstring* str) {
+  if (off >= Length()) {
+    return;
   }
+
+  if (str != NULL) {
+    *str = Sub(off, count);
+  }
+
+  if (count == kInvalidCoord) {
+    data_.erase(off, std::wstring::npos);
+    return;
+  }
+
+  if (off + count > Length()) {
+    data_.erase(off, std::wstring::npos);
+    return;
+  }
+
   data_.erase(off, count);
 }
 

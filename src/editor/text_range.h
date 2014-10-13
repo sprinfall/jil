@@ -162,6 +162,9 @@ class TextRange {
   // Get the char range of the given line.
   CharRange GetCharRange(Coord ln) const;
 
+  // Get the char range between the begin and end points.
+  CharRange GetCharRange() const;
+
   Coord line_first() const { return point_begin_.y; }
   Coord line_last() const { return point_end_.y; }
 

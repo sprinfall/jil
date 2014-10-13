@@ -394,7 +394,7 @@ void TextWindow::InsertChar(wchar_t c) {
 
   if (!selection_.IsEmpty()) {
     // NOTE: This might change the caret point.
-    DeleteRange(selection_.range, selection_.dir, true, true, true);
+    DeleteSelection(true, true);
     grouped = true;
   }
 
@@ -451,7 +451,7 @@ void TextWindow::InsertString(const std::wstring& str) {
   // Delete the selected text.
   if (!selection_.IsEmpty()) {
     // NOTE: This might change the caret point.
-    DeleteRange(selection_.range, selection_.dir, true, true, true);
+    DeleteSelection(true, true);
     grouped = true;
   }
 
@@ -515,6 +515,7 @@ void TextWindow::DeleteText(TextUnit text_unit, SeekType seek_type) {
       action = new DeleteRangeAction(buffer_,
                                      selection_.range,
                                      selection_.dir,
+                                     selection_.rect,
                                      true);
     }
   } else if (text_unit == kLine && seek_type == kWhole) {
@@ -523,7 +524,7 @@ void TextWindow::DeleteText(TextUnit text_unit, SeekType seek_type) {
       Coord line_length = buffer_->LineLength(point.y);
       if (line_length != 0) {
         TextRange range(point, TextPoint(line_length, point.y));
-        action = new DeleteRangeAction(buffer_, range, kForward, false);
+        action = new DeleteRangeAction(buffer_, range, kForward, false, false);
       }
     } else {
       action = new DeleteAction(buffer_, point, text_unit, seek_type);
@@ -531,7 +532,7 @@ void TextWindow::DeleteText(TextUnit text_unit, SeekType seek_type) {
   } else if (text_unit == kBuffer) {
     TextRange range = buffer_->range();
     if (!range.IsEmpty()) {
-      action = new DeleteRangeAction(buffer_, range, kForward, false);
+      action = new DeleteRangeAction(buffer_, range, kForward, false, false);
     }
   } else {
     action = new DeleteAction(buffer_, caret_point_, text_unit, seek_type);
@@ -546,13 +547,35 @@ void TextWindow::DeleteText(TextUnit text_unit, SeekType seek_type) {
 
 void TextWindow::DeleteRange(const TextRange& range,
                              TextDir dir,
+                             bool rect,
                              bool grouped,
                              bool selected,
                              bool update_caret) {
-  DeleteRangeAction* dra = new DeleteRangeAction(buffer_, range, dir, selected);
+  DeleteRangeAction* dra =
+      new DeleteRangeAction(buffer_, range, dir, rect, selected);
+
   dra->set_caret_point(caret_point_);
   dra->set_update_caret(update_caret);
   dra->set_grouped(grouped);
+
+  Exec(dra);
+}
+
+void TextWindow::DeleteSelection(bool grouped, bool update_caret) {
+  assert(!selection_.IsEmpty());
+
+  DeleteRangeAction* dra = new DeleteRangeAction(buffer_,
+                                                 selection_.range,
+                                                 selection_.dir,
+                                                 selection_.rect,
+                                                 true);
+  dra->set_caret_point(caret_point_);
+  dra->set_update_caret(update_caret);
+  dra->set_grouped(grouped);
+
+  // Reset before execute the action for refreshing properly.
+  selection_.Reset();
+
   Exec(dra);
 }
 
@@ -744,18 +767,16 @@ void TextWindow::SetSelection(const TextRange& range, TextDir dir, bool rect) {
     return;
   }
 
-  TextRange old_range = selection_.range;
+  Selection old_selection = selection_;
   selection_.Set(range, dir, rect);
 
-  const TextRange& new_range = selection_.range;
-
-  if (old_range.IsEmpty()) {
-    RefreshTextByLineRange(new_range.GetLineRange(), true);
+  if (old_selection.IsEmpty()) {
+    RefreshTextByLineRange(selection_.GetLineRange(), true);
     return;
   }
 
-  LineRange old_line_range = old_range.GetLineRange();
-  LineRange new_line_range = new_range.GetLineRange();
+  LineRange old_line_range = old_selection.GetLineRange();
+  LineRange new_line_range = selection_.GetLineRange();
 
   // When two line ranges are not intersected, just refresh them one by one.
   LineRange intersected = old_line_range.Intersect(new_line_range);
@@ -765,11 +786,12 @@ void TextWindow::SetSelection(const TextRange& range, TextDir dir, bool rect) {
     return;
   }
 
-  // When two line ranges are intersected, and the selection is by rect,
-  // refresh the combined lines.
+  // When two line ranges are intersected, and the selection is by rect, ...
   if (selection_.rect) {
-    RefreshTextByLineRange(old_line_range.Union(new_line_range), true);
-    return;
+    if (selection_.GetCharRange() != old_selection.GetCharRange()) {
+      RefreshTextByLineRange(old_line_range.Union(new_line_range), true);
+      return;
+    }
   }
 
   // When two line ranges are intersected, the following implementation is
@@ -797,13 +819,13 @@ void TextWindow::SetSelection(const TextRange& range, TextDir dir, bool rect) {
   // If the char range of the first/last line of the intersected lines
   // has been changed, refresh that line.
   Coord ln = intersected.first();
-  if (old_range.GetCharRange(ln) != new_range.GetCharRange(ln)) {
+  if (old_selection.GetCharRange(ln) != selection_.GetCharRange(ln)) {
     RefreshTextByLine(ln, true);
   }
 
   if (intersected.LineCount() > 1) {
     ln = intersected.last();
-    if (old_range.GetCharRange(ln) != new_range.GetCharRange(ln)) {
+    if (old_selection.GetCharRange(ln) != selection_.GetCharRange(ln)) {
       RefreshTextByLine(ln, true);
     }
   }
@@ -1273,14 +1295,20 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
 
     CharRange char_range = selection_.GetCharRange(ln);
 
-    int x_begin = GetLineWidth(ln, 0, char_range.begin());
-    int x_end = GetLineWidth(ln, 0, char_range.end());
-    int w = x_end - x_begin;
-    if (ln != selection_.end().y && char_range.end() == kInvalidCoord) {
-      w += char_width_;  // Extra char width for EOL.
-    }
+    if (char_range.IsEmpty()) {
+      // Draw a vertical line for empty rect selection.
+      int x = GetLineWidth(ln, 0, char_range.begin());
+      renderer.DrawLine(x, y, x, y + line_height_);
+    } else {
+      int x_begin = GetLineWidth(ln, 0, char_range.begin());
+      int x_end = GetLineWidth(ln, 0, char_range.end());
+      int w = x_end - x_begin;
+      if (ln != selection_.end().y && char_range.end() == kInvalidCoord) {
+        w += char_width_;  // Extra char width for EOL.
+      }
 
-    renderer.DrawRectangle(x_begin, y, w, line_height_);
+      renderer.DrawRectangle(x_begin, y, w, line_height_);
+    }
 
     renderer.RestoreBrush();
     renderer.RestorePen();

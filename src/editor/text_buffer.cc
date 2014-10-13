@@ -686,27 +686,47 @@ void TextBuffer::GetText(std::wstring* text) const {
 }
 
 void TextBuffer::GetText(const TextRange& range, std::wstring* text) const {
-  if (range.point_begin().y == range.point_end().y) {
-    const std::wstring& line_data = LineData(range.point_begin().y);
-    *text = line_data.substr(range.point_begin().x,
-                             range.point_end().x - range.point_begin().x);
+  const TextPoint& point_begin = range.point_begin();
+  const TextPoint& point_end = range.point_end();
+
+  if (point_begin.y == point_end.y) {
+    *text = Line(point_begin.y)->Sub(point_begin.x,
+                                     point_end.x - point_begin.x);
     return;
   }
 
   // First line.
-  const std::wstring& line_data = LineData(range.point_begin().y);
-  *text = line_data.substr(range.point_begin().x, std::wstring::npos);
+  *text = Line(point_begin.y)->Sub(point_begin.x, kInvalidCoord);
   *text += LF;
 
   // Middle lines.
-  for (Coord y = range.point_begin().y + 1; y < range.point_end().y; ++y) {
-    *text += LineData(y) + LF;
+  for (Coord ln = point_begin.y + 1; ln < point_end.y; ++ln) {
+    *text += LineData(ln) + LF;
   }
 
   // Last line.
-  if (range.point_end().x > 0) {
-    *text += LineData(range.point_end().y).substr(0, range.point_end().x);
+  if (point_end.x > 0) {
+    *text += Line(point_end.y)->Sub(0, point_end.x);
   }
+}
+
+void TextBuffer::GetRectText(const TextRange& range, std::wstring* text) const {
+  if (range.IsEmpty()) {
+    return;
+  }
+
+  CharRange char_range = range.GetCharRange();
+  if (char_range.IsEmpty()) {
+    return;
+  }
+
+  LineRange line_range = range.GetLineRange();
+
+  for (Coord ln = line_range.first(); ln < line_range.last(); ++ln) {
+    *text += Line(ln)->Sub(char_range) + LF;
+  }
+
+  *text += Line(line_range.last())->Sub(char_range);
 }
 
 TextPoint TextBuffer::InsertChar(const TextPoint& point, wchar_t c) {
@@ -812,7 +832,7 @@ TextPoint TextBuffer::InsertString(const TextPoint& point,
 }
 
 void TextBuffer::DeleteString(const TextPoint& point,
-                              size_t count,
+                              Coord count,
                               std::wstring* str) {
   TextLine* line = Line(point.y);
 
@@ -925,7 +945,7 @@ void TextBuffer::DeleteText(const TextRange& range, std::wstring* text) {
   FreezeNotify();
 
   // First line.
-  DeleteString(range.point_begin(), std::wstring::npos, text);
+  DeleteString(range.point_begin(), kInvalidCoord, text);
   if (text != NULL) {
     *text += LF;
   }
@@ -967,6 +987,41 @@ void TextBuffer::DeleteText(const TextRange& range, std::wstring* text) {
   Notify(kLineDeleted,
          LineChangeData(range.point_begin().y + 1, range.point_end().y));
   Notify(kLineUpdated, LineChangeData(range.point_begin().y));
+}
+
+void TextBuffer::DeleteRectText(const TextRange& range, std::wstring* text) {
+  if (range.IsEmpty()) {
+    return;
+  }
+
+  CharRange char_range = range.GetCharRange();
+  if (char_range.IsEmpty()) {
+    return;
+  }
+
+  FreezeNotify();
+
+  LineRange line_range = range.GetLineRange();
+
+  for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
+    TextPoint point(char_range.begin(), ln);
+
+    if (text == NULL) {
+      DeleteString(point, char_range.CharCount());
+    } else {
+      std::wstring str;
+      DeleteString(point, char_range.CharCount(), &str);
+
+      if (!text->empty()) {
+        *text += LF;
+      }
+      *text += str;
+    }
+  }
+
+  ThawNotify();
+
+  Notify(kLineUpdated, LineChangeData(line_range));
 }
 
 //------------------------------------------------------------------------------

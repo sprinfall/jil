@@ -108,6 +108,15 @@ CharRange TextRange::GetCharRange(Coord ln) const {
   }
 }
 
+CharRange TextRange::GetCharRange() const {
+  Coord x1 = point_begin_.x;
+  Coord x2 = point_end_.x;
+  if (x1 > x2) {
+    std::swap(x1, x2);
+  }
+  return CharRange(x1, x2);
+}
+
 wxString TextRange::ToString() const {
   wxString str = wxT("[");
   str += point_begin_.ToString();

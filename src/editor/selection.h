@@ -49,7 +49,17 @@ class Selection {
     return range.GetLineRange();
   }
 
-  CharRange GetCharRange(Coord ln) const;
+  CharRange GetCharRange(Coord ln) const {
+    if (rect) {
+      return range.GetCharRange();
+    } else {
+      return range.GetCharRange(ln);
+    }
+  }
+
+  CharRange GetCharRange() const {
+    return range.GetCharRange();
+  }
 
   TextRange range;
   TextDir dir;
