@@ -255,6 +255,7 @@ class TextBuffer {
   void DeleteLine(Coord ln, std::wstring* line_data = NULL);
 
   TextPoint InsertText(const TextPoint& point, const std::wstring& text);
+  TextPoint InsertRectText(const TextPoint& point, const std::wstring& text);
 
   void DeleteText(const TextRange& range, std::wstring* text = NULL);
   void DeleteRectText(const TextRange& range, std::wstring* text = NULL);

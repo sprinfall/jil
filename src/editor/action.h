@@ -29,6 +29,8 @@ class RangeAction {
 
   bool selected() const { return selected_; }
 
+  // Most range actions are based on the current selection. And after execution,
+  // the selection might be cleared or changed.
   virtual TextRange SelectionAfterExec() const = 0;
 
  protected:

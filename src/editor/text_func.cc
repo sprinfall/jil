@@ -112,8 +112,10 @@ void Cut(TextWindow* tw) {
 
   if (!selection.IsEmpty()) {
     if (selection.rect) {
-      clipboard_format = kClipboard_Rect;
-      buffer->GetRectText(selection.range, &text);
+      if (!selection.IsRectEmpty()) {
+        clipboard_format = kClipboard_Rect;
+        buffer->GetRectText(selection.range, &text);
+      }
     } else {
       buffer->GetText(selection.range, &text);
     }
@@ -151,8 +153,10 @@ void Copy(TextWindow* tw) {
 
   if (!selection.IsEmpty()) {
     if (selection.rect) {
-      clipboard_format = kClipboard_Rect;
-      buffer->GetRectText(selection.range, &text);
+      if (!selection.IsRectEmpty()) {
+        clipboard_format = kClipboard_Rect;
+        buffer->GetRectText(selection.range, &text);
+      }
     } else {
       buffer->GetText(selection.range, &text);
     }
@@ -192,7 +196,6 @@ void Paste(TextWindow* tw) {
     dra->set_update_caret(true);
     tw->Exec(dra);
   }
-
 
   TextPoint point = tw->caret_point();
 

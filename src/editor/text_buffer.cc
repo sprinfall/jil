@@ -934,6 +934,37 @@ TextPoint TextBuffer::InsertText(const TextPoint& point,
   return insert_point;
 }
 
+TextPoint TextBuffer::InsertRectText(const TextPoint& point,
+                                     const std::wstring& text) {
+  FreezeNotify();
+
+  size_t line_count = 0;
+  TextPoint insert_point = point;
+
+  size_t p = 0;
+  for (size_t i = 0; i < text.size(); ++i) {
+    if (text[i] == LF) {
+      InsertString(insert_point, text.substr(p, i - p));
+      ++insert_point.y;
+      p = i + 1;
+      ++line_count;
+    }
+  }
+
+  if (p < text.size()) {
+    InsertString(insert_point, text.substr(p, text.size() - p));
+  }
+
+  ThawNotify();
+
+  // Notify now.
+  if (line_count > 0) {
+    Notify(kLineUpdated, LineChangeData(point.y, point.y + line_count));
+  }
+
+  return point;
+}
+
 void TextBuffer::DeleteText(const TextRange& range, std::wstring* text) {
   if (range.point_begin().y == range.point_end().y) {
     DeleteString(range.point_begin(),

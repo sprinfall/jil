@@ -511,7 +511,7 @@ void TextWindow::DeleteText(TextUnit text_unit, SeekType seek_type) {
   Action* action = NULL;
 
   if (text_unit == kSelected) {
-    if (!selection_.IsEmpty()) {
+    if (!selection_.IsEmpty() && !selection_.IsRectEmpty()) {
       action = new DeleteRangeAction(buffer_,
                                      selection_.range,
                                      selection_.dir,
@@ -989,18 +989,17 @@ void TextWindow::UpdateAfterExec(Action* action) {
   RangeAction* ra = action->AsRangeAction();
   if (ra != NULL) {
     TextRange range = ra->SelectionAfterExec();
-    if (range.IsEmpty()) {
-      ClearSelection();
+    if (!range.IsEmpty()) {
+      SetSelection(range, ra->dir(), ra->rect());
     } else {
-      SetSelection(range, ra->dir(), false);
+      ClearSelection();
     }
   }
 
   if (action->update_caret()) {
-    // Normally, there should be no virtual space after an action is executed.
-    // Don't allow virtual space.
-    bool vspace = false;
-    UpdateCaretPoint(action->CaretPointAfterExec(), false, true, vspace);
+    // NOTE: Allow virtual spaces. Some actions need this, e.g.,
+    // IncreaseIndentAction.
+    UpdateCaretPoint(action->CaretPointAfterExec(), false, true, true);
   }
 }
 
@@ -1008,14 +1007,14 @@ void TextWindow::UpdateAfterUndo(Action* action) {
   RangeAction* ra = action->AsRangeAction();
   if (ra != NULL && ra->selected()) {
     // Restore the selection.
-    SetSelection(ra->range(), ra->dir(), false);  // TODO: rect
+    SetSelection(ra->range(), ra->dir(), ra->rect());
   } else {
     ClearSelection();
+  }
 
-    if (action->update_caret()) {
-      // NOTE: Allow virtual spaces.
-      UpdateCaretPoint(action->caret_point(), false, true, true);
-    }
+  if (action->update_caret()) {
+    // NOTE: Allow virtual spaces.
+    UpdateCaretPoint(action->caret_point(), false, true, true);
   }
 }
 
@@ -1716,6 +1715,8 @@ void TextWindow::HandleTextLeftDown_Ctrl() {
 }
 
 void TextWindow::HandleTextLeftDown_CtrlAlt() {
+  ClearSelection();
+
   down_modifiers_ = wxMOD_CONTROL | wxMOD_ALT;
 }
 
@@ -1731,8 +1732,11 @@ void TextWindow::HandleTextLeftDown_CtrlAltShift() {
 
 void TextWindow::HandleTextLeftDown_Alt() {
   ClearSelection();
+
+#if JIL_ENABLE_RECT_SELECT
   // Allow virtual spaces when ALT is pressed.
   UpdateCaretPoint(down_point_, false, false, true);
+#endif  // JIL_ENABLE_RECT_SELECT
 
   down_modifiers_ = wxMOD_ALT;
 }
@@ -1745,10 +1749,10 @@ void TextWindow::HandleTextLeftDown_Shift() {
 }
 
 void TextWindow::HandleTextLeftDown_AltShift() {
+#if JIL_ENABLE_RECT_SELECT
   // Extend the selection to the down point by rect.
-  // TODO
-  // ClearSelection();
-  UpdateCaretPoint(down_point_, false, false, true);
+  ExtendSelection(down_point_, true);
+#endif  // JIL_ENABLE_RECT_SELECT
 
   down_modifiers_ = wxMOD_ALT | wxMOD_SHIFT;
 }
@@ -1780,17 +1784,15 @@ void TextWindow::HandleTextMotion(wxMouseEvent& evt) {
 }
 
 void TextWindow::SelectByDragging() {
-  // TODO
   if ((down_modifiers_ & wxMOD_ALT) != 0) {
+#if JIL_ENABLE_RECT_SELECT
     // Select by rectangle.
+    // TODO
     TextPoint move_point = CalcCaretPoint(move_position_, true);
     if (move_point != caret_point_) {
       ExtendSelection(move_point, true);
     }
-
-    //if ((down_modifiers_ & wxMOD_CONTROL) != 0) {
-    //} else {
-    //}
+#endif  // JIL_ENABLE_RECT_SELECT
   } else {
     TextPoint move_point = CalcCaretPoint(move_position_, false);
 

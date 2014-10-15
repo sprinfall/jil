@@ -256,17 +256,9 @@ void DeleteRangeAction::Exec() {
   }
 
   if (!text_.empty()) {  // Ever executed.
-    if (rect_) {
-      buffer_->DeleteRectText(range_);
-    } else {
-      buffer_->DeleteText(range_);
-    }
+    buffer_->DeleteText(range_);
   } else {
-    if (rect_) {
-      buffer_->DeleteRectText(range_, &text_);
-    } else {
-      buffer_->DeleteText(range_, &text_);
-    }
+    buffer_->DeleteText(range_, &text_);
   }
 
   if (dir_ == kForward) {

@@ -14,13 +14,23 @@ class Selection {
   Selection() : dir(kForward), rect(false) {
   }
 
+  void Reset() {
+    range.Reset();
+    rect = false;
+  }
+
+  void Set(const TextRange _range, TextDir _dir, bool _rect) {
+    range = _range;
+    dir = _dir;
+    rect = _rect;
+  }
+
   bool IsEmpty() const {
     return range.IsEmpty();
   }
 
-  void Reset() {
-    range.Reset();
-    rect = false;
+  bool IsRectEmpty() const {
+    return (rect && range.point_begin().x == range.point_end().x);
   }
 
   const TextPoint& begin() const {
@@ -37,12 +47,6 @@ class Selection {
 
   const TextPoint& GetToPoint() const {
     return (dir == kForward ? end() : begin());
-  }
-
-  void Set(const TextRange _range, TextDir _dir, bool _rect) {
-    range = _range;
-    dir = _dir;
-    rect = _rect;
   }
 
   LineRange GetLineRange() const {
