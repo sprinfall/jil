@@ -1,3 +1,6 @@
+if(JIL_ENABLE_TEST)
+    add_subdirectory(gtest)
+endif()
 add_subdirectory(base)
 add_subdirectory(libconfig)
 add_subdirectory(pugixml)

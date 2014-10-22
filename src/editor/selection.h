@@ -33,6 +33,10 @@ class Selection {
     return (rect && range.point_begin().x == range.point_end().x);
   }
 
+  bool HasLine(Coord ln) const {
+    return range.HasLine(ln);
+  }
+
   const TextPoint& begin() const {
     return range.point_begin();
   }

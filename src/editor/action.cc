@@ -182,6 +182,7 @@ TextPoint DeleteAction::CaretPointAfterExec() const {
   if (text_unit_ == kLine && seek_type_ == kWhole) {
     return caret_point_;
   }
+
   return point_ + delta_point_;
 }
 
@@ -472,6 +473,122 @@ bool DecreaseIndentAction::DecreaseIndentLine(Coord ln) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// Compose indent string from indent value.
+std::wstring ComposeIndentString(Coord indent, bool expand_tab, int tab_stop) {
+  if (expand_tab) {
+    return std::wstring(indent, kSpaceChar);
+  }
+
+  std::wstring indent_str;
+
+  Coord tabs = indent / tab_stop;
+  if (tabs > 0) {
+    indent_str.append(tabs, kTabChar);
+  }
+
+  Coord spaces = indent % tab_stop;
+  if (spaces > 0) {
+    indent_str.append(spaces, kSpaceChar);
+  }
+
+  return indent_str;
+}
+
+AutoIndentLineAction::AutoIndentLineAction(TextBuffer* buffer, Coord ln)
+    : Action(buffer, TextPoint())
+    , ln_(ln) {
+}
+
+AutoIndentLineAction::~AutoIndentLineAction() {
+}
+
+void AutoIndentLineAction::Exec() {
+  effective_ = false;  // Reset
+
+  if (buffer_->IsLineEmpty(ln_, true)) {
+    return;
+  }
+
+  Coord indent = buffer_->GetIndent(ln_);
+  Coord expected_indent = buffer_->GetExpectedIndent(ln_);
+
+  if (indent == expected_indent) {  // TODO: Retab
+    return;
+  }
+
+  // There might be multiple change notifications.
+  buffer_->FreezeNotify();
+
+  // Save old indent string.
+  old_indent_str_ = buffer_->GetIndentStr(ln_);
+
+  // Delete old indent.
+  if (!old_indent_str_.empty()) {
+    buffer_->DeleteString(TextPoint(0, ln_), CoordCast(old_indent_str_.size()));
+  }
+
+  // Insert new indent.
+  if (expected_indent > 0) {
+    const Options& options = buffer_->ft_plugin()->options();
+    std::wstring indent_str = ComposeIndentString(expected_indent,
+                                                  options.expand_tab,
+                                                  options.tab_stop);
+    buffer_->InsertString(TextPoint(0, ln_), indent_str);
+
+    // Save new indent string.
+    new_indent_str_ = indent_str;
+  }
+
+  effective_ = true;
+
+  buffer_->ThawNotify();
+  buffer_->Notify(kLineUpdated, LineRange(ln_));
+}
+
+void AutoIndentLineAction::Undo() {
+  if (new_indent_str_ == old_indent_str_) {
+    return;
+  }
+
+  buffer_->FreezeNotify();
+
+  if (!new_indent_str_.empty()) {
+    buffer_->DeleteString(TextPoint(0, ln_),
+                          CoordCast(new_indent_str_.size()));
+  }
+
+  if (!old_indent_str_.empty()) {
+    buffer_->InsertString(TextPoint(0, ln_), old_indent_str_);
+  }
+
+  buffer_->ThawNotify();
+  buffer_->Notify(kLineUpdated, LineRange(ln_));
+}
+
+TextPoint AutoIndentLineAction::CaretPointAfterExec() const {
+  if (ln_ != caret_point_.y) {
+    // The caret point is not in this line.
+    return caret_point_;
+  }
+
+  // TODO
+  if (buffer_->IsLineEmpty(ln_, true)) {
+    const Options& options = buffer_->ft_plugin()->options();
+    return caret_point_ + TextPoint(options.shift_width, 0);
+  }
+
+  Coord delta = CoordCast(new_indent_str_.size()) -
+                CoordCast(old_indent_str_.size());
+
+  if (delta == 0) {
+    return caret_point_;
+  }
+
+  return TextPoint(caret_point_.x + delta, caret_point_.y);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 AutoIndentAction::AutoIndentAction(TextBuffer* buffer,
                                    const TextRange& range,
                                    TextDir dir,
@@ -492,7 +609,7 @@ void AutoIndentAction::Exec() {
   // only one line.
   buffer_->FreezeNotify();
 
-  effective_ = false;
+  effective_ = false;  // Reset
 
   for (Coord ln = range_.line_first(); ln <= range_.line_last(); ++ln) {
     if (!buffer_->IsLineEmpty(ln, true)) {  // Skip empty lines.
@@ -601,8 +718,10 @@ bool AutoIndentAction::AutoIndentLine(Coord ln) {
 
   // Insert new indent.
   if (expected_indent > 0) {
-    std::wstring indent_str;
-    GetIndentStr(expected_indent, &indent_str);
+    const Options& options = buffer_->ft_plugin()->options();
+    std::wstring indent_str = ComposeIndentString(expected_indent,
+                                                  options.expand_tab,
+                                                  options.tab_stop);
     buffer_->InsertString(TextPoint(0, ln), indent_str);
   }
 
@@ -610,23 +729,6 @@ bool AutoIndentAction::AutoIndentLine(Coord ln) {
   new_indent_strs_[ln_off] = buffer_->GetIndentStr(ln);
 
   return true;
-}
-
-void AutoIndentAction::GetIndentStr(Coord indent, std::wstring* indent_str) {
-  const Options& options = buffer_->ft_plugin()->options();
-
-  if (options.expand_tab) {
-    indent_str->append(indent, kSpaceChar);
-  } else {
-    Coord tabs = indent / options.tab_stop;
-    if (tabs > 0) {
-      indent_str->append(tabs, kTabChar);
-    }
-    Coord spaces = indent % options.tab_stop;
-    if (spaces > 0) {
-      indent_str->append(spaces, kSpaceChar);
-    }
-  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

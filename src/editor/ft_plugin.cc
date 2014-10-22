@@ -31,8 +31,13 @@ FtPlugin::FtPlugin(const FileType& file_type)
     : file_type_(file_type)
     , ignore_case_(false) {
   wcsncmp_ = wcsncmp;
+
+  // TODO
   operators_ = L"!@#%^&*()+-=\\|/?[]{}<>,.;:'\"`~";
   delimiters_ = operators_ + L" \t";
+
+  // TODO
+  AddIndentKey(L"}");
 }
 
 FtPlugin::~FtPlugin() {
@@ -211,6 +216,17 @@ bool FtPlugin::MatchSuffix(const std::wstring& str,
     }
   }
   return false;
+}
+
+//------------------------------------------------------------------------------
+
+bool FtPlugin::IsIndentKey(wchar_t key) const {
+  return IsIndentKey(std::wstring(1, key));
+}
+
+bool FtPlugin::IsIndentKey(const std::wstring& key) const {
+  return (std::find(indent_keys_.begin(), indent_keys_.end(), key) !=
+          indent_keys_.end());
 }
 
 }  // namespace editor

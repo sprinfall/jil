@@ -66,7 +66,7 @@ END_EVENT_TABLE()
 
 TextWindow::TextWindow(TextBuffer* buffer)
     : buffer_(buffer)
-    , options_(buffer->ft_plugin()->options())
+    , options_(buffer->options())
     , style_(NULL)
     , binding_(NULL)
     , line_nr_width_(0)
@@ -698,13 +698,13 @@ Coord TextWindow::GetPageSize() const {
 }
 
 //------------------------------------------------------------------------------
+// Indent
 
 void TextWindow::AutoIndent(Coord ln) {
-  /*
-  AutoIndentAction* aia = new AutoIndentAction(buffer_, ln);
-  aia->set_caret_point(caret_point_);
-  Exec(aia);
-  */
+  AutoIndentLineAction* aila = new AutoIndentLineAction(buffer_, ln);
+  aila->set_caret_point(caret_point_);
+  aila->set_update_caret(true);
+  Exec(aila);
 }
 
 //------------------------------------------------------------------------------
@@ -848,6 +848,10 @@ void TextWindow::ClearSelection(bool refresh) {
 
 FtPlugin* TextWindow::ft_plugin() const {
   return buffer_->ft_plugin();
+}
+
+const Options& TextWindow::options() const {
+  return buffer_->options();
 }
 
 //------------------------------------------------------------------------------
@@ -1026,31 +1030,41 @@ void TextWindow::InsertChar(const TextPoint& point,
   ica->set_caret_point(caret_point_);
   ica->set_dir(dir);
   ica->set_grouped(grouped);
+
   buffer_->AddInsertCharAction(ica);
 
-  TextPoint caret_point = ica->CaretPointAfterExec();
+  UpdateCaretPoint(ica->CaretPointAfterExec(), false, true, false);
 
+  // Indent the new line.
   if (c == LF) {
-    const Coord ln = caret_point.y;
-    TextLine* line = buffer_->Line(ln);
+    TextPoint p = caret_point_;
 
-    caret_point.x = buffer_->GetExpectedIndent(ln);
-
-    if (!line->IsEmpty()) {
-      // If the new line is not empty, reindent it.
-      AutoIndent(ln);
+    if (buffer_->Line(p.y)->IsEmpty()) {
+      p.x = buffer_->GetExpectedIndent(p.y);
+      UpdateCaretPoint(p, false, true, true);
+    } else {
+      AutoIndent(p.y);
     }
+
+    return;
   }
 
-  UpdateCaretPoint(caret_point, false, true, true);
-}
+  // TODO
+  // Re-indent current line if necessary.
+  const TextLine* line = buffer_->Line(caret_point_.y);
 
-//void TextWindow::DeleteString(const TextPoint& point,
-//                              Coord count,
-//                              bool grouped) {
-//  TextRange range(point, TextPoint(point.x + count, point.y));
-//  DeleteRange(range, kForward, grouped, false);
-//}
+  // Check if the word (or words, a indent key could be multiple words, e.g.,
+  // "End If" in VB) before the caret is a indent key or not.
+  if (!line->IsEmpty(true)) {
+    Coord off = line->FirstNonSpaceChar();
+    if (off < caret_point_.x) {
+      std::wstring word = line->Sub(off, caret_point_.x - off);
+      if (ft_plugin()->IsIndentKey(word)) {
+        AutoIndent(caret_point_.y);
+      }
+    }
+  }
+}
 
 //------------------------------------------------------------------------------
 // Delegated event handlers from TextArea.
@@ -1287,7 +1301,7 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
   assert(!options_.wrap);
 
   // If in select range, draw the select background.
-  if (selection_.range.HasLine(ln)) {
+  if (selection_.HasLine(ln)) {
     const wxColour& visual_bg = style_->Get(Style::kVisual)->bg();
     renderer.SetBrush(wxBrush(visual_bg), true);
     renderer.SetPen(wxPen(visual_bg), true);
@@ -1329,12 +1343,12 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
   std::vector<CharRange> sub_ranges = wrap_helper()->SubRanges(ln);
 
   // If in select range, draw the select background.
-  if (selection_.range.HasLine(ln)) {
+  if (selection_.HasLine(ln)) {
     const wxColour& visual_bg = style_->Get(Style::kVisual)->bg();
     renderer.SetBrush(wxBrush(visual_bg), true);
     renderer.SetPen(wxPen(visual_bg), true);
 
-    CharRange select_char_range = selection_.range.GetCharRange(ln);  // TODO
+    CharRange select_char_range = selection_.GetCharRange(ln);
     int _y = y;
 
     std::vector<CharRange>::iterator range_it = sub_ranges.begin();

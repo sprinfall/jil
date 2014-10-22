@@ -13,6 +13,7 @@
 #include "editor/compile_config.h"
 #include "editor/buffer_listener.h"
 #include "editor/defs.h"
+#include "editor/option.h"
 #include "editor/text_line.h"
 #include "editor/text_range.h"
 #include "editor/text_point.h"
@@ -28,6 +29,7 @@ class FtPlugin;
 class TextExtent;
 class Action;
 class InsertCharAction;
+class LinePred;
 
 enum Bracket {
   kParenthesis = 0,   // ()
@@ -170,6 +172,13 @@ class TextBuffer {
     return ft_plugin_;
   }
 
+  const Options& options() const {
+    return options_;
+  }
+  Options& options() {
+    return options_;
+  }
+
   //----------------------------------------------------------------------------
   // Buffer states.
 
@@ -200,6 +209,9 @@ class TextBuffer {
   // Return the previous non-empty line or 0.
   // \param ignore_spaces A line with only spaces is also empty.
   Coord PrevNonEmptyLine(Coord ln, bool ignore_spaces = true) const;
+
+  // Return the previous line matching the line predication.
+  Coord PrevLine(Coord ln, const LinePred& pred) const;
 
   const std::wstring& LineData(Coord ln) const;
 
@@ -314,8 +326,21 @@ class TextBuffer {
   void ThawNotify();
 
   //----------------------------------------------------------------------------
-  // Bracket pairs: (), {}, [], <>
+  // Indent
 
+  // Get the indent as spaces of the given line.
+  Coord GetIndent(Coord ln) const;
+
+  // Get the original indent string of the given line.
+  std::wstring GetIndentStr(Coord ln) const;
+
+  // Get the expected indent (as spaces) of the given line.
+  Coord GetExpectedIndent(Coord ln) const;
+
+  //----------------------------------------------------------------------------
+  // Bracket and key pairs: (), {}, [], <>, begin/end, etc.
+
+  // TODO
   // The char at the given point should be one of (){}[]<>.
   // If the char at the given point is:
   // - (, find ) forward
@@ -323,7 +348,7 @@ class TextBuffer {
   // - etc.
   // Return invalid point if no match is found or the char at the given point
   // is not a bracket.
-  TextPoint MatchBracket(const TextPoint& point) const;
+  //TextPoint MatchBracket(const TextPoint& point) const;
 
   // Get the outer bracket pair range around the given point.
   // Example:
@@ -349,17 +374,23 @@ class TextBuffer {
   //  (        )   increased
   TextRange IncreaseRange(const TextRange& range) const;
 
-  //----------------------------------------------------------------------------
-  // Indent
+  // Find the first unpaired left key before the given point.
+  // \param single_line Find only in the current line.
+  // Examples:
+  //   UnpairedLeftKey(point, L'{', L'}')
+  //   UnpairedLeftKey(point, L'(', L')')
+  TextPoint UnpairedLeftKey(const TextPoint& point,
+                            wchar_t l_key,
+                            wchar_t r_key,
+                            bool single_line = false) const;
 
-  // Get the indent as spaces of the given line.
-  Coord GetIndent(Coord ln) const;
-
-  // Get the original indent string of the given line.
-  std::wstring GetIndentStr(Coord ln) const;
-
-  // Get the expected indent of the given line.
-  Coord GetExpectedIndent(Coord ln) const;
+  // Find the first unpaired right key after the given point.
+  // Examples:
+  //   UnpairedRightKey(point, L'{', L'}')
+  //   UnpairedRightKey(point, L'(', L')')
+  TextPoint UnpairedRightKey(const TextPoint& point,
+                             wchar_t l_key,
+                             wchar_t r_key) const;
 
   //----------------------------------------------------------------------------
   // Seek
@@ -505,6 +536,9 @@ class TextBuffer {
                             CmpFunc cmp) const;
 
   //----------------------------------------------------------------------------
+  // Bracket and key pairs: (), {}, [], <>, begin/end, etc.
+
+  // TODO: Rename unmatched to unpaired.
 
   // Find the first unmatched left bracket before the given point.
   // Example:
@@ -517,8 +551,6 @@ class TextBuffer {
   //          (   )     )
   //      p             * (found)
   TextPoint UnmatchedBracketR(const TextPoint& point) const;
-
-  TextPoint UnmatchedBracketR(const TextPoint& point, Bracket bracket) const;
 
   //----------------------------------------------------------------------------
   // Seek
@@ -599,6 +631,10 @@ class TextBuffer {
 
   // Shared file type specific data.
   FtPlugin* ft_plugin_;
+
+  // Options specific this buffer.
+  // There might be some difference from the ones in the ft plugin.
+  Options options_;
 
   // Encoding of the file.
   // The buffer itself always uses wchar_t as a charactor.

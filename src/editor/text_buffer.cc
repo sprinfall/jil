@@ -8,10 +8,11 @@
 #include "wx/log.h"
 #include "wx/filesys.h"
 #include "base/string_util.h"
+#include "editor/action.h"
 #include "editor/compile_config.h"
 #include "editor/ft_plugin.h"
-#include "editor/action.h"
 #include "editor/file_io.h"
+#include "editor/indent.h"
 #include "editor/lex.h"
 #include "editor/util.h"
 
@@ -92,6 +93,29 @@ bool IsBracketPair(wchar_t bracket_l, wchar_t bracket_r) {
   }
   if (bracket_l == L'\'') {
     return bracket_r == L'\'';
+  }
+  return false;
+}
+
+typedef Bracket(*BracketFunc)(wchar_t);
+
+// Helper function for finding unmatched bracket.
+static bool CheckBracket(wchar_t c,
+                         BracketFunc bf1,
+                         BracketFunc bf2,
+                         int counter[kBracketCount]) {
+  Bracket bracket = bf1(c);
+  if (bracket != kNoBracket) {
+    if (counter[bracket] == 0) {
+      return true;
+    } else {
+      --counter[bracket];
+    }
+  } else {
+    bracket = bf2(c);
+    if (bracket != kNoBracket) {
+      ++counter[bracket];
+    }
   }
   return false;
 }
@@ -636,13 +660,18 @@ Coord TextBuffer::LineNrFromId(size_t id) const {
 }
 
 Coord TextBuffer::PrevNonEmptyLine(Coord ln, bool ignore_spaces) const {
-  Coord prev_ln = ln - 1;
-  for (; prev_ln > 0; --prev_ln) {
-    if (!Line(prev_ln)->IsEmpty()) {
+  for (--ln; ln > 0; --ln) {
+    if (!Line(ln)->IsEmpty()) {
       break;
     }
   }
-  return prev_ln;
+  return ln;
+}
+
+Coord TextBuffer::PrevLine(Coord ln, const LinePred& pred) const {
+  for (--ln; ln > 0 && !pred.Check(Line(ln)); --ln) {
+  }
+  return ln;
 }
 
 const std::wstring& TextBuffer::LineData(Coord ln) const {
@@ -1147,39 +1176,56 @@ void TextBuffer::ThawNotify() {
 
 //------------------------------------------------------------------------------
 
-TextPoint TextBuffer::MatchBracket(const TextPoint& point) const {
-  const TextLine* line = Line(point.y);
-  Bracket bracket = BracketL(line->Char(point.x));
-  if (bracket != kNoBracket) {  // ( { [ <
-    return UnmatchedBracketR(point, bracket);
-  } else {
-    bracket = BracketR(line->Char(point.x));
-    if (bracket != kNoBracket) {  // ) } ] >
-    }
-  }
-  /*
-  TextPoint open_point = point;
-
-  const std::wstring& line_data = LineData(point.y);
-  Coord x = point.x - 1;
-  for (; x >= 0; --x) {
-    if (line_data[x] == open) {
-      return TextPoint(x, point.y);
-    }
-  }
-
-  for (Coord y = point.y - 1; y > 0; --y) {
-    const std::wstring& line_data = LineData(y);
-    Coord x = LineLength(y) - 1;
-    for (; x >= 0; --x) {
-      if (line_data[x] == open) {
-        return TextPoint(x, y);
-      }
-    }
-  }*/
-
-  return kInvalidPoint;
+Coord TextBuffer::GetIndent(Coord ln) const {
+  return Line(ln)->GetIndent(options_.tab_stop);
 }
+
+std::wstring TextBuffer::GetIndentStr(Coord ln) const {
+  return Line(ln)->GetIndentStr();
+}
+
+// TODO
+Coord TextBuffer::GetExpectedIndent(Coord ln) const {
+  CppIndent indent(this);
+  return indent.Indent(ln);
+}
+
+//------------------------------------------------------------------------------
+
+// TODO
+//TextPoint TextBuffer::MatchBracket(const TextPoint& point) const {
+//  const TextLine* line = Line(point.y);
+//  Bracket bracket = BracketL(line->Char(point.x));
+//  if (bracket != kNoBracket) {  // ( { [ <
+//    return UnmatchedBracketR(point, bracket);
+//  } else {
+//    bracket = BracketR(line->Char(point.x));
+//    if (bracket != kNoBracket) {  // ) } ] >
+//    }
+//  }
+//  /*
+//  TextPoint open_point = point;
+//
+//  const std::wstring& line_data = LineData(point.y);
+//  Coord x = point.x - 1;
+//  for (; x >= 0; --x) {
+//    if (line_data[x] == open) {
+//      return TextPoint(x, point.y);
+//    }
+//  }
+//
+//  for (Coord y = point.y - 1; y > 0; --y) {
+//    const std::wstring& line_data = LineData(y);
+//    Coord x = LineLength(y) - 1;
+//    for (; x >= 0; --x) {
+//      if (line_data[x] == open) {
+//        return TextPoint(x, y);
+//      }
+//    }
+//  }*/
+//
+//  return kInvalidPoint;
+//}
 
 TextRange TextBuffer::BracketPairOuterRange(const TextPoint& point) const {
   TextPoint point_l = UnmatchedBracketL(point);
@@ -1277,64 +1323,54 @@ TextRange TextBuffer::IncreaseRange(const TextRange& range) const {
   return TextRange(point_begin, point_end);
 }
 
-typedef Bracket(*BracketFunc)(wchar_t);
+TextPoint TextBuffer::UnpairedLeftKey(const TextPoint& point,
+                                      wchar_t l_key,
+                                      wchar_t r_key,
+                                      bool single_line) const {
+  int counter = 0;
 
-// Helper function for finding unmatched bracket.
-static bool CheckBracket(wchar_t c,
-                         BracketFunc bf1,
-                         BracketFunc bf2,
-                         int counter[kBracketCount]) {
-  Bracket bracket = bf1(c);
-  if (bracket != kNoBracket) {
-    if (counter[bracket] == 0) {
-      return true;
-    } else {
-      --counter[bracket];
+  // Find in the current line.
+  Coord y = point.y;
+  const TextLine* line = Line(y);
+
+  for (Coord x = point.x - 1; x >= 0; --x) {
+    if (line->Char(x) == r_key) {  // Embedded pair.
+      ++counter;
+    } else if (line->Char(x) == l_key) {
+      if (counter == 0) {
+        return TextPoint(x, y);
+      } else {
+        --counter;
+      }
     }
-  } else {
-    bracket = bf2(c);
-    if (bracket != kNoBracket) {
-      ++counter[bracket];
+  }
+
+  // Find in previous lines.
+  if (!single_line) {
+    for (--y; y > 0; --y) {
+      const TextLine* line = Line(y);
+      for (Coord x = line->Length() - 1; x >= 0; --x) {
+        if (line->Char(x) == r_key) {  // Embedded pair.
+          ++counter;
+        } else if (line->Char(x) == l_key) {
+          if (counter == 0) {
+            return TextPoint(x, y);
+          } else {
+            --counter;
+          }
+        }
+      }
     }
   }
-  return false;
+
+  return kInvalidPoint;
 }
 
-Coord TextBuffer::GetIndent(Coord ln) const {
-  return Line(ln)->GetIndent(ft_plugin_->options().tab_stop);
-}
-
-std::wstring TextBuffer::GetIndentStr(Coord ln) const {
-  return Line(ln)->GetIndentStr();
-}
-
-Coord TextBuffer::GetExpectedIndent(Coord ln) const {
-  assert(ln > 0);
-
-  Coord prev_ln = PrevNonEmptyLine(ln);
-  if (prev_ln == 0) {
-    return 0;
-  }
-
-  const Options& options = ft_plugin_->options();
-
-  const TextLine* prev_line = Line(prev_ln);
-  const Coord prev_indent = prev_line->GetIndent(options.tab_stop);
-
-  Coord i = prev_line->LastNonSpaceChar();
-
-  if (prev_line->Char(i) == L'{') {
-    /*
-    std::pair<wchar_t, wchar_t> prefix = std::make_pair(L'(', L')');
-    Coord j = prev_line->LastNonSpaceChar(i);
-    if (prev_line->Char(j) == L')') {
-      TextPoint point = MatchBracket(TextPoint(j, prev_ln));
-    }*/
-    return prev_indent + options.shift_width;
-  }
-
-  // By default, use the same indent as the previous line.
-  return prev_indent;
+// TODO
+TextPoint TextBuffer::UnpairedRightKey(const TextPoint& point,
+                                       wchar_t l_key,
+                                       wchar_t r_key) const {
+  return kInvalidPoint;
 }
 
 //----------------------------------------------------------------------------
@@ -1407,6 +1443,11 @@ static bool MergeDeleteActions(DeleteAction* delete_action,
 
   if (!prev_delete_action->SameKind(*delete_action)) {
     return false;
+  }
+
+  if (prev_delete_action->CaretPointAfterExec() !=
+      delete_action->caret_point()) {
+    return false;  // Not continuous.
   }
 
   // Check time interval.
@@ -1547,6 +1588,7 @@ Coord TextBuffer::GetMaxLineLength() const {
 
 TextBuffer::TextBuffer(FtPlugin* ft_plugin)
     : ft_plugin_(ft_plugin)
+    , options_(ft_plugin->options())
     , file_format_(FF_DEFAULT)
     , read_only_(false)
     , deleted_(false)
@@ -2120,23 +2162,17 @@ TextPoint TextBuffer::UnmatchedBracketR(const TextPoint& point) const {
   return kInvalidPoint;
 }
 
-TextPoint TextBuffer::UnmatchedBracketR(const TextPoint& point,
-                                        Bracket bracket) const {
-  CharIterator ci = CharIteratorFromPoint(point);
-  CharIterator ci_end = CharEnd();
-  for (; ci != ci_end; ++ci) {
-    if (BracketR(*ci) != kNoBracket) {
-    }
-  }
-
-  return kInvalidPoint;
-}
-
 //------------------------------------------------------------------------------
 
 TextPoint TextBuffer::SeekPrevChar(const TextPoint& point) {
   if (point.x > 0) {
-    return TextPoint(point.x - 1, point.y);
+    Coord line_length = LineLength(point.y);
+    if (point.x > line_length) {
+      // Skip virtual spaces.
+      return TextPoint(line_length, point.y);
+    } else {
+      return TextPoint(point.x - 1, point.y);
+    }
   } else {
     if (point.y > 1) {
       return TextPoint(LineLength(point.y - 1), point.y - 1);
@@ -2162,7 +2198,11 @@ TextPoint TextBuffer::SeekPrevWord(const TextPoint& point) {
   assert(point.y <= LineCount());
 
   const Coord line_length = LineLength(point.y);
-  assert(point.x <= line_length);
+
+  if (point.x > line_length) {
+    // Skip virtual spaces.
+    return TextPoint(line_length, point.y);
+  }
 
   TextPoint begin_point;
 

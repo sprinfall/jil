@@ -10,13 +10,19 @@ namespace editor {
 
 class TextPoint {
  public:
-  TextPoint(Coord x_ = 0, Coord y_ = 1)
+  TextPoint(Coord x_ = -1, Coord y_ = 0)
       : x(x_), y(y_) {
   }
 
   void Set(Coord x_, Coord y_) {
     x = x_;
     y = y_;
+  }
+
+  // Reset to an invalid text point.
+  void Reset() {
+    x = -1;
+    y = 0;
   }
 
   bool Valid() const {

@@ -3,6 +3,58 @@
 
 using namespace jil::editor;
 
+TEST(TextLine, Char) {
+  TextLine line(0, L"a b\tc");
+
+  EXPECT_EQ(L'a', line.Char(0));
+  EXPECT_EQ(L' ', line.Char(1));
+  EXPECT_EQ(L'\n', line.Char(line.Length()));
+}
+
+TEST(TextLine, Sub) {
+  TextLine line(0, L"a b\tc");
+
+  EXPECT_EQ(L"", line.Sub(0, 0));
+  EXPECT_EQ(L"", line.Sub(CharRange(0, 0)));
+
+  EXPECT_EQ(L"a", line.Sub(0, 1));
+  EXPECT_EQ(L"a", line.Sub(CharRange(0, 1)));
+
+  EXPECT_EQ(L"b\tc", line.Sub(2, 3));
+  EXPECT_EQ(L"b\tc", line.Sub(CharRange(2, 5)));
+
+  EXPECT_EQ(L"b\tc", line.Sub(2, kInvalidCoord));
+  EXPECT_EQ(L"b\tc", line.Sub(CharRange(2, kInvalidCoord)));
+
+  EXPECT_EQ(L"a b\tc", line.Sub(0, kInvalidCoord));
+  EXPECT_EQ(L"a b\tc", line.Sub(CharRange(0, kInvalidCoord)));
+}
+
+TEST(TextLine, FirstNonSpaceChar) {
+  TextLine line(0, L"");
+  EXPECT_EQ(line.Length(), line.FirstNonSpaceChar(0));
+
+  line.InsertString(0, L"a b\tc");
+  EXPECT_EQ(0, line.FirstNonSpaceChar(0));
+  EXPECT_EQ(2, line.FirstNonSpaceChar(1));
+  EXPECT_EQ(4, line.FirstNonSpaceChar(3));
+  EXPECT_EQ(line.Length(), line.FirstNonSpaceChar(line.Length()));
+  EXPECT_EQ(line.Length(), line.FirstNonSpaceChar(line.Length() + 1));
+}
+
+TEST(TextLine, LastNonSpaceChar) {
+  TextLine line(0, L"");
+  EXPECT_EQ(kInvalidCoord, line.LastNonSpaceChar());
+
+  line.InsertString(0, L"a b\tc");
+  EXPECT_EQ(4, line.LastNonSpaceChar());
+  EXPECT_EQ(4, line.LastNonSpaceChar(line.Length()));
+  EXPECT_EQ(2, line.LastNonSpaceChar(4));
+  EXPECT_EQ(0, line.LastNonSpaceChar(2));
+  EXPECT_EQ(0, line.LastNonSpaceChar(1));
+  EXPECT_EQ(kInvalidCoord, line.LastNonSpaceChar(0));
+}
+
 TEST(TextLine, RangeLexElements) {
   TextLine line(0, L"int i = 0;");
   line.AddLexElement(0, 3, Lex(kLexType));
@@ -61,40 +113,59 @@ TEST(TextLine, RangeLexElements) {
   EXPECT_EQ(0, lex_elements9a.size());
 }
 
-TEST(TextLine, GetIndent) {
+TEST(TextLine, GetIndentAndIndentStr) {
+  std::wstring indent_str;
+  std::wstring str = L"abc";
+
   TextLine line(0, L"");
   EXPECT_EQ(0, line.GetIndent(4));
+  EXPECT_EQ(L"", line.GetIndentStr());
 
   line.Clear();
-  line.InsertString(0, L"abc");
+  line.InsertString(0, str);
   EXPECT_EQ(0, line.GetIndent(4));
+  EXPECT_EQ(L"", line.GetIndentStr());
 
+  indent_str = L"   ";
   line.Clear();
-  line.InsertString(0, L"   ");
+  line.InsertString(0, indent_str);
   EXPECT_EQ(3, line.GetIndent(4));
+  EXPECT_EQ(indent_str, line.GetIndentStr());
 
+  indent_str = L"   ";
   line.Clear();
-  line.InsertString(0, L"   abc");
+  line.InsertString(0, indent_str + str);
   EXPECT_EQ(3, line.GetIndent(4));
+  EXPECT_EQ(indent_str, line.GetIndentStr());
 
+  indent_str = L"\t";
   line.Clear();
-  line.InsertString(0, L"\tabc");
+  line.InsertString(0, indent_str + str);
   EXPECT_EQ(4, line.GetIndent(4));
+  EXPECT_EQ(indent_str, line.GetIndentStr());
 
+  indent_str = L"\t\t";
   line.Clear();
-  line.InsertString(0, L"\t\tabc");
+  line.InsertString(0, indent_str + str);
   EXPECT_EQ(8, line.GetIndent(4));
+  EXPECT_EQ(indent_str, line.GetIndentStr());
 
+  indent_str = L"  \t\t";
   line.Clear();
-  line.InsertString(0, L"  \t\tabc");
+  line.InsertString(0, indent_str + str);
   EXPECT_EQ(8, line.GetIndent(4));
+  EXPECT_EQ(indent_str, line.GetIndentStr());
 
+  indent_str = L"  \t  \t";
   line.Clear();
-  line.InsertString(0, L"  \t  \tabc");
+  line.InsertString(0, indent_str + str);
   EXPECT_EQ(8, line.GetIndent(4));
+  EXPECT_EQ(L"  \t  \t", line.GetIndentStr());
 
+  indent_str = L"    \t  \t";
   line.Clear();
-  line.InsertString(0, L"    \t  \tabc");
+  line.InsertString(0, indent_str + str);
   EXPECT_EQ(12, line.GetIndent(4));
-  EXPECT_EQ(10, line.GetIndent(2));
+  EXPECT_EQ(indent_str, line.GetIndentStr());
 }
+

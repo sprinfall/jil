@@ -122,8 +122,6 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
 
   Mode mode() const;
 
-  const Options& options() const { return options_; }
-
   //----------------------------------------------------------------------------
   // Action
 
@@ -235,6 +233,9 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
 
   FtPlugin* ft_plugin() const;
 
+  // TODO
+  const Options& options() const;
+
   //----------------------------------------------------------------------------
   // Wrap
 
@@ -265,9 +266,6 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
                   wchar_t c,
                   TextDir dir,
                   bool grouped);
-
-  // TODO
-  //void DeleteString(const TextPoint& point, Coord count, bool grouped);
 
   //----------------------------------------------------------------------------
   // Delegated event handlers from TextArea.
@@ -483,8 +481,8 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
  protected:
   TextBuffer* buffer_;
 
-  // Edit options.
-  Options options_;
+  // Reference to the options in text buffer.
+  Options& options_;
 
   Style* style_;
   SharedTheme theme_;

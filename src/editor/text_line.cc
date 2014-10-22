@@ -51,54 +51,91 @@ bool TextLine::IsEmpty(bool ignore_spaces) const {
   return data_.find_first_not_of(L" \t") == std::wstring::npos;
 }
 
-bool TextLine::EndWith(wchar_t c, bool ignore_spaces) const {
-  if (data_.empty()) {
-    return false;
-  }
-
-  size_t i = data_.size() - 1;
-  if (ignore_spaces) {
-    for (; i > 0; --i) {
-      if (data_[i] != kSpaceChar && data_[i] != kTabChar) {
-        break;
-      }
-    }
-  }
-
-  return data_[i] == c;
-}
-
-bool TextLine::StartWith(const std::wstring& str, bool ignore_spaces) const {
+bool TextLine::StartWith(const std::wstring& str,
+                         bool ignore_spaces,
+                         Coord* off) const {
   size_t i = 0;
+
   if (ignore_spaces) {
-    for (; i < data_.size(); ++i) {
-      if (data_[i] != kSpaceChar && data_[i] != kTabChar) {
-        break;
-      }
-    }
+    for (; i < data_.size() && IsSpace(data_[i]); ++i) {}
   }
 
   if (data_.size() < i + str.size()) {
     return false;
   }
 
-  return wcsncmp(&data_[i], &str[0], str.size()) == 0;
+  if (wcsncmp(&data_[i], &str[0], str.size()) == 0) {
+    if (off != NULL) {
+      *off = i;
+    }
+    return true;
+  }
+
+  return false;
+}
+
+//bool TextLine::EndWith(wchar_t c, bool ignore_spaces) const {
+//  if (data_.empty()) {
+//    return false;
+//  }
+//
+//  size_t i = data_.size() - 1;
+//
+//  if (ignore_spaces) {
+//    for (; i > 0 && IsSpace(data_[i]); --i) {}
+//  }
+//
+//  return data_[i] == c;
+//}
+
+bool TextLine::EndWith(const std::wstring& str,
+                       bool ignore_spaces,
+                       Coord* off) const {
+  if (data_.empty()) {
+    return false;
+  }
+
+  size_t len = data_.size();
+
+  if (ignore_spaces) {
+    for (; len > 0 && IsSpace(data_[len-1]); --len) {}
+  }
+
+  if (len < str.size()) {
+    return false;
+  }
+
+  size_t i = len - str.size();
+  if (wcsncmp(&data_[i], &str[0], str.size()) == 0) {
+    if (off != NULL) {
+      *off = i;
+    }
+    return true;
+  }
+
+  return false;
 }
 
 Coord TextLine::FirstNonSpaceChar(Coord off) const {
-  Coord length = Length();
+  assert(off >= 0);
+
+  Coord len = Length();
+  if (off >= len) {
+    return len;
+  }
+
   Coord i = off;
-  for (; i < length && IsSpace(Char(i)); ++i) {}
+  for (; i < len && IsSpace(data_[i]); ++i) {}
   return i;
 }
 
 Coord TextLine::LastNonSpaceChar(Coord off) const {
   if (off == kInvalidCoord) {
-    off = CoordCast(data_.size());
+    off = Length();
   }
 
   Coord i = off - 1;
-  for (; i >= 0 && IsSpace(Char(i)); --i) {}
+  for (; i >= 0 && IsSpace(data_[i]); --i) {}
   return i;  // Might be -1, i.e., kInvalidCoord.
 }
 
@@ -108,10 +145,10 @@ Coord TextLine::GetIndent(int tab_stop) const {
   const Coord length = Length();
   Coord i = 0;
 
-  for (; i < length && IsSpace(Char(i)); ++i) {
-    if (Char(i) == kSpaceChar) {
+  for (; i < length && IsSpace(data_[i]); ++i) {
+    if (data_[i] == kSpaceChar) {
       ++spaces;
-    } else if (Char(i) == kTabChar) {
+    } else if (data_[i] == kTabChar) {
       spaces += tab_stop - (spaces % tab_stop);
     } else {
       break;

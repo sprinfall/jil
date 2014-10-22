@@ -231,7 +231,7 @@ void AutoIndent(TextWindow* tw) {
     return;
   }
 
-  const bool selected = !tw->selection().IsEmpty();
+  bool selected = !tw->selection().IsEmpty();
   AutoIndentAction* iia = new AutoIndentAction(tw->buffer(),
                                                text_range,
                                                tw->selection().dir,

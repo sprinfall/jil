@@ -129,6 +129,7 @@ class Action {
   TextBuffer* buffer_;
 
   // Action creation time.
+  // TODO: Only keep last action's timestamp in text buffer.
   wxDateTime timestamp_;
 
   // Action (insert, delete, etc.) point.
@@ -416,6 +417,25 @@ class DecreaseIndentAction : public Action, public RangeAction {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// Automatically indent a line.
+class AutoIndentLineAction : public Action {
+public:
+  AutoIndentLineAction(TextBuffer* buffer, Coord ln);
+  virtual ~AutoIndentLineAction();
+
+  virtual void Exec() override;
+  virtual void Undo() override;
+
+  virtual TextPoint CaretPointAfterExec() const override;
+
+private:
+  Coord ln_;
+  std::wstring old_indent_str_;
+  std::wstring new_indent_str_;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
 // Automatically indent a range of lines.
 class AutoIndentAction : public Action, public RangeAction {
  public:
@@ -438,8 +458,6 @@ class AutoIndentAction : public Action, public RangeAction {
  private:
   // Return true if the indent is changed.
   bool AutoIndentLine(Coord ln);
-
-  void GetIndentStr(Coord indent, std::wstring* indent_str);
 
  private:
   std::vector<std::wstring> old_indent_strs_;

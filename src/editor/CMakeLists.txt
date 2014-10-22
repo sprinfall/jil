@@ -7,6 +7,7 @@ set(HEADERS
     action.h
     file_io.h
     ft_plugin.h
+    indent.h
     key.h
     lex.h
     line_nr_area.h
@@ -37,6 +38,7 @@ set(SRCS
     action.cc
     file_io.cc
     ft_plugin.cc
+    indent.cc
     key.cc
     lex.cc
     line_nr_area.cc
@@ -62,12 +64,13 @@ add_library(editor ${SRCS} ${HEADERS})
 # Unit test.
 if(JIL_ENABLE_TEST)
     set(UT_SRCS
+        indent_unittest.cc
         text_line_unittest.cc
         text_buffer_unittest.cc
         )
     set(UT_TARGET_NAME editor_unittest)
     add_executable(${UT_TARGET_NAME} ${UT_SRCS})
-    target_link_libraries(${UT_TARGET_NAME} ${wxWidgets_LIBRARIES} base editor uchardet ${GTEST_BOTH_LIBRARIES})
+    target_link_libraries(${UT_TARGET_NAME} ${wxWidgets_LIBRARIES} base editor uchardet gtest)
 
     add_test(${UT_TARGET_NAME} ${UT_TARGET_NAME})
 endif()

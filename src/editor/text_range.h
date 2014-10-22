@@ -151,8 +151,8 @@ class TextRange {
   }
 
   void Reset() {
-    point_begin_.Set(0, 0);
-    point_end_.Set(0, 0);
+    point_begin_.Reset();
+    point_end_.Reset();
   }
 
   LineRange GetLineRange() const {

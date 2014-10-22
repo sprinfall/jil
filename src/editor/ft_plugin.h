@@ -94,6 +94,13 @@ class FtPlugin {
   //----------------------------------------------------------------------------
   // Indent
 
+  void AddIndentKey(const std::wstring& indent_key) {
+    indent_keys_.push_back(indent_key);
+  }
+
+  bool IsIndentKey(wchar_t key) const;
+  bool IsIndentKey(const std::wstring& key) const;
+
  private:
   FileType file_type_;
 
@@ -138,8 +145,11 @@ class FtPlugin {
   //----------------------------------------------------------------------------
   // Indent
 
-  // A list of keys that, when typed, cause reindenting of the current line.
-  std::wstring indent_keys_;
+  // A list of keys that, when typed, cause re-indenting of the current line.
+  // Indent keys normally appear at the beginning of a line.
+  // Similar to Vim option "indentkeys".
+  // Examples: '}' for C/C++, "endif" for Vim Script, etc.
+  std::vector<std::wstring> indent_keys_;
 };
 
 }  // namespace editor

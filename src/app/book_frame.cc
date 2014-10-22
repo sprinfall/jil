@@ -1278,7 +1278,7 @@ void BookFrame::OnFindResultPageEvent(wxCommandEvent& evt) {
 
     wxString file_path;
     for (Coord ln = caret_y - 1; ln > 0; --ln) {
-      if (fr_buffer->Line(ln)->StartWith(kPrefix)) {
+      if (fr_buffer->Line(ln)->StartWith(kPrefix, false)) {
         file_path = fr_buffer->LineData(ln).substr(kPrefix.size());
         break;
       }

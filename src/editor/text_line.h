@@ -2,8 +2,9 @@
 #define JIL_EDITOR_TEXT_LINE_H_
 #pragma once
 
-#include <string>
 #include <list>
+#include <string>
+#include <vector>
 #include "editor/compile_config.h"
 #include "editor/text_point.h"
 #include "editor/text_range.h"
@@ -63,12 +64,18 @@ class TextLine {
   std::wstring GetIndentStr() const;
 
   // Return true if the line is empty.
-  // \param ignore_spaces A line with spaces only is also empty.
+  // \param ignore_spaces A line is empty if it has only empty spaces.
   bool IsEmpty(bool ignore_spaces = true) const;
 
-  bool EndWith(wchar_t c, bool ignore_spaces = true) const;
+  bool StartWith(const std::wstring& str,
+                 bool ignore_spaces = true,
+                 Coord* off = NULL) const;
 
-  bool StartWith(const std::wstring& str, bool ignore_spaces = true) const;
+  //bool EndWith(wchar_t c, bool ignore_spaces = true) const;
+
+  bool EndWith(const std::wstring& str,
+               bool ignore_spaces = true,
+               Coord* off = NULL) const;
 
   // Line length with tabs expanded.
   Coord TabbedLength(int tab_stop) const;
@@ -127,6 +134,43 @@ class TextLine {
   std::list<LexElement*> lex_elements_;
 
   std::list<QuoteInfo> quote_infos_;
+};
+
+class LinePred {
+public:
+  virtual bool Check(const TextLine* line) const = 0;
+};
+
+class LineStartWith : public LinePred {
+public:
+  LineStartWith(const std::wstring& str1) {
+    strs_.push_back(str1);
+  }
+
+  LineStartWith(const std::wstring& str1, const std::wstring& str2) {
+    strs_.push_back(str1);
+    strs_.push_back(str2);
+  }
+
+  LineStartWith(const std::wstring& str1,
+                const std::wstring& str2,
+                const std::wstring& str3) {
+    strs_.push_back(str1);
+    strs_.push_back(str2);
+    strs_.push_back(str3);
+  }
+
+  virtual bool Check(const TextLine* line) const override {
+    for (size_t i = 0; i < strs_.size(); ++i) {
+      if (line->StartWith(strs_[i], true)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+private:
+  std::vector<std::wstring> strs_;
 };
 
 }  // namespace editor
