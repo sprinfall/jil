@@ -55,6 +55,165 @@ TEST(TextLine, LastNonSpaceChar) {
   EXPECT_EQ(kInvalidCoord, line.LastNonSpaceChar(0));
 }
 
+TEST(TextLine, GetIndentAndIndentStr) {
+  std::wstring indent_str;
+  std::wstring str = L"abc";
+
+  TextLine line(0, L"");
+  EXPECT_EQ(0, line.GetIndent(4));
+  EXPECT_EQ(L"", line.GetIndentStr());
+
+  line.Clear();
+  line.InsertString(0, str);
+  EXPECT_EQ(0, line.GetIndent(4));
+  EXPECT_EQ(L"", line.GetIndentStr());
+
+  indent_str = L"   ";
+  line.Clear();
+  line.InsertString(0, indent_str);
+  EXPECT_EQ(3, line.GetIndent(4));
+  EXPECT_EQ(indent_str, line.GetIndentStr());
+
+  indent_str = L"   ";
+  line.Clear();
+  line.InsertString(0, indent_str + str);
+  EXPECT_EQ(3, line.GetIndent(4));
+  EXPECT_EQ(indent_str, line.GetIndentStr());
+
+  indent_str = L"\t";
+  line.Clear();
+  line.Append(indent_str + str);
+  EXPECT_EQ(4, line.GetIndent(4));
+  EXPECT_EQ(indent_str, line.GetIndentStr());
+
+  indent_str = L"\t\t";
+  line.Clear();
+  line.Append(indent_str + str);
+  EXPECT_EQ(8, line.GetIndent(4));
+  EXPECT_EQ(indent_str, line.GetIndentStr());
+
+  indent_str = L"  \t\t";
+  line.Clear();
+  line.Append(indent_str + str);
+  EXPECT_EQ(8, line.GetIndent(4));
+  EXPECT_EQ(indent_str, line.GetIndentStr());
+
+  indent_str = L"  \t  \t";
+  line.Clear();
+  line.Append(indent_str + str);
+  EXPECT_EQ(8, line.GetIndent(4));
+  EXPECT_EQ(L"  \t  \t", line.GetIndentStr());
+
+  indent_str = L"    \t  \t";
+  line.Clear();
+  line.InsertString(0, indent_str + str);
+  EXPECT_EQ(12, line.GetIndent(4));
+  EXPECT_EQ(indent_str, line.GetIndentStr());
+}
+
+TEST(TextLine, IsEmpty) {
+  TextLine line(0, L"");
+
+  EXPECT_TRUE(line.IsEmpty(true));
+  EXPECT_TRUE(line.IsEmpty(false));
+
+  line.Clear();
+  line.Append(L" \t");
+
+  EXPECT_TRUE(line.IsEmpty(true));
+  EXPECT_FALSE(line.IsEmpty(false));
+}
+
+TEST(TextLine, StartWith_Char) {
+  TextLine line(0, L"");
+
+  EXPECT_FALSE(line.StartWith(L'a', true));
+  EXPECT_FALSE(line.StartWith(L'a', false));
+
+  line.Clear();
+  line.Append(L" \t");
+
+  Coord off = kInvalidCoord;
+  EXPECT_TRUE(line.StartWith(L' ', true, &off));
+  EXPECT_EQ(0, off);
+  off = kInvalidCoord;
+  EXPECT_TRUE(line.StartWith(L' ', false, &off));
+  EXPECT_EQ(0, off);
+
+  line.Clear();
+  line.Append(L"\t ");
+
+  off = kInvalidCoord;
+  EXPECT_TRUE(line.StartWith(L'\t', true, &off));
+  EXPECT_EQ(0, off);
+  off = kInvalidCoord;
+  EXPECT_TRUE(line.StartWith(L'\t', false, &off));
+  EXPECT_EQ(0, off);
+
+  line.Clear();
+  line.Append(L"\t test");
+
+  off = kInvalidCoord;
+  EXPECT_TRUE(line.StartWith(L't', true, &off));
+  EXPECT_EQ(2, off);
+  EXPECT_FALSE(line.StartWith(L't', false));
+
+  line.Clear();
+  line.Append(L"test");
+
+  off = kInvalidCoord;
+  EXPECT_TRUE(line.StartWith(L't', true, &off));
+  EXPECT_EQ(0, off);
+  off = kInvalidCoord;
+  EXPECT_TRUE(line.StartWith(L't', false, &off));
+  EXPECT_EQ(0, off);
+}
+
+TEST(TextLine, EndWith_Char) {
+  TextLine line(0, L"");
+
+  EXPECT_FALSE(line.EndWith(L'a', true));
+  EXPECT_FALSE(line.EndWith(L'a', false));
+
+  line.Clear();
+  line.Append(L" \t");
+
+  Coord off = kInvalidCoord;
+  EXPECT_TRUE(line.EndWith(L'\t', true, &off));
+  EXPECT_EQ(1, off);
+  off = kInvalidCoord;
+  EXPECT_TRUE(line.EndWith(L'\t', false, &off));
+  EXPECT_EQ(1, off);
+
+  line.Clear();
+  line.Append(L"\t ");
+
+  off = kInvalidCoord;
+  EXPECT_TRUE(line.EndWith(L' ', true, &off));
+  EXPECT_EQ(1, off);
+  off = kInvalidCoord;
+  EXPECT_TRUE(line.EndWith(L' ', false, &off));
+  EXPECT_EQ(1, off);
+
+  line.Clear();
+  line.Append(L"test\t ");
+
+  off = kInvalidCoord;
+  EXPECT_TRUE(line.EndWith(L't', true, &off));
+  EXPECT_EQ(3, off);
+  EXPECT_FALSE(line.EndWith(L't', false));
+
+  line.Clear();
+  line.Append(L"test");
+
+  off = kInvalidCoord;
+  EXPECT_TRUE(line.EndWith(L't', true, &off));
+  EXPECT_EQ(3, off);
+  off = kInvalidCoord;
+  EXPECT_TRUE(line.EndWith(L't', false, &off));
+  EXPECT_EQ(3, off);
+}
+
 TEST(TextLine, RangeLexElements) {
   TextLine line(0, L"int i = 0;");
   line.AddLexElement(0, 3, Lex(kLexType));
@@ -112,60 +271,3 @@ TEST(TextLine, RangeLexElements) {
   LexElements lex_elements9a = line.lex_elements(CharRange(9, 10));
   EXPECT_EQ(0, lex_elements9a.size());
 }
-
-TEST(TextLine, GetIndentAndIndentStr) {
-  std::wstring indent_str;
-  std::wstring str = L"abc";
-
-  TextLine line(0, L"");
-  EXPECT_EQ(0, line.GetIndent(4));
-  EXPECT_EQ(L"", line.GetIndentStr());
-
-  line.Clear();
-  line.InsertString(0, str);
-  EXPECT_EQ(0, line.GetIndent(4));
-  EXPECT_EQ(L"", line.GetIndentStr());
-
-  indent_str = L"   ";
-  line.Clear();
-  line.InsertString(0, indent_str);
-  EXPECT_EQ(3, line.GetIndent(4));
-  EXPECT_EQ(indent_str, line.GetIndentStr());
-
-  indent_str = L"   ";
-  line.Clear();
-  line.InsertString(0, indent_str + str);
-  EXPECT_EQ(3, line.GetIndent(4));
-  EXPECT_EQ(indent_str, line.GetIndentStr());
-
-  indent_str = L"\t";
-  line.Clear();
-  line.InsertString(0, indent_str + str);
-  EXPECT_EQ(4, line.GetIndent(4));
-  EXPECT_EQ(indent_str, line.GetIndentStr());
-
-  indent_str = L"\t\t";
-  line.Clear();
-  line.InsertString(0, indent_str + str);
-  EXPECT_EQ(8, line.GetIndent(4));
-  EXPECT_EQ(indent_str, line.GetIndentStr());
-
-  indent_str = L"  \t\t";
-  line.Clear();
-  line.InsertString(0, indent_str + str);
-  EXPECT_EQ(8, line.GetIndent(4));
-  EXPECT_EQ(indent_str, line.GetIndentStr());
-
-  indent_str = L"  \t  \t";
-  line.Clear();
-  line.InsertString(0, indent_str + str);
-  EXPECT_EQ(8, line.GetIndent(4));
-  EXPECT_EQ(L"  \t  \t", line.GetIndentStr());
-
-  indent_str = L"    \t  \t";
-  line.Clear();
-  line.InsertString(0, indent_str + str);
-  EXPECT_EQ(12, line.GetIndent(4));
-  EXPECT_EQ(indent_str, line.GetIndentStr());
-}
-

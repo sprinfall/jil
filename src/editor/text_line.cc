@@ -48,15 +48,46 @@ std::wstring TextLine::Sub(Coord off, Coord count) const {
 }
 
 bool TextLine::IsEmpty(bool ignore_spaces) const {
-  return data_.find_first_not_of(L" \t") == std::wstring::npos;
+  if (ignore_spaces) {
+    return data_.find_first_not_of(L" \t") == std::wstring::npos;
+  } else {
+    return data_.empty();
+  }
+}
+
+bool TextLine::StartWith(wchar_t c,
+                         bool ignore_spaces,
+                         Coord* off) const {
+  size_t i = 0;
+
+  if (ignore_spaces && !IsSpace(c)) {
+    for (; i < data_.size() && IsSpace(data_[i]); ++i) {}
+  }
+
+  if (i == data_.size()) {
+    return false;
+  }
+
+  if (data_[i] == c) {
+    if (off != NULL) {
+      *off = i;
+    }
+    return true;
+  }
+
+  return false;
 }
 
 bool TextLine::StartWith(const std::wstring& str,
                          bool ignore_spaces,
                          Coord* off) const {
+  if (str.size() == 1) {
+    return StartWith(str[0], ignore_spaces, off);
+  }
+
   size_t i = 0;
 
-  if (ignore_spaces) {
+  if (ignore_spaces && !IsSpace(str[0])) {
     for (; i < data_.size() && IsSpace(data_[i]); ++i) {}
   }
 
@@ -74,30 +105,46 @@ bool TextLine::StartWith(const std::wstring& str,
   return false;
 }
 
-//bool TextLine::EndWith(wchar_t c, bool ignore_spaces) const {
-//  if (data_.empty()) {
-//    return false;
-//  }
-//
-//  size_t i = data_.size() - 1;
-//
-//  if (ignore_spaces) {
-//    for (; i > 0 && IsSpace(data_[i]); --i) {}
-//  }
-//
-//  return data_[i] == c;
-//}
-
-bool TextLine::EndWith(const std::wstring& str,
-                       bool ignore_spaces,
-                       Coord* off) const {
+bool TextLine::EndWith(wchar_t c, bool ignore_spaces, Coord* off) const {
   if (data_.empty()) {
     return false;
   }
 
   size_t len = data_.size();
 
-  if (ignore_spaces) {
+  if (ignore_spaces && !IsSpace(c)) {
+    for (; len > 0 && IsSpace(data_[len-1]); --len) {}
+  }
+
+  if (len == 0) {
+    return false;
+  }
+
+  size_t i = len - 1;
+  if (data_[i] == c) {
+    if (off != NULL) {
+      *off = i;
+    }
+    return true;
+  }
+
+  return false;
+}
+
+bool TextLine::EndWith(const std::wstring& str,
+                       bool ignore_spaces,
+                       Coord* off) const {
+  if (str.size() == 1) {
+    return EndWith(str[0], ignore_spaces, off);
+  }
+
+  if (data_.empty()) {
+    return false;
+  }
+
+  size_t len = data_.size();
+
+  if (ignore_spaces && !IsSpace(str[str.size()-1])) {
     for (; len > 0 && IsSpace(data_[len-1]); --len) {}
   }
 
@@ -285,6 +332,60 @@ std::list<const LexElement*> TextLine::lex_elements(
   return range_lex_elements;
 }
 
+bool TextLine::SpacesOnly() const {
+  if (data_.empty()) {
+    return false;
+  }
+
+  for (size_t i = 0; i < data_.size(); ++i) {
+    if (!IsSpace(data_[i])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool TextLine::CommentsOnly() const {
+  if (lex_elements_.empty()) {
+    return false;
+  }
+
+  Coord i = 0;
+
+  std::list<LexElement*>::const_iterator it = lex_elements_.begin();
+  for (; it != lex_elements_.end(); ++it) {
+    const LexElement* le = *it;
+
+    if (le->lex != kLexComment) {
+      return false;
+    }
+
+    if (i < le->off) {
+      // Line piece (spaces, operators, plain-text, etc.) with no lex.
+      for (; i < le->off; ++i) {
+        if (!IsSpace(data_[i])) {
+          return false;
+        }
+      }
+    }
+
+    i = le->off + le->len;
+  }
+
+  // Line piece after the last lex element.
+  if (i < Length()) {
+    // Line piece (spaces, operators, plain-text, etc.) with no lex element.
+    for (; i < Length(); ++i) {
+      if (!IsSpace(data_[i])) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 void TextLine::AddQuoteInfo(Quote* quote,
                             size_t off,
                             size_t len,
@@ -303,7 +404,7 @@ Quote* TextLine::UnendedQuote(bool multi_line) const {
   return NULL;
 }
 
-bool TextLine::EndsQuote(Quote* quote) const {
+bool TextLine::EndQuote(Quote* quote) const {
   std::list<QuoteInfo>::const_iterator it = quote_infos_.begin();
   for (; it != quote_infos_.end(); ++it) {
     const QuoteInfo& qi = *it;

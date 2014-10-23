@@ -20,13 +20,13 @@ protected:
 
     buffer_ = TextBuffer::Create(ft_plugin_, encoding);
 
-    cpp_indent_ = new CppIndent(buffer_);
+    indent_cpp_ = new IndentCpp(buffer_);
   }
 
   virtual void TearDown() {
     delete buffer_;
     delete ft_plugin_;
-    delete cpp_indent_;
+    delete indent_cpp_;
   }
 
   void Assert(Coord first, Coord last = kInvalidCoord) {
@@ -35,13 +35,13 @@ protected:
     }
 
     for (Coord ln = first; ln <= last; ++ln) {
-      EXPECT_EQ(buffer_->GetIndent(ln), cpp_indent_->Indent(ln));
+      EXPECT_EQ(buffer_->GetIndent(ln), indent_cpp_->Indent(ln));
     }
   }
 
   FtPlugin* ft_plugin_;
   TextBuffer* buffer_;
-  CppIndent* cpp_indent_;
+  IndentCpp* indent_cpp_;
 };
 
 TEST_F(CppIndentTest, SimpleBraceBlock) {
@@ -69,7 +69,8 @@ TEST_F(CppIndentTest, FunctionDef_EmptyBody) {
 }
 
 TEST_F(CppIndentTest, FunctionDef_EmptyBody_NewLineBrace) {
-  buffer_->AppendLine(L"void None() {");
+  buffer_->AppendLine(L"void None()");
+  buffer_->AppendLine(L"{");
   buffer_->AppendLine(L"}");
 
   Assert(3);
@@ -231,7 +232,7 @@ TEST_F(CppIndentTest, Struct_Accessors) {
 }
 
 TEST_F(CppIndentTest, SwitchCase) {
-  cpp_indent_->set_indent_case(false);
+  indent_cpp_->set_indent_case(false);
 
   buffer_->AppendLine(L"    switch (file_format) {");
   buffer_->AppendLine(L"    case FF_WIN:");

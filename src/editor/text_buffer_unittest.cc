@@ -122,6 +122,31 @@ TEST(TextBuffer, Create_WithText) {
   EXPECT_EQ(L"", buffer->LineData(3));
 }
 
+TEST(TextBuffer, PrevNonEmptyLine) {
+  FtPlugin ft_plugin(FileType("cpp", "C++"));
+  ft_plugin.AddQuote(new Quote(kLexComment, L"//", L"", Quote::kEscapeEol));
+  ft_plugin.AddQuote(new Quote(kLexComment, L"/*", L"*/", Quote::kMultiLine));
+
+  TextBufferPtr buffer;
+  buffer.reset(TextBuffer::Create(&ft_plugin, kEncoding));
+
+  buffer->AppendLine(L"int i;");  // Line 2
+  buffer->AppendLine(L"while(true) {} // nothing");
+  buffer->AppendLine(L"// line comments");
+  buffer->AppendLine(L"  \t// line comments");
+  buffer->AppendLine(L"");
+  buffer->AppendLine(L" /* test */ /* test */  ");
+  buffer->AppendLine(L"/* block");
+  buffer->AppendLine(L"   comments */");
+  buffer->AppendLine(L"  \t");
+  buffer->AppendLine(L"int j;");
+
+  EXPECT_EQ(3, buffer->PrevNonEmptyLine(11, true, true));
+  EXPECT_EQ(9, buffer->PrevNonEmptyLine(11, true, false));
+  EXPECT_EQ(10, buffer->PrevNonEmptyLine(11, false, true));
+  EXPECT_EQ(10, buffer->PrevNonEmptyLine(11, false, false));
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 // Helper buffer listener to test notify.

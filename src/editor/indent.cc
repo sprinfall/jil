@@ -19,15 +19,25 @@ bool StartWith(const TextLine* line,
          line->StartWith(str3);
 }
 
-CppIndent::CppIndent(const TextBuffer* buffer)
-    : buffer_(buffer)
-    , indent_namespace_(false)
-    , indent_case_(false) {
+////////////////////////////////////////////////////////////////////////////////
+
+IndentBase::IndentBase(const TextBuffer* buffer) : buffer_(buffer) {
   tab_stop_ = buffer_->options().tab_stop;
   shift_width_ = buffer_->options().shift_width;
 }
 
-Coord CppIndent::Indent(Coord ln) {
+IndentBase::~IndentBase() {
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+IndentCpp::IndentCpp(const TextBuffer* buffer)
+    : IndentBase(buffer)
+    , indent_namespace_(false)
+    , indent_case_(false) {
+}
+
+Coord IndentCpp::Indent(Coord ln) {
   Coord prev_ln = buffer_->PrevNonEmptyLine(ln);
   if (prev_ln == 0) {
     return 0;

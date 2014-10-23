@@ -659,12 +659,28 @@ Coord TextBuffer::LineNrFromId(size_t id) const {
   return kInvalidCoord;
 }
 
-Coord TextBuffer::PrevNonEmptyLine(Coord ln, bool ignore_spaces) const {
+Coord TextBuffer::PrevNonEmptyLine(Coord ln,
+                                   bool ignore_spaces,
+                                   bool skip_comments) const {
   for (--ln; ln > 0; --ln) {
-    if (!Line(ln)->IsEmpty()) {
-      break;
+    const TextLine* line = Line(ln);
+
+    // TODO: Simplify.
+    if (ignore_spaces) {
+      if (!line->IsEmpty(ignore_spaces)) {
+        if (!skip_comments || !line->CommentsOnly()) {
+          break;
+        }
+      }
+    } else {
+      if (!line->IsEmpty(ignore_spaces)) {
+        if (line->SpacesOnly() || !skip_comments || !line->CommentsOnly()) {
+          break;
+        }
+      }
     }
   }
+
   return ln;
 }
 
@@ -678,7 +694,7 @@ const std::wstring& TextBuffer::LineData(Coord ln) const {
   return Line(ln)->data();
 }
 
-wchar_t TextBuffer::CharAt(const TextPoint& point) const {
+wchar_t TextBuffer::Char(const TextPoint& point) const {
   assert(point.y > 0 && point.y <= LineCount());
   return Line(point.y)->Char(point.x);
 }
@@ -1186,7 +1202,7 @@ std::wstring TextBuffer::GetIndentStr(Coord ln) const {
 
 // TODO
 Coord TextBuffer::GetExpectedIndent(Coord ln) const {
-  CppIndent indent(this);
+  IndentCpp indent(this);
   return indent.Indent(ln);
 }
 
@@ -1233,7 +1249,7 @@ TextRange TextBuffer::BracketPairOuterRange(const TextPoint& point) const {
     return TextRange();
   }
 
-  wchar_t bracket_l = CharAt(point_l);
+  wchar_t bracket_l = Char(point_l);
 
   TextPoint point_r = point;
   while (true) {
@@ -1241,7 +1257,7 @@ TextRange TextBuffer::BracketPairOuterRange(const TextPoint& point) const {
     if (!point_r.Valid()) {
       return TextRange();
     }
-    if (IsBracketPair(bracket_l, CharAt(point_r))) {
+    if (IsBracketPair(bracket_l, Char(point_r))) {
       break;
     } else {
       ++point_r.x;
@@ -1286,12 +1302,12 @@ bool TextBuffer::IsBracketPairInnerRange(const TextRange& range) const {
       return false;
     }
   }
-  if (!IsBracketL(CharAt(point_begin))) {
+  if (!IsBracketL(Char(point_begin))) {
     return false;
   }
 
   // Don't have to increase point last_point().
-  return IsBracketPair(CharAt(point_begin), CharAt(point_end));
+  return IsBracketPair(Char(point_begin), Char(point_end));
 }
 
 TextRange TextBuffer::IncreaseRange(const TextRange& range) const {
@@ -2805,7 +2821,7 @@ void TextBuffer::ScanLexOnLineUpdated(const LineRange& line_range) {
       Coord line_count = LineCount();
       old_quote_end_ln = line_count;
       for (Coord ln = line_range.last() + 1; ln <= line_count; ++ln) {
-        if (Line(ln)->EndsQuote(old_quote)) {
+        if (Line(ln)->EndQuote(old_quote)) {
           old_quote_end_ln = ln;
           break;
         }

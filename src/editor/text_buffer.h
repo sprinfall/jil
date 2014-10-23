@@ -208,15 +208,18 @@ class TextBuffer {
 
   // Return the previous non-empty line or 0.
   // \param ignore_spaces A line with only spaces is also empty.
-  Coord PrevNonEmptyLine(Coord ln, bool ignore_spaces = true) const;
+  // \param skip_comments Skip comment lines.
+  Coord PrevNonEmptyLine(Coord ln,
+                         bool ignore_spaces = true,
+                         bool skip_comments = true) const;
 
   // Return the previous line matching the line predication.
   Coord PrevLine(Coord ln, const LinePred& pred) const;
 
   const std::wstring& LineData(Coord ln) const;
 
-  // \param point Must be valid.
-  wchar_t CharAt(const TextPoint& point) const;
+  // Return the char at the given point.
+  wchar_t Char(const TextPoint& point) const;
 
   size_t LineId(Coord ln) const;
 

@@ -67,12 +67,22 @@ class TextLine {
   // \param ignore_spaces A line is empty if it has only empty spaces.
   bool IsEmpty(bool ignore_spaces = true) const;
 
+  // NOTE: ignore_spaces will be ignored if c is an empty space.
+  bool StartWith(wchar_t c,
+                 bool ignore_spaces = true,
+                 Coord* off = NULL) const;
+
+  // NOTE: ignore_spaces will be ignored if str[0] is an empty space.
   bool StartWith(const std::wstring& str,
                  bool ignore_spaces = true,
                  Coord* off = NULL) const;
 
-  //bool EndWith(wchar_t c, bool ignore_spaces = true) const;
+  // NOTE: ignore_spaces will be ignored if c is an empty space.
+  bool EndWith(wchar_t c,
+               bool ignore_spaces = true,
+               Coord* off = NULL) const;
 
+  // NOTE: ignore_spaces will be ignored if str[str.size()-1] is an empty space.
   bool EndWith(const std::wstring& str,
                bool ignore_spaces = true,
                Coord* off = NULL) const;
@@ -110,7 +120,14 @@ class TextLine {
     return lex_elements_;
   }
 
+  // Return the lex elements inside the given char range.
   std::list<const LexElement*> lex_elements(const CharRange& char_range) const;
+
+  // Return true if this line only has spaces.
+  bool SpacesOnly() const;
+
+  // Return true if this line only has comments.
+  bool CommentsOnly() const;
 
   void AddQuoteInfo(Quote* quote, size_t off, size_t len, Quote::Part part);
 
@@ -121,7 +138,7 @@ class TextLine {
   Quote* UnendedQuote(bool multi_line) const;
 
   // Return true if this line ends the given quote.
-  bool EndsQuote(Quote* quote) const;
+  bool EndQuote(Quote* quote) const;
 
   const std::list<QuoteInfo>& quote_infos() const {
     return quote_infos_;

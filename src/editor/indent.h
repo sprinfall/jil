@@ -9,9 +9,44 @@ namespace editor {
 
 class TextBuffer;
 
-class CppIndent {
+class IndentC {
+};
+
+class IndentGo {
+};
+
+class IndentPython {
+};
+
+class IndentJava {
+};
+
+class IndentCSharp {
+};
+
+class IndentVB {
+};
+
+class IndentXml {
+};
+
+class IndentBase {
 public:
-  CppIndent(const TextBuffer* buffer);
+  IndentBase(const TextBuffer* buffer);
+  virtual ~IndentBase() = 0;
+
+  virtual Coord Indent(Coord ln) = 0;
+
+protected:
+  const TextBuffer* buffer_;
+
+  Coord tab_stop_;
+  Coord shift_width_;
+};
+
+class IndentCpp : public IndentBase {
+public:
+  IndentCpp(const TextBuffer* buffer);
 
   void set_indent_namespace(bool indent_namespace) {
     indent_namespace_ = indent_namespace;
@@ -22,18 +57,12 @@ public:
   }
 
   // Get the indent of the line.
-  Coord Indent(Coord ln);
+  virtual Coord Indent(Coord ln) override;
 
 private:
-  const TextBuffer* buffer_;
-
   // Indent options.
   bool indent_namespace_;
   bool indent_case_;
-
-  // For easy access.
-  Coord tab_stop_;
-  Coord shift_width_;
 };
 
 
