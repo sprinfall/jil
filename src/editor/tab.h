@@ -12,7 +12,10 @@ namespace editor {
 // Suppose tab stop is 4, given "a\tbc" you will get "a bc  ".
 void TabbedLineFast(int tab_stop, std::wstring* line);
 
-Coord TabbedLineLength(int tab_stop, const std::wstring& line);
+// Return the tabbed length of line.substr(0, count).
+Coord TabbedLineLength(int tab_stop,
+                       const std::wstring& line,
+                       Coord count = kInvalidCoord);
 
 }  // namespace editor
 }  // namespace jil

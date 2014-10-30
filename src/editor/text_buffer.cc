@@ -1200,10 +1200,10 @@ std::wstring TextBuffer::GetIndentStr(Coord ln) const {
   return Line(ln)->GetIndentStr();
 }
 
-// TODO
 Coord TextBuffer::GetExpectedIndent(Coord ln) const {
-  IndentCpp indent(this);
-  return indent.Indent(ln);
+  IndentFunc* indent_func = ft_plugin_->indent_func();
+  indent_func->SetBuffer(this);
+  return indent_func->Indent(ln);
 }
 
 //------------------------------------------------------------------------------

@@ -4,7 +4,6 @@
 
 #include <string>
 #include <vector>
-#include "wx/font.h"
 #include "editor/defs.h"
 
 namespace jil {
@@ -30,7 +29,14 @@ class Options {
   bool show_number;
   bool show_space;
   bool show_hscrollbar;
+
   std::vector<int> rulers;
+
+  // A list of keys that, when typed, cause reindenting of the current line.
+  // Indent keys normally appear at the beginning of a line.
+  // Similar to Vim option "indentkeys".
+  // Examples: '}' for C/C++, "endif" for Vim Script, etc.
+  std::vector<std::wstring> indent_keys;
 };
 
 }  // namespace editor

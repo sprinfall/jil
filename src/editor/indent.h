@@ -7,34 +7,19 @@
 namespace jil {
 namespace editor {
 
+////////////////////////////////////////////////////////////////////////////////
+
 class TextBuffer;
 
-class IndentC {
-};
-
-class IndentGo {
-};
-
-class IndentPython {
-};
-
-class IndentJava {
-};
-
-class IndentCSharp {
-};
-
-class IndentVB {
-};
-
-class IndentXml {
-};
-
-class IndentBase {
+// Base class for all indent functions.
+class IndentFunc {
 public:
-  IndentBase(const TextBuffer* buffer);
-  virtual ~IndentBase() = 0;
+  virtual ~IndentFunc() {
+  }
 
+  void SetBuffer(const TextBuffer* buffer);
+
+  // Get the indent of the line.
   virtual Coord Indent(Coord ln) = 0;
 
 protected:
@@ -44,9 +29,20 @@ protected:
   Coord shift_width_;
 };
 
-class IndentCpp : public IndentBase {
+////////////////////////////////////////////////////////////////////////////////
+
+class IndentTxt: public IndentFunc {
 public:
-  IndentCpp(const TextBuffer* buffer);
+  IndentTxt();
+
+  virtual Coord Indent(Coord ln) override;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class IndentCpp : public IndentFunc {
+public:
+  IndentCpp();
 
   void set_indent_namespace(bool indent_namespace) {
     indent_namespace_ = indent_namespace;
@@ -56,7 +52,6 @@ public:
     indent_case_ = indent_case;
   }
 
-  // Get the indent of the line.
   virtual Coord Indent(Coord ln) override;
 
 private:
@@ -65,6 +60,113 @@ private:
   bool indent_case_;
 };
 
+////////////////////////////////////////////////////////////////////////////////
+
+class IndentJava : public IndentFunc {
+public:
+  IndentJava();
+
+  virtual Coord Indent(Coord ln) override;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class IndentCSharp : public IndentFunc {
+public:
+  IndentCSharp();
+
+  virtual Coord Indent(Coord ln) override;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class IndentPython : public IndentFunc {
+public:
+  IndentPython();
+
+  virtual Coord Indent(Coord ln) override;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class IndentRuby : public IndentFunc {
+public:
+  IndentRuby();
+
+  virtual Coord Indent(Coord ln) override;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class IndentGo : public IndentFunc {
+public:
+  IndentGo();
+
+  virtual Coord Indent(Coord ln) override;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class IndentJavaScript : public IndentFunc {
+public:
+  IndentJavaScript();
+
+  virtual Coord Indent(Coord ln) override;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class IndentXml : public IndentFunc {
+public:
+  IndentXml();
+
+  virtual Coord Indent(Coord ln) override;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class IndentHtml : public IndentFunc {
+public:
+  IndentHtml();
+
+  virtual Coord Indent(Coord ln) override;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class IndentCss : public IndentFunc {
+public:
+  IndentCss();
+
+  virtual Coord Indent(Coord ln) override;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class IndentCue : public IndentFunc {
+public:
+  IndentCue();
+
+  virtual Coord Indent(Coord ln) override;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class IndentCfg : public IndentFunc {
+public:
+  IndentCfg();
+
+  virtual Coord Indent(Coord ln) override;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class IndentVB : public IndentFunc {
+public:
+  IndentVB();
+
+  virtual Coord Indent(Coord ln) override;
+};
 
 }  // namespace editor
 }  // namespace jil

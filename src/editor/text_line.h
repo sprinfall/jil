@@ -88,7 +88,7 @@ class TextLine {
                Coord* off = NULL) const;
 
   // Line length with tabs expanded.
-  Coord TabbedLength(int tab_stop) const;
+  Coord TabbedLength(int tab_stop, Coord count = kInvalidCoord) const;
 
   //----------------------------------------------------------------------------
 

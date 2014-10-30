@@ -1058,8 +1058,8 @@ void TextWindow::InsertChar(const TextPoint& point,
   if (!line->IsEmpty(true)) {
     Coord off = line->FirstNonSpaceChar();
     if (off < caret_point_.x) {
-      std::wstring word = line->Sub(off, caret_point_.x - off);
-      if (ft_plugin()->IsIndentKey(word)) {
+      Coord len = caret_point_.x - off;
+      if (ft_plugin()->MatchIndentKey(line->data(), off, len)) {
         AutoIndent(caret_point_.y);
       }
     }

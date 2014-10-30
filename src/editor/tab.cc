@@ -23,15 +23,21 @@ void TabbedLineFast(int tab_stop, std::wstring* line) {
   }
 }
 
-Coord TabbedLineLength(int tab_stop, const std::wstring& line) {
+Coord TabbedLineLength(int tab_stop, const std::wstring& line, Coord count) {
+  if (count == kInvalidCoord) {
+    count = CoordCast(line.length());
+  }
+
   Coord tabbed_length = 0;
-  for (size_t x = 0; x < line.size(); ++x) {
+
+  for (Coord x = 0; x < count; ++x) {
     if (line[x] == kTabChar) {
       tabbed_length += tab_stop - (tabbed_length % tab_stop);
     } else {
       ++tabbed_length;
     }
   }
+
   return tabbed_length;
 }
 

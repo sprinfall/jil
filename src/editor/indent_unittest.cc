@@ -20,13 +20,14 @@ protected:
 
     buffer_ = TextBuffer::Create(ft_plugin_, encoding);
 
-    indent_cpp_ = new IndentCpp(buffer_);
+    indent_cpp_ = new IndentCpp;
+    indent_cpp_->SetBuffer(buffer_);
   }
 
   virtual void TearDown() {
+    delete indent_cpp_;
     delete buffer_;
     delete ft_plugin_;
-    delete indent_cpp_;
   }
 
   void Assert(Coord first, Coord last = kInvalidCoord) {
@@ -94,6 +95,16 @@ TEST_F(CppIndentTest, FunctionDef_MultiLineParams) {
   Assert(3);
 }
 
+TEST_F(CppIndentTest, FunctionDef_MultiLineParams2) {
+  buffer_->AppendLine(L"\t void add(int a,");  // Note the '\t'.
+  buffer_->AppendLine(L"              int b,");
+  buffer_->AppendLine(L"              int c) {");
+  buffer_->AppendLine(L"         return a + b + c;");
+  buffer_->AppendLine(L"     }");
+
+  Assert(3);
+}
+
 TEST_F(CppIndentTest, FunctionDef_OneLineParams_NewLineBrace) {
   buffer_->AppendLine(L"void add(int a, int b, int c)");
   buffer_->AppendLine(L"{");
@@ -113,6 +124,14 @@ TEST_F(CppIndentTest, FunctionDef_MultiLineParams_NewLineBrace) {
 
   Assert(3);
 }
+
+//TEST_F(CppIndentTest, FunctionCall_StringParenthesis) {;
+//  buffer_->AppendLine(L"TextPoint p = buffer->UnpairedLeftKey(TextPoint(j, prev_ln),");
+//  buffer_->AppendLine(L"                                      L'(',");
+//  buffer_->AppendLine(L"                                      L')');");
+//
+//  Assert(3);
+//}
 
 TEST_F(CppIndentTest, If_NoBrace) {
   buffer_->AppendLine(L"if (a > b)");
@@ -147,14 +166,6 @@ TEST_F(CppIndentTest, For_NoBrace) {
 
   Assert(3);
 }
-
-//TEST_F(CppIndentTest, FunctionCall_StringParenthesis) {;
-//  buffer_->AppendLine(L"TextPoint p = buffer->UnpairedLeftKey(TextPoint(j, prev_ln),");
-//  buffer_->AppendLine(L"                                      L'(',");
-//  buffer_->AppendLine(L"                                      L')');");
-//
-//  Assert(3);
-//}
 
 TEST_F(CppIndentTest, Class) {
   buffer_->AppendLine(L"    class A {");

@@ -217,8 +217,8 @@ std::wstring TextLine::GetIndentStr() const {
   }
 }
 
-Coord TextLine::TabbedLength(int tab_stop) const {
-  return TabbedLineLength(tab_stop, data_);
+Coord TextLine::TabbedLength(int tab_stop, Coord count) const {
+  return TabbedLineLength(tab_stop, data_, count);
 }
 
 void TextLine::InsertChar(Coord off, wchar_t c) {

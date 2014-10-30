@@ -29,6 +29,7 @@ const char* const SHOW_NUMBER = "show_number";
 const char* const SHOW_SPACE = "show_space";
 const char* const SHOW_HSCROLLBAR = "show_hscrollbar";
 const char* const RULERS = "rulers";
+const char* const INDENT_KEYS = "indent_keys";
 
 // Application options.
 class Options {

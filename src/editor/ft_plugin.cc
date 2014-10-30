@@ -3,6 +3,7 @@
 #include <algorithm>
 #endif
 #include "boost/regex.hpp"
+#include "editor/indent.h"
 #include "editor/lex.h"
 #include "editor/util.h"
 
@@ -29,7 +30,8 @@ inline bool operator<=(const WordLexPair& lhs, const WordLexPair& rhs) {
 
 FtPlugin::FtPlugin(const FileType& file_type)
     : file_type_(file_type)
-    , ignore_case_(false) {
+    , ignore_case_(false)
+    , indent_func_(NULL) {
   wcsncmp_ = wcsncmp;
 
   // TODO
@@ -37,12 +39,44 @@ FtPlugin::FtPlugin(const FileType& file_type)
   delimiters_ = operators_ + L" \t";
 
   // TODO
-  AddIndentKey(L"}");
+  if (file_type.id == wxT("c")) {
+    indent_func_ = new IndentCpp;
+  } else if (file_type.id == wxT("cpp")) {
+    indent_func_ = new IndentCpp;
+  } else if (file_type.id == wxT("java")) {
+    indent_func_ = new IndentJava;
+  } else if (file_type.id == wxT("csharp")) {
+    indent_func_ = new IndentCSharp;
+  } else if (file_type.id == wxT("python")) {
+    indent_func_ = new IndentPython;
+  } else if (file_type.id == wxT("ruby")) {
+    indent_func_ = new IndentRuby;
+  } else if (file_type.id == wxT("go")) {
+    indent_func_ = new IndentGo;
+  } else if (file_type.id == wxT("javascript")) {
+    indent_func_ = new IndentJavaScript;
+  } else if (file_type.id == wxT("xml")) {
+    indent_func_ = new IndentXml;
+  } else if (file_type.id == wxT("html")) {
+    indent_func_ = new IndentHtml;
+  } else if (file_type.id == wxT("css")) {
+    indent_func_ = new IndentCss;
+  } else if (file_type.id == wxT("cue")) {
+    indent_func_ = new IndentCue;
+  } else if (file_type.id == wxT("cfg")) {
+    indent_func_ = new IndentCfg;
+  } else if (file_type.id == wxT("vb")) {
+    indent_func_ = new IndentVB;
+  } else {
+    indent_func_ = new IndentTxt;
+  }
 }
 
 FtPlugin::~FtPlugin() {
   ClearContainer(&quotes_);
   ClearContainer(&regexs_);
+
+  wxDELETE(indent_func_);
 }
 
 //------------------------------------------------------------------------------
@@ -220,13 +254,19 @@ bool FtPlugin::MatchSuffix(const std::wstring& str,
 
 //------------------------------------------------------------------------------
 
-bool FtPlugin::IsIndentKey(wchar_t key) const {
-  return IsIndentKey(std::wstring(1, key));
-}
+bool FtPlugin::MatchIndentKey(const std::wstring& str,
+                              size_t off,
+                              size_t len) const {
+  const std::vector<std::wstring>& indent_keys = options_.indent_keys;
+  for (size_t i = 0; i < indent_keys.size(); ++i) {
+    if (indent_keys[i].size() == len) {
+      if (wcsncmp_(&str[off], indent_keys[i].c_str(), len) == 0) {
+        return true;
+      }
+    }
+  }
 
-bool FtPlugin::IsIndentKey(const std::wstring& key) const {
-  return (std::find(indent_keys_.begin(), indent_keys_.end(), key) !=
-          indent_keys_.end());
+  return false;
 }
 
 }  // namespace editor

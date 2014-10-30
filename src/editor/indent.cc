@@ -21,19 +21,31 @@ bool StartWith(const TextLine* line,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-IndentBase::IndentBase(const TextBuffer* buffer) : buffer_(buffer) {
+void IndentFunc::SetBuffer(const TextBuffer* buffer) {
+  buffer_ = buffer;
+
   tab_stop_ = buffer_->options().tab_stop;
   shift_width_ = buffer_->options().shift_width;
 }
 
-IndentBase::~IndentBase() {
+////////////////////////////////////////////////////////////////////////////////
+
+IndentTxt::IndentTxt() {
+}
+
+Coord IndentTxt::Indent(Coord ln) {
+  Coord prev_ln = buffer_->PrevNonEmptyLine(ln);
+  if (prev_ln == 0) {
+    return 0;
+  }
+
+  return buffer_->GetIndent(prev_ln);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-IndentCpp::IndentCpp(const TextBuffer* buffer)
-    : IndentBase(buffer)
-    , indent_namespace_(false)
+IndentCpp::IndentCpp()
+    : indent_namespace_(false)
     , indent_case_(false) {
 }
 
@@ -140,9 +152,10 @@ Coord IndentCpp::Indent(Coord ln) {
 
     // The char before '{' is ')', find the line with the paired '('.
     if (prev_line->Char(j) == L')') {
-      TextPoint p = buffer_->UnpairedLeftKey(TextPoint(j, prev_ln), L'(', L')');
+      TextPoint p(j, prev_ln);  // ')'
+      p = buffer_->UnpairedLeftKey(p, L'(', L')');
+
       if (p.Valid() && p.y != prev_ln) {
-        // Update the previous line.
         prev_ln = p.y;
         prev_line = buffer_->Line(p.y);
       }
@@ -158,18 +171,19 @@ Coord IndentCpp::Indent(Coord ln) {
   }
 
   // public:/protected:/private:, case label:, etc.
-  // TODO: a ? b : c
   if (prev_line->EndWith(L":")) {
     return prev_line->GetIndent(tab_stop_) + shift_width_;
   }
 
-  // TODO: Initialize list
+  // TODO
   if (prev_line->EndWith(L",", true, &x)) {
     // Parameters?
-    TextPoint p = buffer_->UnpairedLeftKey(TextPoint(x, prev_ln), L'(', L')', true);
+    TextPoint p(x, prev_ln);  // ','
+    p = buffer_->UnpairedLeftKey(p, L'(', L')', true);
+
     if (p.Valid()) {
-      // TODO: \t
-      return p.x + 1;  // Indent the same as the first parameter.
+      // Indent the same as the first parameter.
+      return prev_line->TabbedLength(tab_stop_, p.x + 1);
     } else {
       // enum, etc.
       return prev_line->GetIndent(tab_stop_);
@@ -192,6 +206,180 @@ Coord IndentCpp::Indent(Coord ln) {
 
   // By default, use the same indent as the previous line.
   return prev_line->GetIndent(tab_stop_);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+IndentJava::IndentJava() {
+}
+
+Coord IndentJava::Indent(Coord ln) {
+  Coord prev_ln = buffer_->PrevNonEmptyLine(ln);
+  if (prev_ln == 0) {
+    return 0;
+  }
+
+  return buffer_->GetIndent(prev_ln);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+IndentCSharp::IndentCSharp() {
+}
+
+Coord IndentCSharp::Indent(Coord ln) {
+  Coord prev_ln = buffer_->PrevNonEmptyLine(ln);
+  if (prev_ln == 0) {
+    return 0;
+  }
+
+  return buffer_->GetIndent(prev_ln);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+IndentPython::IndentPython() {
+}
+
+Coord IndentPython::Indent(Coord ln) {
+  Coord prev_ln = buffer_->PrevNonEmptyLine(ln);
+  if (prev_ln == 0) {
+    return 0;
+  }
+
+  return buffer_->GetIndent(prev_ln);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+IndentRuby::IndentRuby() {
+}
+
+Coord IndentRuby::Indent(Coord ln) {
+  Coord prev_ln = buffer_->PrevNonEmptyLine(ln);
+  if (prev_ln == 0) {
+    return 0;
+  }
+
+  return buffer_->GetIndent(prev_ln);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+IndentGo::IndentGo() {
+}
+
+Coord IndentGo::Indent(Coord ln) {
+  Coord prev_ln = buffer_->PrevNonEmptyLine(ln);
+  if (prev_ln == 0) {
+    return 0;
+  }
+
+  const TextLine* prev_line = buffer_->Line(prev_ln);
+  const TextLine* line = buffer_->Line(ln);
+
+  Coord x = kInvalidCoord;
+
+  // By default, use the same indent as the previous line.
+  return prev_line->GetIndent(tab_stop_);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+IndentJavaScript::IndentJavaScript() {
+}
+
+Coord IndentJavaScript::Indent(Coord ln) {
+  Coord prev_ln = buffer_->PrevNonEmptyLine(ln);
+  if (prev_ln == 0) {
+    return 0;
+  }
+
+  return buffer_->GetIndent(prev_ln);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+IndentXml::IndentXml() {
+}
+
+Coord IndentXml::Indent(Coord ln) {
+  Coord prev_ln = buffer_->PrevNonEmptyLine(ln);
+  if (prev_ln == 0) {
+    return 0;
+  }
+
+  return buffer_->GetIndent(prev_ln);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+IndentHtml::IndentHtml() {
+}
+
+Coord IndentHtml::Indent(Coord ln) {
+  Coord prev_ln = buffer_->PrevNonEmptyLine(ln);
+  if (prev_ln == 0) {
+    return 0;
+  }
+
+  return buffer_->GetIndent(prev_ln);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+IndentCss::IndentCss() {
+}
+
+Coord IndentCss::Indent(Coord ln) {
+  Coord prev_ln = buffer_->PrevNonEmptyLine(ln);
+  if (prev_ln == 0) {
+    return 0;
+  }
+
+  return buffer_->GetIndent(prev_ln);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+IndentCue::IndentCue() {
+}
+
+Coord IndentCue::Indent(Coord ln) {
+  Coord prev_ln = buffer_->PrevNonEmptyLine(ln);
+  if (prev_ln == 0) {
+    return 0;
+  }
+
+  return buffer_->GetIndent(prev_ln);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+IndentCfg::IndentCfg() {
+}
+
+Coord IndentCfg::Indent(Coord ln) {
+  Coord prev_ln = buffer_->PrevNonEmptyLine(ln);
+  if (prev_ln == 0) {
+    return 0;
+  }
+
+  return buffer_->GetIndent(prev_ln);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+IndentVB::IndentVB() {
+}
+
+Coord IndentVB::Indent(Coord ln) {
+  Coord prev_ln = buffer_->PrevNonEmptyLine(ln);
+  if (prev_ln == 0) {
+    return 0;
+  }
+
+  return buffer_->GetIndent(prev_ln);
 }
 
 }  // namespace editor

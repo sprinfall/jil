@@ -21,6 +21,8 @@
 namespace jil {
 namespace editor {
 
+class IndentFunc;
+
 // Example: ("true", Lex(kLexConstant, kLexConstantBool))
 typedef std::pair<std::wstring, Lex> WordLexPair;
 
@@ -94,14 +96,15 @@ class FtPlugin {
   //----------------------------------------------------------------------------
   // Indent
 
-  void AddIndentKey(const std::wstring& indent_key) {
-    indent_keys_.push_back(indent_key);
+  IndentFunc* indent_func() const {
+    return indent_func_;
   }
 
-  bool IsIndentKey(wchar_t key) const;
-  bool IsIndentKey(const std::wstring& key) const;
+  bool MatchIndentKey(const std::wstring& str, size_t off, size_t len) const;
 
  private:
+  //----------------------------------------------------------------------------
+
   FileType file_type_;
 
   //----------------------------------------------------------------------------
@@ -145,11 +148,8 @@ class FtPlugin {
   //----------------------------------------------------------------------------
   // Indent
 
-  // A list of keys that, when typed, cause re-indenting of the current line.
-  // Indent keys normally appear at the beginning of a line.
-  // Similar to Vim option "indentkeys".
-  // Examples: '}' for C/C++, "endif" for Vim Script, etc.
-  std::vector<std::wstring> indent_keys_;
+  // Indent function for this file type.
+  IndentFunc* indent_func_;
 };
 
 }  // namespace editor

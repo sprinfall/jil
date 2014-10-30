@@ -174,7 +174,7 @@ void ParseAppOptions(const Setting& setting, Options* options) {
     // a valid font.
     font = GetGlobalFont(font_size, font_name);
   }
-  
+
   options->font = font;
 
   // Switch CWD
@@ -204,6 +204,17 @@ void ParseEditorOptions(const Setting& setting, editor::Options* options) {
   if (rulers_setting) {
     for (int i = 0; i < rulers_setting.size(); ++i) {
       options->rulers.push_back(rulers_setting[i].GetInt());
+    }
+  }
+
+  Setting indent_keys_setting = GetSetting(setting_map,
+                                           INDENT_KEYS,
+                                           Setting::kArray);
+  if (indent_keys_setting) {
+    for (int i = 0; i < indent_keys_setting.size(); ++i) {
+      const char* str = indent_keys_setting[i].GetString();
+      // Assume that the string is pure ascii.
+      options->indent_keys.push_back(std::wstring(str, str + strlen(str)));
     }
   }
 }
