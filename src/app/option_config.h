@@ -12,7 +12,8 @@ class Setting;
 
 namespace editor {
 class Options;
-}
+}  // namespace editor
+
 class Options;
 
 void ParseAppOptions(const Setting& setting, Options* options);

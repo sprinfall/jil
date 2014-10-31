@@ -15,11 +15,9 @@
 
 namespace jil {
 
-namespace {
-
 // Helper functions.
 
-int ParseCjk(const std::string& cjk) {
+static int ParseCjk(const std::string& cjk) {
   if (cjk.empty()) {
     return 0;
   }
@@ -50,7 +48,7 @@ int ParseCjk(const std::string& cjk) {
   return cjk_filters;
 }
 
-int AdjustCjkByLocale(int cjk_filters) {
+static int AdjustCjkByLocale(int cjk_filters) {
   wxLocale locale;
   locale.Init();
   int lang = locale.GetLanguage();
@@ -83,9 +81,9 @@ int AdjustCjkByLocale(int cjk_filters) {
   return cjk_filters;
 }
 
-Setting GetSetting(const SettingMap& settings,
-                   const char* key,
-                   Setting::Type type) {
+static Setting GetSetting(const SettingMap& settings,
+                          const char* key,
+                          Setting::Type type) {
   SettingMap::const_iterator it = settings.find(key);
   if (it != settings.end() && it->second.type() == type) {
     return it->second;
@@ -93,9 +91,9 @@ Setting GetSetting(const SettingMap& settings,
   return Setting();
 }
 
-bool GetString(const SettingMap& settings,
-               const char* key,
-               std::string* value) {
+static bool GetString(const SettingMap& settings,
+                      const char* key,
+                      std::string* value) {
   Setting setting = GetSetting(settings, key, Setting::kString);
   if (setting) {
     *value = setting.GetString();
@@ -104,7 +102,9 @@ bool GetString(const SettingMap& settings,
   return false;
 }
 
-bool GetWxString(const SettingMap& settings, const char* key, wxString* value) {
+static bool GetWxString(const SettingMap& settings,
+                        const char* key,
+                        wxString* value) {
   Setting setting = GetSetting(settings, key, Setting::kString);
   if (setting) {
     *value = wxString::FromUTF8(setting.GetString());
@@ -113,7 +113,7 @@ bool GetWxString(const SettingMap& settings, const char* key, wxString* value) {
   return false;
 }
 
-bool GetBool(const SettingMap& settings, const char* key, bool* value) {
+static bool GetBool(const SettingMap& settings, const char* key, bool* value) {
   Setting setting = GetSetting(settings, key, Setting::kBool);
   if (setting) {
     *value = setting.GetBool();
@@ -122,7 +122,7 @@ bool GetBool(const SettingMap& settings, const char* key, bool* value) {
   return false;
 }
 
-bool GetInt(const SettingMap& settings, const char* key, int* value) {
+static bool GetInt(const SettingMap& settings, const char* key, int* value) {
   Setting setting = GetSetting(settings, key, Setting::kInt);
   if (setting) {
     *value = setting.GetInt();
@@ -130,8 +130,6 @@ bool GetInt(const SettingMap& settings, const char* key, int* value) {
   }
   return false;
 }
-
-}  // namespace
 
 void ParseAppOptions(const Setting& setting, Options* options) {
   SettingMap setting_map;
@@ -202,6 +200,8 @@ void ParseEditorOptions(const Setting& setting, editor::Options* options) {
 
   Setting rulers_setting = GetSetting(setting_map, RULERS, Setting::kArray);
   if (rulers_setting) {
+    options->rulers.clear();  // Clear global setting.
+
     for (int i = 0; i < rulers_setting.size(); ++i) {
       options->rulers.push_back(rulers_setting[i].GetInt());
     }
@@ -211,6 +211,8 @@ void ParseEditorOptions(const Setting& setting, editor::Options* options) {
                                            INDENT_KEYS,
                                            Setting::kArray);
   if (indent_keys_setting) {
+    options->indent_keys.clear();  // Clear global setting.
+
     for (int i = 0; i < indent_keys_setting.size(); ++i) {
       const char* str = indent_keys_setting[i].GetString();
       // Assume that the string is pure ascii.

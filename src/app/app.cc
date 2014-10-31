@@ -38,6 +38,7 @@
 #error "In order to support compound shortcut keys (e.g., \"Ctrl+K,Ctrl+N\"), ACCEL should be disabled!"  // NOLINT
 #endif  // wxUSE_ACCEL
 
+#define kTxt wxT("txt")
 #define kCfgExt wxT(".cfg")
 
 #define kFtPluginDir wxT("ftplugin")
@@ -55,6 +56,8 @@
 // For Unix, this name is used to create the domain socket.
 #define kIpcService wxT("jil_ipc_service")
 #define kIpcTopic wxT("jil_ipc_topic")
+
+#define kTrPlainText _("Plain Text")
 
 IMPLEMENT_WXWIN_MAIN
 
@@ -374,8 +377,10 @@ const editor::FileType& App::FileTypeFromExt(const wxString& ext) const {
     return *(it->second);
   }
 
-  static const editor::FileType kFtNull;
-  return kFtNull;
+  // Unsupported ext, use Plain Text file type.
+  it = ext_ft_map_.find(kTxt);
+  assert(it != ext_ft_map_.end());
+  return *(it->second);
 }
 
 editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft,
@@ -774,11 +779,18 @@ void App::UseDefaultStatusFields() {
 bool App::LoadFileTypes() {
   using namespace editor;
 
+  // Plain Text file type.
+  FileType* txt_ft = new FileType(kTxt, kTrPlainText);
+  file_types_.push_back(txt_ft);
+  ext_ft_map_[wxEmptyString] = txt_ft;
+  ext_ft_map_[kTxt] = txt_ft;
+
+  // Load other file types from config file.
   wxString file_types_file = path::ResourceDir() + kFileTypesFile;
 
   Config config;
   if (!config.Load(file_types_file)) {
-    ErrorMsg(kTrFailedToLoad + wxT(" ") + file_types_file);
+    ErrorMsg(kTrFailedToLoad + kSpaceStr + file_types_file);
     return false;
   }
 
@@ -789,7 +801,7 @@ bool App::LoadFileTypes() {
     return false;
   }
 
-  const int count = list_setting.size();
+  int count = list_setting.size();
 
   for (int j = 0; j < count; ++j) {
     Setting setting = list_setting.Get(j);
@@ -805,10 +817,16 @@ bool App::LoadFileTypes() {
     std::vector<std::string> ext_array;
     boost::split(ext_array,
                  ext,
-                 boost::is_any_of(", "),
+                 boost::is_any_of(","),
                  boost::token_compress_on);
+
     for (size_t i = 0; i < ext_array.size(); ++i) {
-      ext_ft_map_[wxString::FromAscii(ext_array[i].c_str())] = ft;
+      wxString ext_key = wxString::FromAscii(ext_array[i].c_str());
+      if (ext_ft_map_.find(ext_key) == ext_ft_map_.end()) {
+        ext_ft_map_[ext_key] = ft;
+      } else {
+        wxLogError(wxT("Can't map ext [%s] to file type [%s]."), ext_key, ft->name);
+      }
     }
   }
 

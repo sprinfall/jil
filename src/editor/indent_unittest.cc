@@ -8,7 +8,7 @@
 
 using namespace jil::editor;
 
-class CppIndentTest : public testing::Test {
+class IndentCppTest : public testing::Test {
 protected:
   virtual void SetUp() {
     ft_plugin_ = new FtPlugin(FileType(wxT("cpp"), wxT("C++")));
@@ -45,7 +45,7 @@ protected:
   IndentCpp* indent_cpp_;
 };
 
-TEST_F(CppIndentTest, SimpleBraceBlock) {
+TEST_F(IndentCppTest, SimpleBraceBlock) {
   buffer_->AppendLine(L"int a, b, c;");
   buffer_->AppendLine(L"{");
   buffer_->AppendLine(L"    int sum = a + b + c;");
@@ -54,7 +54,7 @@ TEST_F(CppIndentTest, SimpleBraceBlock) {
   Assert(3);
 }
 
-TEST_F(CppIndentTest, SimpleBraceBlock_EmptyBody) {
+TEST_F(IndentCppTest, SimpleBraceBlock_EmptyBody) {
   buffer_->AppendLine(L"int a, b, c;");
   buffer_->AppendLine(L"{");
   buffer_->AppendLine(L"}");
@@ -62,14 +62,14 @@ TEST_F(CppIndentTest, SimpleBraceBlock_EmptyBody) {
   Assert(3);
 }
 
-TEST_F(CppIndentTest, FunctionDef_EmptyBody) {
+TEST_F(IndentCppTest, FunctionDef_EmptyBody) {
   buffer_->AppendLine(L"void None() {");
   buffer_->AppendLine(L"}");
 
   Assert(3);
 }
 
-TEST_F(CppIndentTest, FunctionDef_EmptyBody_NewLineBrace) {
+TEST_F(IndentCppTest, FunctionDef_EmptyBody_NewLineBrace) {
   buffer_->AppendLine(L"void None()");
   buffer_->AppendLine(L"{");
   buffer_->AppendLine(L"}");
@@ -77,7 +77,7 @@ TEST_F(CppIndentTest, FunctionDef_EmptyBody_NewLineBrace) {
   Assert(3);
 }
 
-TEST_F(CppIndentTest, FunctionDef_OneLineParams) {
+TEST_F(IndentCppTest, FunctionDef_OneLineParams) {
   buffer_->AppendLine(L"void add(int a, int b, int c) {");
   buffer_->AppendLine(L"    return a + b + c;");
   buffer_->AppendLine(L"}");
@@ -85,7 +85,7 @@ TEST_F(CppIndentTest, FunctionDef_OneLineParams) {
   Assert(3);
 }
 
-TEST_F(CppIndentTest, FunctionDef_MultiLineParams) {
+TEST_F(IndentCppTest, FunctionDef_MultiLineParams) {
   buffer_->AppendLine(L"void add(int a,");
   buffer_->AppendLine(L"         int b,");
   buffer_->AppendLine(L"         int c) {");
@@ -95,7 +95,7 @@ TEST_F(CppIndentTest, FunctionDef_MultiLineParams) {
   Assert(3);
 }
 
-TEST_F(CppIndentTest, FunctionDef_MultiLineParams2) {
+TEST_F(IndentCppTest, FunctionDef_MultiLineParams2) {
   buffer_->AppendLine(L"\t void add(int a,");  // Note the '\t'.
   buffer_->AppendLine(L"              int b,");
   buffer_->AppendLine(L"              int c) {");
@@ -105,7 +105,7 @@ TEST_F(CppIndentTest, FunctionDef_MultiLineParams2) {
   Assert(3);
 }
 
-TEST_F(CppIndentTest, FunctionDef_OneLineParams_NewLineBrace) {
+TEST_F(IndentCppTest, FunctionDef_OneLineParams_NewLineBrace) {
   buffer_->AppendLine(L"void add(int a, int b, int c)");
   buffer_->AppendLine(L"{");
   buffer_->AppendLine(L"    return a + b + c;");
@@ -114,7 +114,7 @@ TEST_F(CppIndentTest, FunctionDef_OneLineParams_NewLineBrace) {
   Assert(3);
 }
 
-TEST_F(CppIndentTest, FunctionDef_MultiLineParams_NewLineBrace) {
+TEST_F(IndentCppTest, FunctionDef_MultiLineParams_NewLineBrace) {
   buffer_->AppendLine(L"void add(int a,");
   buffer_->AppendLine(L"         int b,");
   buffer_->AppendLine(L"         int c)");
@@ -133,7 +133,7 @@ TEST_F(CppIndentTest, FunctionDef_MultiLineParams_NewLineBrace) {
 //  Assert(3);
 //}
 
-TEST_F(CppIndentTest, If_NoBrace) {
+TEST_F(IndentCppTest, If_NoBrace) {
   buffer_->AppendLine(L"if (a > b)");
   buffer_->AppendLine(L"    return b;");
   //buffer_->AppendLine(L"else");
@@ -143,7 +143,7 @@ TEST_F(CppIndentTest, If_NoBrace) {
   Assert(3);
 }
 
-TEST_F(CppIndentTest, If_OneLineConditions) {
+TEST_F(IndentCppTest, If_OneLineConditions) {
   buffer_->AppendLine(L"if (a > b) {");
   buffer_->AppendLine(L"    return b;");
   buffer_->AppendLine(L"}");
@@ -151,7 +151,7 @@ TEST_F(CppIndentTest, If_OneLineConditions) {
   Assert(3);
 }
 
-TEST_F(CppIndentTest, If_NoBrace_OneLine) {
+TEST_F(IndentCppTest, If_NoBrace_OneLine) {
   buffer_->AppendLine(L"if (a > b) return b;");
   buffer_->AppendLine(L"else return a;");
   buffer_->AppendLine(L"int i;");
@@ -159,7 +159,7 @@ TEST_F(CppIndentTest, If_NoBrace_OneLine) {
   Assert(3);
 }
 
-TEST_F(CppIndentTest, For_NoBrace) {
+TEST_F(IndentCppTest, For_NoBrace) {
   buffer_->AppendLine(L"for (int i = 0; i < count; ++i)");
   buffer_->AppendLine(L"    sum += i;");
   //buffer_->AppendLine(L"int i;");
@@ -167,7 +167,7 @@ TEST_F(CppIndentTest, For_NoBrace) {
   Assert(3);
 }
 
-TEST_F(CppIndentTest, Class) {
+TEST_F(IndentCppTest, Class) {
   buffer_->AppendLine(L"    class A {");
   buffer_->AppendLine(L"        int count_;");
   buffer_->AppendLine(L"    };");
@@ -175,28 +175,28 @@ TEST_F(CppIndentTest, Class) {
   Assert(3);
 }
 
-TEST_F(CppIndentTest, Class_PublicAccessor) {
+TEST_F(IndentCppTest, Class_PublicAccessor) {
   buffer_->AppendLine(L"    class A {");
   buffer_->AppendLine(L"    public:");
 
   Assert(3);
 }
 
-TEST_F(CppIndentTest, Class_ProtectedAccessor) {
+TEST_F(IndentCppTest, Class_ProtectedAccessor) {
   buffer_->AppendLine(L"    class A {");
   buffer_->AppendLine(L"    protected:");
 
   Assert(3);
 }
 
-TEST_F(CppIndentTest, Class_PrivateAccessor) {
+TEST_F(IndentCppTest, Class_PrivateAccessor) {
   buffer_->AppendLine(L"    class A {");
   buffer_->AppendLine(L"    private:");
 
   Assert(3);
 }
 
-TEST_F(CppIndentTest, Class_EmptyAccessors) {
+TEST_F(IndentCppTest, Class_EmptyAccessors) {
   buffer_->AppendLine(L"    class A {");
   buffer_->AppendLine(L"    public:");
   buffer_->AppendLine(L"    protected:");
@@ -206,7 +206,7 @@ TEST_F(CppIndentTest, Class_EmptyAccessors) {
   Assert(3);
 }
 
-TEST_F(CppIndentTest, Class_Accessors) {
+TEST_F(IndentCppTest, Class_Accessors) {
   buffer_->AppendLine(L"    class A {");
   buffer_->AppendLine(L"    public:");
   buffer_->AppendLine(L"        ~A();");
@@ -219,7 +219,7 @@ TEST_F(CppIndentTest, Class_Accessors) {
   Assert(3);
 }
 
-TEST_F(CppIndentTest, Struct_EmptyAccessors) {
+TEST_F(IndentCppTest, Struct_EmptyAccessors) {
   buffer_->AppendLine(L"    struct A {");
   buffer_->AppendLine(L"    public:");
   buffer_->AppendLine(L"    protected:");
@@ -229,7 +229,7 @@ TEST_F(CppIndentTest, Struct_EmptyAccessors) {
   Assert(3);
 }
 
-TEST_F(CppIndentTest, Struct_Accessors) {
+TEST_F(IndentCppTest, Struct_Accessors) {
   buffer_->AppendLine(L"    struct A {");
   buffer_->AppendLine(L"    public:");
   buffer_->AppendLine(L"        ~A();");
@@ -242,7 +242,7 @@ TEST_F(CppIndentTest, Struct_Accessors) {
   Assert(3);
 }
 
-TEST_F(CppIndentTest, SwitchCase) {
+TEST_F(IndentCppTest, SwitchCase) {
   indent_cpp_->set_indent_case(false);
 
   buffer_->AppendLine(L"    switch (file_format) {");
