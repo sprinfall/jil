@@ -236,13 +236,13 @@ TextPage* BookFrame::OpenFile(const wxFileName& fn_object,
                                           options_->cjk_filters,
                                           options_->file_encoding);
   if (buffer == NULL) {
-    wxString msg = wxString::Format(_("Failed to open file! (%s)"),
-                                    fn_object.GetFullPath().c_str());
-    if (silent) {
-      wxLogError(msg);
-    } else {
+    // Show error message only when it's not silent.
+    if (!silent) {
+      wxString msg = wxString::Format(_("Failed to open file! (%s)"),
+                                      fn_object.GetFullPath().c_str());
       wxMessageBox(msg, _("Open File"), wxOK | wxCENTRE | wxICON_ERROR, this);
     }
+
     return NULL;
   }
 
