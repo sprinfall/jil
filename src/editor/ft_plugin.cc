@@ -35,10 +35,6 @@ FtPlugin::FtPlugin(const FileType& file_type)
   wcsncmp_ = wcsncmp;
 
   // TODO
-  operators_ = L"!@#%^&*()+-=\\|/?[]{}<>,.;:'\"`~";
-  delimiters_ = operators_ + L" \t";
-
-  // TODO
   if (file_type.id == wxT("c")) {
     indent_func_ = new IndentCpp;
   } else if (file_type.id == wxT("cpp")) {
@@ -82,11 +78,11 @@ FtPlugin::~FtPlugin() {
 //------------------------------------------------------------------------------
 
 bool FtPlugin::IsOperator(wchar_t c) const {
-  return operators_.find(c) != std::wstring::npos;
+  return options_.operators.find(c) != std::wstring::npos;
 }
 
 bool FtPlugin::IsDelimiter(wchar_t c) const {
-  return delimiters_.find(c) != std::wstring::npos;
+  return options_.delimiters.find(c) != std::wstring::npos;
 }
 
 //------------------------------------------------------------------------------

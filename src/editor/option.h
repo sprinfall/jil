@@ -22,14 +22,41 @@ class Options {
       , show_hscrollbar(false) {
   }
 
+  // Wrap line.
   bool wrap;
+
+  // The number of spaces to increase indent.
+  // TODO: Just use tab_stop?
   int shift_width;
+
+  // The number of spaces a tab occupies.
   int tab_stop;
+
+  // Insert spaces for tab.
   bool expand_tab;
+
+  // Show line number area.
   bool show_number;
+
+  // Show spaces or tabs.
   bool show_space;
+
+  // Always show horizontal scroll bar.
   bool show_hscrollbar;
 
+  // Example: !@#%^&*()+-=\|/?[]{}<>,.;:'"`~
+  std::wstring operators;
+
+  // Delimiters determine when a word should end.
+  // Normally, an operator is also a delimiter. But delimiters also include
+  // space and tab.
+  // The difference between operator and delimiter:
+  // Take C++ as example, '#' is not an operator, but it's a delimiter.
+  // '_' is not an operator, and it is or is not a delimiter.
+  // ' ' and '\t' is delimiters, but they are not operators.
+  std::wstring delimiters;
+
+  // Display vertical lines at the given columns.
   std::vector<int> rulers;
 
   // A list of keys that, when typed, cause reindenting of the current line.

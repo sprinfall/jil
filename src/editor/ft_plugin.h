@@ -123,13 +123,6 @@ class FtPlugin {
   // Determined by ignore_case_.
   WcsNCmp wcsncmp_;
 
-  // The difference between operator and delimiter:
-  // Take C++ as example, '#' is not an operator, but it's a delimiter.
-  // '_' is not an operator, and it is or is not a delimiter.
-  // ' ' and '\t' is delimiters, but they are not operators.
-  std::wstring operators_;
-  std::wstring delimiters_;
-
 #if JIL_MATCH_WORD_WITH_HASH
   typedef boost::unordered_map<std::wstring, Lex> WordLexMap;
   WordLexMap anyofs_;

@@ -102,6 +102,19 @@ static bool GetString(const SettingMap& settings,
   return false;
 }
 
+static bool GetStdWString(const SettingMap& settings,
+                          const char* key,
+                          std::wstring* value) {
+  Setting setting = GetSetting(settings, key, Setting::kString);
+  if (setting) {
+    const char* str = setting.GetString();
+    // Assume that the string is pure ascii.
+    *value = std::wstring(str, str + strlen(str));
+    return true;
+  }
+  return false;
+}
+
 static bool GetWxString(const SettingMap& settings,
                         const char* key,
                         wxString* value) {
@@ -197,6 +210,9 @@ void ParseEditorOptions(const Setting& setting, editor::Options* options) {
 
   GetInt(setting_map, SHIFT_WIDTH, &options->shift_width);
   GetInt(setting_map, TAB_STOP, &options->tab_stop);
+
+  GetStdWString(setting_map, OPERATORS, &options->operators);
+  GetStdWString(setting_map, DELIMITERS, &options->delimiters);
 
   Setting rulers_setting = GetSetting(setting_map, RULERS, Setting::kArray);
   if (rulers_setting) {
