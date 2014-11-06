@@ -7,166 +7,24 @@
 namespace jil {
 namespace editor {
 
-////////////////////////////////////////////////////////////////////////////////
-
 class TextBuffer;
 
-// Base class for all indent functions.
-class IndentFunc {
-public:
-  virtual ~IndentFunc() {
-  }
+typedef Coord (*IndentFunc)(const TextBuffer*, Coord);
 
-  void SetBuffer(const TextBuffer* buffer);
-
-  // Get the indent of the line.
-  virtual Coord Indent(Coord ln) = 0;
-
-protected:
-  const TextBuffer* buffer_;
-
-  Coord tab_stop_;
-  Coord shift_width_;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-class IndentTxt: public IndentFunc {
-public:
-  IndentTxt();
-
-  virtual Coord Indent(Coord ln) override;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-class IndentCpp : public IndentFunc {
-public:
-  IndentCpp();
-
-  void set_indent_namespace(bool indent_namespace) {
-    indent_namespace_ = indent_namespace;
-  }
-
-  void set_indent_case(bool indent_case) {
-    indent_case_ = indent_case;
-  }
-
-  virtual Coord Indent(Coord ln) override;
-
-private:
-  // Indent options.
-  bool indent_namespace_;
-  bool indent_case_;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-class IndentJava : public IndentFunc {
-public:
-  IndentJava();
-
-  virtual Coord Indent(Coord ln) override;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-class IndentCSharp : public IndentFunc {
-public:
-  IndentCSharp();
-
-  virtual Coord Indent(Coord ln) override;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-class IndentPython : public IndentFunc {
-public:
-  IndentPython();
-
-  virtual Coord Indent(Coord ln) override;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-class IndentRuby : public IndentFunc {
-public:
-  IndentRuby();
-
-  virtual Coord Indent(Coord ln) override;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-class IndentGo : public IndentFunc {
-public:
-  IndentGo();
-
-  virtual Coord Indent(Coord ln) override;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-class IndentJavaScript : public IndentFunc {
-public:
-  IndentJavaScript();
-
-  virtual Coord Indent(Coord ln) override;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-class IndentXml : public IndentFunc {
-public:
-  IndentXml();
-
-  virtual Coord Indent(Coord ln) override;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-class IndentHtml : public IndentFunc {
-public:
-  IndentHtml();
-
-  virtual Coord Indent(Coord ln) override;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-class IndentCss : public IndentFunc {
-public:
-  IndentCss();
-
-  virtual Coord Indent(Coord ln) override;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-class IndentCue : public IndentFunc {
-public:
-  IndentCue();
-
-  virtual Coord Indent(Coord ln) override;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-class IndentCfg : public IndentFunc {
-public:
-  IndentCfg();
-
-  virtual Coord Indent(Coord ln) override;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-class IndentVB : public IndentFunc {
-public:
-  IndentVB();
-
-  virtual Coord Indent(Coord ln) override;
-};
+Coord IndentCfg(const TextBuffer* buffer, Coord ln);
+Coord IndentCpp(const TextBuffer* buffer, Coord ln);
+Coord IndentCSharp(const TextBuffer* buffer, Coord ln);
+Coord IndentCss(const TextBuffer* buffer, Coord ln);
+Coord IndentCue(const TextBuffer* buffer, Coord ln);
+Coord IndentGo(const TextBuffer* buffer, Coord ln);
+Coord IndentHtml(const TextBuffer* buffer, Coord ln);
+Coord IndentJava(const TextBuffer* buffer, Coord ln);
+Coord IndentJavaScript(const TextBuffer* buffer, Coord ln);
+Coord IndentPython(const TextBuffer* buffer, Coord ln);
+Coord IndentRuby(const TextBuffer* buffer, Coord ln);
+Coord IndentTxt(const TextBuffer* buffer, Coord ln);
+Coord IndentVB(const TextBuffer* buffer, Coord ln);
+Coord IndentXml(const TextBuffer* buffer, Coord ln);
 
 }  // namespace editor
 }  // namespace jil

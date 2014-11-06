@@ -8,27 +8,30 @@
 // - Binary search: 600ms
 #define JIL_MATCH_WORD_WITH_HASH 0
 
-#include <vector>
+#include <map>
 #include <utility>
+#include <vector>
+
 #if JIL_MATCH_WORD_WITH_HASH
 #include "boost/unordered_map.hpp"
 #endif
+
 #include "wx/string.h"
+
 #include "editor/defs.h"
-#include "editor/option.h"
+#include "editor/indent.h"
 #include "editor/lex.h"
+#include "editor/option.h"
 
 namespace jil {
 namespace editor {
-
-class IndentFunc;
 
 // Example: ("true", Lex(kLexConstant, kLexConstantBool))
 typedef std::pair<std::wstring, Lex> WordLexPair;
 
 // File type specific options, lex, etc.
 class FtPlugin {
- public:
+public:
   explicit FtPlugin(const FileType& file_type);
   ~FtPlugin();
 
@@ -96,25 +99,23 @@ class FtPlugin {
   //----------------------------------------------------------------------------
   // Indent
 
-  IndentFunc* indent_func() const {
+  IndentFunc indent_func() const {
     return indent_func_;
   }
 
   bool MatchIndentKey(const std::wstring& str, size_t off, size_t len) const;
 
- private:
-  //----------------------------------------------------------------------------
+private:
+  void InitIndentFunc();
+
+private:
+  typedef std::map<wxString, IndentFunc> IndentFuncMap;
+  static IndentFuncMap indent_funcs_;
 
   FileType file_type_;
 
-  //----------------------------------------------------------------------------
-  // Options
-
   // File type specific options.
   Options options_;
-
-  //----------------------------------------------------------------------------
-  // Lex
 
   // Some file types ignore case for keywords, e.g., VB.
   bool ignore_case_;
@@ -138,11 +139,8 @@ class FtPlugin {
   std::vector<WordLexPair> prefixes_;
   std::vector<WordLexPair> suffixes_;
 
-  //----------------------------------------------------------------------------
-  // Indent
-
   // Indent function for this file type.
-  IndentFunc* indent_func_;
+  IndentFunc indent_func_;
 };
 
 }  // namespace editor

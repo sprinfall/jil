@@ -20,12 +20,10 @@ protected:
 
     buffer_ = TextBuffer::Create(ft_plugin_, encoding);
 
-    indent_cpp_ = new IndentCpp;
-    indent_cpp_->SetBuffer(buffer_);
+    indent_cpp_ = IndentCpp;
   }
 
   virtual void TearDown() {
-    delete indent_cpp_;
     delete buffer_;
     delete ft_plugin_;
   }
@@ -36,13 +34,13 @@ protected:
     }
 
     for (Coord ln = first; ln <= last; ++ln) {
-      EXPECT_EQ(buffer_->GetIndent(ln), indent_cpp_->Indent(ln));
+      EXPECT_EQ(buffer_->GetIndent(ln), indent_cpp_(buffer_, ln));
     }
   }
 
   FtPlugin* ft_plugin_;
   TextBuffer* buffer_;
-  IndentCpp* indent_cpp_;
+  IndentFunc indent_cpp_;
 };
 
 TEST_F(IndentCppTest, SimpleBraceBlock) {
@@ -243,7 +241,7 @@ TEST_F(IndentCppTest, Struct_Accessors) {
 }
 
 TEST_F(IndentCppTest, SwitchCase) {
-  indent_cpp_->set_indent_case(false);
+  //indent_cpp_->set_indent_case(false);
 
   buffer_->AppendLine(L"    switch (file_format) {");
   buffer_->AppendLine(L"    case FF_WIN:");

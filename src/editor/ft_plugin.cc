@@ -28,51 +28,20 @@ inline bool operator<=(const WordLexPair& lhs, const WordLexPair& rhs) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+FtPlugin::IndentFuncMap FtPlugin::indent_funcs_;
+
 FtPlugin::FtPlugin(const FileType& file_type)
     : file_type_(file_type)
     , ignore_case_(false)
     , indent_func_(NULL) {
   wcsncmp_ = wcsncmp;
 
-  // TODO
-  if (file_type.id == wxT("c")) {
-    indent_func_ = new IndentCpp;
-  } else if (file_type.id == wxT("cpp")) {
-    indent_func_ = new IndentCpp;
-  } else if (file_type.id == wxT("java")) {
-    indent_func_ = new IndentJava;
-  } else if (file_type.id == wxT("csharp")) {
-    indent_func_ = new IndentCSharp;
-  } else if (file_type.id == wxT("python")) {
-    indent_func_ = new IndentPython;
-  } else if (file_type.id == wxT("ruby")) {
-    indent_func_ = new IndentRuby;
-  } else if (file_type.id == wxT("go")) {
-    indent_func_ = new IndentGo;
-  } else if (file_type.id == wxT("javascript")) {
-    indent_func_ = new IndentJavaScript;
-  } else if (file_type.id == wxT("xml")) {
-    indent_func_ = new IndentXml;
-  } else if (file_type.id == wxT("html")) {
-    indent_func_ = new IndentHtml;
-  } else if (file_type.id == wxT("css")) {
-    indent_func_ = new IndentCss;
-  } else if (file_type.id == wxT("cue")) {
-    indent_func_ = new IndentCue;
-  } else if (file_type.id == wxT("cfg")) {
-    indent_func_ = new IndentCfg;
-  } else if (file_type.id == wxT("vb")) {
-    indent_func_ = new IndentVB;
-  } else {
-    indent_func_ = new IndentTxt;
-  }
+  InitIndentFunc();
 }
 
 FtPlugin::~FtPlugin() {
   ClearContainer(&quotes_);
   ClearContainer(&regexs_);
-
-  wxDELETE(indent_func_);
 }
 
 //------------------------------------------------------------------------------
@@ -263,6 +232,33 @@ bool FtPlugin::MatchIndentKey(const std::wstring& str,
   }
 
   return false;
+}
+
+void FtPlugin::InitIndentFunc() {
+  if (indent_funcs_.empty()) {
+    indent_funcs_[wxT("cfg")] = IndentCfg;
+    indent_funcs_[wxT("c")] = IndentCpp;
+    indent_funcs_[wxT("cpp")] = IndentCpp;
+    indent_funcs_[wxT("csharp")] = IndentCSharp;
+    indent_funcs_[wxT("css")] = IndentCss;
+    indent_funcs_[wxT("cue")] = IndentCue;
+    indent_funcs_[wxT("go")] = IndentGo;
+    indent_funcs_[wxT("html")] = IndentHtml;
+    indent_funcs_[wxT("java")] = IndentJava;
+    indent_funcs_[wxT("javascript")] = IndentJavaScript;
+    indent_funcs_[wxT("python")] = IndentPython;
+    indent_funcs_[wxT("ruby")] = IndentRuby;
+    indent_funcs_[wxT("txt")] = IndentTxt;
+    indent_funcs_[wxT("vb")] = IndentVB;
+    indent_funcs_[wxT("xml")] = IndentXml;
+  }
+
+  IndentFuncMap::iterator it = indent_funcs_.find(file_type_.id);
+  if (it != indent_funcs_.end()) {
+    indent_func_ = it->second;
+  } else {
+    indent_func_ = IndentTxt;
+  }
 }
 
 }  // namespace editor
