@@ -36,8 +36,8 @@ class FtPlugin;
 class Binding;
 }
 
-class Session;
 class BookFrame;
+class Session;
 
 typedef void (*FtPluginLoader)(editor::FtPlugin* ft_plugin);
 

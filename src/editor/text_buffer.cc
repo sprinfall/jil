@@ -1201,9 +1201,8 @@ std::wstring TextBuffer::GetIndentStr(Coord ln) const {
 }
 
 Coord TextBuffer::GetExpectedIndent(Coord ln) const {
-  IndentFunc* indent_func = ft_plugin_->indent_func();
-  indent_func->SetBuffer(this);
-  return indent_func->Indent(ln);
+  IndentFunc indent_func = ft_plugin_->indent_func();
+  return indent_func(this, ln);
 }
 
 //------------------------------------------------------------------------------
@@ -1580,7 +1579,9 @@ Action* TextBuffer::Redo() {
 }
 
 bool TextBuffer::CanUndo() const {
-  return !undo_actions_.empty() || !recent_ic_actions_.empty();
+  return !undo_actions_.empty() ||
+         !saved_undo_actions_.empty() ||
+         !recent_ic_actions_.empty();
 }
 
 bool TextBuffer::CanRedo() const {

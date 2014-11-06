@@ -4,10 +4,11 @@
 
 // Binding, or key mapping, binds key(s) to command.
 
-#include <vector>
 #include <list>
 #include <map>
+#include <string>
 #include <utility>
+#include <vector>
 #include "boost/function.hpp"
 #include "editor/key.h"
 #include "editor/text_func.h"
@@ -42,49 +43,64 @@ class VoidFuncWrap : public VoidFunc {
 
 struct TextCmd {
   std::string name;
-  editor::TextFunc* func;
+  TextFunc* func;
+  std::vector<Key> keys;
   int menu;
+  int modes;
 };
 
 struct VoidCmd {
   std::string name;
-  editor::VoidFunc* func;
+  VoidFunc* func;
+  std::vector<Key> keys;
   int menu;
 };
 
 class Binding {
- public:
+public:
   Binding();
   ~Binding();
 
-  void AddTextCmd(const char* name, editor::TextFunc* func, int menu);
-  void AddVoidCmd(const char* name, editor::VoidFunc* func, int menu);
+  void AddTextCmd(const char* name, TextFunc* func, int menu);
+  void AddVoidCmd(const char* name, VoidFunc* func, int menu);
 
-  const TextCmd* GetTextCmdByName(const std::string& name) const;
-  const VoidCmd* GetVoidCmdByName(const std::string& name) const;
+  // Bind the keys to the command with the given name.
+  bool BindKeys(const std::string& name,
+                const std::vector<Key>& keys,
+                int modes);
 
-  void BindTextFunc(TextFunc* text_func,
-                    const std::vector<Key>& keys,
-                    int modes,
-                    int menu);
+  // TODO
+  void BindMenus();
 
-  void BindVoidFunc(VoidFunc* void_func,
-                    const std::vector<Key>& keys,
-                    int menu);
-
+  // Get text func by menu id.
+  // Used to execute text func by clicking menu item.
   TextFunc* GetTextFuncByMenu(int menu) const;
 
+  // Get void func by menu id.
+  // Used to execute void func by clicking menu item.
   VoidFunc* GetVoidFuncByMenu(int menu) const;
 
-  TextFunc* GetTextFuncByKey(Key key, Mode mode) const;
+  // Get text func by key in a given mode.
+  // Used to execute text func by pressing keys.
+  TextFunc* GetTextFuncByKey(Key key, Mode mode, int* menu = NULL) const;
 
+  // Get void func by key in a given mode.
+  // Used to execute void func by pressing keys.
+  // \param menu Can be used to determine if the menu is enabled or not.
+  //   If the menu is disabled, the void func shouldn't be executed.
   VoidFunc* GetVoidFuncByKey(Key key, int* menu = NULL) const;
 
+  // Get the keys by menu id.
+  // Used when create menu item.
   Key GetKeyByMenu(int menu) const;
 
   bool IsLeaderKey(Key key) const;
 
- private:
+private:
+  const TextCmd* GetTextCmdByName(const std::string& name) const;
+  const VoidCmd* GetVoidCmdByName(const std::string& name) const;
+
+private:
   // Command tables.
   // NOTE: Using vector and linear time search is more efficient than map.
   // So don't try to use map.
@@ -95,15 +111,15 @@ class Binding {
   std::vector<TextCmd> text_cmds_;
   std::vector<VoidCmd> void_cmds_;
 
-  typedef std::map<Key, TextFunc*> TextFuncMap;
-  // Keep command functions of each mode in separate maps for
+  // Keep text functions of each mode in separate maps for
   // the convenience of searching.
-  TextFuncMap normal_text_funcs_;
-  TextFuncMap visual_text_funcs_;
+  typedef std::map<Key, std::pair<TextFunc*, int> > TextKeyMap;
+  TextKeyMap normal_text_keys_;
+  TextKeyMap visual_text_keys_;
 
   // Key -> (Void function, Menu)
-  typedef std::map<Key, std::pair<VoidFunc*, int> > VoidFuncMap;
-  VoidFuncMap void_funcs_;
+  typedef std::map<Key, std::pair<VoidFunc*, int> > VoidKeyMap;
+  VoidKeyMap void_keys_;
 
   // Menu -> (Text function, Key)
   typedef std::map<int, std::pair<TextFunc*, Key> > TextMenuMap;

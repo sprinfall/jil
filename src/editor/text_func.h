@@ -9,10 +9,8 @@ namespace editor {
 
 class TextWindow;
 
-typedef void(*RawTextFunc)(editor::TextWindow*);
-typedef void(*RawSeekableTextFunc)(editor::TextWindow*,
-                                   editor::TextUnit,
-                                   editor::SeekType);
+typedef void(*RawTextFunc)(TextWindow*);
+typedef void(*RawSeekableTextFunc)(TextWindow*, TextUnit, SeekType);
 typedef void(*RawVoidFunc)();
 
 // Text function interface.

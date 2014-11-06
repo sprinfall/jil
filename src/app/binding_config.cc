@@ -337,22 +337,12 @@ bool BindingConfig::ParseBinding(const std::string& cmd,
     return false;
   }
 
-  // Match text command.
-  const TextCmd* text_cmd = binding_->GetTextCmdByName(cmd);
-  if (text_cmd != NULL) {
-    binding_->BindTextFunc(text_cmd->func, keys, modes, text_cmd->menu);
-    return true;
+  if (!binding_->BindKeys(cmd, keys, modes)) {
+    wxLogWarning(wxT("Unknown command: %s"), cmd.c_str());
+    return false;
   }
 
-  // Match void command.
-  const VoidCmd* void_cmd = binding_->GetVoidCmdByName(cmd);
-  if (void_cmd != NULL) {
-    binding_->BindVoidFunc(void_cmd->func, keys, void_cmd->menu);
-    return true;
-  }
-
-  wxLogWarning(wxT("Unknown command: %s"), cmd.c_str());
-  return false;
+  return true;
 }
 
 bool BindingConfig::ParseBindingItem(const Setting& setting) {

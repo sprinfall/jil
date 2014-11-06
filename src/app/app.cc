@@ -16,23 +16,23 @@
 
 #include "base/string_util.h"
 
-#include "editor/text_window.h"
+#include "editor/color.h"
 #include "editor/ft_plugin.h"
 #include "editor/style.h"
-#include "editor/color.h"
+#include "editor/text_window.h"
 #include "editor/util.h"
 
-#include "app/compile_config.h"
-#include "app/util.h"
-#include "app/i18n_strings.h"
-#include "app/lex_config.h"
 #include "app/binding_config.h"
-#include "app/theme_config.h"
-#include "app/status_fields_config.h"
-#include "app/option_config.h"
 #include "app/book_ctrl.h"
 #include "app/book_frame.h"
+#include "app/compile_config.h"
 #include "app/goto_dialog.h"
+#include "app/i18n_strings.h"
+#include "app/lex_config.h"
+#include "app/option_config.h"
+#include "app/status_fields_config.h"
+#include "app/theme_config.h"
+#include "app/util.h"
 
 #if wxUSE_ACCEL
 #error "In order to support compound shortcut keys (e.g., \"Ctrl+K,Ctrl+N\"), ACCEL should be disabled!"  // NOLINT
@@ -711,6 +711,8 @@ bool App::LoadBinding() {
   if (!binding_config.Load(UserDataFile(kBindingFile))) {
     wxLogInfo(wxT("No user binding."));
   }
+
+  binding_->BindMenus();
 
   return true;
 }

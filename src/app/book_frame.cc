@@ -965,7 +965,7 @@ bool BookFrame::HandleKeyDownHook(wxKeyEvent& evt) {
   // Match void command.
   int menu = 0;
   editor::VoidFunc* void_func = binding_->GetVoidFuncByKey(key, &menu);
-  if (void_func != NULL && (menu == 0 || GetMenuEnableState(menu))) {
+  if (void_func != NULL) {
     // Clear leader key before execute the function.
     if (!leader_key_.IsEmpty()) {
       leader_key_.Reset();
@@ -974,7 +974,11 @@ bool BookFrame::HandleKeyDownHook(wxKeyEvent& evt) {
                                  true);
     }
 
-    void_func->Exec();
+    // If the command has a menu, execute it only when it's enabled.
+    if (menu == 0 || GetMenuEnableState(menu)) {
+      void_func->Exec();
+    }
+
     return true;
   }
 
@@ -984,6 +988,8 @@ bool BookFrame::HandleKeyDownHook(wxKeyEvent& evt) {
   // If a text command is matched in the current text window, the leader key
   // will also be reset if it's not empty (An event will be posted from the
   // text window for this). See OnTextWindowEvent().
+
+  // TODO: How to check text menu's enable state in TextWindow?
 
   return false;
 }

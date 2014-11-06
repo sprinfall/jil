@@ -41,13 +41,13 @@ bool SaveBufferAs(editor::TextBuffer* buffer, wxWindow* parent) {
   if (wxFileExists(file_path_name)) {
     // Confirm replace.
     wxString msg = wxString::Format(
-        _("The file already exists. Replace it? (%s)"), file_path_name);
-    int confirm_result = wxMessageBox(
-        msg,
-        _("Save File As"),
-        wxOK | wxCANCEL | wxCANCEL_DEFAULT | wxICON_EXCLAMATION | wxCENTRE,
-        parent);
+        _("The file already exists. Replace it? (%s)"),
+        file_path_name);
 
+    long flags = wxOK | wxCANCEL | wxCANCEL_DEFAULT | wxICON_EXCLAMATION;
+    flags |= wxCENTRE;
+
+    int confirm_result = wxMessageBox(msg, _("Save File As"), flags, parent);
     if (confirm_result == wxCANCEL) {
       // No replace.
       return false;
