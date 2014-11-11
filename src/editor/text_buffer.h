@@ -206,12 +206,9 @@ class TextBuffer {
   // Return kInvalidCoord if the line with the given ID doesn't exist.
   Coord LineNrFromId(size_t id) const;
 
-  // Return the previous non-empty line or 0.
-  // \param ignore_spaces A line with only spaces is also empty.
-  // \param skip_comments Skip comment lines.
-  Coord PrevNonEmptyLine(Coord ln,
-                         bool ignore_spaces = true,
-                         bool skip_comments = true) const;
+  // Return the previous non-empty line.
+  // \param skip_comment Skip comment lines.
+  Coord PrevNonEmptyLine(Coord ln, bool skip_comment) const;
 
   // Return the previous line matching the line predication.
   Coord PrevLine(Coord ln, const LinePred& pred) const;

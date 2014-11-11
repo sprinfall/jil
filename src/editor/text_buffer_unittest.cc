@@ -139,12 +139,10 @@ TEST(TextBuffer, PrevNonEmptyLine) {
   buffer->AppendLine(L"/* block");
   buffer->AppendLine(L"   comments */");
   buffer->AppendLine(L"  \t");
-  buffer->AppendLine(L"int j;");
+  buffer->AppendLine(L"int j;");  // Line 11
 
-  EXPECT_EQ(3, buffer->PrevNonEmptyLine(11, true, true));
-  EXPECT_EQ(9, buffer->PrevNonEmptyLine(11, true, false));
-  EXPECT_EQ(10, buffer->PrevNonEmptyLine(11, false, true));
-  EXPECT_EQ(10, buffer->PrevNonEmptyLine(11, false, false));
+  EXPECT_EQ(3, buffer->PrevNonEmptyLine(11, true));
+  EXPECT_EQ(9, buffer->PrevNonEmptyLine(11, false));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

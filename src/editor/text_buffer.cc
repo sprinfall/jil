@@ -659,24 +659,13 @@ Coord TextBuffer::LineNrFromId(size_t id) const {
   return kInvalidCoord;
 }
 
-Coord TextBuffer::PrevNonEmptyLine(Coord ln,
-                                   bool ignore_spaces,
-                                   bool skip_comments) const {
+Coord TextBuffer::PrevNonEmptyLine(Coord ln, bool skip_comment) const {
   for (--ln; ln > 0; --ln) {
     const TextLine* line = Line(ln);
 
-    // TODO: Simplify.
-    if (ignore_spaces) {
-      if (!line->IsEmpty(ignore_spaces)) {
-        if (!skip_comments || !line->CommentsOnly()) {
-          break;
-        }
-      }
-    } else {
-      if (!line->IsEmpty(ignore_spaces)) {
-        if (line->SpacesOnly() || !skip_comments || !line->CommentsOnly()) {
-          break;
-        }
+    if (!line->IsEmpty(true)) {
+      if (!skip_comment || !line->CommentsOnly()) {
+        break;
       }
     }
   }

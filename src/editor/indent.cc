@@ -7,7 +7,7 @@ namespace editor {
 bool StartWith(const TextLine* line,
                const std::wstring& str1,
                const std::wstring& str2,
-               bool ignore_spaces = true,
+               bool ignore_spaces,
                Coord* off = NULL) {
   return line->StartWith(str1, ignore_spaces, off) ||
          line->StartWith(str2, ignore_spaces, off);
@@ -17,7 +17,7 @@ bool StartWith(const TextLine* line,
                const std::wstring& str1,
                const std::wstring& str2,
                const std::wstring& str3,
-               bool ignore_spaces = true,
+               bool ignore_spaces,
                Coord* off = NULL) {
   return line->StartWith(str1, ignore_spaces, off) ||
          line->StartWith(str2, ignore_spaces, off) ||
@@ -25,7 +25,7 @@ bool StartWith(const TextLine* line,
 }
 
 Coord IndentCfg(const TextBuffer* buffer, Coord ln) {
-  Coord prev_ln = buffer->PrevNonEmptyLine(ln);
+  Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
   if (prev_ln == 0) {
     return 0;
   }
@@ -34,7 +34,7 @@ Coord IndentCfg(const TextBuffer* buffer, Coord ln) {
 }
 
 Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
-  Coord prev_ln = buffer->PrevNonEmptyLine(ln);
+  Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
   if (prev_ln == 0) {
     return 0;
   }
@@ -108,16 +108,15 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
   }
 
   // Class accessors: public, protected, private.
-  if (StartWith(line, L"public", L"protected", L"private")) {
-    prev_ln = buffer->PrevLine(prev_ln + 1,
-                               LineStartWith(L"class", L"struct"));
+  if (StartWith(line, L"public", L"protected", L"private", true)) {
+    prev_ln = buffer->PrevLine(prev_ln + 1, LineStartWith(L"class", L"struct"));
     if (prev_ln != 0) {
       return buffer->GetIndent(prev_ln);
     }
     return 0;
   }
 
-  if (StartWith(line, L"case", L"default")) {
+  if (StartWith(line, L"case", L"default", true)) {
     Coord indent = 0;
     Coord temp_ln = buffer->PrevLine(ln, LineStartWith(L"switch"));
     if (temp_ln != 0) {
@@ -133,7 +132,7 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
     Coord j = prev_line->LastNonSpaceChar(x);
     if (j == kInvalidCoord) {
       // No char before '{', check the previous line.
-      prev_ln = buffer->PrevNonEmptyLine(prev_ln);
+      prev_ln = buffer->PrevNonEmptyLine(prev_ln, true);
       if (prev_ln == 0) {  // No previous line.
         return (prev_line->GetIndent(tab_stop) + shift_width);  // TODO: Return?
       }
@@ -198,7 +197,7 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
 }
 
 Coord IndentCSharp(const TextBuffer* buffer, Coord ln) {
-  Coord prev_ln = buffer->PrevNonEmptyLine(ln);
+  Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
   if (prev_ln == 0) {
     return 0;
   }
@@ -207,7 +206,7 @@ Coord IndentCSharp(const TextBuffer* buffer, Coord ln) {
 }
 
 Coord IndentCss(const TextBuffer* buffer, Coord ln) {
-  Coord prev_ln = buffer->PrevNonEmptyLine(ln);
+  Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
   if (prev_ln == 0) {
     return 0;
   }
@@ -216,7 +215,7 @@ Coord IndentCss(const TextBuffer* buffer, Coord ln) {
 }
 
 Coord IndentCue(const TextBuffer* buffer, Coord ln) {
-  Coord prev_ln = buffer->PrevNonEmptyLine(ln);
+  Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
   if (prev_ln == 0) {
     return 0;
   }
@@ -225,7 +224,7 @@ Coord IndentCue(const TextBuffer* buffer, Coord ln) {
 }
 
 Coord IndentGo(const TextBuffer* buffer, Coord ln) {
-  Coord prev_ln = buffer->PrevNonEmptyLine(ln);
+  Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
   if (prev_ln == 0) {
     return 0;
   }
@@ -243,7 +242,7 @@ Coord IndentGo(const TextBuffer* buffer, Coord ln) {
 }
 
 Coord IndentHtml(const TextBuffer* buffer, Coord ln) {
-  Coord prev_ln = buffer->PrevNonEmptyLine(ln);
+  Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
   if (prev_ln == 0) {
     return 0;
   }
@@ -252,7 +251,7 @@ Coord IndentHtml(const TextBuffer* buffer, Coord ln) {
 }
 
 Coord IndentJava(const TextBuffer* buffer, Coord ln) {
-  Coord prev_ln = buffer->PrevNonEmptyLine(ln);
+  Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
   if (prev_ln == 0) {
     return 0;
   }
@@ -261,7 +260,7 @@ Coord IndentJava(const TextBuffer* buffer, Coord ln) {
 }
 
 Coord IndentJavaScript(const TextBuffer* buffer, Coord ln) {
-  Coord prev_ln = buffer->PrevNonEmptyLine(ln);
+  Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
   if (prev_ln == 0) {
     return 0;
   }
@@ -270,7 +269,7 @@ Coord IndentJavaScript(const TextBuffer* buffer, Coord ln) {
 }
 
 Coord IndentPython(const TextBuffer* buffer, Coord ln) {
-  Coord prev_ln = buffer->PrevNonEmptyLine(ln);
+  Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
   if (prev_ln == 0) {
     return 0;
   }
@@ -279,7 +278,7 @@ Coord IndentPython(const TextBuffer* buffer, Coord ln) {
 }
 
 Coord IndentRuby(const TextBuffer* buffer, Coord ln) {
-  Coord prev_ln = buffer->PrevNonEmptyLine(ln);
+  Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
   if (prev_ln == 0) {
     return 0;
   }
@@ -288,7 +287,7 @@ Coord IndentRuby(const TextBuffer* buffer, Coord ln) {
 }
 
 Coord IndentTxt(const TextBuffer* buffer, Coord ln) {
-  Coord prev_ln = buffer->PrevNonEmptyLine(ln);
+  Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
   if (prev_ln == 0) {
     return 0;
   }
@@ -297,7 +296,7 @@ Coord IndentTxt(const TextBuffer* buffer, Coord ln) {
 }
 
 Coord IndentVB(const TextBuffer* buffer, Coord ln) {
-  Coord prev_ln = buffer->PrevNonEmptyLine(ln);
+  Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
   if (prev_ln == 0) {
     return 0;
   }
@@ -306,7 +305,7 @@ Coord IndentVB(const TextBuffer* buffer, Coord ln) {
 }
 
 Coord IndentXml(const TextBuffer* buffer, Coord ln) {
-  Coord prev_ln = buffer->PrevNonEmptyLine(ln);
+  Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
   if (prev_ln == 0) {
     return 0;
   }
