@@ -70,8 +70,7 @@ void FtPlugin::AddAnyof(Lex lex, const std::wstring& joined_words) {
 #if JIL_MATCH_WORD_WITH_HASH
         anyofs_[joined_words.substr(p, i - p)] = lex;
 #else
-        anyofs_.push_back(
-            std::make_pair(joined_words.substr(p, i - p), lex));
+        anyofs_.push_back(std::make_pair(joined_words.substr(p, i - p), lex));
 #endif
       }
 

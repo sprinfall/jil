@@ -31,8 +31,12 @@ class TextLine {
 
   ~TextLine();
 
-  size_t id() const { return id_; }
-  void set_id(size_t id) { id_ = id; }
+  size_t id() const {
+    return id_;
+  }
+  void set_id(size_t id) {
+    id_ = id;
+  }
 
   const std::wstring& data() const {
     return data_;
@@ -65,26 +69,26 @@ class TextLine {
 
   // Return true if the line is empty.
   // \param ignore_spaces A line is empty if it has only empty spaces.
-  bool IsEmpty(bool ignore_spaces = true) const;
+  bool IsEmpty(bool ignore_spaces) const;
 
   // NOTE: ignore_spaces will be ignored if c is an empty space.
-  bool StartWith(wchar_t c,
-                 bool ignore_spaces = true,
-                 Coord* off = NULL) const;
+  bool StartWith(wchar_t c, bool ignore_spaces, Coord* off = NULL) const;
 
   // NOTE: ignore_spaces will be ignored if str[0] is an empty space.
   bool StartWith(const std::wstring& str,
-                 bool ignore_spaces = true,
+                 bool ignore_spaces,
                  Coord* off = NULL) const;
 
   // NOTE: ignore_spaces will be ignored if c is an empty space.
   bool EndWith(wchar_t c,
-               bool ignore_spaces = true,
+               bool ignore_comments,
+               bool ignore_spaces,
                Coord* off = NULL) const;
 
   // NOTE: ignore_spaces will be ignored if str[str.size()-1] is an empty space.
   bool EndWith(const std::wstring& str,
-               bool ignore_spaces = true,
+               bool ignore_comments,
+               bool ignore_spaces,
                Coord* off = NULL) const;
 
   // Line length with tabs expanded.
@@ -153,12 +157,12 @@ class TextLine {
   std::list<QuoteInfo> quote_infos_;
 };
 
-class LinePred {
+class LineFilter {
 public:
   virtual bool Check(const TextLine* line) const = 0;
 };
 
-class LineStartWith : public LinePred {
+class LineStartWith : public LineFilter {
 public:
   LineStartWith(const std::wstring& str1) {
     strs_.push_back(str1);

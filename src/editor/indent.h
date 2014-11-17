@@ -9,6 +9,13 @@ namespace editor {
 
 class TextBuffer;
 
+namespace cpp {
+
+// Check if the given line is a macro definition.
+bool IsLineMacro(const TextBuffer* buffer, Coord ln);
+
+}  // namespace cpp
+
 typedef Coord (*IndentFunc)(const TextBuffer*, Coord);
 
 Coord IndentCfg(const TextBuffer* buffer, Coord ln);

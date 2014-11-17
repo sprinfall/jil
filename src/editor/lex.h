@@ -66,7 +66,7 @@ enum LexType {
 ////////////////////////////////////////////////////////////////////////////////
 
 class Lex {
- public:
+public:
   Lex() : data_(0) {
   }
 
@@ -87,12 +87,12 @@ class Lex {
 
   bool IsEmpty() const { return data_ == 0; }
 
- private:
+private:
   int Make(int major, int minor) {
     return (minor | (major << 16));
   }
 
- private:
+private:
   int data_;
 };
 
@@ -140,7 +140,7 @@ struct LexElement {
 ////////////////////////////////////////////////////////////////////////////////
 
 class Quote {
- public:
+public:
   enum Part {
     kStart,
     kBody,
@@ -159,7 +159,7 @@ class Quote {
     kEscapeEol = 2,
   };
 
- public:
+public:
   Quote();
   Quote(Lex lex,
         const std::wstring& start,
@@ -173,24 +173,37 @@ class Quote {
            const std::wstring& end,
            int flags);
 
-  Lex lex() const { return lex_; }
+  Lex lex() const {
+    return lex_;
+  }
 
-  const std::wstring& start() const { return start_; }
-  const std::wstring& end() const { return end_; }
+  const std::wstring& start() const {
+    return start_;
+  }
 
-  bool HasEnd() const { return !end_.empty(); }
-  bool NoEnd() const { return end_.empty(); }
+  const std::wstring& end() const {
+    return end_;
+  }
 
-  bool multi_line() const { return (flags_ & kMultiLine) != 0; }
-  bool escape_eol() const { return (flags_ & kEscapeEol) != 0; }
+  bool multi_line() const {
+    return (flags_ & kMultiLine) != 0;
+  }
+
+  bool escape_eol() const {
+    return (flags_ & kEscapeEol) != 0;
+  }
 
   void set_ignore_case(bool ignore_case) {
     ignore_case_ = ignore_case;
   }
 
+#if JIL_LEX_REGEX_QUOTE_START
   virtual size_t MatchStart(const std::wstring& str, size_t off) const;
+#else
+  size_t MatchStart(const std::wstring& str, size_t off) const;
+#endif  // JIL_LEX_REGEX_QUOTE_START
 
- protected:
+protected:
   Lex lex_;
   std::wstring start_;
   std::wstring end_;
@@ -205,14 +218,14 @@ class Quote {
 ////////////////////////////////////////////////////////////////////////////////
 
 class RegexQuote : public Quote {
- public:
+public:
   RegexQuote();
 
   virtual ~RegexQuote();
 
   virtual size_t MatchStart(const std::wstring& str, size_t off) const override;
 
- private:
+private:
   boost::wregex* start_re_;
 };
 
@@ -221,21 +234,27 @@ class RegexQuote : public Quote {
 ////////////////////////////////////////////////////////////////////////////////
 
 class Regex {
- public:
+public:
   Regex();
   virtual ~Regex();
 
-  void set_lex(Lex lex) { lex_ = lex; }
-  void set_lex(LexMajorType major, int minor = 0) { lex_.Set(major, minor); }
+  void set_lex(Lex lex) {
+    lex_ = lex;
+  }
+  void set_lex(LexMajorType major, int minor = 0) {
+    lex_.Set(major, minor);
+  }
 
-  Lex lex() const { return lex_; }
+  Lex lex() const {
+    return lex_;
+  }
 
   // Put ignore_case here because regex_constants::icase
   void set_pattern(const std::wstring& pattern, bool ignore_case);
 
   size_t Match(const std::wstring& str, size_t off) const;
 
- private:
+private:
   Lex lex_;
   std::wstring pattern_;
   boost::wregex* re_;

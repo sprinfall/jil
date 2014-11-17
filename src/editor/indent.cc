@@ -24,6 +24,14 @@ bool StartWith(const TextLine* line,
          line->StartWith(str3, ignore_spaces, off);
 }
 
+static Coord GetPrevLineIndent(const TextBuffer* buffer, Coord ln) {
+  Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
+  if (prev_ln == 0) {
+    return 0;
+  }
+  return buffer->GetIndent(prev_ln);
+}
+
 Coord IndentCfg(const TextBuffer* buffer, Coord ln) {
   Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
   if (prev_ln == 0) {
@@ -33,12 +41,27 @@ Coord IndentCfg(const TextBuffer* buffer, Coord ln) {
   return buffer->GetIndent(prev_ln);
 }
 
-Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
-  Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
-  if (prev_ln == 0) {
-    return 0;
+namespace cpp {
+
+bool IsLineMacro(const TextBuffer* buffer, Coord ln) {
+  for (; ln > 0; --ln) {
+    if (buffer->Line(ln)->StartWith(L'#', true)) {
+      return true;
+    }
+
+    if (ln > 1 && buffer->Line(ln - 1)->EndWith(L'\\', false, false)) {
+      continue;
+    }
+
+    break;
   }
 
+  return false;
+}
+
+}  // namespace cpp
+
+Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
   // Indent options.
   bool indent_namespace = false;
   bool indent_case = false;
@@ -46,39 +69,79 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
   Coord tab_stop = buffer->options().tab_stop;
   Coord shift_width = buffer->options().shift_width;
 
-  const TextLine* prev_line = buffer->Line(prev_ln);
-  const TextLine* line = buffer->Line(ln);
-
   Coord x = kInvalidCoord;
 
-  // If the current line starts with '}', indent the same as the line with the
-  // paired '{'.
-  if (line->StartWith(L"}", true, &x)) {
+  const TextLine* line = buffer->Line(ln);
+
+  //----------------------------------------------------------------------------
+
+  if (line->StartWith(L'#', true)) {
+    // No indent for macro definition.
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+
+  if (line->StartWith(L'}', true, &x)) {
+    // If the current line starts with '}', indent the same as the line with
+    // the paired '{'.
+
     // Find '{'.
     TextPoint p(x, ln);  // '}'
     p = buffer->UnpairedLeftKey(p, L'{', L'}');
 
     if (!p.Valid()) {
       // Can't find '{', indent the same as previous line.
-      return prev_line->GetIndent(tab_stop);
+      return GetPrevLineIndent(buffer, ln);
     }
 
     // The line with '{'.
-    prev_ln = p.y;
-    prev_line = buffer->Line(prev_ln);
+    Coord temp_ln = p.y;
+    const TextLine* temp_line = buffer->Line(temp_ln);
 
     // Check the char before '{'.
-    Coord i = prev_line->LastNonSpaceChar(p.x);
-    if (i == kInvalidCoord) {
-      // The line contains only '{', indent '}' the same as '{'.
-      // NOTE: Can't use p.x, there might be tabs.
-      return prev_line->GetIndent(tab_stop);
+    x = temp_line->LastNonSpaceChar(p.x);
+
+    if (x == kInvalidCoord) {
+      // No char before '{'.
+      // NOTE: Can't use p.x because there might be tabs.
+      return temp_line->GetIndent(tab_stop);
     }
 
+    if (temp_line->Char(x) == L')') {
+      // The char before '{' is ')'. (function, if else, switch, etc.)
+      p.Set(x, temp_ln);  // ')'
+      p = buffer->UnpairedLeftKey(p, L'(', L')');
+
+      if (p.Valid() && p.y != temp_ln) {
+        // Find '(' and '(' and ')' are not in the same line.
+        // Indent the same as the line with '('.
+        return buffer->Line(p.y)->GetIndent(tab_stop);
+      }
+
+      // Indent the same as the line with ')'.
+      return temp_line->GetIndent(tab_stop);
+    }
+
+    // Indent the same as the line ending with '{'.
+    return temp_line->GetIndent(tab_stop);
+  }
+
+  //----------------------------------------------------------------------------
+
+  if (line->StartWith(L'{', true)) {
+    Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
+    if (prev_ln == 0) {
+      return 0;
+    }
+
+    const TextLine* prev_line = buffer->Line(prev_ln);
+
+    x = prev_line->LastNonSpaceChar();
+
     // function, if else, switch, etc.
-    if (prev_line->Char(i) == L')') {
-      // The char before '{' is ')'.
-      p.Set(i, prev_ln);  // ')'
+    if (prev_line->Char(x) == L')') {
+      TextPoint p(x, prev_ln);  // ')'
       p = buffer->UnpairedLeftKey(p, L'(', L')');
 
       if (p.Valid() && p.y != prev_ln) {
@@ -90,31 +153,18 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
     return prev_line->GetIndent(tab_stop);
   }
 
-  if (line->StartWith(L"{")) {
-    Coord i = prev_line->LastNonSpaceChar();  // Must be valid.
-
-    // function, if else, switch, etc.
-    if (prev_line->Char(i) == L')') {
-      TextPoint p(i, prev_ln);  // ')'
-      p = buffer->UnpairedLeftKey(p, L'(', L')');
-
-      if (p.Valid() && p.y != prev_ln) {
-        prev_ln = p.y;
-        prev_line = buffer->Line(prev_ln);
-      }
-    }
-
-    return prev_line->GetIndent(tab_stop);
-  }
+  //----------------------------------------------------------------------------
 
   // Class accessors: public, protected, private.
   if (StartWith(line, L"public", L"protected", L"private", true)) {
-    prev_ln = buffer->PrevLine(prev_ln + 1, LineStartWith(L"class", L"struct"));
+    Coord prev_ln = buffer->PrevLine(ln, LineStartWith(L"class", L"struct"));
     if (prev_ln != 0) {
       return buffer->GetIndent(prev_ln);
     }
     return 0;
   }
+
+  //----------------------------------------------------------------------------
 
   if (StartWith(line, L"case", L"default", true)) {
     Coord indent = 0;
@@ -128,7 +178,22 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
     return indent;
   }
 
-  if (prev_line->EndWith(L"{", true, &x)) {
+  //----------------------------------------------------------------------------
+
+  //// The EOL of previous line is escaped.
+  //if (prev_line->EndWith(L'\\', true)) {
+  //  return prev_line->GetIndent(tab_stop) + shift_width;
+  //}
+
+  //----------------------------------------------------------------------------
+
+  Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
+  if (prev_ln == 0) {
+    return 0;
+  }
+  const TextLine* prev_line = buffer->Line(prev_ln);
+
+  if (prev_line->EndWith(L'{', true, true, &x)) {
     Coord j = prev_line->LastNonSpaceChar(x);
     if (j == kInvalidCoord) {
       // No char before '{', check the previous line.
@@ -152,7 +217,7 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
     }
 
     if (!indent_namespace) {  // Don't indent namespace.
-      if (prev_line->StartWith(L"namespace")) {
+      if (prev_line->StartWith(L"namespace", true)) {
         return prev_line->GetIndent(tab_stop);
       }
     }
@@ -160,13 +225,16 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
     return prev_line->GetIndent(tab_stop) + shift_width;
   }
 
+  //----------------------------------------------------------------------------
+
   // public:/protected:/private:, case label:, etc.
-  if (prev_line->EndWith(L":")) {
+  if (prev_line->EndWith(L':', true, true)) {
     return prev_line->GetIndent(tab_stop) + shift_width;
   }
 
-  // TODO
-  if (prev_line->EndWith(L",", true, &x)) {
+  //----------------------------------------------------------------------------
+
+  if (prev_line->EndWith(L',', true, true, &x)) {
     // Parameters?
     TextPoint p(x, prev_ln);  // ','
     p = buffer->UnpairedLeftKey(p, L'(', L')', true);
@@ -180,7 +248,9 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
     }
   }
 
-  if (prev_line->EndWith(L")", true, &x)) {
+  //----------------------------------------------------------------------------
+
+  if (prev_line->EndWith(L')', true, true, &x)) {
     const TextLine* temp_line = prev_line;
     TextPoint p = buffer->UnpairedLeftKey(TextPoint(x, prev_ln), L'(', L')');
     if (p.Valid() && p.y != prev_ln) {
@@ -192,7 +262,17 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
     }
   }
 
+  //----------------------------------------------------------------------------
+
   // By default, use the same indent as the previous line.
+  prev_ln = buffer->PrevNonEmptyLine(ln, true);
+  if (prev_ln == 0) {
+    return 0;
+  }
+
+  prev_line = buffer->Line(prev_ln);
+
+
   return prev_line->GetIndent(tab_stop);
 }
 

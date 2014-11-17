@@ -70,7 +70,7 @@ bool TextLine::StartWith(wchar_t c,
 
   if (data_[i] == c) {
     if (off != NULL) {
-      *off = i;
+      *off = CoordCast(i);
     }
     return true;
   }
@@ -97,7 +97,7 @@ bool TextLine::StartWith(const std::wstring& str,
 
   if (wcsncmp(&data_[i], &str[0], str.size()) == 0) {
     if (off != NULL) {
-      *off = i;
+      *off = CoordCast(i);
     }
     return true;
   }
@@ -105,14 +105,35 @@ bool TextLine::StartWith(const std::wstring& str,
   return false;
 }
 
-bool TextLine::EndWith(wchar_t c, bool ignore_spaces, Coord* off) const {
+bool TextLine::EndWith(wchar_t c,
+                       bool ignore_comments,
+                       bool ignore_spaces,
+                       Coord* off) const {
   if (data_.empty()) {
     return false;
   }
 
-  size_t len = data_.size();
+  Coord len = CoordCast(data_.size());
 
-  if (ignore_spaces && !IsSpace(c)) {
+  bool do_ignore_spaces = ignore_spaces && !IsSpace(c);
+
+  if (ignore_comments) {
+    std::list<LexElement*>::const_reverse_iterator it = lex_elements_.rbegin();
+    for (; it != lex_elements_.rend(); ++it) {
+      if (do_ignore_spaces) {
+        for (; len > 0 && IsSpace(data_[len-1]); --len) {}
+      }
+
+      const LexElement* le = *it;
+      if (le->off + le->len >= len && le->lex == kLexComment) {
+        len = le->off;
+      } else {
+        break;
+      }
+    }
+  }
+
+  if (do_ignore_spaces) {
     for (; len > 0 && IsSpace(data_[len-1]); --len) {}
   }
 
@@ -120,7 +141,7 @@ bool TextLine::EndWith(wchar_t c, bool ignore_spaces, Coord* off) const {
     return false;
   }
 
-  size_t i = len - 1;
+  Coord i = len - 1;
   if (data_[i] == c) {
     if (off != NULL) {
       *off = i;
@@ -132,27 +153,46 @@ bool TextLine::EndWith(wchar_t c, bool ignore_spaces, Coord* off) const {
 }
 
 bool TextLine::EndWith(const std::wstring& str,
+                       bool ignore_comments,
                        bool ignore_spaces,
                        Coord* off) const {
   if (str.size() == 1) {
-    return EndWith(str[0], ignore_spaces, off);
+    return EndWith(str[0], ignore_comments, ignore_spaces, off);
   }
 
   if (data_.empty()) {
     return false;
   }
 
-  size_t len = data_.size();
+  Coord len = CoordCast(data_.size());
 
-  if (ignore_spaces && !IsSpace(str[str.size()-1])) {
+  bool do_ignore_spaces = ignore_spaces && !IsSpace(str[str.size()-1]);
+
+  if (ignore_comments) {
+    std::list<LexElement*>::const_reverse_iterator it = lex_elements_.rbegin();
+    for (; it != lex_elements_.rend(); ++it) {
+      if (do_ignore_spaces) {
+        for (; len > 0 && IsSpace(data_[len-1]); --len) {}
+      }
+
+      const LexElement* le = *it;
+      if (le->off + le->len >= len && le->lex == kLexComment) {
+        len = le->off;
+      } else {
+        break;
+      }
+    }
+  }
+
+  if (do_ignore_spaces) {
     for (; len > 0 && IsSpace(data_[len-1]); --len) {}
   }
 
-  if (len < str.size()) {
+  if (len < CoordCast(str.size())) {
     return false;
   }
 
-  size_t i = len - str.size();
+  Coord i = len - CoordCast(str.size());
   if (wcsncmp(&data_[i], &str[0], str.size()) == 0) {
     if (off != NULL) {
       *off = i;

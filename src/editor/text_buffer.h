@@ -29,7 +29,7 @@ class FtPlugin;
 class TextExtent;
 class Action;
 class InsertCharAction;
-class LinePred;
+class LineFilter;
 
 enum Bracket {
   kParenthesis = 0,   // ()
@@ -210,8 +210,13 @@ class TextBuffer {
   // \param skip_comment Skip comment lines.
   Coord PrevNonEmptyLine(Coord ln, bool skip_comment) const;
 
-  // Return the previous line matching the line predication.
-  Coord PrevLine(Coord ln, const LinePred& pred) const;
+  // Return the previous line matching the filter.
+  Coord PrevLine(Coord ln, const LineFilter& filter) const;
+
+  // Return the previous line matching the two filters.
+  Coord PrevLine(Coord ln,
+                 const LineFilter& filter1,
+                 const LineFilter& filter2) const;
 
   const std::wstring& LineData(Coord ln) const;
 

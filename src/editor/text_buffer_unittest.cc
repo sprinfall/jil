@@ -45,46 +45,46 @@ TEST(TextBuffer, Create_WithText_EmptyLines) {
   std::wstring text;
   buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
   EXPECT_EQ(1, buffer->LineCount());
-  EXPECT_TRUE(buffer->Line(1)->IsEmpty());
+  EXPECT_TRUE(buffer->Line(1)->IsEmpty(true));
 
   text = L"\r";
   buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
   EXPECT_EQ(2, buffer->LineCount());
-  EXPECT_TRUE(buffer->Line(1)->IsEmpty());
-  EXPECT_TRUE(buffer->Line(2)->IsEmpty());
+  EXPECT_TRUE(buffer->Line(1)->IsEmpty(true));
+  EXPECT_TRUE(buffer->Line(2)->IsEmpty(true));
 
   text = L"\n";
   buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
   EXPECT_EQ(2, buffer->LineCount());
-  EXPECT_TRUE(buffer->Line(1)->IsEmpty());
-  EXPECT_TRUE(buffer->Line(2)->IsEmpty());
+  EXPECT_TRUE(buffer->Line(1)->IsEmpty(true));
+  EXPECT_TRUE(buffer->Line(2)->IsEmpty(true));
 
   text = L"\r\n";
   buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
   EXPECT_EQ(2, buffer->LineCount());
-  EXPECT_TRUE(buffer->Line(1)->IsEmpty());
-  EXPECT_TRUE(buffer->Line(2)->IsEmpty());
+  EXPECT_TRUE(buffer->Line(1)->IsEmpty(true));
+  EXPECT_TRUE(buffer->Line(2)->IsEmpty(true));
 
   text = L"\r\r";
   buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
   EXPECT_EQ(3, buffer->LineCount());
-  EXPECT_TRUE(buffer->Line(1)->IsEmpty());
-  EXPECT_TRUE(buffer->Line(2)->IsEmpty());
-  EXPECT_TRUE(buffer->Line(3)->IsEmpty());
+  EXPECT_TRUE(buffer->Line(1)->IsEmpty(true));
+  EXPECT_TRUE(buffer->Line(2)->IsEmpty(true));
+  EXPECT_TRUE(buffer->Line(3)->IsEmpty(true));
 
   text = L"\n\n";
   buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
   EXPECT_EQ(3, buffer->LineCount());
-  EXPECT_TRUE(buffer->Line(1)->IsEmpty());
-  EXPECT_TRUE(buffer->Line(2)->IsEmpty());
-  EXPECT_TRUE(buffer->Line(3)->IsEmpty());
+  EXPECT_TRUE(buffer->Line(1)->IsEmpty(true));
+  EXPECT_TRUE(buffer->Line(2)->IsEmpty(true));
+  EXPECT_TRUE(buffer->Line(3)->IsEmpty(true));
 
   text = L"\r\n\r\n";
   buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
   EXPECT_EQ(3, buffer->LineCount());
-  EXPECT_TRUE(buffer->Line(1)->IsEmpty());
-  EXPECT_TRUE(buffer->Line(2)->IsEmpty());
-  EXPECT_TRUE(buffer->Line(3)->IsEmpty());
+  EXPECT_TRUE(buffer->Line(1)->IsEmpty(true));
+  EXPECT_TRUE(buffer->Line(2)->IsEmpty(true));
+  EXPECT_TRUE(buffer->Line(3)->IsEmpty(true));
 }
 
 TEST(TextBuffer, Create_WithText) {
@@ -143,6 +143,24 @@ TEST(TextBuffer, PrevNonEmptyLine) {
 
   EXPECT_EQ(3, buffer->PrevNonEmptyLine(11, true));
   EXPECT_EQ(9, buffer->PrevNonEmptyLine(11, false));
+}
+
+TEST(TextBuffer, PrevLine) {
+  FtPlugin ft_plugin(FileType("cpp", "C++"));
+  ft_plugin.AddQuote(new Quote(kLexComment, L"//", L"", Quote::kEscapeEol));
+  ft_plugin.AddQuote(new Quote(kLexComment, L"/*", L"*/", Quote::kMultiLine));
+
+  TextBufferPtr buffer;
+  buffer.reset(TextBuffer::Create(&ft_plugin, kEncoding));
+
+  buffer->AppendLine(L"    class {");         // Line 2
+  buffer->AppendLine(L"");                    // Empty line
+  buffer->AppendLine(L"  \t");                // Empty line
+  buffer->AppendLine(L"// line comments");
+  buffer->AppendLine(L"  \t// line comments");
+  buffer->AppendLine(L"    public:");
+
+  EXPECT_EQ(2, buffer->PrevLine(7, LineStartWith(L"class")));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -8,6 +8,10 @@
 
 using namespace jil::editor;
 
+typedef std::auto_ptr<TextBuffer> TextBufferPtr;
+
+static const Encoding kEncoding = EncodingFromName(ENCODING_NAME_ISO_8859_1);
+
 class IndentCppTest : public testing::Test {
 protected:
   virtual void SetUp() {
@@ -16,9 +20,13 @@ protected:
     ft_plugin_->options().tab_stop = 4;
     ft_plugin_->options().shift_width = 4;
 
-    Encoding encoding = EncodingFromName(ENCODING_NAME_ISO_8859_1);
+    ft_plugin_->options().operators = L"!@#%^&*()+-=\\|/?[]{}<>,.;:'\"`~";
+    ft_plugin_->options().delimiters = L"!@#%^&*()+-=\\|/?[]{}<>,.;:'\"`~ \t";
 
-    buffer_ = TextBuffer::Create(ft_plugin_, encoding);
+    ft_plugin_->AddQuote(new Quote(Lex(kLexComment), L"/*", L"*/", Quote::kMultiLine));
+    ft_plugin_->AddQuote(new Quote(Lex(kLexComment), L"//", L"", Quote::kEscapeEol));
+
+    buffer_ = TextBuffer::Create(ft_plugin_, kEncoding);
 
     indent_cpp_ = IndentCpp;
   }
@@ -28,20 +36,46 @@ protected:
     delete ft_plugin_;
   }
 
-  void Assert(Coord first, Coord last = kInvalidCoord) {
-    if (last == kInvalidCoord) {
-      last = buffer_->LineCount();
-    }
-
-    for (Coord ln = first; ln <= last; ++ln) {
-      EXPECT_EQ(buffer_->GetIndent(ln), indent_cpp_(buffer_, ln));
-    }
-  }
-
   FtPlugin* ft_plugin_;
   TextBuffer* buffer_;
   IndentFunc indent_cpp_;
 };
+
+#define ASSERT_LINE(ln)\
+  EXPECT_EQ(buffer_->GetIndent(ln), indent_cpp_(buffer_, ln));
+
+TEST(IndentCppHelperTest, IsLineMacro) {
+  FtPlugin ft_plugin(FileType(wxT("cpp"), wxT("C++")));
+  TextBufferPtr buffer(TextBuffer::Create(&ft_plugin, kEncoding));
+
+  buffer->AppendLine(L"#define MAX_SIZE 256");
+
+  EXPECT_TRUE(cpp::IsLineMacro(buffer.get(), 2));
+}
+
+TEST(IndentCppHelperTest, IsLineMacro2) {
+  FtPlugin ft_plugin(FileType(wxT("cpp"), wxT("C++")));
+  TextBufferPtr buffer(TextBuffer::Create(&ft_plugin, kEncoding));
+
+  buffer->AppendLine(L"#define MAX_SIZE \\");
+  buffer->AppendLine(L"    256");
+
+  EXPECT_TRUE(cpp::IsLineMacro(buffer.get(), 2));
+  EXPECT_TRUE(cpp::IsLineMacro(buffer.get(), 3));
+}
+
+TEST(IndentCppHelperTest, IsLineMacro3) {
+  FtPlugin ft_plugin(FileType(wxT("cpp"), wxT("C++")));
+  TextBufferPtr buffer(TextBuffer::Create(&ft_plugin, kEncoding));
+
+  buffer->AppendLine(L"#define MAX_SIZE 256 \\");
+  buffer->AppendLine(L"");
+  buffer->AppendLine(L"   int i;");
+
+  EXPECT_TRUE(cpp::IsLineMacro(buffer.get(), 2));
+  EXPECT_TRUE(cpp::IsLineMacro(buffer.get(), 3));
+  EXPECT_FALSE(cpp::IsLineMacro(buffer.get(), 4));
+}
 
 TEST_F(IndentCppTest, SimpleBraceBlock) {
   buffer_->AppendLine(L"int a, b, c;");
@@ -49,7 +83,9 @@ TEST_F(IndentCppTest, SimpleBraceBlock) {
   buffer_->AppendLine(L"    int sum = a + b + c;");
   buffer_->AppendLine(L"}");
 
-  Assert(3);
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
 }
 
 TEST_F(IndentCppTest, SimpleBraceBlock_EmptyBody) {
@@ -57,14 +93,15 @@ TEST_F(IndentCppTest, SimpleBraceBlock_EmptyBody) {
   buffer_->AppendLine(L"{");
   buffer_->AppendLine(L"}");
 
-  Assert(3);
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
 }
 
 TEST_F(IndentCppTest, FunctionDef_EmptyBody) {
   buffer_->AppendLine(L"void None() {");
   buffer_->AppendLine(L"}");
 
-  Assert(3);
+  ASSERT_LINE(3);
 }
 
 TEST_F(IndentCppTest, FunctionDef_EmptyBody_NewLineBrace) {
@@ -72,7 +109,8 @@ TEST_F(IndentCppTest, FunctionDef_EmptyBody_NewLineBrace) {
   buffer_->AppendLine(L"{");
   buffer_->AppendLine(L"}");
 
-  Assert(3);
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
 }
 
 TEST_F(IndentCppTest, FunctionDef_OneLineParams) {
@@ -80,7 +118,8 @@ TEST_F(IndentCppTest, FunctionDef_OneLineParams) {
   buffer_->AppendLine(L"    return a + b + c;");
   buffer_->AppendLine(L"}");
 
-  Assert(3);
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
 }
 
 TEST_F(IndentCppTest, FunctionDef_MultiLineParams) {
@@ -90,7 +129,10 @@ TEST_F(IndentCppTest, FunctionDef_MultiLineParams) {
   buffer_->AppendLine(L"    return a + b + c;");
   buffer_->AppendLine(L"}");
 
-  Assert(3);
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
 }
 
 TEST_F(IndentCppTest, FunctionDef_MultiLineParams2) {
@@ -100,7 +142,10 @@ TEST_F(IndentCppTest, FunctionDef_MultiLineParams2) {
   buffer_->AppendLine(L"         return a + b + c;");
   buffer_->AppendLine(L"     }");
 
-  Assert(3);
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
 }
 
 TEST_F(IndentCppTest, FunctionDef_OneLineParams_NewLineBrace) {
@@ -109,7 +154,9 @@ TEST_F(IndentCppTest, FunctionDef_OneLineParams_NewLineBrace) {
   buffer_->AppendLine(L"    return a + b + c;");
   buffer_->AppendLine(L"}");
 
-  Assert(3);
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
 }
 
 TEST_F(IndentCppTest, FunctionDef_MultiLineParams_NewLineBrace) {
@@ -120,7 +167,11 @@ TEST_F(IndentCppTest, FunctionDef_MultiLineParams_NewLineBrace) {
   buffer_->AppendLine(L"    return a + b + c;");
   buffer_->AppendLine(L"}");
 
-  Assert(3);
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
+  ASSERT_LINE(7);
 }
 
 //TEST_F(CppIndentTest, FunctionCall_StringParenthesis) {;
@@ -129,6 +180,8 @@ TEST_F(IndentCppTest, FunctionDef_MultiLineParams_NewLineBrace) {
 //  buffer_->AppendLine(L"                                      L')');");
 //
 //  Assert(3);
+  //ASSERT_LINE(3);
+  //ASSERT_LINE(4);
 //}
 
 TEST_F(IndentCppTest, If_NoBrace) {
@@ -138,7 +191,7 @@ TEST_F(IndentCppTest, If_NoBrace) {
   //buffer_->AppendLine(L"    return a;");
   //buffer_->AppendLine(L"int i;");
 
-  Assert(3);
+  ASSERT_LINE(3);
 }
 
 TEST_F(IndentCppTest, If_OneLineConditions) {
@@ -146,7 +199,8 @@ TEST_F(IndentCppTest, If_OneLineConditions) {
   buffer_->AppendLine(L"    return b;");
   buffer_->AppendLine(L"}");
 
-  Assert(3);
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
 }
 
 TEST_F(IndentCppTest, If_NoBrace_OneLine) {
@@ -154,7 +208,8 @@ TEST_F(IndentCppTest, If_NoBrace_OneLine) {
   buffer_->AppendLine(L"else return a;");
   buffer_->AppendLine(L"int i;");
 
-  Assert(3);
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
 }
 
 TEST_F(IndentCppTest, For_NoBrace) {
@@ -162,7 +217,7 @@ TEST_F(IndentCppTest, For_NoBrace) {
   buffer_->AppendLine(L"    sum += i;");
   //buffer_->AppendLine(L"int i;");
 
-  Assert(3);
+  ASSERT_LINE(3);
 }
 
 TEST_F(IndentCppTest, Class) {
@@ -170,28 +225,29 @@ TEST_F(IndentCppTest, Class) {
   buffer_->AppendLine(L"        int count_;");
   buffer_->AppendLine(L"    };");
 
-  Assert(3);
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
 }
 
 TEST_F(IndentCppTest, Class_PublicAccessor) {
   buffer_->AppendLine(L"    class A {");
   buffer_->AppendLine(L"    public:");
 
-  Assert(3);
+  ASSERT_LINE(3);
 }
 
 TEST_F(IndentCppTest, Class_ProtectedAccessor) {
   buffer_->AppendLine(L"    class A {");
   buffer_->AppendLine(L"    protected:");
 
-  Assert(3);
+  ASSERT_LINE(3);
 }
 
 TEST_F(IndentCppTest, Class_PrivateAccessor) {
   buffer_->AppendLine(L"    class A {");
   buffer_->AppendLine(L"    private:");
 
-  Assert(3);
+  ASSERT_LINE(3);
 }
 
 TEST_F(IndentCppTest, Class_EmptyAccessors) {
@@ -201,7 +257,10 @@ TEST_F(IndentCppTest, Class_EmptyAccessors) {
   buffer_->AppendLine(L"    private:");
   buffer_->AppendLine(L"    };");
 
-  Assert(3);
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
 }
 
 TEST_F(IndentCppTest, Class_Accessors) {
@@ -214,7 +273,13 @@ TEST_F(IndentCppTest, Class_Accessors) {
   buffer_->AppendLine(L"        int count_;");
   buffer_->AppendLine(L"    };");
 
-  Assert(3);
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
+  ASSERT_LINE(7);
+  ASSERT_LINE(8);
+  ASSERT_LINE(9);
 }
 
 TEST_F(IndentCppTest, Struct_EmptyAccessors) {
@@ -224,7 +289,10 @@ TEST_F(IndentCppTest, Struct_EmptyAccessors) {
   buffer_->AppendLine(L"    private:");
   buffer_->AppendLine(L"    };");
 
-  Assert(3);
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
 }
 
 TEST_F(IndentCppTest, Struct_Accessors) {
@@ -237,7 +305,13 @@ TEST_F(IndentCppTest, Struct_Accessors) {
   buffer_->AppendLine(L"        int count_;");
   buffer_->AppendLine(L"    };");
 
-  Assert(3);
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
+  ASSERT_LINE(7);
+  ASSERT_LINE(8);
+  ASSERT_LINE(9);
 }
 
 TEST_F(IndentCppTest, SwitchCase) {
@@ -254,5 +328,45 @@ TEST_F(IndentCppTest, SwitchCase) {
   buffer_->AppendLine(L"        return L\"\";");
   buffer_->AppendLine(L"    }");
 
-  Assert(3, 4);
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  //ASSERT_LINE(5);
+  //ASSERT_LINE(6);
+  //ASSERT_LINE(7);
+  //ASSERT_LINE(8);
+  //ASSERT_LINE(9);
+}
+
+//TEST_F(IndentCppTest, Macro_OneLine) {
+//  buffer_->AppendLine(L"    int i;");
+//  buffer_->AppendLine(L"#define MAX_SIZE 256");
+//  buffer_->AppendLine(L"    int j;");
+//
+//  ASSERT_LINE(3);
+//  ASSERT_LINE(4);
+//}
+
+//TEST_F(IndentCppTest, Macro_EolEscaped) {
+//  buffer_->AppendLine(L"        int i;");
+//  buffer_->AppendLine(L"#define MAX_SIZE \\");
+//  buffer_->AppendLine(L"    256");
+//  buffer_->AppendLine(L"        int j;");
+//
+//  Assert(3);
+//}
+//
+//TEST_F(IndentCppTest, Macro_EolEscaped2) {
+//  buffer_->AppendLine(L"        int i;");
+//  buffer_->AppendLine(L"#define MAX_SIZE 256 \\");
+//  buffer_->AppendLine(L"");
+//  buffer_->AppendLine(L"        int j;");
+//
+//  Assert(3);
+//}
+
+TEST_F(IndentCppTest, CommentedBlockStart) {
+  buffer_->AppendLine(L"        int i;  // {");
+  buffer_->AppendLine(L"        int j;");
+
+  ASSERT_LINE(3);
 }

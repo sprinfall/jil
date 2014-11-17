@@ -673,9 +673,32 @@ Coord TextBuffer::PrevNonEmptyLine(Coord ln, bool skip_comment) const {
   return ln;
 }
 
-Coord TextBuffer::PrevLine(Coord ln, const LinePred& pred) const {
-  for (--ln; ln > 0 && !pred.Check(Line(ln)); --ln) {
+Coord TextBuffer::PrevLine(Coord ln, const LineFilter& filter) const {
+  assert(ln > 0);
+
+  for (--ln; ln > 0; --ln) {
+    if (filter.Check(Line(ln))) {
+      break;
+    }
   }
+
+  return ln;
+}
+
+Coord TextBuffer::PrevLine(Coord ln,
+                           const LineFilter& filter1,
+                           const LineFilter& filter2) const {
+  assert(ln > 0);
+
+  const TextLine* line = NULL;
+
+  for (--ln; ln > 0; --ln) {
+    line = Line(ln);
+    if (filter1.Check(line) && filter2.Check(line)) {
+      break;
+    }
+  }
+
   return ln;
 }
 
@@ -2563,7 +2586,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
 
   size_t i = 0;
 
-  if (quote != NULL && !quote->multi_line() && quote->NoEnd()) {
+  if (quote != NULL && !quote->multi_line() && quote->end().empty()) {
     // Single line quote ending with EOL, don't have to step forward by char.
     // NOTE: If nested quote is allowed, this doesn't work.
     i = line_data.size();
@@ -2581,7 +2604,8 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
 
     if (quote != NULL) {  // Check quote end.
       size_t quote_i = i;
-      if (!quote->NoEnd() && SubStringEquals(line_data, i, quote->end())) {
+      if (!quote->end().empty() &&
+          SubStringEquals(line_data, i, quote->end())) {
         quote_i += quote->end().length();
 
         if (i == 0 || !IsUnescapedBackSlash(line_data, i - 1)) {  // Quote ends.
@@ -2606,7 +2630,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
         quote_off = i;
         line->AddQuoteInfo(quote, i, quote_i - i, Quote::kStart);
 
-        if (!quote->multi_line() && quote->NoEnd()) {
+        if (!quote->multi_line() && quote->end().empty()) {
           // Single line quote ends with EOL.
           // Don't have to step forward by char. Break to go to the line end.
           // NOTE: If nested quote is allowed, this doesn't work.
@@ -2712,7 +2736,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
                      line_data.size() - quote_off,
                      Quote::kBody);
 
-  if (quote->NoEnd()) {  // Quote ends with EOL.
+  if (quote->end().empty()) {  // Quote ends with EOL.
     if (!quote->escape_eol() ||
         !(!line_data.empty() &&
           IsUnescapedBackSlash(line_data, line_data.size() - 1))) {

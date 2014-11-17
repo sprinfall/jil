@@ -172,46 +172,88 @@ TEST(TextLine, StartWith_Char) {
 TEST(TextLine, EndWith_Char) {
   TextLine line(0, L"");
 
-  EXPECT_FALSE(line.EndWith(L'a', true));
-  EXPECT_FALSE(line.EndWith(L'a', false));
+  EXPECT_FALSE(line.EndWith(L'a', true, true));
+  EXPECT_FALSE(line.EndWith(L'a', true, false));
+  EXPECT_FALSE(line.EndWith(L'a', false, true));
+  EXPECT_FALSE(line.EndWith(L'a', false, false));
 
   line.Clear();
   line.Append(L" \t");
 
   Coord off = kInvalidCoord;
-  EXPECT_TRUE(line.EndWith(L'\t', true, &off));
+  EXPECT_TRUE(line.EndWith(L'\t', true, true, &off));
+  EXPECT_TRUE(line.EndWith(L'\t', false, true, &off));
   EXPECT_EQ(1, off);
+
   off = kInvalidCoord;
-  EXPECT_TRUE(line.EndWith(L'\t', false, &off));
+  EXPECT_TRUE(line.EndWith(L'\t', true, false, &off));
+  EXPECT_TRUE(line.EndWith(L'\t', false, false, &off));
   EXPECT_EQ(1, off);
 
   line.Clear();
   line.Append(L"\t ");
 
   off = kInvalidCoord;
-  EXPECT_TRUE(line.EndWith(L' ', true, &off));
+  EXPECT_TRUE(line.EndWith(L' ', true, true, &off));
+  EXPECT_TRUE(line.EndWith(L' ', false, true, &off));
   EXPECT_EQ(1, off);
+
   off = kInvalidCoord;
-  EXPECT_TRUE(line.EndWith(L' ', false, &off));
+  EXPECT_TRUE(line.EndWith(L' ', true, false, &off));
+  EXPECT_TRUE(line.EndWith(L' ', false, false, &off));
   EXPECT_EQ(1, off);
 
   line.Clear();
   line.Append(L"test\t ");
 
   off = kInvalidCoord;
-  EXPECT_TRUE(line.EndWith(L't', true, &off));
+  EXPECT_TRUE(line.EndWith(L't', true, true, &off));
+  EXPECT_TRUE(line.EndWith(L't', false, true, &off));
   EXPECT_EQ(3, off);
-  EXPECT_FALSE(line.EndWith(L't', false));
+  EXPECT_FALSE(line.EndWith(L't', true, false));
+  EXPECT_FALSE(line.EndWith(L't', false, false));
 
   line.Clear();
   line.Append(L"test");
 
   off = kInvalidCoord;
-  EXPECT_TRUE(line.EndWith(L't', true, &off));
+  EXPECT_TRUE(line.EndWith(L't', true, true, &off));
+  EXPECT_TRUE(line.EndWith(L't', false, true, &off));
   EXPECT_EQ(3, off);
+
   off = kInvalidCoord;
-  EXPECT_TRUE(line.EndWith(L't', false, &off));
+  EXPECT_TRUE(line.EndWith(L't', true, false, &off));
+  EXPECT_TRUE(line.EndWith(L't', false, false, &off));
   EXPECT_EQ(3, off);
+
+  line.Clear();
+  line.ClearLexElements();
+  line.Append(L"{ // comments");
+  line.AddLexElement(2, 11, Lex(kLexComment));
+
+  EXPECT_TRUE(line.EndWith(L'{', true, true));
+  EXPECT_TRUE(line.EndWith(L'{', true, true));
+
+  line.Clear();
+  line.ClearLexElements();
+  line.Append(L"{ // comments ");
+  line.AddLexElement(2, 12, Lex(kLexComment));
+
+  line.Clear();
+  line.ClearLexElements();
+  line.Append(L"{ /*comments*/ // comments ");
+  line.AddLexElement(2, 12, Lex(kLexComment));
+  line.AddLexElement(15, 12, Lex(kLexComment));
+
+  EXPECT_TRUE (line.EndWith(L'{', true,   true));
+  EXPECT_FALSE(line.EndWith(L'{', true,   false));
+  EXPECT_FALSE(line.EndWith(L'{', false,  true));
+  EXPECT_FALSE(line.EndWith(L'{', false,  false));
+
+  EXPECT_FALSE(line.EndWith(L'}', true,   true));
+  EXPECT_FALSE(line.EndWith(L'}', true,   false));
+  EXPECT_FALSE(line.EndWith(L'}', false,  true));
+  EXPECT_FALSE(line.EndWith(L'}', false,  false));
 }
 
 TEST(TextLine, RangeLexElements) {

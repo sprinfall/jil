@@ -1039,7 +1039,7 @@ void TextWindow::InsertChar(const TextPoint& point,
   if (c == LF) {
     TextPoint p = caret_point_;
 
-    if (buffer_->Line(p.y)->IsEmpty()) {
+    if (buffer_->Line(p.y)->IsEmpty(true)) {
       p.x = buffer_->GetExpectedIndent(p.y);
       UpdateCaretPoint(p, false, true, true);
     } else {
