@@ -124,8 +124,8 @@ TEST(TextBuffer, Create_WithText) {
 
 TEST(TextBuffer, PrevNonEmptyLine) {
   FtPlugin ft_plugin(FileType("cpp", "C++"));
-  ft_plugin.AddQuote(new Quote(kLexComment, L"//", L"", Quote::kEscapeEol));
-  ft_plugin.AddQuote(new Quote(kLexComment, L"/*", L"*/", Quote::kMultiLine));
+  ft_plugin.AddQuote(new Quote(kLexComment, L"//", L"", kQuoteEscapeEol));
+  ft_plugin.AddQuote(new Quote(kLexComment, L"/*", L"*/", kQuoteMultiLine));
 
   TextBufferPtr buffer;
   buffer.reset(TextBuffer::Create(&ft_plugin, kEncoding));
@@ -147,8 +147,8 @@ TEST(TextBuffer, PrevNonEmptyLine) {
 
 TEST(TextBuffer, PrevLine) {
   FtPlugin ft_plugin(FileType("cpp", "C++"));
-  ft_plugin.AddQuote(new Quote(kLexComment, L"//", L"", Quote::kEscapeEol));
-  ft_plugin.AddQuote(new Quote(kLexComment, L"/*", L"*/", Quote::kMultiLine));
+  ft_plugin.AddQuote(new Quote(kLexComment, L"//", L"", kQuoteEscapeEol));
+  ft_plugin.AddQuote(new Quote(kLexComment, L"/*", L"*/", kQuoteMultiLine));
 
   TextBufferPtr buffer;
   buffer.reset(TextBuffer::Create(&ft_plugin, kEncoding));

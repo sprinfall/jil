@@ -3,7 +3,8 @@
 #pragma once
 
 #include <string>
-#include "boost/regex_fwd.hpp"
+#include <vector>
+#include "boost/regex.hpp"  // For boost::match_results
 #include "editor/compile_config.h"
 #include "editor/defs.h"
 
@@ -139,39 +140,32 @@ struct LexElement {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+enum QuotePart {
+  kQuoteStart,
+  kQuoteBody,
+  kQuoteEnd
+};
+
+enum QuoteFlag {
+  // Multi-line quote.
+  // E.g., C/C++ comment: /* */
+  kQuoteMultiLine = 1,
+
+  // EOL can be escaped. (Usually for single-line quote)
+  // E.g., C/C++ string:
+  //   "first line string \
+  // second line string"
+  kQuoteEscapeEol = 2,
+};
+
 class Quote {
 public:
-  enum Part {
-    kStart,
-    kBody,
-    kEnd
-  };
-
-  enum Flag {
-    // Multi-line quote.
-    // E.g., C/C++ comment: /* */
-    kMultiLine = 1,
-
-    // EOL can be escaped. (Usually for single-line quote)
-    // E.g., C/C++ string:
-    //   "first line string \
-    // second line string"
-    kEscapeEol = 2,
-  };
-
-public:
-  Quote();
   Quote(Lex lex,
         const std::wstring& start,
         const std::wstring& end,
         int flags);
 
   virtual ~Quote();
-
-  void Set(Lex lex,
-           const std::wstring& start,
-           const std::wstring& end,
-           int flags);
 
   Lex lex() const {
     return lex_;
@@ -185,51 +179,70 @@ public:
     return end_;
   }
 
+  int flags() const {
+    return flags_;
+  }
+
   bool multi_line() const {
-    return (flags_ & kMultiLine) != 0;
+    return (flags_ & kQuoteMultiLine) != 0;
   }
 
   bool escape_eol() const {
-    return (flags_ & kEscapeEol) != 0;
+    return (flags_ & kQuoteEscapeEol) != 0;
   }
 
   void set_ignore_case(bool ignore_case) {
     ignore_case_ = ignore_case;
   }
 
-#if JIL_LEX_REGEX_QUOTE_START
-  virtual size_t MatchStart(const std::wstring& str, size_t off) const;
-#else
   size_t MatchStart(const std::wstring& str, size_t off) const;
-#endif  // JIL_LEX_REGEX_QUOTE_START
 
 protected:
   Lex lex_;
   std::wstring start_;
   std::wstring end_;
   int flags_;
-  // Match with case ignored.
-  // E.g., VB's comment: REM
+
+  // Match with case ignored. E.g., VB's comment: REM
   bool ignore_case_;
 };
-
-#if JIL_LEX_REGEX_QUOTE_START
 
 ////////////////////////////////////////////////////////////////////////////////
 
 class RegexQuote : public Quote {
 public:
-  RegexQuote();
+  typedef boost::match_results<std::wstring::const_iterator> MatchResult;
+
+  RegexQuote(Lex lex,
+             const std::wstring& start,
+             const std::wstring& end,
+             int flags);
 
   virtual ~RegexQuote();
 
-  virtual size_t MatchStart(const std::wstring& str, size_t off) const override;
+  size_t MatchStart(const std::wstring& str,
+                    size_t off,
+                    std::wstring* concrete_end) const;
+
+  // Add a concrete quote.
+  void AddQuote(Quote* quote) const {
+    quotes_.push_back(quote);
+  }
+
+private:
+  void CreateRegex();
+
+  bool CreateConcreteEnd(const std::wstring& str,
+                         size_t off,
+                         MatchResult& m,
+                         std::wstring* concrete_end) const;
 
 private:
   boost::wregex* start_re_;
-};
 
-#endif  // JIL_LEX_REGEX_QUOTE_START
+  // Concrete quotes created from this regex quote.
+  mutable std::vector<Quote*> quotes_;
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 

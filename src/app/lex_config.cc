@@ -111,69 +111,27 @@ Lex ParseLex(const char* lex_str) {
   }
 }
 
-Quote* ParseQuoteSetting(Lex lex,
-                         const Setting& quote_setting,
-                         const std::string& flags_str) {
+bool ParseQuoteSetting(const Setting& quote_setting,
+                       std::wstring* start,
+                       std::wstring* end) {
   if (quote_setting.type() != Setting::kArray) {
-    return NULL;
+    return false;
   }
-
-  std::string start;
-  std::string end;
 
   if (quote_setting.size() > 0) {
-    start = quote_setting[0].GetString();
+    const char* start_cstr = quote_setting[0].GetString();
+    start->insert(start->end(), start_cstr, start_cstr + strlen(start_cstr));
     if (quote_setting.size() > 1) {
-      end = quote_setting[1].GetString();
+      const char* end_cstr = quote_setting[1].GetString();
+      end->insert(end->end(), end_cstr, end_cstr + strlen(end_cstr));
     }
   }
 
-  if (start.empty()) {
-    wxLogError(wxT("Lex quote start is empty!"));
-    return NULL;
+  if (start->empty()) {
+    return false;
   }
 
-#if JIL_LEX_REGEX_QUOTE_START
-  bool regex = false;
-#endif  // JIL_LEX_REGEX_QUOTE_START
-
-  int flags = 0;
-
-  if (!flags_str.empty()) {
-    std::vector<std::string> flag_str_array;
-    boost::split(flag_str_array,
-                 flags_str,
-                 boost::is_any_of(", "),
-                 boost::token_compress_on);
-
-    for (size_t i = 0; i < flag_str_array.size(); ++i) {
-      std::string& flag_str = flag_str_array[i];
-      if (flag_str == "multi_line") {
-        flags |= Quote::kMultiLine;
-      } else if (flag_str == "escape_eol") {
-        flags |= Quote::kEscapeEol;
-#if JIL_LEX_REGEX_QUOTE_START
-      } else if (flag_str == "regex_start") {
-        regex = true;
-#endif  // JIL_LEX_REGEX_QUOTE_START
-      } else {
-        wxLogError(wxT("Unknown quote flag: %s!"), flag_str.c_str());
-      }
-    }
-  }
-
-  // Convert to std::wstring.
-  std::wstring w_start(start.begin(), start.end());
-  std::wstring w_end(end.begin(), end.end());
-
-#if JIL_LEX_REGEX_QUOTE_START
-  Quote* quote = regex ? (new RegexQuote) : (new Quote);
-  quote->Set(lex, w_start, w_end, flags);
-#else
-  Quote* quote = new Quote(lex, w_start, w_end, flags);
-#endif  // JIL_LEX_REGEX_QUOTE_START
-
-  return quote;
+  return true;
 }
 
 }  // namespace
@@ -216,12 +174,28 @@ bool LoadLexFile(const wxString& lex_file, FtPlugin* ft_plugin) {
 
     Setting quote_setting = lex_setting.Get("quote");
     if (quote_setting) {
-      Quote* quote = ParseQuoteSetting(lex,
-                                       quote_setting,
-                                       lex_setting.GetString("flags"));
-      if (quote != NULL) {
+      std::wstring start;
+      std::wstring end;
+      if (!ParseQuoteSetting(quote_setting, &start, &end)) {
+        continue;
+      }
+
+      int flags = 0;
+      if (lex_setting.GetBool("multi_line")) {
+        flags |= kQuoteMultiLine;
+      }
+      if (lex_setting.GetBool("escape_eol")) {
+        flags |= kQuoteEscapeEol;
+      }
+
+      if (lex_setting.GetBool("regex")) {
+        RegexQuote* regex_quote = new RegexQuote(lex, start, end, flags);
+        ft_plugin->AddRegexQuote(regex_quote);
+      } else {
+        Quote* quote = new Quote(lex, start, end, flags);
         ft_plugin->AddQuote(quote);
       }
+
       continue;
     }
 

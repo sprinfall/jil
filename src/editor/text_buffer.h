@@ -25,11 +25,12 @@
 namespace jil {
 namespace editor {
 
-class FtPlugin;
-class TextExtent;
 class Action;
+class FtPlugin;
 class InsertCharAction;
 class LineFilter;
+class Quote;
+class TextExtent;
 
 enum Bracket {
   kParenthesis = 0,   // ()

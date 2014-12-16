@@ -1,5 +1,4 @@
 #include "editor/lex.h"
-#include "boost/regex.hpp"
 #include "editor/util.h"
 
 namespace jil {
@@ -7,32 +6,15 @@ namespace editor {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef boost::match_results<std::wstring::const_iterator> regex_match_results;
-
-////////////////////////////////////////////////////////////////////////////////
-
-Quote::Quote()
-    : lex_(kLexNone), flags_(0), ignore_case_(false) {
-}
-
 Quote::Quote(Lex lex,
              const std::wstring& start,
              const std::wstring& end,
              int flags)
-  : lex_(lex), start_(start), end_(end), flags_(flags) {
+    : lex_(lex), start_(start), end_(end), flags_(flags)
+    , ignore_case_(false) {
 }
 
 Quote::~Quote() {
-}
-
-void Quote::Set(Lex lex,
-                const std::wstring& start,
-                const std::wstring& end,
-                int flags) {
-  lex_ = lex;
-  start_ = start;
-  end_ = end;
-  flags_ = flags;
 }
 
 size_t Quote::MatchStart(const std::wstring& str, size_t off) const {
@@ -45,46 +27,96 @@ size_t Quote::MatchStart(const std::wstring& str, size_t off) const {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#if JIL_LEX_REGEX_QUOTE_START
+RegexQuote::RegexQuote(Lex lex,
+                       const std::wstring& start,
+                       const std::wstring& end,
+                       int flags)
+    : Quote(lex, start, end, flags)
+    , start_re_(NULL) {
+  assert(!start_.empty());
 
-size_t RegexQuote::MatchStart(const std::wstring& str, size_t off) const {
+  if (start_[0] != L'^') {
+    start_.insert(start_.begin(), L'^');
+  }
+
+  int flag = 0;
+  if (ignore_case_) {
+    flag = boost::regex_constants::icase;
+  }
+
   if (start_re_ == NULL) {
-    start_re_ = new wregex(start_);
+    start_re_ = new boost::wregex(start_, flag);
+  } else {
+    start_re_->set_expression(start_, flag);
   }
-
-  const int flags = boost::regex_constants::match_default;
-
-  // NOTE(20140718, performance):
-  //   Using member variable doesn't improve performance.
-  regex_match_results m;
-
-  std::wstring::const_iterator begin(str.begin() + off);
-  std::wstring::const_iterator end(str.end());
-
-  bool result = boost::regex_search(begin, end, m, *start_re_, flag);
-  if (result) {
-    return off + (m[0].second - m[0].first);
-  }
-
-  return off;
-}
-
-RegexQuote::RegexQuote()
-    : start_re_(NULL) {
 }
 
 RegexQuote::~RegexQuote() {
   if (start_re_ != NULL) {
     delete start_re_;
   }
+
+  ClearContainer(&quotes_);
 }
 
-#endif  // JIL_LEX_REGEX_QUOTE_START
+size_t RegexQuote::MatchStart(const std::wstring& str,
+                              size_t off,
+                              std::wstring* concrete_end) const {
+  // NOTE(20140718): Using member variable doesn't improve performance.
+  boost::match_results<std::wstring::const_iterator> m;
+
+  boost::regex_constants::match_flags flags =
+      boost::regex_constants::match_default;
+
+  bool result = boost::regex_search(str.begin() + off,
+                                    str.end(),
+                                    m,
+                                    *start_re_,
+                                    flags);
+  if (result) {
+    CreateConcreteEnd(str, off, m, concrete_end);
+    return off + (m[0].second - m[0].first);
+  }
+
+  return off;
+}
+
+bool RegexQuote::CreateConcreteEnd(const std::wstring& str,
+                                   size_t off,
+                                   RegexQuote::MatchResult& m,
+                                   std::wstring* concrete_end) const {
+  if (end_.empty()) {
+    return true;
+  }
+
+  // NOTE: So far, only support back reference "\1".
+  size_t br_pos = end_.find(L"\\1");
+  if (br_pos == std::wstring::npos) {
+    return true;
+  }
+
+  if (m.size() <= 1) {
+    return false;  // No sub match result.
+  }
+
+  std::wstring sub;
+  size_t sub_size = std::distance(m[1].first, m[1].second);
+  if (sub_size > 0) {
+    size_t sub_off = std::distance(str.begin(), m[1].first) + off;
+    sub = str.substr(sub_off, sub_size);
+  }  // else: The sub matched string is empty.
+
+  *concrete_end = end_;
+  std::wstring::const_iterator br_first = concrete_end->begin() + br_pos;
+  concrete_end->replace(br_first, br_first + 2, sub);
+
+  return true;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Regex::Regex()
-    : re_(NULL) {
+Regex::Regex() : re_(NULL) {
 }
 
 Regex::~Regex() {
@@ -101,7 +133,10 @@ void Regex::set_pattern(const std::wstring& pattern, bool ignore_case) {
     pattern_.insert(pattern_.begin(), L'^');
   }
 
-  const int flag = boost::regex_constants::icase;
+  int flag = 0;
+  if (ignore_case) {
+    flag = boost::regex_constants::icase;
+  }
 
   if (re_ == NULL) {
     re_ = new boost::wregex(pattern_, flag);
@@ -117,11 +152,16 @@ size_t Regex::Match(const std::wstring& str, size_t off) const {
 
   assert(off < str.length());
 
-  regex_match_results m;
-  std::wstring::const_iterator begin(str.begin() + off);
-  std::wstring::const_iterator end(str.end());
+  boost::match_results<std::wstring::const_iterator> m;
 
-  bool result = boost::regex_search(begin, end, m, *re_, boost::match_default);
+  boost::regex_constants::match_flags flags =
+      boost::regex_constants::match_default;
+
+  bool result = boost::regex_search(str.begin() + off,
+                                    str.end(),
+                                    m,
+                                    *re_,
+                                    flags);
   if (!result) {
     return off;
   }

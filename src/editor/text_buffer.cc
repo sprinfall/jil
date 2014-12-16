@@ -2609,8 +2609,8 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
         quote_i += quote->end().length();
 
         if (i == 0 || !IsUnescapedBackSlash(line_data, i - 1)) {  // Quote ends.
-          line->AddQuoteInfo(quote, quote_off, i - quote_off, Quote::kBody);
-          line->AddQuoteInfo(quote, i, quote_i - i, Quote::kEnd);
+          line->AddQuoteInfo(quote, quote_off, i - quote_off, kQuoteBody);
+          line->AddQuoteInfo(quote, i, quote_i - i, kQuoteEnd);
 
           i = quote_i;
           le.Set(quote_off, i - quote_off, quote->lex());
@@ -2628,7 +2628,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
 
       if (quote_i > i) {  // Quote starts.
         quote_off = i;
-        line->AddQuoteInfo(quote, i, quote_i - i, Quote::kStart);
+        line->AddQuoteInfo(quote, i, quote_i - i, kQuoteStart);
 
         if (!quote->multi_line() && quote->end().empty()) {
           // Single line quote ends with EOL.
@@ -2726,7 +2726,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
     // Quote continues to next line.
     // Note the line might be empty. Add quote info even the line is empty.
     size_t count = line_data.size() - quote_off;
-    line->AddQuoteInfo(quote, quote_off, count, Quote::kBody);
+    line->AddQuoteInfo(quote, quote_off, count, kQuoteBody);
     return;
   }
 
@@ -2734,14 +2734,14 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
   line->AddQuoteInfo(quote,
                      quote_off,
                      line_data.size() - quote_off,
-                     Quote::kBody);
+                     kQuoteBody);
 
   if (quote->end().empty()) {  // Quote ends with EOL.
     if (!quote->escape_eol() ||
         !(!line_data.empty() &&
           IsUnescapedBackSlash(line_data, line_data.size() - 1))) {
       // Quote ends.
-      line->AddQuoteInfo(quote, line_data.size(), 0, Quote::kEnd);
+      line->AddQuoteInfo(quote, line_data.size(), 0, kQuoteEnd);
       quote = NULL;
     }  // else: EOL is escaped, quote continues.
 
@@ -2750,7 +2750,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
         !quote->escape_eol() ||
         !IsUnescapedBackSlash(line_data, line_data.size() - 1)) {
       // Quote is invalid with no end marker found. Just end it.
-      line->AddQuoteInfo(quote, line_data.size(), 0, Quote::kEnd);
+      line->AddQuoteInfo(quote, line_data.size(), 0, kQuoteEnd);
       quote = NULL;
     }  // else: Quote continues.
   }
@@ -2902,7 +2902,7 @@ void TextBuffer::ScanLexOnLineDeleted(const LineRange& line_range) {
     TextLine* next_line = Line(line_range.first());
     if (!next_line->quote_infos().empty()) {
       const QuoteInfo& qi = next_line->quote_infos().front();
-      if (qi.part != Quote::kStart) {
+      if (qi.part != kQuoteStart) {
         next_quote = qi.quote;
       }
     }

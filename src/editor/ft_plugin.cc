@@ -104,6 +104,11 @@ void FtPlugin::AddQuote(Quote* quote) {
   quotes_.push_back(quote);
 }
 
+void FtPlugin::AddRegexQuote(RegexQuote* regex_quote) {
+  regex_quote->set_ignore_case(ignore_case_);
+  regex_quotes_.push_back(regex_quote);
+}
+
 void FtPlugin::AddRegex(Lex lex, const std::wstring& pattern) {
   Regex* regex = new Regex;
   regex->set_lex(lex);
@@ -164,6 +169,32 @@ bool FtPlugin::MatchAnyof(const std::wstring& str,
 size_t FtPlugin::MatchQuote(const std::wstring& str,
                             size_t off,
                             Quote** quote) const {
+  // Firstly, match regex quotes.
+  if (!regex_quotes_.empty()) {
+    std::wstring concrete_end;
+
+    for (size_t i = 0; i < regex_quotes_.size(); ++i) {
+      RegexQuote* regex_quote = regex_quotes_[i];
+      size_t matched_off = regex_quote->MatchStart(str, off, &concrete_end);
+
+      if (matched_off > off) {
+        // Create a concrete quote from this regex quote.
+        std::wstring concrete_start = str.substr(off, matched_off - off);
+
+        Quote* concrete_quote = new Quote(regex_quote->lex(),
+                                          concrete_start,
+                                          concrete_end,
+                                          regex_quote->flags());
+
+        // Keep the concrete quote in the regex quote.
+        regex_quote->AddQuote(concrete_quote);
+
+        *quote = concrete_quote;
+        return matched_off;
+      }
+    }
+  }
+
   for (size_t i = 0; i < quotes_.size(); ++i) {
     size_t matched_off = quotes_[i]->MatchStart(str, off);
     if (matched_off > off) {

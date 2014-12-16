@@ -23,8 +23,11 @@ protected:
     ft_plugin_->options().operators = L"!@#%^&*()+-=\\|/?[]{}<>,.;:'\"`~";
     ft_plugin_->options().delimiters = L"!@#%^&*()+-=\\|/?[]{}<>,.;:'\"`~ \t";
 
-    ft_plugin_->AddQuote(new Quote(Lex(kLexComment), L"/*", L"*/", Quote::kMultiLine));
-    ft_plugin_->AddQuote(new Quote(Lex(kLexComment), L"//", L"", Quote::kEscapeEol));
+    Quote* quote1 = new Quote(Lex(kLexComment), L"/*", L"*/", kQuoteMultiLine);
+    ft_plugin_->AddQuote(quote1);
+
+    Quote* quote2 = new Quote(Lex(kLexComment), L"//", L"", kQuoteEscapeEol);
+    ft_plugin_->AddQuote(quote2);
 
     buffer_ = TextBuffer::Create(ft_plugin_, kEncoding);
 

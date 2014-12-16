@@ -17,7 +17,7 @@ struct QuoteInfo {
   Quote* quote;
   size_t off;
   size_t len;
-  Quote::Part part;
+  QuotePart part;
 };
 
 class TextLine {
@@ -133,7 +133,7 @@ class TextLine {
   // Return true if this line only has comments.
   bool CommentsOnly() const;
 
-  void AddQuoteInfo(Quote* quote, size_t off, size_t len, Quote::Part part);
+  void AddQuoteInfo(Quote* quote, size_t off, size_t len, QuotePart part);
 
   void ClearQuoteInfos() {
     quote_infos_.clear();

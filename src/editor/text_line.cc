@@ -429,7 +429,7 @@ bool TextLine::CommentsOnly() const {
 void TextLine::AddQuoteInfo(Quote* quote,
                             size_t off,
                             size_t len,
-                            Quote::Part part) {
+                            QuotePart part) {
   QuoteInfo qi = { quote, off, len, part };
   quote_infos_.push_back(qi);
 }
@@ -437,7 +437,7 @@ void TextLine::AddQuoteInfo(Quote* quote,
 Quote* TextLine::UnendedQuote(bool multi_line) const {
   if (!quote_infos_.empty()) {
     const QuoteInfo& qi = quote_infos_.back();
-    if (qi.part != Quote::kEnd && multi_line == qi.quote->multi_line()) {
+    if (qi.part != kQuoteEnd && multi_line == qi.quote->multi_line()) {
       return qi.quote;
     }
   }
@@ -450,9 +450,9 @@ bool TextLine::EndQuote(Quote* quote) const {
     const QuoteInfo& qi = *it;
 
     if (qi.quote == quote) {
-      if (qi.part == Quote::kEnd) {
+      if (qi.part == kQuoteEnd) {
         return true;
-      } else if (qi.part == Quote::kStart) {
+      } else if (qi.part == kQuoteStart) {
         return false;
       }
     }

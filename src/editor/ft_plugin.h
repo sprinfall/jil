@@ -72,6 +72,7 @@ public:
 #endif
 
   void AddQuote(Quote* quote);
+  void AddRegexQuote(RegexQuote* regex_quote);
 
   // \param pattern Regex pattern, e.g., "^#\s*endif\b".
   void AddRegex(Lex lex, const std::wstring& pattern);
@@ -132,6 +133,8 @@ private:
 #endif
 
   std::vector<Quote*> quotes_;
+  std::vector<RegexQuote*> regex_quotes_;
+
   std::vector<Regex*> regexs_;
 
   // Normally there won't be many prefixes and suffixes. So simply use array
