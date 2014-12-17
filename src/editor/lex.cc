@@ -107,8 +107,7 @@ bool RegexQuote::CreateConcreteEnd(const std::wstring& str,
   }  // else: The sub matched string is empty.
 
   *concrete_end = end_;
-  std::wstring::const_iterator br_first = concrete_end->begin() + br_pos;
-  concrete_end->replace(br_first, br_first + 2, sub);
+  concrete_end->replace(br_pos, 2, sub);
 
   return true;
 }

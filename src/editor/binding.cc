@@ -46,8 +46,10 @@ bool Binding::BindKeys(const std::string& name,
   }
 
   // Match text command.
-  const TextCmd* text_cmd = GetTextCmdByName(name);
+  TextCmd* text_cmd = GetTextCmdByName(name);
   if (text_cmd != NULL) {
+    text_cmd->keys = keys;
+
     for (size_t i = 0; i < keys.size(); ++i) {
       if ((modes & kNormalMode) != 0) {
         normal_text_keys_[keys[i]] = std::make_pair(text_cmd->func,
@@ -64,8 +66,10 @@ bool Binding::BindKeys(const std::string& name,
   }
 
   // Match void command.
-  const VoidCmd* void_cmd = GetVoidCmdByName(name);
+  VoidCmd* void_cmd = GetVoidCmdByName(name);
   if (void_cmd != NULL) {
+    void_cmd->keys = keys;
+
     for (size_t i = 0; i < keys.size(); ++i) {
       void_keys_[keys[i]] = std::make_pair(void_cmd->func, void_cmd->menu);
     }
@@ -170,7 +174,7 @@ bool Binding::IsLeaderKey(Key key) const {
          leader_keys_.end();
 }
 
-const TextCmd* Binding::GetTextCmdByName(const std::string& name) const {
+TextCmd* Binding::GetTextCmdByName(const std::string& name) {
   for (size_t i = 0; i < text_cmds_.size(); ++i) {
     if (name == text_cmds_[i].name) {
       return &text_cmds_[i];
@@ -179,7 +183,7 @@ const TextCmd* Binding::GetTextCmdByName(const std::string& name) const {
   return NULL;
 }
 
-const VoidCmd* Binding::GetVoidCmdByName(const std::string& name) const {
+VoidCmd* Binding::GetVoidCmdByName(const std::string& name) {
   for (size_t i = 0; i < void_cmds_.size(); ++i) {
     if (name == void_cmds_[i].name) {
       return &void_cmds_[i];

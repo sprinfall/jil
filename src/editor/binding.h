@@ -97,8 +97,8 @@ public:
   bool IsLeaderKey(Key key) const;
 
 private:
-  const TextCmd* GetTextCmdByName(const std::string& name) const;
-  const VoidCmd* GetVoidCmdByName(const std::string& name) const;
+  TextCmd* GetTextCmdByName(const std::string& name);
+  VoidCmd* GetVoidCmdByName(const std::string& name);
 
 private:
   // Command tables.
