@@ -82,7 +82,6 @@ static wxString& AddKeyPart(wxString& str,
   return str;
 }
 
-// TODO: Mac
 wxString KeyModifiersName(int modifiers) {
   if (modifiers == 0) {
     return wxEmptyString;
@@ -90,17 +89,21 @@ wxString KeyModifiersName(int modifiers) {
 
   wxString name;
 
-  if ((modifiers & wxMOD_WIN) != 0) {
-    AddKeyPart(name, wxT("Win"));
+  // NOTE: Don't support wxMOD_WIN.
+
+#if defined(__WXMAC__)
+  if ((modifiers & wxMOD_RAW_CONTROL) != 0) {
+    AddKeyPart(name, wxT("Ctrl"));  // TODO
   }
 
-  if ((modifiers & wxMOD_CONTROL) != 0) {
-#if defined (__WXMAC__)
-    AddKeyPart(name, wxT("Cmd"));
-#else
-    AddKeyPart(name, wxT("Ctrl"));
-#endif
+  if ((modifiers & wxMOD_CMD) != 0) {
+    AddKeyPart(name, wxT("Cmd"));  // TODO
   }
+#else
+  if ((modifiers & wxMOD_CONTROL) != 0) {
+    AddKeyPart(name, wxT("Ctrl"));
+  }
+#endif  // #if defined(__WXMAC__)
 
   if ((modifiers & wxMOD_ALT) != 0) {
     AddKeyPart(name, wxT("Alt"));

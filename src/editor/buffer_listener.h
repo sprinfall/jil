@@ -23,7 +23,7 @@ enum ChangeType {
 };
 
 class LineChangeData : public LineRange {
- public:
+public:
   // Single line.
   LineChangeData(Coord first_line = 0, Coord last_line = 0)
       : LineRange(first_line, last_line) {
@@ -40,14 +40,14 @@ class LineChangeData : public LineRange {
     return *this;
   }
 
- private:
+private:
   boost::any extra_;
 };
 
 // Implement this interface and attach to a text buffer to listen to
 // the changes of it.
 class BufferListener {
- public:
+public:
   virtual ~BufferListener() {
   }
 

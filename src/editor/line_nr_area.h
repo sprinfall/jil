@@ -14,7 +14,7 @@ class TextWindow;
 class LineNrArea : public wxPanel {
   DECLARE_EVENT_TABLE()
 
- public:
+public:
   explicit LineNrArea(TextWindow* text_window);
   bool Create(wxWindow* parent, wxWindowID id);
 
@@ -24,13 +24,13 @@ class LineNrArea : public wxPanel {
     return false;
   }
 
- protected:
+protected:
   void OnPaint(wxPaintEvent& evt);
   void OnSize(wxSizeEvent& evt);
   void OnMouse(wxMouseEvent& evt);
   void OnMouseCaptureLost(wxMouseCaptureLostEvent& evt);
 
- private:
+private:
   TextWindow* text_window_;
 };
 

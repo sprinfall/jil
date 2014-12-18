@@ -16,7 +16,7 @@ namespace jil {
 namespace editor {
 
 class Renderer {
- public:
+public:
   explicit Renderer(wxDC* dc);
   ~Renderer();
 

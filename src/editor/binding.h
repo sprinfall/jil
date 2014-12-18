@@ -18,7 +18,7 @@ namespace editor {
 
 // Void function interface.
 class VoidFunc {
- public:
+public:
   virtual void Exec() = 0;
 };
 
@@ -26,18 +26,18 @@ class VoidFunc {
 class VoidFuncWrap : public VoidFunc {
   typedef void(*Func)();
 
- public:
+public:
   VoidFuncWrap(Func func) : func_(func) {
   }
 
- protected:
+protected:
   virtual void Exec() override {
     if (func_ != NULL) {
       (*func_)();
     }
   }
 
- private:
+private:
   Func func_;
 };
 
@@ -69,7 +69,7 @@ public:
                 const std::vector<Key>& keys,
                 int modes);
 
-  // TODO
+  // Build the map from menu to (function, key) pair.
   void BindMenus();
 
   // Get text func by menu id.

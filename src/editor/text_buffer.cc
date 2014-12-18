@@ -237,7 +237,7 @@ static wxMBConv* GetCsConv(const Encoding& encoding,
 // Charset detector using uchardet from Mozilla.
 // See http://mxr.mozilla.org/mozilla/source/extensions/universalchardet/src/
 class CharDetector : public nsUniversalDetector {
- public:
+public:
   explicit CharDetector(int lang_filter)
       : nsUniversalDetector(lang_filter) {
   }
@@ -249,13 +249,13 @@ class CharDetector : public nsUniversalDetector {
 
   bool PureAscii() const { return mInputState == ePureAscii; }
 
- protected:
+protected:
   virtual void Report(const char* charset) override {
     charset_ = charset;
     boost::algorithm::to_lower(charset_);
   }
 
- private:
+private:
   std::string charset_;
 };
 
@@ -673,11 +673,11 @@ Coord TextBuffer::PrevNonEmptyLine(Coord ln, bool skip_comment) const {
   return ln;
 }
 
-Coord TextBuffer::PrevLine(Coord ln, const LineFilter& filter) const {
+Coord TextBuffer::PrevLine(Coord ln, const LinePred& line_pred) const {
   assert(ln > 0);
 
   for (--ln; ln > 0; --ln) {
-    if (filter.Check(Line(ln))) {
+    if (line_pred.Check(Line(ln))) {
       break;
     }
   }
@@ -686,15 +686,15 @@ Coord TextBuffer::PrevLine(Coord ln, const LineFilter& filter) const {
 }
 
 Coord TextBuffer::PrevLine(Coord ln,
-                           const LineFilter& filter1,
-                           const LineFilter& filter2) const {
+                           const LinePred& line_pred1,
+                           const LinePred& line_pred2) const {
   assert(ln > 0);
 
   const TextLine* line = NULL;
 
   for (--ln; ln > 0; --ln) {
     line = Line(ln);
-    if (filter1.Check(line) && filter2.Check(line)) {
+    if (line_pred1.Check(line) && line_pred2.Check(line)) {
       break;
     }
   }

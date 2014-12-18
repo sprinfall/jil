@@ -112,9 +112,9 @@ inline bool operator>(Lex lhs, Lex rhs) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct LexElement {
-  LexElement()
-      : off(0), len(0) {
+class LexElement {
+public:
+  LexElement() : off(0), len(0) {
   }
 
   LexElement(Coord _off, Coord _len, Lex _lex)

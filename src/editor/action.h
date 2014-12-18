@@ -19,7 +19,7 @@ class TextBuffer;
 
 // Base class for actions operating a range of text.
 class RangeAction {
- public:
+public:
   virtual ~RangeAction() {
   }
 
@@ -33,12 +33,12 @@ class RangeAction {
   // the selection might be cleared or changed.
   virtual TextRange SelectionAfterExec() const = 0;
 
- protected:
+protected:
   RangeAction(const TextRange& range, TextDir dir, bool rect, bool selected)
       : range_(range), dir_(dir), rect_(rect), selected_(selected) {
   }
 
- protected:
+protected:
   TextRange range_;
 
   // The direction of the text range.
@@ -57,7 +57,7 @@ class RangeAction {
 class Action {
   wxDECLARE_NO_COPY_CLASS(Action);
 
- public:
+public:
   virtual ~Action();
 
   bool saved() const {
@@ -118,10 +118,10 @@ class Action {
     return NULL;
   }
 
- protected:
+protected:
   Action(TextBuffer* buffer, const TextPoint& point);
 
- protected:
+protected:
   // If the change by this action was saved or not.
   bool saved_;
 
@@ -168,7 +168,7 @@ class Action {
 //   ...
 //   buffer->AddAction(new GroupAction(buffer));
 class GroupAction : public Action {
- public:
+public:
   explicit GroupAction(TextBuffer* buffer);
   virtual ~GroupAction();
 
@@ -179,7 +179,7 @@ class GroupAction : public Action {
 ////////////////////////////////////////////////////////////////////////////////
 
 class InsertCharAction : public Action {
- public:
+public:
   InsertCharAction(TextBuffer* buffer, const TextPoint& point, wchar_t c);
   virtual ~InsertCharAction();
 
@@ -191,7 +191,7 @@ class InsertCharAction : public Action {
   virtual void Exec() override;
   virtual void Undo() override;
 
- private:
+private:
   // Normally the dir is forward.
   // If it's backward, caret remains after insert. (See NewLineAbove)
   // Examples:
@@ -213,7 +213,7 @@ class InsertCharAction : public Action {
 ////////////////////////////////////////////////////////////////////////////////
 
 class InsertStringAction : public Action {
- public:
+public:
   InsertStringAction(TextBuffer* buffer,
                      const TextPoint& point,
                      const std::wstring& str);
@@ -222,14 +222,14 @@ class InsertStringAction : public Action {
   virtual void Exec() override;
   virtual void Undo() override;
 
- private:
+private:
   std::wstring str_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
 class InsertTextAction : public Action {
- public:
+public:
   InsertTextAction(TextBuffer* buffer,
                    const TextPoint& point,
                    const std::wstring& text);
@@ -253,7 +253,7 @@ class InsertTextAction : public Action {
     use_delta_y_ = use_delta_y;
   }
 
- private:
+private:
   std::wstring text_;
 
   bool use_delta_x_;
@@ -263,7 +263,7 @@ class InsertTextAction : public Action {
 ////////////////////////////////////////////////////////////////////////////////
 
 class DeleteAction : public Action {
- public:
+public:
   DeleteAction(TextBuffer* buffer,
                const TextPoint& point,
                TextUnit text_unit,
@@ -286,13 +286,13 @@ class DeleteAction : public Action {
   bool Merge(DeleteAction* rhs);
   void DeleteText(const TextRange& range);
 
- private:
+private:
   TextPoint Seek(const TextPoint& point,
                  TextUnit text_unit,
                  SeekType seek_type,
                  size_t count) const;
 
- private:
+private:
   std::wstring text_;
   TextUnit text_unit_;
   SeekType seek_type_;
@@ -302,7 +302,7 @@ class DeleteAction : public Action {
 ////////////////////////////////////////////////////////////////////////////////
 
 class DeleteRangeAction : public Action, public RangeAction {
- public:
+public:
   DeleteRangeAction(TextBuffer* buffer,
                     const TextRange& range,
                     TextDir dir,
@@ -322,7 +322,7 @@ class DeleteRangeAction : public Action, public RangeAction {
     return TextRange();
   }
 
- private:
+private:
   std::wstring text_;
 };
 
@@ -334,7 +334,7 @@ class DeleteRangeAction : public Action, public RangeAction {
 // easier caret point handling.
 // TODO: Rect range.
 class IncreaseIndentAction : public Action, public RangeAction {
- public:
+public:
   IncreaseIndentAction(TextBuffer* buffer,
                        const TextRange& range,
                        TextDir dir,
@@ -381,7 +381,7 @@ class IncreaseIndentAction : public Action, public RangeAction {
   // The selection is also "indented".
   virtual TextRange SelectionAfterExec() const override;
 
- private:
+private:
   std::wstring spaces_;
 };
 
@@ -390,7 +390,7 @@ class IncreaseIndentAction : public Action, public RangeAction {
 // Decrease indent of a range of lines.
 // TODO: Rect range.
 class DecreaseIndentAction : public Action, public RangeAction {
- public:
+public:
   DecreaseIndentAction(TextBuffer* buffer,
                        const TextRange& range,
                        TextDir dir,
@@ -407,11 +407,11 @@ class DecreaseIndentAction : public Action, public RangeAction {
 
   virtual TextRange SelectionAfterExec() const override;
 
- private:
+private:
   // Return true if the indent is changed.
   bool DecreaseIndentLine(Coord ln);
 
- private:
+private:
   std::vector<std::wstring> spaces_array_;
 };
 
@@ -438,7 +438,7 @@ private:
 
 // Automatically indent a range of lines.
 class AutoIndentAction : public Action, public RangeAction {
- public:
+public:
   AutoIndentAction(TextBuffer* buffer,
                    const TextRange& range,
                    TextDir dir,
@@ -455,11 +455,11 @@ class AutoIndentAction : public Action, public RangeAction {
 
   virtual TextRange SelectionAfterExec() const override;
 
- private:
+private:
   // Return true if the indent is changed.
   bool AutoIndentLine(Coord ln);
 
- private:
+private:
   std::vector<std::wstring> old_indent_strs_;
   std::vector<std::wstring> new_indent_strs_;
 };
@@ -468,7 +468,7 @@ class AutoIndentAction : public Action, public RangeAction {
 
 // Set the file format, or line endings.
 class SetFileFormatAction : public Action {
- public:
+public:
   SetFileFormatAction(TextBuffer* buffer,
                       const TextPoint& point,
                       FileFormat file_format);
@@ -489,7 +489,7 @@ class SetFileFormatAction : public Action {
     file_format_ = file_format;
   }
 
- private:
+private:
   FileFormat file_format_;
   FileFormat old_file_format_;
 };

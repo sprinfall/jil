@@ -9,7 +9,7 @@ namespace jil {
 namespace editor {
 
 class TextPoint {
- public:
+public:
   TextPoint(Coord x_ = -1, Coord y_ = 0)
       : x(x_), y(y_) {
   }

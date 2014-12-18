@@ -34,7 +34,7 @@ WrapOffsets WrapLineByChar(const std::wstring& line,
 
 // Wrap information for a text line.
 class WrapInfo {
- public:
+public:
   const WrapOffsets& offsets() const {
     return offsets_;
   }
@@ -77,12 +77,12 @@ class WrapInfo {
     return sub_ln == 1 ? 0 : offsets_[sub_ln - 1];
   }
 
- private:
+private:
   WrapOffsets offsets_;
 };
 
 class WrapHelper {
- public:
+public:
   WrapHelper(TextBuffer* buffer, TextExtent* text_extent);
   ~WrapHelper();
 
@@ -227,7 +227,7 @@ class WrapHelper {
   //  - UnwrapLineRange([10, 20]) -> [0, 0]
   LineRange UnwrapLineRange(const LineRange& wrapped_line_range) const;
 
- private:
+private:
   TextBuffer* buffer_;
   TextExtent* text_extent_;
   int client_width_;

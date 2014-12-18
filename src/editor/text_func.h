@@ -15,7 +15,7 @@ typedef void(*RawVoidFunc)();
 
 // Text function interface.
 class TextFunc {
- public:
+public:
   virtual ~TextFunc() {
   }
 
@@ -28,18 +28,18 @@ class TextFunc {
 
   virtual void Exec(TextWindow* tw) = 0;
 
- protected:
+protected:
   TextFunc() : change_text_(false) {
   }
 
- protected:
+protected:
   // Whether this function changes the text or not.
   bool change_text_;
 };
 
 // Use with predefined seekable text functions.
 class SeekableTextFuncWrap : public TextFunc {
- public:
+public:
   SeekableTextFuncWrap(RawSeekableTextFunc func,
                        TextUnit text_unit,
                        SeekType seek_type)
@@ -55,7 +55,7 @@ class SeekableTextFuncWrap : public TextFunc {
     }
   }
 
- private:
+private:
   RawSeekableTextFunc func_;
   TextUnit text_unit_;
   SeekType seek_type_;
@@ -65,7 +65,7 @@ class SeekableTextFuncWrap : public TextFunc {
 class TextFuncWrap : public TextFunc {
   typedef void(*Func)(TextWindow*);
 
- public:
+public:
   TextFuncWrap(RawTextFunc func, bool change_text = true)
       : func_(func) {
     set_change_text(change_text);
@@ -74,14 +74,14 @@ class TextFuncWrap : public TextFunc {
   virtual ~TextFuncWrap() {
   }
 
- protected:
+protected:
   virtual void Exec(TextWindow* tw) override {
     if (func_ != NULL) {
       (*func_)(tw);
     }
   }
 
- private:
+private:
   RawTextFunc func_;
 };
 

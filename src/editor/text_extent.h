@@ -16,7 +16,7 @@ namespace editor {
 
 // Text extent used to calculate the text size.
 class TextExtent {
- public:
+public:
   TextExtent();
   ~TextExtent();
 
@@ -36,7 +36,7 @@ class TextExtent {
                   int client_x,
                   bool vspace);
 
- private:
+private:
   // Binary search to get the char index.
   // The range is STL-style: [begin, end).
   // Called by IndexChar().
@@ -47,7 +47,7 @@ class TextExtent {
                              int client_x,
                              bool vspace);
 
- private:
+private:
   wxMemoryDC* dc_;
   int char_width_;
 };

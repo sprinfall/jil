@@ -11,7 +11,7 @@ namespace editor {
 
 // For fast option access (No key-value map).
 class Options {
- public:
+public:
   Options()
       : wrap(false)
       , shift_width(4)

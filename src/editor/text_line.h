@@ -13,6 +13,8 @@
 namespace jil {
 namespace editor {
 
+////////////////////////////////////////////////////////////////////////////////
+
 struct QuoteInfo {
   Quote* quote;
   size_t off;
@@ -20,8 +22,10 @@ struct QuoteInfo {
   QuotePart part;
 };
 
+////////////////////////////////////////////////////////////////////////////////
+
 class TextLine {
- public:
+public:
   TextLine(size_t id, const wchar_t* data, size_t len);
 
   // Construct with a '\0' terminated C string.
@@ -148,7 +152,7 @@ class TextLine {
     return quote_infos_;
   }
 
- private:
+private:
   size_t id_;
   std::wstring data_;
 
@@ -157,12 +161,16 @@ class TextLine {
   std::list<QuoteInfo> quote_infos_;
 };
 
-class LineFilter {
+////////////////////////////////////////////////////////////////////////////////
+
+class LinePred {
 public:
   virtual bool Check(const TextLine* line) const = 0;
 };
 
-class LineStartWith : public LineFilter {
+////////////////////////////////////////////////////////////////////////////////
+
+class LineStartWith : public LinePred {
 public:
   LineStartWith(const std::wstring& str1) {
     strs_.push_back(str1);

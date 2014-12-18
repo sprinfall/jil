@@ -33,14 +33,14 @@ class TipHandler;
 class Tip : public wxFrame {
   DECLARE_NO_COPY_CLASS(Tip)
 
- public:
+public:
   Tip(TipModel* model, wxWindow* parent);
   virtual ~Tip();
 
   const TipTheme& theme() const { return theme_; }
   void set_theme(const TipTheme& theme) { theme_ = theme; }
 
- private:
+private:
   TipModel* model_;
   TipTheme theme_;
 };
@@ -53,7 +53,7 @@ class Tip : public wxFrame {
 class TipHandler : public wxEvtHandler {
   DECLARE_EVENT_TABLE()
 
- public:
+public:
   // Owner window is the one who has the tip.
   explicit TipHandler(wxWindow* owner);
   virtual ~TipHandler();
@@ -72,7 +72,7 @@ class TipHandler : public wxEvtHandler {
     tip_theme_ = tip_theme;
   }
 
- protected:
+protected:
   void OnMouseLeftDown(wxMouseEvent& evt);
   void OnMouseMotion(wxMouseEvent& evt);
   void OnMouseLeftUp(wxMouseEvent& evt);
@@ -92,7 +92,7 @@ class TipHandler : public wxEvtHandler {
   void StartTip();
   void CloseTip();
 
- protected:
+protected:
   wxWindow* owner_window_;
   Tip* tip_;
   TipTheme tip_theme_;

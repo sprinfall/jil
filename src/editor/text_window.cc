@@ -1049,12 +1049,11 @@ void TextWindow::InsertChar(const TextPoint& point,
     return;
   }
 
-  // TODO
   // Re-indent current line if necessary.
   const TextLine* line = buffer_->Line(caret_point_.y);
 
   // Check if the word (or words, a indent key could be multiple words, e.g.,
-  // "End If" in VB) before the caret is a indent key or not.
+  // "End If" in VB) before the caret is an indent key or not.
   if (!line->IsEmpty(true)) {
     Coord off = line->FirstNonSpaceChar();
     if (off < caret_point_.x) {

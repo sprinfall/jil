@@ -37,7 +37,7 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
   DECLARE_CLASS(TextWindow)
   DECLARE_EVENT_TABLE()
 
- public:
+public:
   // Detailed event types of kTextWindowEvent.
   enum EventType {
     kEncodingEvent = 1,
@@ -53,7 +53,7 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
     COLOR_COUNT
   };
 
- public:
+public:
   explicit TextWindow(TextBuffer* buffer);
 
   // \param hide Set true to avoid flickering a small window (about 20x20).
@@ -136,12 +136,12 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
   void Undo();
   void Redo();
 
- private:
+private:
   // Insert a char at the caret point.
   // If there's any selection, the selected text will be deleted.
   void InsertChar(wchar_t c);
 
- public:
+public:
   void NewLineBreak();
 
   // Break a new line below.
@@ -150,13 +150,13 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
   // Break a new line above.
   void NewLineAbove();
 
- private:  // TODO
+private:  // TODO
   // Insert a string at the caret point.
   // If there's any selection, the selected text will be deleted.
   // The caret point will be updated.
   void InsertString(const std::wstring& str);
 
- public:
+public:
   void InsertString(const TextPoint& point,
                     const std::wstring& str,
                     bool grouped,
@@ -227,7 +227,7 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
 
   void ClearSelection(bool refresh = true);
 
- protected:
+protected:
   //----------------------------------------------------------------------------
   // Mediators.
 
@@ -478,7 +478,7 @@ class TextWindow : public wxScrolledWindow, public BufferListener {
 
   void PostEvent(EventType type);
 
- protected:
+protected:
   TextBuffer* buffer_;
 
   // Reference to the options in text buffer.

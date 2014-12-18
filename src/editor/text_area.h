@@ -12,14 +12,14 @@ class TextWindow;
 class TextArea : public wxPanel {
   DECLARE_EVENT_TABLE()
 
- public:
+public:
   explicit TextArea(TextWindow* text_window);
   bool Create(wxWindow* parent, wxWindowID id);
 
   // Override to scroll line nr area together.
   virtual void ScrollWindow(int dx, int dy, const wxRect* rect = NULL) override;
 
- protected:
+protected:
   void OnPaint(wxPaintEvent& evt);
   void OnSize(wxSizeEvent& evt);
   void OnMouse(wxMouseEvent& evt);
@@ -27,7 +27,7 @@ class TextArea : public wxPanel {
   void OnChar(wxKeyEvent& evt);
   void OnMouseCaptureLost(wxMouseCaptureLostEvent& evt);
 
- private:
+private:
   TextWindow* text_window_;
 };
 

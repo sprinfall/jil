@@ -14,7 +14,7 @@ class Theme;
 typedef boost::shared_ptr<Theme> SharedTheme;
 
 class Theme {
- public:
+public:
   explicit Theme(size_t theme_size)
       : themes_(theme_size) {
   }
@@ -61,12 +61,12 @@ class Theme {
     }
   }
 
- private:
+private:
   int theme_size() const { return static_cast<int>(themes_.size()); }
   int color_size() const { return static_cast<int>(colors_.size()); }
   int font_size() const { return static_cast<int>(fonts_.size()); }
 
- private:
+private:
   std::vector<SharedTheme> themes_;  // Sub-themes
   std::vector<wxColour> colors_;
   std::vector<wxFont> fonts_;

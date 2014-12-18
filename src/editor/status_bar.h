@@ -12,7 +12,7 @@ namespace editor {
 class StatusBar : public wxPanel {
   DECLARE_EVENT_TABLE()
 
- public:
+public:
   enum ColorId {
     BORDER = 0,
     FG,
@@ -58,7 +58,7 @@ class StatusBar : public wxPanel {
     int size;
   };
 
- public:
+public:
   StatusBar();
   bool Create(wxWindow* parent, wxWindowID id);
   virtual ~StatusBar();
@@ -80,7 +80,7 @@ class StatusBar : public wxPanel {
 
   void ClearFieldValues();
 
- protected:
+protected:
   virtual wxSize DoGetBestSize() const override;
 
   void OnPaint(wxPaintEvent& evt);
@@ -89,7 +89,7 @@ class StatusBar : public wxPanel {
   void OnSize(wxSizeEvent& evt);
   void OnMouseLeftDown(wxMouseEvent& evt);
 
- private:
+private:
   wxString GetFieldValue(FieldId id);
 
   // Get field rect according to its size and the client rect.
@@ -98,7 +98,7 @@ class StatusBar : public wxPanel {
 
   const FieldInfo* GetFieldByPos(int pos_x) const;
 
- private:
+private:
   SharedTheme theme_;
 
   std::vector<FieldInfo> field_infos_;

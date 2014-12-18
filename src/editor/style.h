@@ -12,7 +12,7 @@ namespace jil {
 namespace editor {
 
 class StyleValue {
- public:
+public:
   StyleValue(const wxColour& fg = wxNullColour,
              const wxColour& bg = wxNullColour,
              int font = 0)
@@ -35,14 +35,14 @@ class StyleValue {
   void set_bg(const wxColour& bg) { bg_ = bg; }
   void set_font(int font) { font_ = font; }
 
- private:
+private:
   wxColour fg_;
   wxColour bg_;
   int font_;  // Examples: kBold, kBold | kUnderline.
 };
 
 class Style {
- public:
+public:
   enum Font {
     kBold = 1,
     kItalic = 2,
@@ -62,7 +62,7 @@ class Style {
     kItemCount,
   };
 
- public:
+public:
   Style();
   ~Style();
 
@@ -90,7 +90,7 @@ class Style {
 
   const StyleValue* Get(Lex lex) const;
 
- private:
+private:
   typedef std::vector<StyleValue*> Values;
   Values values_;
   Values lex_values_[kLexMajorTypeCount];

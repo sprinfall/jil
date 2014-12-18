@@ -28,7 +28,7 @@ namespace editor {
 class Action;
 class FtPlugin;
 class InsertCharAction;
-class LineFilter;
+class LinePred;
 class Quote;
 class TextExtent;
 
@@ -45,7 +45,7 @@ enum Bracket {
 // A view implemented interface BufferListener listens to the change of it.
 // A text buffer may have multiple views.
 class TextBuffer {
- public:
+public:
   // Use deque instead of vector for faster line insert & delete operations.
   typedef std::deque<TextLine*> TextLines;
 
@@ -57,13 +57,13 @@ class TextBuffer {
                         ptrdiff_t> CharIteratorBase;
 
   class CharIterator : public CharIteratorBase {
-   private:
+ private:
     // Use TextLines::iterator instead of Coord for performance.
     // If lines are kept in vector instead of deque, Coord will be OK.
     TextLines::const_iterator y_;
     Coord x_;
 
-   public:
+  public:
     CharIterator() {
     }
 
@@ -211,13 +211,13 @@ class TextBuffer {
   // \param skip_comment Skip comment lines.
   Coord PrevNonEmptyLine(Coord ln, bool skip_comment) const;
 
-  // Return the previous line matching the filter.
-  Coord PrevLine(Coord ln, const LineFilter& filter) const;
+  // Return the previous line matching the predicate.
+  Coord PrevLine(Coord ln, const LinePred& line_pred) const;
 
-  // Return the previous line matching the two filters.
+  // Return the previous line matching the two predicates.
   Coord PrevLine(Coord ln,
-                 const LineFilter& filter1,
-                 const LineFilter& filter2) const;
+                 const LinePred& line_pred1,
+                 const LinePred& line_pred2) const;
 
   const std::wstring& LineData(Coord ln) const;
 
@@ -429,7 +429,7 @@ class TextBuffer {
 
   Coord GetMaxLineLength() const;
 
- private:
+private:
   //----------------------------------------------------------------------------
   // Buffer
 
@@ -632,7 +632,7 @@ class TextBuffer {
   void RemoveLineLength(TextLine* line);
   void ClearLineLength();
 
- private:
+private:
   wxFileName file_name_object_;
 
   // Shared file type specific data.

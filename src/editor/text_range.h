@@ -13,7 +13,7 @@ namespace editor {
 // The range inside a single line.
 // STL style begin/end range: [begin, end).
 class CharRange {
- public:
+public:
   CharRange(Coord begin = 0, Coord end = kInvalidCoord);
 
   Coord begin() const { return begin_; }
@@ -38,7 +38,7 @@ class CharRange {
     return end_ != kInvalidCoord && begin_ >= end_;
   }
 
- private:
+private:
   Coord begin_;
   Coord end_;
 };
@@ -56,7 +56,7 @@ inline bool operator!=(const CharRange& lhs, const CharRange& rhs) {
 // Range of line.
 // [first, last] with first <= last.
 class LineRange {
- public:
+public:
   LineRange(Coord first = 0, Coord last = 0)
       : first_(first), last_(last) {
     if (last_ < first_) {
@@ -96,7 +96,7 @@ class LineRange {
 
   wxString ToString() const;
 
- private:
+private:
   Coord first_;
   Coord last_;
 };
@@ -114,7 +114,7 @@ inline bool operator!=(const LineRange& lhs, const LineRange& rhs) {
 // Range of text.
 // STL style range: [point_begin, point_end).
 class TextRange {
- public:
+public:
   // Construct an invalid text range.
   TextRange() {
   }
@@ -182,7 +182,7 @@ class TextRange {
 
   wxString ToString() const;
 
- private:
+private:
   TextPoint point_begin_;
   TextPoint point_end_;
 };

@@ -10,7 +10,7 @@ namespace editor {
 
 // Text selection.
 class Selection {
- public:
+public:
   Selection() : dir(kForward), rect(false) {
   }
 

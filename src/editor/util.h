@@ -50,7 +50,7 @@ void ClearContainer(C* c) {
 //   time_it.End();
 //   SomeLogFunc(time_it.result_msg());
 class TimeIt {
- public:
+public:
   TimeIt(const wxChar* msg = wxT(""));
 
   void Start();
@@ -58,7 +58,7 @@ class TimeIt {
 
   const wxString& result_msg() const { return msg_; }
 
- private:
+private:
   wxString msg_;
   wxDateTime start_dt_;
 };

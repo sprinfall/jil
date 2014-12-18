@@ -227,7 +227,7 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
 
   //----------------------------------------------------------------------------
 
-  // public:/protected:/private:, case label:, etc.
+  //public:/protected:/private:, case label:, etc.
   if (prev_line->EndWith(L':', true, true)) {
     return prev_line->GetIndent(tab_stop) + shift_width;
   }

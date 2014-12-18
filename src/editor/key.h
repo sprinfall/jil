@@ -22,7 +22,7 @@ extern const std::string kNonShiftChars;  // "`1234567890-=,./;'[]\
 // - Ctrl+K, U
 // - Ctrl+Shift+K
 class Key {
- public:
+public:
   Key() : data_(0) {
   }
 
@@ -72,12 +72,12 @@ class Key {
 
   wxString ToString() const;
 
- private:
+private:
   int Make(int code, int modifiers) {
     return (code | (modifiers << 10));
   }
 
- private:
+private:
   // Encode key stroke in the last 4 bytes of int.
 
   //         /    leader    \
