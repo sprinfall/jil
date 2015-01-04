@@ -26,6 +26,8 @@ set(SRCS
     i18n_util.h
     lex_config.cc
     lex_config.h
+    navigation_dialog.cc
+    navigation_dialog.h
     option.cc
     option.h
     option_config.cc

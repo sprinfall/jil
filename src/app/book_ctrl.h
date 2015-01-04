@@ -11,11 +11,13 @@
 #include "editor/theme.h"
 #include "app/compile_config.h"
 
-class wxSizer;
+class wxGraphicsContext;
+
 #ifndef __WXMAC__
 class wxMemoryDC;
 #endif  // __WXMAC__
-class wxGraphicsContext;
+
+class wxSizer;
 
 namespace jil {
 
@@ -91,11 +93,11 @@ class BookCtrl : public wxPanel {
  protected:
   class Tab {
    public:
-    Tab(BookPage* page_, int best_size_, bool active_ = false)
-        : page(page_)
-        , best_size(best_size_)
-        , size(best_size_)
-        , active(active_) {
+    Tab(BookPage* _page, int _best_size, bool _active = false)
+        : page(_page)
+        , best_size(_best_size)
+        , size(_best_size)
+        , active(_active) {
     }
 
     BookPage* page;
@@ -152,6 +154,8 @@ class BookCtrl : public wxPanel {
   void SwitchToPrevStackPage();
 
   std::vector<BookPage*> Pages() const;
+
+  std::vector<BookPage*> StackPages() const;
 
   // Return the page next to the given page.
   BookPage* NextPage(const BookPage* page) const;
@@ -228,8 +232,8 @@ class BookCtrl : public wxPanel {
   TabList tabs_;
 
   // The front tab is the current active tab.
-  // A tab is moved to the front whenever it's activated.
-  TabList tab_stack_;
+  // A tab is moved to the front when it's activated.
+  TabList stack_tabs_;
 
   Tab* rclicked_tab_;
 

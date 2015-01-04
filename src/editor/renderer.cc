@@ -148,7 +148,6 @@ void Renderer::DrawTab(int x, int y, int w, int h) {
 }
 
 void Renderer::UpdateCharSize() {
-  void UpdateCharSize();
   dc_->GetTextExtent(wxT("T"), &char_size_.x, &char_size_.y);
 }
 

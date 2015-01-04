@@ -1,6 +1,5 @@
 #include "app/goto_dialog.h"
 #include "wx/button.h"
-#include "wx/log.h"
 #include "wx/sizer.h"
 #include "wx/textctrl.h"
 #include "wx/valnum.h"
@@ -21,7 +20,6 @@ GotoDialog::GotoDialog(wxWindow* parent, wxWindowID id)
                                    wxSize(300, -1),
                                    0,
                                    val);
-  //line_text_ctrl_->SetMinSize(wxSize(300, -1));
 
   wxButton* ok_button = new wxButton(this, wxID_OK, _("OK"));
   wxButton* cancel_button = new wxButton(this, wxID_CANCEL, _("Cancel"));

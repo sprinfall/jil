@@ -102,7 +102,7 @@ size_t TailorLabel(const wxDC& dc, const wxString& label, int max_width) {
   for (size_t i = 0; i < label.size(); ++i) {
     dc.GetTextExtent(label.Mid(0, i), &w, NULL, NULL, NULL, NULL);
     if (w > max_width) {
-      return i == 0 ? i : i - 1;
+      return (i == 0 ? i : i - 1);
     }
   }
   return label.size();

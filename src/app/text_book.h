@@ -20,6 +20,8 @@ class TextBook : public BookCtrl {
 
   TextPage* ActiveTextPage() const;
 
+  std::vector<TextPage*> StackTextPages() const;
+
  protected:
   virtual void HandleTabMouseLeftDown(wxMouseEvent& evt) override;
   virtual void HandleTabMouseLeftUp(wxMouseEvent& evt) override;

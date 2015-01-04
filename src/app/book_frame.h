@@ -240,6 +240,8 @@ class BookFrame : public wxFrame {
   void RemovePage(const TextPage* page);
   void RemoveAllPages(const TextPage* except_page = NULL);
 
+  void SwitchStackPage(bool forward);
+
   void DoSaveBuffer(editor::TextBuffer* buffer);
 
  private:

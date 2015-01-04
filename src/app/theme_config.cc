@@ -9,6 +9,7 @@
 #include "editor/text_window.h"
 #include "editor/status_bar.h"
 #include "editor/color.h"
+#include "app/navigation_dialog.h"
 #include "app/defs.h"
 #include "app/config.h"
 #include "app/book_ctrl.h"
@@ -94,9 +95,9 @@ bool LoadThemeFile(const wxString& theme_file,
   Setting root = cfg.Root();
 
   //----------------------------------------------------------------------------
-  // Window items.
+  // Window items
 
-  // Book frame.
+  // Book frame
   SharedTheme bf_theme(new Theme(BookFrame::COLOR_COUNT, 0));
   Setting bf_setting = root.Get("book_frame", Setting::kGroup);
   if (bf_setting) {
@@ -104,7 +105,7 @@ bool LoadThemeFile(const wxString& theme_file,
   }
   theme->SetTheme(THEME_BOOK_FRAME, bf_theme);
 
-  // Text book.
+  // Text book
   SharedTheme tb_theme(new Theme(BookCtrl::COLOR_COUNT, BookCtrl::FONT_COUNT));
   Setting tb_setting = root.Get("text_book", Setting::kGroup);
   if (tb_setting) {
@@ -140,7 +141,7 @@ bool LoadThemeFile(const wxString& theme_file,
   }
   theme->SetTheme(THEME_TEXT_BOOK, tb_theme);
 
-  // Text page.
+  // Text page
   SharedTheme tp_theme(new Theme(TextWindow::COLOR_COUNT, 0));
   Setting tp_setting = root.Get("text_page", Setting::kGroup);
   if (tp_setting) {
@@ -148,9 +149,9 @@ bool LoadThemeFile(const wxString& theme_file,
   }
   theme->SetTheme(THEME_TEXT_PAGE, tp_theme);
 
-  // Status bar.
-  SharedTheme sb_theme(
-      new Theme(StatusBar::COLOR_COUNT, StatusBar::FONT_COUNT));
+  // Status bar
+  SharedTheme sb_theme(new Theme(StatusBar::COLOR_COUNT,
+                                 StatusBar::FONT_COUNT));
   Setting sb_setting = root.Get("status_bar", Setting::kGroup);
   if (sb_setting) {
     sb_theme->SetColor(StatusBar::BORDER, sb_setting.GetColor("border"));
@@ -164,6 +165,21 @@ bool LoadThemeFile(const wxString& theme_file,
     sb_theme->SetFont(StatusBar::FONT, font);
   }
   theme->SetTheme(THEME_STATUS_BAR, sb_theme);
+
+  // Navigation dialog
+  SharedTheme nd_theme(new Theme(NavigationDialog::COLOR_COUNT, 0));
+  Setting nd_setting = root.Get("navigation_dialog", Setting::kGroup);
+  if (nd_setting) {
+    nd_theme->SetColor(NavigationDialog::BG, nd_setting.GetColor("bg"));
+    nd_theme->SetColor(NavigationDialog::FG, nd_setting.GetColor("fg"));
+    nd_theme->SetColor(NavigationDialog::SELECT_FG,
+                       nd_setting.GetColor("select_fg"));
+    nd_theme->SetColor(NavigationDialog::SELECT_BG,
+                       nd_setting.GetColor("select_bg"));
+    nd_theme->SetColor(NavigationDialog::SELECT_BORDER,
+                       nd_setting.GetColor("select_border"));
+  }
+  theme->SetTheme(THEME_NAVIGATION_DIALOG, nd_theme);
 
   //----------------------------------------------------------------------------
   // Non-lex items.

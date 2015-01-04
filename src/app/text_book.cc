@@ -44,6 +44,21 @@ TextPage* TextBook::ActiveTextPage() const {
   return AsTextPage(ActivePage());
 }
 
+std::vector<TextPage*> TextBook::StackTextPages() const {
+  std::vector<TextPage*> text_pages;
+  TextPage* text_page = NULL;
+
+  TabList::const_iterator it = stack_tabs_.begin();
+  for (; it != stack_tabs_.end(); ++it) {
+    text_page = wxDynamicCast((*it)->page, TextPage);
+    if (text_page != NULL) {
+      text_pages.push_back(text_page);
+    }
+  }
+
+  return text_pages;
+}
+
 void TextBook::HandleTabMouseLeftDown(wxMouseEvent& evt) {
   TabList::iterator it = TabByPos(evt.GetPosition().x);
   if (it != tabs_.end()) {

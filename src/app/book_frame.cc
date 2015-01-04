@@ -34,20 +34,21 @@
 #include "editor/text_window.h"
 #include "editor/status_bar.h"
 
-#include "app/defs.h"
 #include "app/app.h"
 #include "app/compile_config.h"
+#include "app/config.h"
+#include "app/defs.h"
+#include "app/find_result_page.h"
+#include "app/find_window.h"
 #include "app/i18n_strings.h"
+#include "app/navigation_dialog.h"
+#include "app/save.h"
+#include "app/session.h"
 #include "app/skin.h"
+#include "app/splitter.h"
 #include "app/text_page.h"
 #include "app/text_book.h"
 #include "app/tool_book.h"
-#include "app/session.h"
-#include "app/config.h"
-#include "app/find_window.h"
-#include "app/find_result_page.h"
-#include "app/splitter.h"
-#include "app/save.h"
 #include "app/util.h"
 
 namespace jil {
@@ -385,11 +386,11 @@ void BookFrame::SwitchToPrevPage() {
 }
 
 void BookFrame::SwitchToNextStackPage() {
-  // TODO
+  SwitchStackPage(true);
 }
 
 void BookFrame::SwitchToPrevStackPage() {
-  // TODO
+  SwitchStackPage(false);
 }
 
 void BookFrame::ShowFind() {
@@ -1829,6 +1830,26 @@ void BookFrame::RemovePage(const TextPage* page) {
 
 void BookFrame::RemoveAllPages(const TextPage* except_page) {
   ActiveTextBook()->RemoveAllPages(except_page);
+}
+
+void BookFrame::SwitchStackPage(bool forward) {
+  TextBook* text_book = ActiveTextBook();
+
+  std::vector<TextPage*> text_pages = text_book->StackTextPages();
+  if (text_pages.size() <= 1) {
+    return;
+  }
+
+  editor::SharedTheme theme = theme_->GetTheme(THEME_NAVIGATION_DIALOG);
+
+  NavigationDialog navigation_dialog(this, wxID_ANY, theme);
+  navigation_dialog.SetTextPages(text_pages, forward);
+  navigation_dialog.ShowModal();
+
+  size_t index = navigation_dialog.select_index();
+  if (index < text_pages.size()) {
+    text_book->ActivatePage(text_pages[index]);
+  }
 }
 
 void BookFrame::DoSaveBuffer(editor::TextBuffer* buffer) {

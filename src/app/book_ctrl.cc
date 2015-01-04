@@ -227,7 +227,7 @@ bool BookCtrl::AddPage(BookPage* page, bool active) {
   if (active) {
     ActivatePage(--tabs_.end());
   } else {
-    tab_stack_.push_back(tab);
+    stack_tabs_.push_back(tab);
   }
 
   PostEvent(kEvtBookPageChange);
@@ -277,7 +277,7 @@ bool BookCtrl::RemoveAllPages(const BookPage* except_page) {
     }
 
     it = tabs_.erase(it);
-    tab_stack_.remove(tab);
+    stack_tabs_.remove(tab);
     if (tab->active) {
       page_sizer_->Clear(false);
     }
@@ -287,8 +287,8 @@ bool BookCtrl::RemoveAllPages(const BookPage* except_page) {
   }
 
   if (any_page_removed) {
-    if (!tab_stack_.empty()) {
-      ActivatePage(tab_stack_.front()->page);
+    if (!stack_tabs_.empty()) {
+      ActivatePage(stack_tabs_.front()->page);
 
       PostEvent(kEvtBookPageSwitch);
     }
@@ -315,13 +315,13 @@ void BookCtrl::ActivatePage(BookPage* page) {
 }
 
 BookPage* BookCtrl::ActivePage() const {
-  if (tab_stack_.empty()) {
+  if (stack_tabs_.empty()) {
     return NULL;
   }
-  if (!tab_stack_.front()->active) {
+  if (!stack_tabs_.front()->active) {
     return NULL;
   }
-  return tab_stack_.front()->page;
+  return stack_tabs_.front()->page;
 }
 
 void BookCtrl::SwitchToNextPage() {
@@ -360,19 +360,22 @@ void BookCtrl::SwitchToPrevPage() {
   }
 }
 
-// TODO
 void BookCtrl::SwitchToNextStackPage() {
   if (PageCount() <= 1) {
     return;
   }
 
-  TabList::iterator it = tab_stack_.begin();
+  TabList::iterator it = stack_tabs_.begin();
   ++it;
   ActivatePage((*it)->page);
 }
 
-// TODO
 void BookCtrl::SwitchToPrevStackPage() {
+  if (PageCount() <= 1) {
+    return;
+  }
+
+  ActivatePage(stack_tabs_.back()->page);
 }
 
 std::vector<BookPage*> BookCtrl::Pages() const {
@@ -380,6 +383,17 @@ std::vector<BookPage*> BookCtrl::Pages() const {
 
   TabList::const_iterator it = tabs_.begin();
   for (; it != tabs_.end(); ++it) {
+    pages.push_back((*it)->page);
+  }
+
+  return pages;
+}
+
+std::vector<BookPage*> BookCtrl::StackPages() const {
+  std::vector<BookPage*> pages;
+
+  TabList::const_iterator it = stack_tabs_.begin();
+  for (; it != stack_tabs_.end(); ++it) {
     pages.push_back((*it)->page);
   }
 
@@ -960,8 +974,8 @@ void BookCtrl::ActivatePage(TabList::iterator it) {
   }
 
   // Update tab stack.
-  tab_stack_.remove(tab);
-  tab_stack_.push_front(tab);
+  stack_tabs_.remove(tab);
+  stack_tabs_.push_front(tab);
 
   page_area_->Layout();
   page_area_->Thaw();
@@ -991,7 +1005,7 @@ bool BookCtrl::RemovePage(TabList::iterator it) {
   page_area_->Freeze();
 
   tabs_.erase(it);
-  tab_stack_.remove(tab);
+  stack_tabs_.remove(tab);
 
   // The page to remove is active.
   if (tab->active) {
@@ -999,7 +1013,7 @@ bool BookCtrl::RemovePage(TabList::iterator it) {
 
     if (PageCount() > 0) {
       // Activate another page.
-      Tab* active_tab = tab_stack_.front();
+      Tab* active_tab = stack_tabs_.front();
       active_tab->active = true;
       page_sizer_->Add(active_tab->page->Page_Window(), 1, wxEXPAND);
       active_tab->page->Page_Activate(true);
