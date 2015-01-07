@@ -1110,13 +1110,16 @@ bool TextWindow::OnTextMouse(wxMouseEvent& evt) {
   if (evt_type == wxEVT_LEFT_DOWN) {
     HandleTextLeftDown(evt);
     handled = true;
-  } else if (evt_type == wxEVT_MOTION) {
-    HandleTextMotion(evt);
-    handled = true;
   } else if (evt_type == wxEVT_LEFT_UP) {
     HandleTextLeftUp(evt);
     handled = true;
-  }  else if (evt_type == wxEVT_LEFT_DCLICK) {
+  } else if (evt_type == wxEVT_RIGHT_DOWN) {
+    HandleTextRightDown(evt);
+    handled = true;
+  } else if (evt_type == wxEVT_MOTION) {
+    HandleTextMotion(evt);
+    handled = true;
+  } else if (evt_type == wxEVT_LEFT_DCLICK) {
     HandleTextLeftDClick(evt);
     handled = true;
   } else if (evt_type == wxEVT_MOUSEWHEEL) {
@@ -1896,6 +1899,19 @@ void TextWindow::HandleTextLeftUp(wxMouseEvent& evt) {
   // Clear flags.
   down_modifiers_ = 0;
   dragged_ = false;
+}
+
+void TextWindow::HandleTextRightDown(wxMouseEvent& evt) {
+  text_area_->SetFocus();
+
+  down_point_ = CalcCaretPoint(evt.GetPosition(), false);
+
+  if (!selection_.IsEmpty() && !selection_.Contain(down_point_)) {
+    // Clear selection if click outside of it.
+    ClearSelection();
+  }
+
+  UpdateCaretPoint(down_point_, false, false, false);
 }
 
 void TextWindow::HandleTextLeftDClick(wxMouseEvent& evt) {

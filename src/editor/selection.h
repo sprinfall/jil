@@ -33,6 +33,10 @@ public:
     return (rect && range.point_begin().x == range.point_end().x);
   }
 
+  bool Contain(const TextPoint& point) const {
+    return range.Contain(point);
+  }
+
   bool HasLine(Coord ln) const {
     return range.HasLine(ln);
   }

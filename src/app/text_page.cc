@@ -5,6 +5,7 @@
 #include "editor/text_buffer.h"
 #include "editor/text_area.h"
 #include "app/i18n_strings.h"
+#include "app/id.h"
 #include "app/save.h"
 
 namespace jil {
@@ -91,21 +92,20 @@ bool TextPage::SaveBuffer() {
   return saved;
 }
 
-// TODO
 bool TextPage::OnTextMouse(wxMouseEvent& evt) {
   wxEventType evt_type = evt.GetEventType();
 
   if (evt_type == wxEVT_RIGHT_UP) {
     wxMenu menu;
-    menu.Append(wxID_ANY, _("Insert Snippet..."));
-    menu.AppendSeparator();
-    menu.Append(wxID_ANY, _("Go To Definition"));
-    menu.Append(wxID_ANY, _("Find References"));
-    menu.Append(wxID_ANY, _("Switch Between Header && Source"));
-    menu.AppendSeparator();
-    menu.Append(wxID_ANY, _("Cut"));
-    menu.Append(wxID_ANY, _("Copy"));
-    menu.Append(wxID_ANY, _("Paste"));
+    //menu.Append(wxID_ANY, _("Insert Snippet..."));
+    //menu.AppendSeparator();
+    //menu.Append(wxID_ANY, _("Go To Definition"));
+    //menu.Append(wxID_ANY, _("Find References"));
+    //menu.Append(wxID_ANY, _("Switch Between Header && Source"));
+    //menu.AppendSeparator();
+    menu.Append(ID_MENU_EDIT_CUT, _("Cut"));
+    menu.Append(ID_MENU_EDIT_COPY, _("Copy"));
+    menu.Append(ID_MENU_EDIT_PASTE, _("Paste"));
 
     wxPoint pos = text_area()->ClientToScreen(evt.GetPosition());
     pos = ScreenToClient(pos);

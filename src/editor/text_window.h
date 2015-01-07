@@ -331,6 +331,7 @@ protected:
   void OnScrollTimer(wxTimerEvent& evt);
 
   void HandleTextLeftUp(wxMouseEvent& evt);
+  void HandleTextRightDown(wxMouseEvent& evt);
   virtual void HandleTextLeftDClick(wxMouseEvent& evt);
 
   // Return true if the event is handled.
