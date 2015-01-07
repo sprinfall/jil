@@ -21,6 +21,8 @@ BEGIN_EVENT_TABLE(NavigationDialog, wxDialog)
 EVT_PAINT         (NavigationDialog::OnPaint)
 EVT_CLOSE         (NavigationDialog::OnClose)
 EVT_ACTIVATE      (NavigationDialog::OnActivate)
+EVT_LEFT_UP       (NavigationDialog::OnMouseLeftUp)
+EVT_MOTION        (NavigationDialog::OnMouseMotion)
 EVT_KEY_DOWN      (NavigationDialog::OnKeyDown)
 EVT_KEY_UP        (NavigationDialog::OnKeyUp)
 EVT_NAVIGATION_KEY(NavigationDialog::OnNavigationKey)
@@ -40,9 +42,7 @@ NavigationDialog::NavigationDialog(wxWindow* parent,
     SetBackgroundColour(theme_->GetColor(BG));
   }
 
-  wxFont font = GetFont();
-
-  title_font_ = font;
+  title_font_ = GetFont();
   title_font_.SetWeight(wxFONTWEIGHT_BOLD);
 }
 
@@ -129,6 +129,27 @@ void NavigationDialog::OnActivate(wxActivateEvent& evt) {
     Close();
   }
   evt.Skip();
+}
+
+void NavigationDialog::OnMouseLeftUp(wxMouseEvent& evt) {
+  size_t index = GetIndexByPos(evt.GetPosition());
+
+  if (index != editor::kNpos) {
+    select_index_ = index;
+    Close();
+  } else {
+    evt.Skip();
+  }
+}
+
+void NavigationDialog::OnMouseMotion(wxMouseEvent& evt) {
+  size_t index = GetIndexByPos(evt.GetPosition());
+
+  if (index != editor::kNpos) {
+    wxSetCursor(wxCursor(wxCURSOR_HAND));
+  } else {
+    wxSetCursor(wxCursor(wxCURSOR_ARROW));
+  }
 }
 
 void NavigationDialog::OnKeyDown(wxKeyEvent& evt) {
@@ -248,6 +269,15 @@ void NavigationDialog::DrawText(wxDC& dc,
   }
 
   dc.DrawText(text.Mid(0, i) + kEllipsis, rect.x, rect.y);
+}
+
+size_t NavigationDialog::GetIndexByPos(const wxPoint& pos) const {
+  for (size_t i = 0; i < text_rects_.size(); ++i) {
+    if (text_rects_[i].Contains(pos)) {
+      return i;
+    }
+  }
+  return editor::kNpos;
 }
 
 }  // namespace jil

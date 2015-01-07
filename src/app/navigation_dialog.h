@@ -51,6 +51,8 @@ protected:
   void OnPaint(wxPaintEvent& evt);
   void OnClose(wxCloseEvent& evt);
   void OnActivate(wxActivateEvent& evt);
+  void OnMouseLeftUp(wxMouseEvent& evt);
+  void OnMouseMotion(wxMouseEvent& evt);
   void OnKeyDown(wxKeyEvent& evt);
   void OnKeyUp(wxKeyEvent& evt);
   void OnNavigationKey(wxNavigationKeyEvent& evt);
@@ -60,11 +62,14 @@ private:
 
   void DrawText(wxDC& dc, const wxString& text, const wxRect& rect);
 
+  size_t GetIndexByPos(const wxPoint& pos) const;
+
 private:
   editor::SharedTheme theme_;
 
   // Active text pages.
   std::vector<TextPage*> text_pages_;
+
   size_t select_index_;
 
   int column_width_;  // In pixel
