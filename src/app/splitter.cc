@@ -1,9 +1,12 @@
 #include "app/splitter.h"
 #include "wx/log.h"
+#include "wx/wupdlock.h"
 
 namespace jil {
 
 static const int kGap = 3;  // px
+
+////////////////////////////////////////////////////////////////////////////////
 
 SplitNode::~SplitNode() {
   if (node1_ != NULL) {
@@ -30,11 +33,46 @@ bool SplitNode::IsShown() const {
   return true;
 }
 
+wxSize SplitNode::GetMinSize() const {
+  wxSize min_size;
+
+  wxSize min_size1 = node1_ != NULL ? node1_->GetMinSize() : wxDefaultSize;
+  wxSize min_size2 = node2_ != NULL ? node2_->GetMinSize() : wxDefaultSize;
+
+  if (vertical()) {
+  } else {
+    min_size.x = wxMax(min_size1.x, min_size2.x);
+
+    if (min_size1.y != -1) {
+      min_size.y += min_size1.y;
+    }
+    if (min_size2.y != -1) {
+      min_size.y += min_size2.y;
+    }
+    if (min_size.y == 0) {
+      min_size.y = -1;
+    }
+  }
+
+  return min_size;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+wxSize SplitLeaf::GetMinSize() const {
+  if (window_ != NULL) {
+    return window_->GetMinSize();
+  }
+  return wxDefaultSize;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 BEGIN_EVENT_TABLE(Splitter, wxPanel)
-EVT_SIZE(Splitter::OnSize)
-EVT_LEFT_DOWN(Splitter::OnMouseLeftDown)
-EVT_LEFT_UP(Splitter::OnMouseLeftUp)
-EVT_MOTION(Splitter::OnMouseMove)
+EVT_SIZE      (Splitter::OnSize)
+EVT_LEFT_DOWN (Splitter::OnMouseLeftDown)
+EVT_LEFT_UP   (Splitter::OnMouseLeftUp)
+EVT_MOTION    (Splitter::OnMouseMove)
 END_EVENT_TABLE()
 
 Splitter::Splitter()
@@ -65,6 +103,7 @@ void Splitter::SetSplitRoot(SplitNode* split_root) {
 
 void Splitter::Split() {
   if (split_root_ != NULL) {
+    wxWindowUpdateLocker no_update(this);
     Split(split_root_, GetClientRect());
   }
 }
@@ -195,6 +234,20 @@ void Splitter::OnMouseMove(wxMouseEvent& evt) {
       width1 = width - kGap;
     }
 
+    // Mind the min width of node1.
+    int min_width1 = gap_node_->node1()->GetMinSize().x;
+    if (width1 < min_width1) {
+      width1 = min_width1;
+    } else {
+      // Mind the min width of node2.
+      int min_width2 = gap_node_->node2()->GetMinSize().x;
+      int width2 = width - width1 - kGap;
+      if (width2 < min_width2) {
+        width2 = min_width2;
+        width1 = width - width2 - kGap;
+      }
+    }
+
     new_size_ratio = static_cast<double>(width1) / width;
 
   } else {
@@ -210,6 +263,20 @@ void Splitter::OnMouseMove(wxMouseEvent& evt) {
       height1 = 0;
     } else if (height1 > height) {
       height1 = height - kGap;
+    }
+
+    // Mind the min height of node1.
+    int min_height1 = gap_node_->node1()->GetMinSize().y;
+    if (height1 < min_height1) {
+      height1 = min_height1;
+    } else {
+      // Mind the min height of node2.
+      int min_height2 = gap_node_->node2()->GetMinSize().y;
+      int height2 = height - height1 - kGap;
+      if (height2 < min_height2) {
+        height2 = min_height2;
+        height1 = height - height2 - kGap;
+      }
     }
 
     new_size_ratio = static_cast<double>(height1) / height;
