@@ -7,6 +7,8 @@
 
 namespace jil {
 
+////////////////////////////////////////////////////////////////////////////////
+
 class SplitLeaf;
 
 class SplitNode {
@@ -70,6 +72,8 @@ class SplitNode {
     node2_ = node2;
   }
 
+  virtual wxSize GetMinSize() const;
+
  protected:
   // wxHORIZONTAL or wxVERTICAL.
   wxOrientation orientation_;
@@ -82,6 +86,8 @@ class SplitNode {
   SplitNode* node1_;
   SplitNode* node2_;
 };
+
+////////////////////////////////////////////////////////////////////////////////
 
 class SplitLeaf : public SplitNode {
  public:
@@ -116,10 +122,14 @@ class SplitLeaf : public SplitNode {
     id_ = id;
   }
 
+  virtual wxSize GetMinSize() const override;
+
  private:
   wxWindow* window_;
   std::string id_;
 };
+
+////////////////////////////////////////////////////////////////////////////////
 
 // Example:
 // A, B, C are three windows. The layout is:

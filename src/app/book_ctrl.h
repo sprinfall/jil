@@ -114,13 +114,15 @@ class BookCtrl : public wxPanel {
 
  public:
   explicit BookCtrl(const editor::SharedTheme& theme);
-  bool Create(wxWindow* parent, wxWindowID id);
   virtual ~BookCtrl();
 
-  // Overriddens of wxWindow.
+  bool Create(wxWindow* parent, wxWindowID id);
+
   virtual bool HasFocus() const override;
 
-  wxPanel* PageParent() { return page_area_; }
+  wxPanel* PageParent() {
+    return page_area_;
+  }
 
   // Set batch flag to avoid unecessary resizing tabs and refresh.
   // Example:

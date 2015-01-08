@@ -138,6 +138,15 @@ BookCtrl::BookCtrl(const editor::SharedTheme& theme)
     , need_resize_tabs_(false) {
 }
 
+BookCtrl::~BookCtrl() {
+  TabList::iterator it = tabs_.begin();
+  for (; it != tabs_.end(); ++it) {
+    Disconnect((*it)->page->Page_Window()->GetId());
+    delete (*it);
+  }
+  tabs_.clear();
+}
+
 bool BookCtrl::Create(wxWindow* parent, wxWindowID id) {
   if (!wxPanel::Create(parent, id)) {
     return false;
@@ -153,6 +162,9 @@ bool BookCtrl::Create(wxWindow* parent, wxWindowID id) {
     tab_area_->SetFont(theme_->GetFont(TAB_FONT));
   }
 
+  // Book ctrl's min size is the best size of its tab area.
+  SetMinSize(tab_area_->GetBestSize());
+
   page_area_ = new BookPageArea(this, wxID_ANY);
   page_sizer_ = new wxBoxSizer(wxVERTICAL);
   page_area_->SetSizer(page_sizer_);
@@ -164,15 +176,6 @@ bool BookCtrl::Create(wxWindow* parent, wxWindowID id) {
   SetSizer(sizer);
 
   return true;
-}
-
-BookCtrl::~BookCtrl() {
-  TabList::iterator it = tabs_.begin();
-  for (; it != tabs_.end(); ++it) {
-    Disconnect((*it)->page->Page_Window()->GetId());
-    delete (*it);
-  }
-  tabs_.clear();
 }
 
 bool BookCtrl::HasFocus() const {
