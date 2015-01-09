@@ -496,8 +496,7 @@ wxString App::ResourceFile(const wxString& dir, const wxString& file) const {
 void App::LoadStatusFields() {
   wxString status_fields_file = UserDataFile(kStatusFieldsFile);
   if (!wxFileName::FileExists(status_fields_file)) {
-    wxLogInfo(wxT("No user status fields file."));
-    return;
+    status_fields_file = ResourceFile(kStatusFieldsFile);
   }
 
   Config config;
@@ -506,7 +505,7 @@ void App::LoadStatusFields() {
     return;
   }
 
-  Setting list_setting = config.Root().Get("list");
+  Setting list_setting = config.Root()[0];
   if (!list_setting || list_setting.type() != Setting::kList) {
     return;
   }
@@ -519,7 +518,7 @@ void App::LoadStatusFields() {
 void App::LoadOptions() {
   wxString options_file = UserDataFile(kOptionsFile);
   if (!wxFileName::FileExists(options_file)) {
-    wxLogInfo(wxT("No user options file."));
+    wxLogInfo(wxT("No user options config file."));
     options_file = ResourceFile(kOptionsFile);
   }
 
