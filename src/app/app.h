@@ -42,7 +42,7 @@ class Session;
 typedef void (*FtPluginLoader)(editor::FtPlugin* ft_plugin);
 
 class App : public wxApp {
- public:
+public:
   App();
   virtual ~App();
 
@@ -68,7 +68,7 @@ class App : public wxApp {
     return status_fields_;
   }
 
- protected:
+protected:
 #if wxUSE_CMDLINE_PARSER
   // Called from OnInit() to add all supported options to the given parser.
   virtual void OnInitCmdLine(wxCmdLineParser& parser) override;
@@ -88,7 +88,7 @@ class App : public wxApp {
 #error "Please enable wxUSE_CMDLINE_PARSER!"
 #endif  // wxUSE_CMDLINE_PARSER
 
- private:
+private:
   // Windows: C:\Users\username\AppData\Roaming\appname\ (Win7)
   // Mac: ~/Library/Application Support/appname/
   // Unix: ~/.appname/
@@ -120,11 +120,26 @@ class App : public wxApp {
                   bool change_text,
                   int menu);
 
-  void AddSeekableTextCmd(const char* name,
+  void AddMoveTextCmd(editor::TextUnit unit, editor::SeekType seek, int menu);
+
+  void AddDeleteTextCmd(editor::TextUnit unit,
+                        editor::SeekType seek,
+                        int menu);
+
+  void AddScrollTextCmd(editor::TextUnit unit,
+                        editor::SeekType seek,
+                        int menu);
+
+  void AddSelectTextCmd(editor::TextUnit unit,
+                        editor::SeekType seek,
+                        int menu);
+
+  void AddSeekableTextCmd(const std::string& name_prefix,
                           editor::RawSeekableTextFunc func,
                           editor::TextUnit unit,
                           editor::SeekType seek,
-                          int menu);
+                          int menu,
+                          bool change_text);
 
   void AddVoidCmd(const char* name, editor::RawVoidFunc func, int menu);
 
@@ -140,7 +155,7 @@ class App : public wxApp {
   // Open the last opened files, activate the last active file.
   void RestoreLastOpenedFiles(BookFrame* book_frame);
 
- private:
+private:
   wxSingleInstanceChecker* instance_checker_;
   wxServer* server_;
 

@@ -66,9 +66,9 @@ class TextFuncWrap : public TextFunc {
   typedef void(*Func)(TextWindow*);
 
 public:
-  TextFuncWrap(RawTextFunc func, bool change_text = true)
+  TextFuncWrap(RawTextFunc func, bool change_text)
       : func_(func) {
-    set_change_text(change_text);
+    change_text_ = change_text;
   }
 
   virtual ~TextFuncWrap() {

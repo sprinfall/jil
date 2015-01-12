@@ -16,7 +16,7 @@ Binding::~Binding() {
   }
 }
 
-void Binding::AddTextCmd(const char* name, TextFunc* func, int menu) {
+void Binding::AddTextCmd(const std::string& name, TextFunc* func, int menu) {
   TextCmd text_cmd;
   text_cmd.name = name;
   text_cmd.func = func;
@@ -25,7 +25,7 @@ void Binding::AddTextCmd(const char* name, TextFunc* func, int menu) {
   text_cmds_.push_back(text_cmd);
 }
 
-void Binding::AddVoidCmd(const char* name, VoidFunc* func, int menu) {
+void Binding::AddVoidCmd(const std::string& name, VoidFunc* func, int menu) {
   VoidCmd void_cmd;
   void_cmd.name = name;
   void_cmd.func = func;

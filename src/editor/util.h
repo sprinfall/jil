@@ -76,6 +76,14 @@ Encoding EncodingFromName(const std::string& name);
 // Returns EOL string from file format.
 std::wstring GetEol(FileFormat file_format);
 
+////////////////////////////////////////////////////////////////////////////////
+
+const std::string& UnitName(TextUnit unit);
+TextUnit UnitFromName(const std::string& name);
+
+const std::string& SeekName(SeekType seek);
+SeekType SeekFromName(const std::string& name);
+
 }  // namespace editor
 }  // namespace jil
 

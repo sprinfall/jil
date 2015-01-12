@@ -153,5 +153,44 @@ std::wstring GetEol(FileFormat file_format) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+static const std::string kTextUnitNames[kTextUnitCount] = {
+  "", "char", "word", "line", "page", "half_page", "buffer", "selected",
+};
+
+static const std::string kSeekTypeNames[kSeekTypeCount] = {
+  "", "whole", "begin", "end", "prev", "next",
+};
+
+const std::string& UnitName(TextUnit unit) {
+  assert(unit < kTextUnitCount);
+  return kTextUnitNames[unit];
+}
+
+TextUnit UnitFromName(const std::string& name) {
+  for (int i = 0; i < kTextUnitCount; ++i) {
+    if (kTextUnitNames[i] == name) {
+      return static_cast<TextUnit>(i);
+    }
+  }
+  return kNoUnit;
+}
+
+const std::string& SeekName(SeekType seek) {
+  assert(seek < kSeekTypeCount);
+  return kSeekTypeNames[seek];
+}
+
+SeekType SeekFromName(const std::string& name) {
+  for (int i = 0; i < kSeekTypeCount; ++i) {
+    if (kSeekTypeNames[i] == name) {
+      return static_cast<SeekType>(i);
+    }
+  }
+  return kNoSeek;
+}
+
+
 }  // namespace editor
 }  // namespace jil

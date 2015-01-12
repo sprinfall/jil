@@ -63,6 +63,13 @@ public:
 
   //----------------------------------------------------------------------------
 
+  bool allow_text_change() const {
+    return allow_text_change_;
+  }
+  void set_allow_text_change(bool allow_text_change) {
+    allow_text_change_ = allow_text_change;
+  }
+
   void set_theme(const SharedTheme& theme) {
     theme_ = theme;
   }
@@ -481,6 +488,9 @@ protected:
 
 protected:
   TextBuffer* buffer_;
+
+  // Some text window cannot be changed, e.g., find result.
+  bool allow_text_change_;
 
   // Reference to the options in text buffer.
   Options& options_;

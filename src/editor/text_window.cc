@@ -66,6 +66,7 @@ END_EVENT_TABLE()
 
 TextWindow::TextWindow(TextBuffer* buffer)
     : buffer_(buffer)
+    , allow_text_change_(true)
     , options_(buffer->options())
     , style_(NULL)
     , binding_(NULL)
@@ -1995,13 +1996,15 @@ bool TextWindow::OnTextKeyDown(wxKeyEvent& evt) {
   }
 
   if (code == WXK_TAB && modifiers == 0 && leader_key_->IsEmpty()) {
-    // Input tab (expand or not).
-    if (options_.expand_tab) {
-      int spaces = options_.tab_stop - (caret_point_.x % options_.tab_stop);
-      // TODO: Continuous tabs cannot be undone together.
-      InsertString(std::wstring(spaces, kSpaceChar));
-    } else {
-      InsertChar(kTabChar);
+    if (allow_text_change_) {
+      // Input tab (expand or not).
+      if (options_.expand_tab) {
+        int spaces = options_.tab_stop - (caret_point_.x % options_.tab_stop);
+        // TODO: Continuous tabs cannot be undone together.
+        InsertString(std::wstring(spaces, kSpaceChar));
+      } else {
+        InsertChar(kTabChar);
+      }
     }
     return true;
   }
@@ -2037,7 +2040,9 @@ bool TextWindow::OnTextKeyDown(wxKeyEvent& evt) {
   }
 
   if (text_func != NULL) {
-    text_func->Exec(this);
+    if (allow_text_change_ || !text_func->change_text()) {
+      text_func->Exec(this);
+    }
     return true;
   }
 
@@ -2045,6 +2050,10 @@ bool TextWindow::OnTextKeyDown(wxKeyEvent& evt) {
 }
 
 void TextWindow::OnTextChar(wxKeyEvent& evt) {
+  if (!allow_text_change_) {
+    return;
+  }
+
   if (evt.AltDown() || evt.CmdDown()) {
     evt.Skip();
     return;

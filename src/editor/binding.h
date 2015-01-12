@@ -61,8 +61,8 @@ public:
   Binding();
   ~Binding();
 
-  void AddTextCmd(const char* name, TextFunc* func, int menu);
-  void AddVoidCmd(const char* name, VoidFunc* func, int menu);
+  void AddTextCmd(const std::string& name, TextFunc* func, int menu);
+  void AddVoidCmd(const std::string& name, VoidFunc* func, int menu);
 
   // Bind the keys to the command with the given name.
   bool BindKeys(const std::string& name,

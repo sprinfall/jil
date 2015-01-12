@@ -44,6 +44,7 @@ enum TextUnit {
   kHalfPage,
   kBuffer,
   kSelected,
+  kTextUnitCount,
 };
 
 enum SeekType {
@@ -52,7 +53,8 @@ enum SeekType {
   kBegin,
   kEnd,
   kPrev,
-  kNext
+  kNext,
+  kSeekTypeCount,
 };
 
 // Editor mode.

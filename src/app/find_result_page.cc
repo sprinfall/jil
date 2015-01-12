@@ -9,6 +9,7 @@ IMPLEMENT_CLASS(FindResultPage, TextPage);
 
 FindResultPage::FindResultPage(editor::TextBuffer* buffer)
     : TextPage(buffer) {
+  allow_text_change_ = false;
 }
 
 bool FindResultPage::Create(wxWindow* parent, wxWindowID id, bool hide) {

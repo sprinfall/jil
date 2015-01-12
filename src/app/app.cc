@@ -611,47 +611,47 @@ void App::InitCommands() {
 
   //----------------------------------------------------------------------------
 
-  AddSeekableTextCmd("move.char.prev", Move, kChar, kPrev, 0);
-  AddSeekableTextCmd("move.char.next", Move, kChar, kNext, 0);
-  AddSeekableTextCmd("move.selected.begin", Move, kSelected, kBegin, 0);
-  AddSeekableTextCmd("move.selected.end", Move, kSelected, kEnd, 0);
-  AddSeekableTextCmd("move.word.prev", Move, kWord, kPrev, 0);
-  AddSeekableTextCmd("move.word.next", Move, kWord, kNext, 0);
-  AddSeekableTextCmd("move.line.prev", Move, kLine, kPrev, 0);
-  AddSeekableTextCmd("move.line.next", Move, kLine, kNext, 0);
-  AddSeekableTextCmd("move.line.begin", Move, kLine, kBegin, 0);
-  AddSeekableTextCmd("move.line.end", Move, kLine, kEnd, 0);
-  AddSeekableTextCmd("move.buffer.begin", Move, kBuffer, kBegin, 0);
-  AddSeekableTextCmd("move.buffer.end", Move, kBuffer, kEnd, 0);
+  AddMoveTextCmd(kChar, kPrev, 0);
+  AddMoveTextCmd(kChar, kNext, 0);
+  AddMoveTextCmd(kSelected, kBegin, 0);
+  AddMoveTextCmd(kSelected, kEnd, 0);
+  AddMoveTextCmd(kWord, kPrev, 0);
+  AddMoveTextCmd(kWord, kNext, 0);
+  AddMoveTextCmd(kLine, kPrev, 0);
+  AddMoveTextCmd(kLine, kNext, 0);
+  AddMoveTextCmd(kLine, kBegin, 0);
+  AddMoveTextCmd(kLine, kEnd, 0);
+  AddMoveTextCmd(kBuffer, kBegin, 0);
+  AddMoveTextCmd(kBuffer, kEnd, 0);
 
-  AddSeekableTextCmd("delete.char.prev", Delete, kChar, kPrev, 0);
-  AddSeekableTextCmd("delete.char.next", Delete, kChar, kNext, 0);
-  AddSeekableTextCmd("delete.word.prev", Delete, kWord, kPrev, 0);
-  AddSeekableTextCmd("delete.word.next", Delete, kWord, kNext, 0);
-  AddSeekableTextCmd("delete.line.begin", Delete, kLine, kBegin, 0);
-  AddSeekableTextCmd("delete.line.end", Delete, kLine, kEnd, 0);
-  AddSeekableTextCmd("delete.line.whole", Delete, kLine, kWhole, 0);
-  AddSeekableTextCmd("delete.selected.whole", Delete, kSelected, kWhole, 0);
+  AddDeleteTextCmd(kChar, kPrev, 0);
+  AddDeleteTextCmd(kChar, kNext, 0);
+  AddDeleteTextCmd(kWord, kPrev, 0);
+  AddDeleteTextCmd(kWord, kNext, 0);
+  AddDeleteTextCmd(kLine, kBegin, 0);
+  AddDeleteTextCmd(kLine, kEnd, 0);
+  AddDeleteTextCmd(kLine, kWhole, 0);
+  AddDeleteTextCmd(kSelected, kWhole, 0);
 
-  AddSeekableTextCmd("scroll.line.prev", Scroll, kLine, kPrev, 0);
-  AddSeekableTextCmd("scroll.line.next", Scroll, kLine, kNext, 0);
-  AddSeekableTextCmd("scroll.half_page.prev", Scroll, kHalfPage, kPrev, 0);
-  AddSeekableTextCmd("scroll.half_page.next", Scroll, kHalfPage, kNext, 0);
-  AddSeekableTextCmd("scroll.page.prev", Scroll, kPage, kPrev, 0);
-  AddSeekableTextCmd("scroll.page.next", Scroll, kPage, kNext, 0);
+  AddScrollTextCmd(kLine, kPrev, 0);
+  AddScrollTextCmd(kLine, kNext, 0);
+  AddScrollTextCmd(kHalfPage, kPrev, 0);
+  AddScrollTextCmd(kHalfPage, kNext, 0);
+  AddScrollTextCmd(kPage, kPrev, 0);
+  AddScrollTextCmd(kPage, kNext, 0);
 
-  AddSeekableTextCmd("select.char.prev", Select, kChar, kPrev, 0);
-  AddSeekableTextCmd("select.char.next", Select, kChar, kNext, 0);
-  AddSeekableTextCmd("select.word.prev", Select, kWord, kPrev, 0);
-  AddSeekableTextCmd("select.word.next", Select, kWord, kNext, 0);
-  AddSeekableTextCmd("select.line.begin", Select, kLine, kBegin, 0);
-  AddSeekableTextCmd("select.line.end", Select, kLine, kEnd, 0);
-  AddSeekableTextCmd("select.line.prev", Select, kLine, kPrev, 0);
-  AddSeekableTextCmd("select.line.next", Select, kLine, kNext, 0);
-  AddSeekableTextCmd("select.buffer.begin", Select, kBuffer, kBegin, 0);
-  AddSeekableTextCmd("select.buffer.end", Select, kBuffer, kEnd, 0);
-  AddSeekableTextCmd("select.buffer.whole", Select, kBuffer, kWhole, 0);
-  AddSeekableTextCmd("select.selected.whole", Select, kSelected, kWhole, 0);
+  AddSelectTextCmd(kChar, kPrev, 0);
+  AddSelectTextCmd(kChar, kNext, 0);
+  AddSelectTextCmd(kWord, kPrev, 0);
+  AddSelectTextCmd(kWord, kNext, 0);
+  AddSelectTextCmd(kLine, kBegin, 0);
+  AddSelectTextCmd(kLine, kEnd, 0);
+  AddSelectTextCmd(kLine, kPrev, 0);
+  AddSelectTextCmd(kLine, kNext, 0);
+  AddSelectTextCmd(kBuffer, kBegin, 0);
+  AddSelectTextCmd(kBuffer, kEnd, 0);
+  AddSelectTextCmd(kBuffer, kWhole, 0);
+  AddSelectTextCmd(kSelected, kWhole, 0);
 
   //----------------------------------------------------------------------------
 
@@ -680,17 +680,51 @@ void App::AddTextCmd(const char* name,
                      editor::RawTextFunc func,
                      bool change_text,
                      int menu) {
-  binding_->AddTextCmd(name, new editor::TextFuncWrap(func, change_text), menu);
+  using namespace editor;
+  TextFunc* text_func = new TextFuncWrap(func, change_text);
+  binding_->AddTextCmd(name, text_func, menu);
 }
 
-void App::AddSeekableTextCmd(const char* name,
+void App::AddMoveTextCmd(editor::TextUnit unit,
+                         editor::SeekType seek,
+                         int menu) {
+  static const std::string kMovePrefix = "move.";
+  AddSeekableTextCmd(kMovePrefix, editor::Move, unit, seek, menu, false);
+}
+
+void App::AddDeleteTextCmd(editor::TextUnit unit,
+                           editor::SeekType seek,
+                           int menu) {
+  static const std::string kDeletePrefix = "delete.";
+  AddSeekableTextCmd(kDeletePrefix, editor::Delete, unit, seek, menu, true);
+}
+
+void App::AddScrollTextCmd(editor::TextUnit unit,
+                           editor::SeekType seek,
+                           int menu) {
+  static const std::string kScrollPrefix = "scroll.";
+  AddSeekableTextCmd(kScrollPrefix, editor::Scroll, unit, seek, menu, false);
+}
+
+void App::AddSelectTextCmd(editor::TextUnit unit,
+                           editor::SeekType seek,
+                           int menu) {
+  static const std::string kSelectPrefix = "select.";
+  AddSeekableTextCmd(kSelectPrefix, editor::Select, unit, seek, menu, false);
+}
+
+void App::AddSeekableTextCmd(const std::string& name_prefix,
                              editor::RawSeekableTextFunc func,
                              editor::TextUnit unit,
                              editor::SeekType seek,
-                             int menu) {
-  binding_->AddTextCmd(name,
-                       new editor::SeekableTextFuncWrap(func, unit, seek),
-                       menu);
+                             int menu,
+                             bool change_text) {
+  using namespace editor;
+  TextFunc* text_func = new SeekableTextFuncWrap(func, unit, seek);
+  text_func->set_change_text(change_text);
+
+  std::string name = name_prefix + UnitName(unit) + "." + SeekName(seek);
+  binding_->AddTextCmd(name, text_func, menu);
 }
 
 void App::AddVoidCmd(const char* name, editor::RawVoidFunc func, int menu) {

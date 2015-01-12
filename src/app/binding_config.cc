@@ -15,42 +15,6 @@ using namespace editor;  // NOLINT
 
 namespace {
 
-TextUnit ParseUnit(const std::string& unit_str) {
-  if (unit_str == "char") {
-    return kChar;
-  } else if (unit_str == "word") {
-    return kWord;
-  } else if (unit_str == "line") {
-    return kLine;
-  } else if (unit_str == "page") {
-    return kPage;
-  } else if (unit_str == "half_page") {
-    return kHalfPage;
-  } else if (unit_str == "buffer") {
-    return kBuffer;
-  } else if (unit_str == "selected") {
-    return kSelected;
-  } else {
-    return kNoUnit;
-  }
-}
-
-SeekType ParseSeek(const std::string& seek_str) {
-  if (seek_str == "whole") {
-    return kWhole;
-  } else if (seek_str == "begin") {
-    return kBegin;
-  } else if (seek_str == "end") {
-    return kEnd;
-  } else if (seek_str == "prev") {
-    return kPrev;
-  } else if (seek_str == "next") {
-    return kNext;
-  } else {
-    return kNoSeek;
-  }
-}
-
 int ParseModifier(const std::string& modifier_str) {
   if (modifier_str == "ctrl") {
 #if defined(__WXMAC__)
