@@ -1117,6 +1117,9 @@ bool TextWindow::OnTextMouse(wxMouseEvent& evt) {
   } else if (evt_type == wxEVT_RIGHT_DOWN) {
     HandleTextRightDown(evt);
     handled = true;
+  } else if (evt_type == wxEVT_RIGHT_UP) {
+    HandleTextRightUp(evt);
+    handled = true;
   } else if (evt_type == wxEVT_MOTION) {
     HandleTextMotion(evt);
     handled = true;
@@ -1913,6 +1916,9 @@ void TextWindow::HandleTextRightDown(wxMouseEvent& evt) {
   }
 
   UpdateCaretPoint(down_point_, false, false, false);
+}
+
+void TextWindow::HandleTextRightUp(wxMouseEvent& evt) {
 }
 
 void TextWindow::HandleTextLeftDClick(wxMouseEvent& evt) {

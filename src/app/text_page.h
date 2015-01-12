@@ -10,14 +10,16 @@
 
 namespace jil {
 
+////////////////////////////////////////////////////////////////////////////////
+
 class TextPage : public editor::TextWindow, public BookPage {
   DECLARE_CLASS(TextPage)
 
- public:
+public:
   explicit TextPage(editor::TextBuffer* buffer);
   virtual ~TextPage();
 
-  // Overriddens of BookPage:
+  // OVERRIDE of BookPage:
   virtual wxWindow* Page_Window() override { return this; }
   virtual void Page_Activate(bool active) override;
   virtual bool Page_Close() override;
@@ -27,12 +29,18 @@ class TextPage : public editor::TextWindow, public BookPage {
 
   bool SaveBuffer();
 
- private:
-  // Return true if the event is handled.
-  virtual bool OnTextMouse(wxMouseEvent& evt) override;
+protected:
+  // OVERRIDE of editor::TextWindow:
+  virtual void HandleTextRightUp(wxMouseEvent& evt) override;
 
+  // Add menu items to the right click menu.
+  virtual void FillRClickMenu(wxMenu& menu);
+
+private:
   void PostEvent(wxEventType evt_type);
 };
+
+////////////////////////////////////////////////////////////////////////////////
 
 // Convert book page to text page or NULL.
 TextPage* AsTextPage(BookPage* page);

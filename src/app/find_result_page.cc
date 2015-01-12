@@ -1,5 +1,7 @@
 #include "app/find_result_page.h"
+#include "wx/menu.h"
 #include "editor/text_buffer.h"
+#include "app/id.h"
 
 namespace jil {
 
@@ -47,6 +49,10 @@ void FindResultPage::HandleTextLeftDClick(wxMouseEvent& evt) {
   fr_evt.SetEventObject(this);
   fr_evt.SetInt(kLocalizeEvent);
   GetParent()->GetEventHandler()->AddPendingEvent(fr_evt);
+}
+
+void FindResultPage::FillRClickMenu(wxMenu& menu) {
+  menu.Append(ID_MENU_EDIT_COPY, _("Copy"));
 }
 
 }  // namespace jil

@@ -11,24 +11,26 @@ namespace jil {
 class FindResultPage : public TextPage {
   DECLARE_CLASS(FindResultPage)
 
- public:
+public:
   // Detailed event types of kFindResultPageEvent.
   enum EventType {
     kLocalizeEvent = 1,
   };
 
- public:
+public:
   explicit FindResultPage(editor::TextBuffer* buffer);
   bool Create(wxWindow* parent, wxWindowID id, bool hide = false);
   virtual ~FindResultPage();
 
-  // Overriddens of BookPage:
+  // OVERRIDE of BookPage:
   virtual wxString Page_Label() const override;
   virtual wxString Page_Description() const override;
   virtual int Page_Flags() const override;
 
- protected:
+protected:
   virtual void HandleTextLeftDClick(wxMouseEvent& evt) override;
+
+  virtual void FillRClickMenu(wxMenu& menu) override;
 };
 
 BEGIN_DECLARE_EVENT_TYPES()

@@ -280,8 +280,10 @@ protected:
   friend class TextArea;
 
   void OnTextSize(wxSizeEvent& evt);
+
   // Return true if the event is handled.
-  virtual bool OnTextMouse(wxMouseEvent& evt);
+  bool OnTextMouse(wxMouseEvent& evt);
+
   void OnTextPaint(Renderer& renderer);
 
   void HandleTextPaint(Renderer& renderer);
@@ -339,6 +341,7 @@ protected:
 
   void HandleTextLeftUp(wxMouseEvent& evt);
   void HandleTextRightDown(wxMouseEvent& evt);
+  virtual void HandleTextRightUp(wxMouseEvent& evt);
   virtual void HandleTextLeftDClick(wxMouseEvent& evt);
 
   // Return true if the event is handled.

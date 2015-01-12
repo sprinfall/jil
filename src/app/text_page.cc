@@ -12,6 +12,8 @@ namespace jil {
 
 using namespace editor;
 
+////////////////////////////////////////////////////////////////////////////////
+
 IMPLEMENT_CLASS(TextPage, TextWindow)
 
 TextPage::TextPage(TextBuffer* buffer)
@@ -92,30 +94,21 @@ bool TextPage::SaveBuffer() {
   return saved;
 }
 
-bool TextPage::OnTextMouse(wxMouseEvent& evt) {
-  wxEventType evt_type = evt.GetEventType();
+void TextPage::HandleTextRightUp(wxMouseEvent& evt) {
+  wxMenu menu;
+  FillRClickMenu(menu);
 
-  if (evt_type == wxEVT_RIGHT_UP) {
-    wxMenu menu;
-    //menu.Append(wxID_ANY, _("Insert Snippet..."));
-    //menu.AppendSeparator();
-    //menu.Append(wxID_ANY, _("Go To Definition"));
-    //menu.Append(wxID_ANY, _("Find References"));
-    //menu.Append(wxID_ANY, _("Switch Between Header && Source"));
-    //menu.AppendSeparator();
-    menu.Append(ID_MENU_EDIT_CUT, _("Cut"));
-    menu.Append(ID_MENU_EDIT_COPY, _("Copy"));
-    menu.Append(ID_MENU_EDIT_PASTE, _("Paste"));
+  // TODO: Check if menu is empty.
+  wxPoint pos = text_area()->ClientToScreen(evt.GetPosition());
+  pos = ScreenToClient(pos);
 
-    wxPoint pos = text_area()->ClientToScreen(evt.GetPosition());
-    pos = ScreenToClient(pos);
+  PopupMenu(&menu, pos);
+}
 
-    PopupMenu(&menu, pos);
-
-    return true;
-  }
-
-  return TextWindow::OnTextMouse(evt);
+void TextPage::FillRClickMenu(wxMenu& menu) {
+  menu.Append(ID_MENU_EDIT_CUT, _("Cut"));
+  menu.Append(ID_MENU_EDIT_COPY, _("Copy"));
+  menu.Append(ID_MENU_EDIT_PASTE, _("Paste"));
 }
 
 void TextPage::PostEvent(wxEventType evt_type) {
@@ -124,6 +117,7 @@ void TextPage::PostEvent(wxEventType evt_type) {
   GetParent()->GetEventHandler()->AddPendingEvent(evt);
 }
 
+////////////////////////////////////////////////////////////////////////////////
 
 TextPage* AsTextPage(BookPage* page) {
   if (page == NULL) {
