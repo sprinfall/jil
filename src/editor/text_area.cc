@@ -17,6 +17,7 @@ EVT_MOUSE_EVENTS(TextArea::OnMouse)
 EVT_KEY_DOWN(TextArea::OnKeyDown)
 EVT_CHAR(TextArea::OnChar)
 EVT_MOUSE_CAPTURE_LOST(TextArea::OnMouseCaptureLost)
+EVT_SET_FOCUS(TextArea::OnSetFocus)
 END_EVENT_TABLE()
 
 TextArea::TextArea(TextWindow* text_window)
@@ -82,7 +83,12 @@ void TextArea::OnChar(wxKeyEvent& evt) {
 }
 
 void TextArea::OnMouseCaptureLost(wxMouseCaptureLostEvent& evt) {
-  text_window_->OnMouseCaptureLost(evt);
+  text_window_->OnTextMouseCaptureLost(evt);
+}
+
+void TextArea::OnSetFocus(wxFocusEvent& evt) {
+  text_window_->OnTextSetFocus(evt);
+  evt.Skip();  // Skip for default handling.
 }
 
 }  // namespace editor

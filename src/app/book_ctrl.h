@@ -12,18 +12,20 @@
 #include "app/compile_config.h"
 
 class wxGraphicsContext;
+class wxMenu;
+class wxSizer;
 
 #ifndef __WXMAC__
 class wxMemoryDC;
 #endif  // __WXMAC__
 
-class wxSizer;
-
 namespace jil {
+
+////////////////////////////////////////////////////////////////////////////////
 
 // Page interface of book ctrl.
 class BookPage {
- public:
+public:
   enum Flag {
     kModified = 1,
   };
@@ -31,6 +33,7 @@ class BookPage {
   virtual ~BookPage() {
   }
 
+  // NOTE:
   // Prefix "Page_" is added to each function to avoid name conflict.
 
   // Page as window.
@@ -41,6 +44,9 @@ class BookPage {
 
   // Close this page (also destroy the window).
   virtual bool Page_Close() = 0;
+
+  // Page type ID.
+  virtual wxString Page_Type() const = 0;
 
   // Page label displayed in tab.
   virtual wxString Page_Label() const = 0;
@@ -54,21 +60,21 @@ class BookPage {
   virtual int Page_Flags() const {
     return 0;
   }
+
+  // Add menu items to the edit menu.
+  // Different pages might have different edit menu items.
+  // E.g., text page has Undo and Redo while find result page doesn't.
+  virtual void Page_EditMenu(wxMenu* menu) = 0;
 };
+
+////////////////////////////////////////////////////////////////////////////////
 
 class BookTabArea;
-
-class BookPageArea : public wxPanel {
- public:
-  BookPageArea(wxWindow* parent, wxWindowID id)
-      : wxPanel(parent, id) {
-  }
-};
 
 class BookCtrl : public wxPanel {
   DECLARE_EVENT_TABLE()
 
- public:
+public:
   enum ColorId {
     BG = 0,  // The whole book background
 
@@ -90,7 +96,7 @@ class BookCtrl : public wxPanel {
     FONT_COUNT
   };
 
- protected:
+protected:
   class Tab {
    public:
     Tab(BookPage* _page, int _best_size, bool _active = false)
@@ -112,7 +118,7 @@ class BookCtrl : public wxPanel {
   typedef std::list<Tab*> TabList;
   typedef TabList::iterator TabIter;
 
- public:
+public:
   explicit BookCtrl(const editor::SharedTheme& theme);
   virtual ~BookCtrl();
 
@@ -124,7 +130,7 @@ class BookCtrl : public wxPanel {
     return page_area_;
   }
 
-  // Set batch flag to avoid unecessary resizing tabs and refresh.
+  // Set batch flag to avoid unnecessary resizing tabs and refresh.
   // Example:
   //   notebook->StartBatch();
   //   notebook->AddPage(...);
@@ -152,8 +158,11 @@ class BookCtrl : public wxPanel {
   void SwitchToNextPage();
   void SwitchToPrevPage();
 
+#if 0
+  // Not used
   void SwitchToNextStackPage();
   void SwitchToPrevStackPage();
+#endif
 
   std::vector<BookPage*> Pages() const;
 
@@ -170,8 +179,9 @@ class BookCtrl : public wxPanel {
     return rclicked_tab_ == NULL ? NULL : rclicked_tab_->page;
   }
 
- protected:
+protected:
   friend class BookTabArea;
+
   void OnTabSize(wxSizeEvent& evt);
 
   void OnTabPaint(wxAutoBufferedPaintDC& dc, wxPaintEvent& evt);
@@ -218,7 +228,7 @@ class BookCtrl : public wxPanel {
 
   void PostEvent(wxEventType event_type);
 
- protected:
+protected:
   editor::SharedTheme theme_;
 
   int tab_min_size_;
@@ -228,8 +238,8 @@ class BookCtrl : public wxPanel {
   int free_size_;
 
   BookTabArea* tab_area_;
-  BookPageArea* page_area_;
-  wxSizer* page_sizer_;
+  wxPanel* page_area_;
+  wxSizer* page_vsizer_;
 
   TabList tabs_;
 

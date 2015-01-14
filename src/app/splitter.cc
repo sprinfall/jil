@@ -1,6 +1,5 @@
 #include "app/splitter.h"
 #include "wx/log.h"
-#include "wx/wupdlock.h"
 
 namespace jil {
 
@@ -103,7 +102,6 @@ void Splitter::SetSplitRoot(SplitNode* split_root) {
 
 void Splitter::Split() {
   if (split_root_ != NULL) {
-    wxWindowUpdateLocker no_update(this);
     Split(split_root_, GetClientRect());
   }
 }

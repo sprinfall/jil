@@ -155,10 +155,10 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
 
     Connect(text_books_[i]->GetId(),
             kEvtBookPageChange,
-            wxCommandEventHandler(BookFrame::OnBookPageChange));
+            wxCommandEventHandler(BookFrame::OnTextBookPageChange));
     Connect(text_books_[i]->GetId(),
             kEvtBookPageSwitch,
-            wxCommandEventHandler(BookFrame::OnBookPageSwitch));
+            wxCommandEventHandler(BookFrame::OnTextBookPageSwitch));
   }
 
   // Create tool book.
@@ -361,7 +361,7 @@ void BookFrame::FileSaveAs() {
 
 void BookFrame::FileSaveAll() {
   for (size_t i = 0; i < text_books_.size(); ++i) {
-    std::vector<TextPage*> text_pages = BookTextPages(text_books_[i]);
+    std::vector<TextPage*> text_pages = text_books_[i]->TextPages();
 
     for (size_t j = 0; j < text_pages.size(); ++j) {
       if (text_pages[j] != NULL) {
@@ -402,24 +402,24 @@ void BookFrame::ShowReplace() {
 }
 
 TextPage* BookFrame::ActiveTextPage() const {
-  BookPage* page = ActiveTextBook()->ActivePage();
-  if (page == NULL) {
+  TextPage* text_page = ActiveTextBook()->ActiveTextPage();
+  if (text_page == NULL) {
     return NULL;
   }
 
-  if (page->Page_Window()->IsBeingDeleted()) {
+  if (text_page->IsBeingDeleted()) {
     return NULL;
   }
 
-  return AsTextPage(page);
+  return text_page;
 }
 
 editor::TextBuffer* BookFrame::ActiveBuffer() const {
-  TextPage* page = ActiveTextPage();
-  if (page == NULL) {
+  TextPage* text_page = ActiveTextPage();
+  if (text_page == NULL) {
     return NULL;
   }
-  return page->buffer();
+  return text_page->buffer();
 }
 
 void BookFrame::FindInActivePage(const std::wstring& str, int flags) {
@@ -525,7 +525,7 @@ void BookFrame::FindInAllPages(const std::wstring& str, int flags) {
 #endif  // 0
 
 void BookFrame::FindAllInActivePage(const std::wstring& str, int flags) {
-  TextPage* fr_page = GetFindResultPage();
+  FindResultPage* fr_page = GetFindResultPage();
 
   // Clear previous result.
   editor::TextRange range = fr_page->buffer()->range();
@@ -760,7 +760,7 @@ static std::wstring CreateLineNrStrFormat(const TextRangeList& result_ranges,
 void BookFrame::FindAll(const std::wstring& str,
                         editor::TextBuffer* buffer,
                         int flags,
-                        TextPage* fr_page) {
+                        FindResultPage* fr_page) {
   using namespace editor;
 
   std::list<TextRange> result_ranges;
@@ -1083,7 +1083,7 @@ void BookFrame::OnClose(wxCloseEvent& evt) {
 
   TextBook* text_book = ActiveTextBook();
   if (text_book->PageCount() > 0) {
-    std::vector<TextPage*> text_pages = BookTextPages(text_book);
+    std::vector<TextPage*> text_pages = text_book->TextPages();
 
     for (size_t i = 0; i < text_pages.size(); ++i) {
       if (!text_pages[i]->buffer()->new_created()) {
@@ -1133,7 +1133,7 @@ void BookFrame::OnBookRClickMenu(wxCommandEvent& evt) {
   }
 }
 
-void BookFrame::OnBookPageChange(wxCommandEvent& evt) {
+void BookFrame::OnTextBookPageChange(wxCommandEvent& evt) {
   // Clear status fields if all pages are removed.
   if (ActiveTextBook()->PageCount() == 0) {
     UpdateStatusFields();
@@ -1147,7 +1147,7 @@ void BookFrame::OnBookPageChange(wxCommandEvent& evt) {
   }
 }
 
-void BookFrame::OnBookPageSwitch(wxCommandEvent& evt) {
+void BookFrame::OnTextBookPageSwitch(wxCommandEvent& evt) {
   UpdateStatusFields();
   UpdateTitle();
 }
@@ -1168,7 +1168,7 @@ void BookFrame::OnToolBookPageChange(wxCommandEvent& evt) {
 void BookFrame::UpdateStatusFields() {
   using namespace editor;
 
-  TextPage* text_page = AsTextPage(ActiveTextBook()->ActivePage());
+  TextPage* text_page = ActiveTextBook()->ActiveTextPage();
 
   if (text_page == NULL) {
     status_bar_->ClearFieldValues();
@@ -1201,7 +1201,7 @@ void BookFrame::UpdateStatusFields() {
 }
 
 void BookFrame::UpdateTitle() {
-  TextPage* text_page = AsTextPage(ActiveTextBook()->ActivePage());
+  TextPage* text_page = ActiveTextBook()->ActiveTextPage();
   if (text_page == NULL) {
     SetTitle(kAppDisplayName);
   } else {
@@ -1221,9 +1221,11 @@ wxString BookFrame::FormatCaretString(TextPage* page) const {
 
 // Update status bar according to the event.
 void BookFrame::OnTextWindowEvent(wxCommandEvent& evt) {
+  using namespace editor;
+
   int type = evt.GetInt();
 
-  if (type == editor::TextWindow::kEncodingEvent) {
+  if (type == TextWindow::kEncodingEvent) {
     wxString encoding;
 
     TextPage* text_page = ActiveTextPage();
@@ -1231,34 +1233,58 @@ void BookFrame::OnTextWindowEvent(wxCommandEvent& evt) {
       encoding = text_page->buffer()->file_encoding().display_name;
     }
 
-    status_bar_->SetFieldValue(editor::StatusBar::kField_Encoding,
-                               encoding,
-                               false);
-
+    status_bar_->SetFieldValue(StatusBar::kField_Encoding, encoding, false);
     status_bar_->UpdateFieldSizes();
     status_bar_->Refresh();
 
-  } else if (type == editor::TextWindow::kCaretEvent) {
+  } else if (type == TextWindow::kCaretEvent) {
     TextPage* text_page = ActiveTextPage();
     if (text_page != NULL) {
-      status_bar_->SetFieldValue(editor::StatusBar::kField_Caret,
+      status_bar_->SetFieldValue(StatusBar::kField_Caret,
                                  FormatCaretString(text_page),
                                  true);
     }
-  } else if (type == editor::TextWindow::kLeaderKeyEvent) {
+  } else if (type == TextWindow::kLeaderKeyEvent) {
     // Leader key is reset by the text window.
     if (leader_key_.IsEmpty()) {  // Must be empty but just check it.
-      status_bar_->SetFieldValue(editor::StatusBar::kField_KeyStroke,
+      status_bar_->SetFieldValue(StatusBar::kField_KeyStroke,
                                  wxEmptyString,
                                  true);
     }
-  } else if (type == editor::TextWindow::kFileFormatEvent) {
+  } else if (type == TextWindow::kFileFormatEvent) {
     TextPage* text_page = ActiveTextPage();
     if (text_page != NULL) {
-      editor::FileFormat ff = text_page->buffer()->file_format();
-      status_bar_->SetFieldValue(editor::StatusBar::kField_FileFormat,
-                                 editor::FileFormatName(ff),
+      FileFormat ff = text_page->buffer()->file_format();
+      status_bar_->SetFieldValue(StatusBar::kField_FileFormat,
+                                 FileFormatName(ff),
                                  true);
+    }
+  } else if (type == TextWindow::kGetFocusEvent) {
+    HandleTextWindowGetFocus(evt);
+  }
+}
+
+// Update menus according to the focused text window.
+void BookFrame::HandleTextWindowGetFocus(wxCommandEvent& evt) {
+  wxMenuBar* menu_bar = GetMenuBar();
+  if (menu_bar == NULL) {
+    return;
+  }
+
+  wxMenu* edit_menu = menu_bar->GetMenu(1);
+  if (edit_menu == NULL) {
+    return;
+  }
+
+  // TODO: Avoid dynamic_cast.
+  BookPage* book_page = dynamic_cast<BookPage*>(evt.GetEventObject());
+  if (book_page != NULL) {
+    if (book_page->Page_Type() != page_type_) {
+      page_type_ = book_page->Page_Type();
+      wxLogDebug("Current page type: %s", page_type_);
+
+      ClearMenuItems(edit_menu);
+      book_page->Page_EditMenu(edit_menu);
     }
   }
 }
@@ -1617,23 +1643,22 @@ void BookFrame::ActivateToolPage(BookPage* page) {
 
 //------------------------------------------------------------------------------
 
-wxMenuItem* BookFrame::NewMenuItem(wxMenu* menu,
-                                   int id,
-                                   const wxString& label,
-                                   wxItemKind item_kind) {
-  wxString menu_label = label;
+wxMenuItem* BookFrame::AppendMenuItem(wxMenu* menu,
+                                      int id,
+                                      const wxString& label,
+                                      wxItemKind kind) {
+  wxString _label = label;
 
-  // Append accelerator if any.
-  editor::Key menu_key = binding_->GetKeyByMenu(id);
-  if (!menu_key.IsEmpty()) {
-    menu_label += wxT("\t") + menu_key.ToString();
+  // Append accelerator.
+  editor::Key key = binding_->GetKeyByMenu(id);
+  if (!key.IsEmpty()) {
+    _label += wxT("\t") + key.ToString();
   }
 
-  wxMenuItem* menu_item =
-      new wxMenuItem(menu, id, menu_label, wxEmptyString, item_kind);
-  menu->Append(menu_item);
+  wxMenuItem* item = new wxMenuItem(menu, id, _label, wxEmptyString, kind);
+  menu->Append(item);
 
-  return menu_item;
+  return item;
 }
 
 void BookFrame::LoadMenus() {
@@ -1644,27 +1669,27 @@ void BookFrame::LoadMenus() {
 
   wxMenu* menu_file = new wxMenu;
   // - New
-  NewMenuItem(menu_file, ID_MENU_FILE_NEW, kTrFileNew);
+  AppendMenuItem(menu_file, ID_MENU_FILE_NEW, kTrFileNew);
 
 #if JIL_MULTIPLE_WINDOW
   menu_file->AppendSeparator();
-  NewMenuItem(menu_file, ID_MENU_FILE_NEW_WINDOW, kTrFileNewFrame);
+  AppendMenuItem(menu_file, ID_MENU_FILE_NEW_WINDOW, kTrFileNewFrame);
 #endif  // JIL_MULTIPLE_WINDOW
 
   // - Open
   menu_file->AppendSeparator();
-  NewMenuItem(menu_file, ID_MENU_FILE_OPEN, kTrFileOpen);
+  AppendMenuItem(menu_file, ID_MENU_FILE_OPEN, kTrFileOpen);
   menu_file->AppendSeparator();
   // - Close
-  NewMenuItem(menu_file, ID_MENU_FILE_CLOSE, kTrFileClose);
-  NewMenuItem(menu_file, ID_MENU_FILE_CLOSE_ALL, kTrFileCloseAll);
+  AppendMenuItem(menu_file, ID_MENU_FILE_CLOSE, kTrFileClose);
+  AppendMenuItem(menu_file, ID_MENU_FILE_CLOSE_ALL, kTrFileCloseAll);
   menu_file->AppendSeparator();
-  NewMenuItem(menu_file, ID_MENU_FILE_SAVE, kTrFileSave);
-  NewMenuItem(menu_file, ID_MENU_FILE_SAVE_AS, kTrFileSaveAs);
-  NewMenuItem(menu_file, ID_MENU_FILE_SAVE_ALL, kTrFileSaveAll);
+  AppendMenuItem(menu_file, ID_MENU_FILE_SAVE, kTrFileSave);
+  AppendMenuItem(menu_file, ID_MENU_FILE_SAVE_AS, kTrFileSaveAs);
+  AppendMenuItem(menu_file, ID_MENU_FILE_SAVE_ALL, kTrFileSaveAll);
   menu_file->AppendSeparator();
   // - Exit
-  NewMenuItem(menu_file, wxID_EXIT, kTrFileExit);  // TODO: ID
+  AppendMenuItem(menu_file, wxID_EXIT, kTrFileExit);  // TODO: ID
 
   menu_bar->Append(menu_file, kTrMenuFile);
 
@@ -1673,35 +1698,35 @@ void BookFrame::LoadMenus() {
 
   wxMenu* menu_edit = new wxMenu;
 
-  NewMenuItem(menu_edit, ID_MENU_EDIT_UNDO, kTrEditUndo);
-  NewMenuItem(menu_edit, ID_MENU_EDIT_REDO, kTrEditRedo);
+  AppendMenuItem(menu_edit, ID_MENU_EDIT_UNDO, kTrEditUndo);
+  AppendMenuItem(menu_edit, ID_MENU_EDIT_REDO, kTrEditRedo);
   menu_edit->AppendSeparator();
 
-  NewMenuItem(menu_edit, ID_MENU_EDIT_CUT, kTrEditCut);
-  NewMenuItem(menu_edit, ID_MENU_EDIT_COPY, kTrEditCopy);
-  NewMenuItem(menu_edit, ID_MENU_EDIT_PASTE, kTrEditPaste);
+  AppendMenuItem(menu_edit, ID_MENU_EDIT_CUT, kTrEditCut);
+  AppendMenuItem(menu_edit, ID_MENU_EDIT_COPY, kTrEditCopy);
+  AppendMenuItem(menu_edit, ID_MENU_EDIT_PASTE, kTrEditPaste);
   menu_edit->AppendSeparator();
 
   // - Line
   wxMenu* menu_line = new wxMenu;
-  NewMenuItem(menu_line, ID_MENU_EDIT_AUTO_INDENT, kTrEditAutoIndent);
-  NewMenuItem(menu_line, ID_MENU_EDIT_INCREASE_INDENT, kTrEditIncreaseIndent);
-  NewMenuItem(menu_line, ID_MENU_EDIT_DECREASE_INDENT, kTrEditDecreaseIndent);
+  AppendMenuItem(menu_line, ID_MENU_EDIT_AUTO_INDENT, kTrEditAutoIndent);
+  AppendMenuItem(menu_line, ID_MENU_EDIT_INCREASE_INDENT, kTrEditIncreaseIndent);
+  AppendMenuItem(menu_line, ID_MENU_EDIT_DECREASE_INDENT, kTrEditDecreaseIndent);
   menu_edit->AppendSubMenu(menu_line, kTrEditLine);
 
   // - Comment
   wxMenu* menu_comment = new wxMenu;
-  NewMenuItem(menu_comment, ID_MENU_EDIT_COMMENT, kTrEditComment);
-  NewMenuItem(menu_comment, ID_MENU_EDIT_UNCOMMENT, kTrEditUncomment);
-  NewMenuItem(menu_comment, ID_MENU_EDIT_TOGGLE_COMMENT, kTrEditToggleComment);
+  AppendMenuItem(menu_comment, ID_MENU_EDIT_COMMENT, kTrEditComment);
+  AppendMenuItem(menu_comment, ID_MENU_EDIT_UNCOMMENT, kTrEditUncomment);
+  AppendMenuItem(menu_comment, ID_MENU_EDIT_TOGGLE_COMMENT, kTrEditToggleComment);
   menu_edit->AppendSubMenu(menu_comment, kTrEditComment);
 
-  NewMenuItem(menu_edit, ID_MENU_EDIT_FORMAT, kTrEditFormat);
+  AppendMenuItem(menu_edit, ID_MENU_EDIT_FORMAT, kTrEditFormat);
   menu_edit->AppendSeparator();
 
-  NewMenuItem(menu_edit, ID_MENU_EDIT_FIND, kTrEditFind);
-  NewMenuItem(menu_edit, ID_MENU_EDIT_REPLACE, kTrEditReplace);
-  NewMenuItem(menu_edit, ID_MENU_EDIT_GOTO, kTrEditGoto);
+  AppendMenuItem(menu_edit, ID_MENU_EDIT_FIND, kTrEditFind);
+  AppendMenuItem(menu_edit, ID_MENU_EDIT_REPLACE, kTrEditReplace);
+  AppendMenuItem(menu_edit, ID_MENU_EDIT_GOTO, kTrEditGoto);
 
   menu_bar->Append(menu_edit, kTrMenuEdit);
 
@@ -1811,7 +1836,7 @@ TextPage* BookFrame::CreateTextPage(editor::TextBuffer* buffer,
 
 TextPage* BookFrame::TextPageByFileName(const wxFileName& fn_object) const {
   for (size_t i = 0; i < text_books_.size(); ++i) {
-    std::vector<TextPage*> text_pages = BookTextPages(text_books_[i]);
+    std::vector<TextPage*> text_pages = text_books_[i]->TextPages();
 
     for (size_t j = 0; j < text_pages.size(); ++j) {
       if (fn_object == text_pages[j]->buffer()->file_name_object()) {

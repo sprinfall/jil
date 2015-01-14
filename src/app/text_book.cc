@@ -44,13 +44,28 @@ TextPage* TextBook::ActiveTextPage() const {
   return AsTextPage(ActivePage());
 }
 
+std::vector<TextPage*> TextBook::TextPages() const {
+  std::vector<TextPage*> text_pages;
+  TextPage* text_page = NULL;
+
+  TabList::const_iterator it = tabs_.begin();
+  for (; it != tabs_.end(); ++it) {
+    text_page = AsTextPage((*it)->page);
+    if (text_page != NULL) {
+      text_pages.push_back(text_page);
+    }
+  }
+
+  return text_pages;
+}
+
 std::vector<TextPage*> TextBook::StackTextPages() const {
   std::vector<TextPage*> text_pages;
   TextPage* text_page = NULL;
 
   TabList::const_iterator it = stack_tabs_.begin();
   for (; it != stack_tabs_.end(); ++it) {
-    text_page = wxDynamicCast((*it)->page, TextPage);
+    text_page = AsTextPage((*it)->page);
     if (text_page != NULL) {
       text_pages.push_back(text_page);
     }
@@ -131,7 +146,6 @@ void TextBook::HandleTabMouseLeftDClick(wxMouseEvent& evt) {
 
 // NOTE: ID_MENU_BOOK_RCLICK_NEW_FILE is not handled here.
 void TextBook::OnRClickMenu(wxCommandEvent& evt) {
-  // TODO: Non-text pages should also be able to have rclick menus.
   TextPage* text_page = AsTextPage(rclicked_tab_page());
 
   switch (evt.GetId()) {

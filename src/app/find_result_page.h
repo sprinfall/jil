@@ -2,13 +2,14 @@
 #define JIL_FIND_RESULT_PAGE_H_
 #pragma once
 
-// A text page to show the find result.
+// Text window as find result page in the tool book.
 
-#include "app/text_page.h"
+#include "editor/text_window.h"
+#include "app/book_ctrl.h"
 
 namespace jil {
 
-class FindResultPage : public TextPage {
+class FindResultPage : public editor::TextWindow, public BookPage {
   DECLARE_CLASS(FindResultPage)
 
 public:
@@ -23,14 +24,19 @@ public:
   virtual ~FindResultPage();
 
   // OVERRIDE of BookPage:
+  virtual wxWindow* Page_Window() override { return this; }
+  virtual void Page_Activate(bool active) override;
+  virtual bool Page_Close() override;
+  virtual wxString Page_Type() const override;
   virtual wxString Page_Label() const override;
   virtual wxString Page_Description() const override;
   virtual int Page_Flags() const override;
+  virtual void Page_EditMenu(wxMenu* edit_menu) override;
 
 protected:
+  // OVERRIDE of editor::TextWindow:
   virtual void HandleTextLeftDClick(wxMouseEvent& evt) override;
-
-  virtual void FillRClickMenu(wxMenu& menu) override;
+  virtual void HandleTextRightUp(wxMouseEvent& evt) override;
 };
 
 BEGIN_DECLARE_EVENT_TYPES()

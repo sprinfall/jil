@@ -4,9 +4,10 @@
 #include <Cocoa/Cocoa.h>
 #endif
 
-#include "wx/stdpaths.h"
 #include "wx/filename.h"
+#include "wx/menu.h"
 #include "wx/msgdlg.h"
+#include "wx/stdpaths.h"
 
 #include "app/i18n_strings.h"
 
@@ -46,6 +47,12 @@ void ExploreFile(const wxString& file_path) {
   [[NSWorkspace sharedWorkspace] selectFile:(NSString*)nsstr inFileViewerRootedAtPath:nil];
   [nsstr release];
 #endif
+}
+
+void ClearMenuItems(wxMenu* menu) {
+  while (menu->GetMenuItemCount() > 0) {
+    menu->Delete(menu->FindItemByPosition(0));
+  }
 }
 
 } // namespace jil

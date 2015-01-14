@@ -1,15 +1,20 @@
 #include "editor/text_window.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <vector>
-#include "wx/dcbuffer.h"
-#include "wx/sizer.h"
+
 #include "wx/caret.h"
-#include "wx/timer.h"
+#include "wx/dcbuffer.h"
+#include "wx/menu.h"
 #include "wx/log.h"
+#include "wx/sizer.h"
+#include "wx/timer.h"
+
 #include "base/string_util.h"
 #include "base/math_util.h"
+
 #include "editor/compile_config.h"
 #include "editor/util.h"
 #include "editor/style.h"
@@ -979,6 +984,7 @@ void TextWindow::OnSize(wxSizeEvent& evt) {
   evt.Skip();
 }
 
+// TODO: Seems never be here. Remove.
 void TextWindow::OnSetFocus(wxFocusEvent& evt) {
   // Always let text area has the focus.
   if (text_area_ != NULL) {
@@ -1981,7 +1987,7 @@ void TextWindow::ScrollHorizontally(wxMouseEvent& evt) {
   }
 }
 
-void TextWindow::OnMouseCaptureLost(wxMouseCaptureLostEvent& evt) {
+void TextWindow::OnTextMouseCaptureLost(wxMouseCaptureLostEvent& evt) {
   // Stop select-by-dragging.
   StopScrollTimer();
 }
@@ -2069,6 +2075,10 @@ void TextWindow::OnTextChar(wxKeyEvent& evt) {
   if (c >= 0x20) {  // "< 0x20" is CONTROL
     InsertChar(c);
   }
+}
+
+void TextWindow::OnTextSetFocus(wxFocusEvent& evt) {
+  PostEvent(TextWindow::kGetFocusEvent);
 }
 
 //------------------------------------------------------------------------------
@@ -2835,6 +2845,24 @@ void TextWindow::PostEvent(TextWindow::EventType type) {
   evt.SetEventObject(this);
   evt.SetInt(type);
   GetParent()->GetEventHandler()->AddPendingEvent(evt);
+}
+
+wxMenuItem* TextWindow::AppendMenuItem(wxMenu* menu,
+                                       int id,
+                                       const wxString& label,
+                                       wxItemKind kind) {
+  wxString _label = label;
+
+  // Append accelerator.
+  editor::Key key = binding_->GetKeyByMenu(id);
+  if (!key.IsEmpty()) {
+    _label += wxT("\t") + key.ToString();
+  }
+
+  wxMenuItem* item = new wxMenuItem(menu, id, _label, wxEmptyString, kind);
+  menu->Append(item);
+
+  return item;
 }
 
 }  // namespace editor

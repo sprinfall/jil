@@ -14,6 +14,8 @@
 #include "editor/selection.h"
 #include "editor/theme.h"
 
+class wxMenu;
+class wxMenuItem;
 class wxTimer;
 class wxTimerEvent;
 
@@ -46,6 +48,7 @@ public:
     kModifiedEvent,
     kCaretEvent,
     kLeaderKeyEvent,
+    kGetFocusEvent,  // Text area gets focus
   };
 
   enum ColorId {
@@ -260,6 +263,7 @@ protected:
   // System event handlers.
 
   void OnSize(wxSizeEvent& evt);
+
   void OnSetFocus(wxFocusEvent& evt);
 
   //----------------------------------------------------------------------------
@@ -349,12 +353,14 @@ protected:
 
   void ScrollHorizontally(wxMouseEvent& evt);
 
-  void OnMouseCaptureLost(wxMouseCaptureLostEvent& evt);
+  void OnTextMouseCaptureLost(wxMouseCaptureLostEvent& evt);
 
   // Return true if the event is handled.
   bool OnTextKeyDown(wxKeyEvent& evt);
 
   void OnTextChar(wxKeyEvent& evt);
+
+  void OnTextSetFocus(wxFocusEvent& evt);
 
   //----------------------------------------------------------------------------
   // Delegated event handlers from LineNrArea.
@@ -489,6 +495,10 @@ protected:
 
   void PostEvent(EventType type);
 
+  wxMenuItem* AppendMenuItem(wxMenu* menu,
+                             int id,
+                             const wxString& label,
+                             wxItemKind kind = wxITEM_NORMAL);
 protected:
   TextBuffer* buffer_;
 
@@ -583,7 +593,7 @@ protected:
 // Text window event.
 
 BEGIN_DECLARE_EVENT_TYPES()
-// Check GetInt(), which returns TextWindowEventType, for the details.
+// Check GetInt(), which returns TextWindow::EventType, for the details.
 DECLARE_EVENT_TYPE(kTextWindowEvent, 0)
 END_DECLARE_EVENT_TYPES()
 

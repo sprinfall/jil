@@ -10,14 +10,12 @@
 
 namespace jil {
 
-using namespace editor;
-
 ////////////////////////////////////////////////////////////////////////////////
 
-IMPLEMENT_CLASS(TextPage, TextWindow)
+IMPLEMENT_CLASS(TextPage, editor::TextWindow)
 
-TextPage::TextPage(TextBuffer* buffer)
-    : TextWindow(buffer) {
+TextPage::TextPage(editor::TextBuffer* buffer)
+    : editor::TextWindow(buffer) {
 }
 
 TextPage::~TextPage() {
@@ -68,6 +66,11 @@ bool TextPage::Page_Close() {
   return false;
 }
 
+wxString TextPage::Page_Type() const {
+  static const wxString kType = "TextPage";
+  return kType;
+}
+
 wxString TextPage::Page_Label() const {
   return buffer()->file_name();
 }
@@ -84,6 +87,38 @@ int TextPage::Page_Flags() const {
   return flags;
 }
 
+void TextPage::Page_EditMenu(wxMenu* menu) {
+  AppendMenuItem(menu, ID_MENU_EDIT_UNDO, kTrEditUndo);
+  AppendMenuItem(menu, ID_MENU_EDIT_REDO, kTrEditRedo);
+  menu->AppendSeparator();
+
+  AppendMenuItem(menu, ID_MENU_EDIT_CUT, kTrEditCut);
+  AppendMenuItem(menu, ID_MENU_EDIT_COPY, kTrEditCopy);
+  AppendMenuItem(menu, ID_MENU_EDIT_PASTE, kTrEditPaste);
+  menu->AppendSeparator();
+
+  // - Line
+  wxMenu* menu_line = new wxMenu;
+  AppendMenuItem(menu_line, ID_MENU_EDIT_AUTO_INDENT, kTrEditAutoIndent);
+  AppendMenuItem(menu_line, ID_MENU_EDIT_INCREASE_INDENT, kTrEditIncreaseIndent);
+  AppendMenuItem(menu_line, ID_MENU_EDIT_DECREASE_INDENT, kTrEditDecreaseIndent);
+  menu->AppendSubMenu(menu_line, kTrEditLine);
+
+  // - Comment
+  wxMenu* menu_comment = new wxMenu;
+  AppendMenuItem(menu_comment, ID_MENU_EDIT_COMMENT, kTrEditComment);
+  AppendMenuItem(menu_comment, ID_MENU_EDIT_UNCOMMENT, kTrEditUncomment);
+  AppendMenuItem(menu_comment, ID_MENU_EDIT_TOGGLE_COMMENT, kTrEditToggleComment);
+  menu->AppendSubMenu(menu_comment, kTrEditComment);
+
+  AppendMenuItem(menu, ID_MENU_EDIT_FORMAT, kTrEditFormat);
+  menu->AppendSeparator();
+
+  AppendMenuItem(menu, ID_MENU_EDIT_FIND, kTrEditFind);
+  AppendMenuItem(menu, ID_MENU_EDIT_REPLACE, kTrEditReplace);
+  AppendMenuItem(menu, ID_MENU_EDIT_GOTO, kTrEditGoto);
+}
+
 bool TextPage::SaveBuffer() {
   bool saved = false;
   if (buffer()->new_created() || buffer()->read_only()) {
@@ -96,25 +131,13 @@ bool TextPage::SaveBuffer() {
 
 void TextPage::HandleTextRightUp(wxMouseEvent& evt) {
   wxMenu menu;
-  FillRClickMenu(menu);
-
-  // TODO: Check if menu is empty.
-  wxPoint pos = text_area()->ClientToScreen(evt.GetPosition());
-  pos = ScreenToClient(pos);
-
-  PopupMenu(&menu, pos);
-}
-
-void TextPage::FillRClickMenu(wxMenu& menu) {
   menu.Append(ID_MENU_EDIT_CUT, _("Cut"));
   menu.Append(ID_MENU_EDIT_COPY, _("Copy"));
   menu.Append(ID_MENU_EDIT_PASTE, _("Paste"));
-}
 
-void TextPage::PostEvent(wxEventType evt_type) {
-  wxCommandEvent evt(evt_type, GetId());
-  evt.SetEventObject(this);
-  GetParent()->GetEventHandler()->AddPendingEvent(evt);
+  wxPoint pos = text_area()->ClientToScreen(evt.GetPosition());
+  pos = ScreenToClient(pos);
+  PopupMenu(&menu, pos);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -124,18 +147,6 @@ TextPage* AsTextPage(BookPage* page) {
     return NULL;
   }
   return wxDynamicCast(page->Page_Window(), TextPage);
-}
-
-std::vector<TextPage*> BookTextPages(BookCtrl* book) {
-  std::vector<TextPage*> text_pages;
-  std::vector<BookPage*> pages = book->Pages();
-  for (size_t i = 0; i < pages.size(); ++i) {
-    TextPage* text_page = AsTextPage(pages[i]);
-    if (text_page != NULL) {
-      text_pages.push_back(text_page);
-    }
-  }
-  return text_pages;
 }
 
 }  // namespace jil

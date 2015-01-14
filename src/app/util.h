@@ -5,6 +5,7 @@
 #include <string>
 #include "wx/filefn.h"
 
+class wxMenu;
 class wxWindow;
 
 namespace jil {
@@ -57,6 +58,9 @@ inline int SetBit(int flags, int bit, bool state) {
   }
   return flags;
 }
+
+// Delete all items of the menu.
+void ClearMenuItems(wxMenu* menu);
 
 }  // namespace jil
 

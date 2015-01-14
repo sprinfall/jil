@@ -16,31 +16,31 @@
 namespace jil {
 
 namespace editor {
+class Binding;
+class FtPlugin;
+class StatusBar;
+class Style;
+class TextBuffer;
 class TextPoint;
 class TextRange;
 class TextWindow;
-class TextBuffer;
-class FtPlugin;
-class Style;
-class Binding;
-class StatusBar;
-}
+}  // namespace editor
 
-class Session;
-class TextPage;
-class BookPage;
 class BookCtrl;
-class TextBook;
-class ToolBook;
-class FindWindow;
+class BookPage;
 class FindResultPage;
+class FindWindow;
+class Session;
 class Splitter;
 class SplitNode;
+class TextBook;
+class TextPage;
+class ToolBook;
 
 class BookFrame : public wxFrame {
   DECLARE_EVENT_TABLE()
 
- public:
+public:
   enum ColorId {
     BG = 0,
     COLOR_COUNT,
@@ -123,7 +123,7 @@ class BookFrame : public wxFrame {
                               const std::wstring& replace_str,
                               int flags);
 
- private:
+private:
   // Return the matched result range.
   editor::TextRange Find(TextPage* text_page,
                          const std::wstring& str,
@@ -135,9 +135,9 @@ class BookFrame : public wxFrame {
   void FindAll(const std::wstring& str,
                editor::TextBuffer* buffer,
                int flags,
-               TextPage* fr_page);
+               FindResultPage* fr_page);
 
- protected:
+protected:
   void OnSize(wxSizeEvent& evt);
 
   // Layout child windows.
@@ -164,7 +164,6 @@ class BookFrame : public wxFrame {
   // Return true if the command function is found and executed.
   bool ExecFuncByMenu(int menu);
 
-  // Update the enable state of menu items.
   void OnFileUpdateUI(wxUpdateUIEvent& evt);
   void OnEditUpdateUI(wxUpdateUIEvent& evt);
 
@@ -174,25 +173,28 @@ class BookFrame : public wxFrame {
   void OnBookRClickMenu(wxCommandEvent& evt);
 
   // Text page(s) added or removed.
-  // TODO: Rename to OnTextBookPageChange
-  void OnBookPageChange(wxCommandEvent& evt);
+  void OnTextBookPageChange(wxCommandEvent& evt);
+
   // Active text page switch.
-  // TODO: Rename to OnTextBookPageSwitch
-  void OnBookPageSwitch(wxCommandEvent& evt);
+  void OnTextBookPageSwitch(wxCommandEvent& evt);
 
   // Tool page(s) added or removed.
   void OnToolBookPageChange(wxCommandEvent& evt);
 
   // Update status fields according to active text page.
   void UpdateStatusFields();
+
   // Update title according to active text page.
   void UpdateTitle();
 
   // Example: "3/120, 27"
   wxString FormatCaretString(TextPage* page) const;
 
-  // Handle events from text window/page.
+  // Handle events from text window.
   void OnTextWindowEvent(wxCommandEvent& evt);
+
+  // Handle text window get focus event.
+  void HandleTextWindowGetFocus(wxCommandEvent& evt);
 
   // Handle events from find result page.
   void OnFindResultPageEvent(wxCommandEvent& evt);
@@ -217,11 +219,12 @@ class BookFrame : public wxFrame {
   // Show tool book and activate the given page.
   void ActivateToolPage(BookPage* page);
 
- private:
-  wxMenuItem* NewMenuItem(wxMenu* menu,
-                          int id,
-                          const wxString& label,
-                          wxItemKind item_kind = wxITEM_NORMAL);
+private:
+  // TODO: TextWindow also has AppendMenuItem, remove one of them.
+  wxMenuItem* AppendMenuItem(wxMenu* menu,
+                             int id,
+                             const wxString& label,
+                             wxItemKind kind = wxITEM_NORMAL);
   void LoadMenus();
 
   bool GetFileMenuEnableState(int menu_id) const;
@@ -244,15 +247,19 @@ class BookFrame : public wxFrame {
 
   void DoSaveBuffer(editor::TextBuffer* buffer);
 
- private:
+private:
   Options* options_;
   Session* session_;
 
-  // Splitter is to split sub windows.
+  // Splitter splits sub windows.
   Splitter* splitter_;
 
   std::vector<TextBook*> text_books_;
   ToolBook* tool_book_;
+
+  // Current page type.
+  // See BookPage::Page_Type().
+  wxString page_type_;
 
   editor::StatusBar* status_bar_;
 

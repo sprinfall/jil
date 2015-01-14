@@ -38,10 +38,12 @@ static const int kTabPaddingBottom = 3;
 
 const int kFadeAwayChars = 3;
 
+////////////////////////////////////////////////////////////////////////////////
+
 class BookTabArea : public wxPanel {
   DECLARE_EVENT_TABLE()
 
- public:
+public:
   BookTabArea(BookCtrl* book_ctrl, wxWindowID id)
       : wxPanel(book_ctrl, id)
       , book_ctrl_(book_ctrl)
@@ -80,7 +82,7 @@ class BookTabArea : public wxPanel {
 #endif  // JIL_BOOK_NATIVE_TOOLTIP
   }
 
- protected:
+protected:
   virtual wxSize DoGetBestSize() const {
     int y = 0;
     GetTextExtent(wxT("T"), NULL, &y, 0, 0);
@@ -93,6 +95,7 @@ class BookTabArea : public wxPanel {
 
   void OnPaint(wxPaintEvent& evt) {
     wxAutoBufferedPaintDC dc(this);
+
 #if !wxALWAYS_NATIVE_DOUBLE_BUFFER
     dc.SetBackground(GetBackgroundColour());
     dc.Clear();
@@ -109,7 +112,7 @@ class BookTabArea : public wxPanel {
     // Do nothing.
   }
 
- private:
+private:
   BookCtrl* book_ctrl_;
 
 #if !JIL_BOOK_NATIVE_TOOLTIP
@@ -124,6 +127,7 @@ EVT_MOUSE_EVENTS(BookTabArea::OnMouseEvents)
 EVT_MOUSE_CAPTURE_LOST(BookTabArea::OnMouseCaptureLost)
 END_EVENT_TABLE()
 
+////////////////////////////////////////////////////////////////////////////////
 
 BEGIN_EVENT_TABLE(BookCtrl, wxPanel)
 END_EVENT_TABLE()
@@ -165,15 +169,15 @@ bool BookCtrl::Create(wxWindow* parent, wxWindowID id) {
   // Book ctrl's min size is the best size of its tab area.
   SetMinSize(tab_area_->GetBestSize());
 
-  page_area_ = new BookPageArea(this, wxID_ANY);
-  page_sizer_ = new wxBoxSizer(wxVERTICAL);
-  page_area_->SetSizer(page_sizer_);
+  page_area_ = new wxPanel(this, wxID_ANY);
+  page_vsizer_ = new wxBoxSizer(wxVERTICAL);
+  page_area_->SetSizer(page_vsizer_);
 
-  wxSizer* sizer = new wxBoxSizer(wxVERTICAL);
-  sizer->Add(tab_area_, 0, wxEXPAND);
-  sizer->Add(page_area_, 1, wxEXPAND);
+  wxSizer* vsizer = new wxBoxSizer(wxVERTICAL);
+  vsizer->Add(tab_area_, 0, wxEXPAND);
+  vsizer->Add(page_area_, 1, wxEXPAND);
 
-  SetSizer(sizer);
+  SetSizer(vsizer);
 
   return true;
 }
@@ -183,11 +187,9 @@ bool BookCtrl::HasFocus() const {
     return true;
   }
 
-  TabList::const_iterator it = tabs_.begin();
-  for (; it != tabs_.end(); ++it) {
-    if ((*it)->page->Page_Window()->HasFocus()) {
-      return true;
-    }
+  BookPage* page = ActivePage();
+  if (page != NULL && page->Page_Window()->HasFocus()) {
+    return true;
   }
 
   return false;
@@ -282,7 +284,7 @@ bool BookCtrl::RemoveAllPages(const BookPage* except_page) {
     it = tabs_.erase(it);
     stack_tabs_.remove(tab);
     if (tab->active) {
-      page_sizer_->Clear(false);
+      page_vsizer_->Clear(false);
     }
     delete tab;
 
@@ -363,6 +365,7 @@ void BookCtrl::SwitchToPrevPage() {
   }
 }
 
+#if 0
 void BookCtrl::SwitchToNextStackPage() {
   if (PageCount() <= 1) {
     return;
@@ -380,6 +383,7 @@ void BookCtrl::SwitchToPrevStackPage() {
 
   ActivatePage(stack_tabs_.back()->page);
 }
+#endif
 
 std::vector<BookPage*> BookCtrl::Pages() const {
   std::vector<BookPage*> pages;
@@ -963,12 +967,12 @@ void BookCtrl::ActivatePage(TabList::iterator it) {
   if (active_it != tabs_.end()) {
     (*active_it)->active = false;
     (*active_it)->page->Page_Activate(false);
-    page_sizer_->Clear(false);
+    page_vsizer_->Clear(false);
   }
 
   // Activate new page.
   (*it)->active = true;
-  page_sizer_->Add((*it)->page->Page_Window(), 1, wxEXPAND);
+  page_vsizer_->Add((*it)->page->Page_Window(), 1, wxEXPAND);
   (*it)->page->Page_Activate(true);
 
   // Make sure the active tab has enough space to display.
@@ -1012,13 +1016,13 @@ bool BookCtrl::RemovePage(TabList::iterator it) {
 
   // The page to remove is active.
   if (tab->active) {
-    page_sizer_->Clear(false);
+    page_vsizer_->Clear(false);
 
     if (PageCount() > 0) {
       // Activate another page.
       Tab* active_tab = stack_tabs_.front();
       active_tab->active = true;
-      page_sizer_->Add(active_tab->page->Page_Window(), 1, wxEXPAND);
+      page_vsizer_->Add(active_tab->page->Page_Window(), 1, wxEXPAND);
       active_tab->page->Page_Activate(true);
 
       PostEvent(kEvtBookPageSwitch);

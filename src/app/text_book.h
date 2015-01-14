@@ -20,6 +20,7 @@ class TextBook : public BookCtrl {
 
   TextPage* ActiveTextPage() const;
 
+  std::vector<TextPage*> TextPages() const;
   std::vector<TextPage*> StackTextPages() const;
 
  protected:
