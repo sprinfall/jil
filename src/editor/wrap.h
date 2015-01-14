@@ -86,6 +86,10 @@ public:
   WrapHelper(TextBuffer* buffer, TextExtent* text_extent);
   ~WrapHelper();
 
+  int client_width() const {
+    return client_width_;
+  }
+
   void set_client_width(int client_width) {
     client_width_ = client_width;
   }

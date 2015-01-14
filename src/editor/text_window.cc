@@ -1080,7 +1080,9 @@ void TextWindow::InsertChar(const TextPoint& point,
 // window gets larger - new client area has to be painted). If the window
 // gets smaller, there'll be no refresh.
 void TextWindow::OnTextSize(wxSizeEvent& evt) {
-  if (text_area_->GetClientSize().x < kUnreadyWindowSize) {
+  wxSize client_size = text_area_->GetClientSize();
+
+  if (client_size.x < kUnreadyWindowSize) {
     return;
   }
 
@@ -1088,23 +1090,26 @@ void TextWindow::OnTextSize(wxSizeEvent& evt) {
     UpdateVirtualSize();
     // Don't call Refresh() here!
   } else {
-    wrap_helper()->set_client_width(text_area_->GetClientSize().GetWidth());
+    // Update wrap information only when client width is changed.
+    if (client_size.x != wrap_helper()->client_width()) {
+      wrap_helper()->set_client_width(client_size.x);
 
-    int wrap_delta = 0;
-    bool wrap_changed = wrap_helper()->Wrap(&wrap_delta);
+      int wrap_delta = 0;
+      bool wrap_changed = wrap_helper()->Wrap(&wrap_delta);
 
-    UpdateVirtualSize();
+      UpdateVirtualSize();
 
-    if (wrap_changed) {
-      // The text has to be repainted since the wrap changes.
-      text_area_->Refresh();
-      if (wrap_delta != 0) {
-        line_nr_area_->Refresh();
+      if (wrap_changed) {
+        // The text has to be repainted since the wrap changes.
+        text_area_->Refresh();
+        if (wrap_delta != 0) {
+          line_nr_area_->Refresh();
+        }
+
+        // Caret position might change due to the wrap change.
+        UpdateCaretPosition();
+        ScrollToPoint(caret_point_);
       }
-
-      // Caret position might change due to the wrap change.
-      UpdateCaretPosition();
-      ScrollToPoint(caret_point_);
     }
   }
 }
