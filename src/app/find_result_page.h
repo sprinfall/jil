@@ -31,7 +31,9 @@ public:
   virtual wxString Page_Label() const override;
   virtual wxString Page_Description() const override;
   virtual int Page_Flags() const override;
+
   virtual void Page_EditMenu(wxMenu* edit_menu) override;
+  virtual bool Page_EditMenuState(int menu_id) override;
 
 protected:
   // OVERRIDE of editor::TextWindow:

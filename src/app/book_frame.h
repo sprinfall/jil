@@ -219,6 +219,9 @@ protected:
   // Show tool book and activate the given page.
   void ActivateToolPage(BookPage* page);
 
+  // Get the page which has focus.
+  BookPage* GetFocusedPage();
+
 private:
   // TODO: TextWindow also has AppendMenuItem, remove one of them.
   wxMenuItem* AppendMenuItem(wxMenu* menu,
@@ -227,9 +230,9 @@ private:
                              wxItemKind kind = wxITEM_NORMAL);
   void LoadMenus();
 
-  bool GetFileMenuEnableState(int menu_id) const;
-  bool GetEditMenuEnableState(int menu_id) const;
-  bool GetMenuEnableState(int menu_id) const;
+  bool GetFileMenuEnableState(int menu_id);
+  bool GetEditMenuEnableState(int menu_id);
+  bool GetMenuEnableState(int menu_id);
 
   TextBook* ActiveTextBook() const;
 

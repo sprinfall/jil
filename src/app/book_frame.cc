@@ -1276,16 +1276,19 @@ void BookFrame::HandleTextWindowGetFocus(wxCommandEvent& evt) {
     return;
   }
 
-  // TODO: Avoid dynamic_cast.
-  BookPage* book_page = dynamic_cast<BookPage*>(evt.GetEventObject());
-  if (book_page != NULL) {
-    if (book_page->Page_Type() != page_type_) {
-      page_type_ = book_page->Page_Type();
-      wxLogDebug("Current page type: %s", page_type_);
+  // NOTE: Don't try to get the focused page from evt.GetEventObject().
+  // A window could be destroyed immediately after it gets focus.
+  BookPage* focused_page = GetFocusedPage();
+  if (focused_page == NULL) {
+    return;
+  }
 
-      ClearMenuItems(edit_menu);
-      book_page->Page_EditMenu(edit_menu);
-    }
+  if (focused_page->Page_Type() != page_type_) {
+    page_type_ = focused_page->Page_Type();
+    wxLogDebug("Current page type: %s", page_type_);
+
+    ClearMenuItems(edit_menu);
+    focused_page->Page_EditMenu(edit_menu);
   }
 }
 
@@ -1641,6 +1644,31 @@ void BookFrame::ActivateToolPage(BookPage* page) {
   tool_book_->ActivatePage(page);
 }
 
+BookPage* BookFrame::GetFocusedPage() {
+  BookCtrl* focused_book = NULL;
+
+  // Find active book in text books.
+  for (size_t i = 0; i < text_books_.size(); ++i) {
+    if (text_books_[i]->HasFocus()) {
+      focused_book = text_books_[i];
+      break;
+    }
+  }
+
+  // Check tool book.
+  if (focused_book == NULL) {
+    if (tool_book_->HasFocus()) {
+      focused_book = tool_book_;
+    }
+  }
+
+  if (focused_book == NULL) {
+    return NULL;
+  }
+
+  return focused_book->ActivePage();
+}
+
 //------------------------------------------------------------------------------
 
 wxMenuItem* BookFrame::AppendMenuItem(wxMenu* menu,
@@ -1748,7 +1776,7 @@ void BookFrame::LoadMenus() {
   SetMenuBar(menu_bar);
 }
 
-bool BookFrame::GetFileMenuEnableState(int menu_id) const {
+bool BookFrame::GetFileMenuEnableState(int menu_id) {
   using namespace editor;
 
   TextPage* page = ActiveTextPage();
@@ -1780,29 +1808,15 @@ bool BookFrame::GetFileMenuEnableState(int menu_id) const {
   return state;
 }
 
-bool BookFrame::GetEditMenuEnableState(int menu_id) const {
-  TextPage* page = ActiveTextPage();
-  if (page == NULL) {
+bool BookFrame::GetEditMenuEnableState(int menu_id) {
+  BookPage* focused_page = GetFocusedPage();
+  if (focused_page == NULL) {
     return false;
   }
-
-  switch (menu_id) {
-  case ID_MENU_EDIT_UNDO:
-    return page->CanUndo();
-
-  case ID_MENU_EDIT_REDO:
-    return page->CanRedo();
-
-  case ID_MENU_EDIT_PASTE:
-    // TODO
-    return true;
-
-  default:
-    return true;
-  }
+  return focused_page->Page_EditMenuState(menu_id);
 }
 
-bool BookFrame::GetMenuEnableState(int menu_id) const {
+bool BookFrame::GetMenuEnableState(int menu_id) {
   if (menu_id >= ID_MENU_FILE_BEGIN && menu_id < ID_MENU_FILE_END) {
     return GetFileMenuEnableState(menu_id);
   } else if (menu_id >= ID_MENU_EDIT_BEGIN && menu_id < ID_MENU_EDIT_END) {

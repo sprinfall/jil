@@ -310,10 +310,7 @@ TextBuffer::CharIterator TextBuffer::CharIterator::operator--(int) {
 
 TextBuffer::~TextBuffer() {
   ClearActions();
-
   ClearContainer(&lines_);
-  // Force vector to relinquish its memory (look up "STL swap trick").
-  TextLines().swap(lines_);
 }
 
 //------------------------------------------------------------------------------

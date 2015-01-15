@@ -65,6 +65,9 @@ public:
   // Different pages might have different edit menu items.
   // E.g., text page has Undo and Redo while find result page doesn't.
   virtual void Page_EditMenu(wxMenu* menu) = 0;
+
+  // Get the enable state of the edit menu item.
+  virtual bool Page_EditMenuState(int menu_id) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -27,7 +27,9 @@ public:
   virtual wxString Page_Label() const override;
   virtual wxString Page_Description() const override;
   virtual int Page_Flags() const override;
+
   virtual void Page_EditMenu(wxMenu* menu) override;
+  virtual bool Page_EditMenuState(int menu_id) override;
 
   bool SaveBuffer();
 

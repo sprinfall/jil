@@ -61,6 +61,10 @@ void FindResultPage::Page_EditMenu(wxMenu* menu) {
   AppendMenuItem(menu, ID_MENU_EDIT_GOTO, kTrEditGoto);
 }
 
+bool FindResultPage::Page_EditMenuState(int menu_id) {
+  return true;
+}
+
 // Double-click goes to the line of this result.
 void FindResultPage::HandleTextLeftDClick(wxMouseEvent& evt) {
   using namespace editor;

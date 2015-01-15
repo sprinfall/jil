@@ -119,6 +119,23 @@ void TextPage::Page_EditMenu(wxMenu* menu) {
   AppendMenuItem(menu, ID_MENU_EDIT_GOTO, kTrEditGoto);
 }
 
+bool TextPage::Page_EditMenuState(int menu_id) {
+  switch (menu_id) {
+  case ID_MENU_EDIT_UNDO:
+    return CanUndo();
+
+  case ID_MENU_EDIT_REDO:
+    return CanRedo();
+
+  case ID_MENU_EDIT_PASTE:
+    // TODO
+    return true;
+
+  default:
+    return true;
+  }
+}
+
 bool TextPage::SaveBuffer() {
   bool saved = false;
   if (buffer()->new_created() || buffer()->read_only()) {
