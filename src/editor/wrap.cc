@@ -224,15 +224,10 @@ bool WrapHelper::Unwrap(int* wrap_delta) {
 }
 
 Coord WrapHelper::WrapLineNr(Coord ln) const {
+  Coord line_count = buffer_->LineCount();
+  assert(ln >=1 && ln <= line_count);
+
   Coord wrapped_ln = 0;
-
-  const Coord line_count = buffer_->LineCount();
-
-  if (ln > line_count) {
-    assert(false && "Invalid unwrapped ln!");
-    return wrapped_ln;
-  }
-
   for (Coord unwrapped_ln = 1; unwrapped_ln < ln; ++unwrapped_ln) {
     wrapped_ln += WrappedLineCount(unwrapped_ln);
   }
@@ -241,7 +236,7 @@ Coord WrapHelper::WrapLineNr(Coord ln) const {
 }
 
 Coord WrapHelper::UnwrapLineNr(Coord wrapped_ln, Coord* sub_ln) const {
-  const Coord line_count = buffer_->LineCount();
+  Coord line_count = buffer_->LineCount();
 
   for (Coord ln = 1; ln <= line_count && wrapped_ln > 0; ++ln) {
     int wlc = WrappedLineCount(ln);

@@ -173,12 +173,20 @@ public:
   // Return true if the wrap offsets change.
   bool Unwrap(int* wrap_delta);
 
+  // Given 3 lines wrapped as:
+  //  1 ABC
+  //  2 DEF
+  //  | GHI
+  //  | J
+  //  3 KLM  (ln: 3)
+  //  | N
+  // WrapLineNr(3) returns 5.
   Coord WrapLineNr(Coord ln) const;
 
   // Given 3 lines wrapped as:
   //  1 ABC
   //  2 DEF
-  //  | GHI  (wrap_ln: 3)
+  //  | GHI  (wrapped_ln: 3)
   //  | J
   //  3 KLM
   //  | N

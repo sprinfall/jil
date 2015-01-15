@@ -628,12 +628,13 @@ void TextWindow::ScrollToPoint(const TextPoint& point) {
               1;
   }
 
+  wxRect client_rect = text_area_->GetClientRect();
+
   // - 1 because line nr is 0-based.
   if (caret_y - 1 < view_start_y) {
     y = caret_y - 1;
   } else {
-    int unscrolled_bottom =
-        GetUnscrolledY(text_area_->GetClientRect().GetBottom());
+    int unscrolled_bottom = GetUnscrolledY(client_rect.GetBottom());
     // NOTE: Don't use (unscrolled_bottom + line_height_ / 2) / line_height_
     // Otherwise the line might be partially visible.
     int line_end = (unscrolled_bottom) / line_height_;
@@ -653,8 +654,7 @@ void TextWindow::ScrollToPoint(const TextPoint& point) {
         x = 0;
       }
     } else {
-      int unscrolled_right =
-          GetUnscrolledX(text_area_->GetClientRect().GetRight());
+      int unscrolled_right = GetUnscrolledX(client_rect.GetRight());
       int char_end = (unscrolled_right + char_width_ / 2) / char_width_;
       if (point.x >= char_end) {
         // 3 units per scroll.
@@ -678,23 +678,30 @@ void TextWindow::ScrollLinesDirectly(int lines) {
 }
 
 void TextWindow::Goto(Coord ln) {
+  // NOTE: Don't use assert().
   if (ln < 1) {
     ln = 1;
   } else if (ln > buffer_->LineCount()) {
     ln = buffer_->LineCount();
   }
 
+  Coord y = ln;
+
+  if (options_.wrap) {
+    ln = wrap_helper()->WrapLineNr(ln);
+  }
+
   LineRange line_range = GetClientLineRange();
 
   if (ln < line_range.first()) {
     ScrollLinesDirectly(ln - line_range.first() - GetHalfPageSize());
-  }
-  if (ln > line_range.last()) {
+  } else if (ln > line_range.last()) {
     ScrollLinesDirectly(ln - line_range.last() + GetHalfPageSize());
   }
 
-  TextPoint point(std::min(max_caret_x_, buffer_->LineLength(ln)), ln);
-  UpdateCaretPoint(point, true, false, false);
+  Coord x = std::min(max_caret_x_, buffer_->LineLength(y));
+
+  UpdateCaretPoint(TextPoint(x, y), true, false, false);
 }
 
 //------------------------------------------------------------------------------
