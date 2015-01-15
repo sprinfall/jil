@@ -51,7 +51,7 @@ void ExploreFile(const wxString& file_path) {
 
 void ClearMenuItems(wxMenu* menu) {
   while (menu->GetMenuItemCount() > 0) {
-    menu->Delete(menu->FindItemByPosition(0));
+    menu->Destroy(menu->FindItemByPosition(0));
   }
 }
 

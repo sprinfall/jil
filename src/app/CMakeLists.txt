@@ -74,12 +74,6 @@ set(EXTRA_LIBS
     uchardet
     )
 
-if(WIN32)
-    if(JIL_ENABLE_VLD)
-        set(EXTRA_LIBS ${EXTRA_LIBS} vld)
-    endif()
-endif()
-
 # NOTE: Put ${wxWidgets_LIBRARIES} after others, or there will be link errors in Linux/GTK+.
 target_link_libraries(${TARGET_NAME} ${EXTRA_LIBS} ${wxWidgets_LIBRARIES})
 
@@ -89,11 +83,17 @@ if(MSVC)
 endif()
 
 # Install
-install(FILES ${CMAKE_SOURCE_DIR}/data/options.cfg DESTINATION .)
+install(FILES ${PROJECT_SOURCE_DIR}/data/options.cfg DESTINATION .)
 install(FILES ${PROJECT_SOURCE_DIR}/data/binding.cfg DESTINATION .)
 install(FILES ${PROJECT_SOURCE_DIR}/data/file_types.cfg DESTINATION .)
 install(FILES ${PROJECT_SOURCE_DIR}/data/status_fields.cfg DESTINATION .)
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/theme DESTINATION .)
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/ftplugin DESTINATION .)
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/src/app/icon DESTINATION .)
-
+if(WIN32)
+    if(JIL_ENABLE_VLD)
+        install(FILES ${PROJECT_SOURCE_DIR}/third_party/win32/bin/dbghelp.dll DESTINATION .)
+        install(FILES ${PROJECT_SOURCE_DIR}/third_party/win32/bin/Microsoft.DTfW.DHL.manifest DESTINATION .)
+        install(FILES ${PROJECT_SOURCE_DIR}/third_party/win32/bin/vld_x86.dll DESTINATION .)
+    endif()
+endif()

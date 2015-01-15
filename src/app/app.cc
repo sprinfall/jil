@@ -6,6 +6,7 @@
 #if defined(__WXMSW__) && defined(_DEBUG) && defined(JIL_ENABLE_VLD)
 #pragma message ("< include vld.h >")
 #include "vld/vld.h"
+#pragma comment(lib, "vld")
 #endif  // __WXMSW__
 
 #include "wx/image.h"
