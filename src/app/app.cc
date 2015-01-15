@@ -3,6 +3,11 @@
 #include <string>
 #include "boost/algorithm/string.hpp"
 
+#if defined(__WXMSW__) && defined(_DEBUG) && defined(JIL_ENABLE_VLD)
+#pragma message ("< include vld.h >")
+#include "vld/vld.h"
+#endif  // __WXMSW__
+
 #include "wx/image.h"
 #include "wx/intl.h"
 #include "wx/sysopt.h"

@@ -61,8 +61,8 @@ set(SRCS
 
 add_library(editor ${SRCS} ${HEADERS})
 
-# Unit test.
-if(JIL_ENABLE_TEST)
+# Unit test
+if(JIL_ENABLE_UT)
     set(UT_SRCS
         indent_unittest.cc
         text_line_unittest.cc

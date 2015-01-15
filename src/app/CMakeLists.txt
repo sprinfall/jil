@@ -66,8 +66,23 @@ endif()
 
 add_executable(${TARGET_NAME} WIN32 MACOSX_BUNDLE ${JIL_RC} ${SRCS})
 
+set(EXTRA_LIBS
+    base
+    editor
+    libconfig
+    pugixml
+    uchardet
+    )
+
+if(WIN32)
+    if(JIL_ENABLE_VLD)
+        set(EXTRA_LIBS ${EXTRA_LIBS} DEBUG vld)
+    endif()
+endif()
+
 # NOTE: Put ${wxWidgets_LIBRARIES} after others, or there will be link errors in Linux/GTK+.
-target_link_libraries(${TARGET_NAME} base editor libconfig pugixml uchardet ${wxWidgets_LIBRARIES})
+target_link_libraries(${TARGET_NAME} ${EXTRA_LIBS} ${wxWidgets_LIBRARIES})
+
 set_target_properties(${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_NAME jil)
 if(MSVC)
     set_target_properties(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "/wd4290")

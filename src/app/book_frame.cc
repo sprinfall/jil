@@ -1213,7 +1213,7 @@ void BookFrame::UpdateTitle() {
 }
 
 wxString BookFrame::FormatCaretString(TextPage* page) const {
-  wxString format = wxT("Line %d, Column %d"); // TODO
+  wxString format = _("Line") + wxT(" %d, ") + _("Column") + wxT(" %d");
   return wxString::Format(format,
                           page->caret_point().y,
                           page->caret_point().x);

@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.0)
 project(jil)
 
-option(JIL_ENABLE_TEST "Enable unit test?" off)
+option(JIL_ENABLE_UT "Enable unit test?" OFF)
+
+if(WIN32)
+    option(JIL_ENABLE_VLD "Enable VLD (Visual Leak Detector)?" ON)
+endif()
 
 add_definitions(-DUNICODE -D_UNICODE)
 
@@ -12,6 +16,7 @@ else()
     # Require "net" for create server/client between two instances.
     find_package(wxWidgets REQUIRED COMPONENTS core base net qa xml)
 endif()
+
 include(${wxWidgets_USE_FILE})
 
 set(Boost_USE_STATIC_LIBS ON)
@@ -23,11 +28,15 @@ if(Boost_FOUND)
     link_directories(${Boost_LIBRARY_DIRS})
 endif()
 
-if(JIL_ENABLE_TEST)
+if(JIL_ENABLE_UT)
     enable_testing()
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
+
+if(WIN32)
+    include_directories(${PROJECT_SOURCE_DIR}/third_party/win32/include)
+endif()
 
 if(MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
