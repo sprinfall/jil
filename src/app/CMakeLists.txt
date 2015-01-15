@@ -76,7 +76,7 @@ set(EXTRA_LIBS
 
 if(WIN32)
     if(JIL_ENABLE_VLD)
-        set(EXTRA_LIBS ${EXTRA_LIBS} DEBUG vld)
+        set(EXTRA_LIBS ${EXTRA_LIBS} vld)
     endif()
 endif()
 

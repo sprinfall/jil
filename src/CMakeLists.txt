@@ -1,4 +1,4 @@
-if(JIL_ENABLE_TEST)
+if(JIL_ENABLE_UT)
     add_subdirectory(gtest)
 endif()
 add_subdirectory(base)
