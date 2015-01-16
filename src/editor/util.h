@@ -84,6 +84,10 @@ TextUnit UnitFromName(const std::string& name);
 const std::string& SeekName(SeekType seek);
 SeekType SeekFromName(const std::string& name);
 
+////////////////////////////////////////////////////////////////////////////////
+
+bool IsClipboardEmpty();
+
 }  // namespace editor
 }  // namespace jil
 

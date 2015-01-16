@@ -1,4 +1,5 @@
 #include "editor/util.h"
+#include "wx/clipbrd.h"
 #include "wx/intl.h"
 
 namespace jil {
@@ -191,6 +192,22 @@ SeekType SeekFromName(const std::string& name) {
   return kNoSeek;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+bool IsClipboardEmpty() {
+  bool is_empty = true;
+
+  if (wxTheClipboard->Open()) {
+    if (wxTheClipboard->IsSupported(wxDF_TEXT)) {
+      wxTextDataObject data;
+      wxTheClipboard->GetData(data);
+      is_empty = data.GetText().IsEmpty();
+    }
+    wxTheClipboard->Close();
+  }
+
+  return is_empty;
+}
 
 }  // namespace editor
 }  // namespace jil

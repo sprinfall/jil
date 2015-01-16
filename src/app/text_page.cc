@@ -4,6 +4,7 @@
 #include "wx/log.h"
 #include "editor/text_buffer.h"
 #include "editor/text_area.h"
+#include "editor/util.h"
 #include "app/i18n_strings.h"
 #include "app/id.h"
 #include "app/save.h"
@@ -128,8 +129,7 @@ bool TextPage::Page_EditMenuState(int menu_id) {
     return CanRedo();
 
   case ID_MENU_EDIT_PASTE:
-    // TODO
-    return true;
+    return !editor::IsClipboardEmpty();
 
   default:
     return true;
