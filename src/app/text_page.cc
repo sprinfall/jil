@@ -136,6 +136,15 @@ bool TextPage::Page_EditMenuState(int menu_id) {
   }
 }
 
+bool TextPage::Page_OnMenu(int menu_id) {
+  editor::TextFunc* text_func = binding_->GetTextFuncByMenu(menu_id);
+  if (text_func != NULL) {
+    text_func->Exec(this);
+    return true;
+  }
+  return false;
+}
+
 bool TextPage::SaveBuffer() {
   bool saved = false;
   if (buffer()->new_created() || buffer()->read_only()) {

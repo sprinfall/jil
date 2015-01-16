@@ -984,9 +984,9 @@ bool BookFrame::HandleKeyDownHook(wxKeyEvent& evt) {
   }
 
   // No void command matched.
-  // Return false to let current text window handle the event.
+  // Return false to let current focused window handle the event.
 
-  // If a text command is matched in the current text window, the leader key
+  // If a text command is matched in the focused text window, the leader key
   // will also be reset if it's not empty (An event will be posted from the
   // text window for this). See OnTextWindowEvent().
 
@@ -1041,12 +1041,10 @@ void BookFrame::OnMenuHelp(wxCommandEvent& evt) {
 //------------------------------------------------------------------------------
 
 bool BookFrame::ExecFuncByMenu(int menu) {
-  // Match text command.
-  TextPage* page = ActiveTextPage();
+  // Delegate to the focused page to handle it.
+  BookPage* page = GetFocusedPage();
   if (page != NULL) {
-    editor::TextFunc* text_func = binding_->GetTextFuncByMenu(menu);
-    if (text_func != NULL) {
-      text_func->Exec(page);
+    if (page->Page_OnMenu(menu)) {
       return true;
     }
   }

@@ -68,6 +68,9 @@ public:
 
   // Get the enable state of the edit menu item.
   virtual bool Page_EditMenuState(int menu_id) = 0;
+
+  // Handle the menu event.
+  virtual bool Page_OnMenu(int menu_id) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

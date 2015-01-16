@@ -35,6 +35,8 @@ public:
   virtual void Page_EditMenu(wxMenu* edit_menu) override;
   virtual bool Page_EditMenuState(int menu_id) override;
 
+  virtual bool Page_OnMenu(int menu_id) override;
+
 protected:
   // OVERRIDE of editor::TextWindow:
   virtual void HandleTextLeftDClick(wxMouseEvent& evt) override;

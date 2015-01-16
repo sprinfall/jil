@@ -65,6 +65,15 @@ bool FindResultPage::Page_EditMenuState(int menu_id) {
   return true;
 }
 
+bool FindResultPage::Page_OnMenu(int menu_id) {
+  editor::TextFunc* text_func = binding_->GetTextFuncByMenu(menu_id);
+  if (text_func != NULL) {
+    text_func->Exec(this);
+    return true;
+  }
+  return false;
+}
+
 // Double-click goes to the line of this result.
 void FindResultPage::HandleTextLeftDClick(wxMouseEvent& evt) {
   using namespace editor;
