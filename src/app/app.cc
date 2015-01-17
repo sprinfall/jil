@@ -389,8 +389,7 @@ const editor::FileType& App::FileTypeFromExt(const wxString& ext) const {
   return *(it->second);
 }
 
-editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft,
-                                   FtPluginLoader ft_plugin_loader) {
+editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
   for (size_t i = 0; i < ft_plugins_.size(); ++i) {
     if (ft.id == ft_plugins_[i]->id()) {
       return ft_plugins_[i];
@@ -399,27 +398,21 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft,
 
   editor::FtPlugin* ft_plugin = new editor::FtPlugin(ft);
 
-  if (ft_plugin_loader == NULL) {
-    // TODO: Dir
-    wxString ftplugin_dir = ResourceDir(kFtPluginDir, ft_plugin->id());
-    wxString ftplugin_user_dir = UserDataDir(kFtPluginDir, ft_plugin->id());
+  wxString ftplugin_dir = ResourceDir(kFtPluginDir, ft_plugin->id());
+  wxString ftplugin_user_dir = UserDataDir(kFtPluginDir, ft_plugin->id());
 
-    LoadLexFile(ftplugin_dir + kLexFile, ft_plugin);
+  LoadLexFile(ftplugin_dir + kLexFile, ft_plugin);
 
-    editor::Options& ft_editor_options = ft_plugin->options();
-    // Copy global options, then overwrite.
-    ft_editor_options = editor_options_;
+  editor::Options& ft_editor_options = ft_plugin->options();
+  // Copy global options, then overwrite.
+  ft_editor_options = editor_options_;
 
-    Config config;
-    if (config.Load(ftplugin_dir + kOptionsFile)) {
-      Setting editor_setting = config.Root().Get("editor");
-      if (editor_setting) {
-        ParseEditorOptions(editor_setting, &ft_editor_options);
-      }
+  Config config;
+  if (config.Load(ftplugin_dir + kOptionsFile)) {
+    Setting editor_setting = config.Root().Get("editor");
+    if (editor_setting) {
+      ParseEditorOptions(editor_setting, &ft_editor_options);
     }
-  } else {
-    // Internal file type, e.g., find result.
-    (*ft_plugin_loader)(ft_plugin);
   }
 
   ft_plugins_.push_back(ft_plugin);

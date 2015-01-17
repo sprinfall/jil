@@ -31,15 +31,13 @@ class wxSingleInstanceChecker;
 namespace jil {
 
 namespace editor {
-class Style;
-class FtPlugin;
 class Binding;
-}
+class FtPlugin;
+class Style;
+}  // namespace editor
 
 class BookFrame;
 class Session;
-
-typedef void (*FtPluginLoader)(editor::FtPlugin* ft_plugin);
 
 class App : public wxApp {
 public:
@@ -61,8 +59,7 @@ public:
 
   // Get ft plugin object.
   // If the ft plugin doesn't exist, it will be created.
-  editor::FtPlugin* GetFtPlugin(const editor::FileType& ft,
-                                FtPluginLoader ft_plugin_loader = NULL);
+  editor::FtPlugin* GetFtPlugin(const editor::FileType& ft);
 
   const std::vector<editor::StatusBar::FieldInfo>& status_fields() const {
     return status_fields_;

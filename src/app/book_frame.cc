@@ -1580,19 +1580,6 @@ void BookFrame::ShowFindWindow(int find_window_mode) {
   find_window->Raise();
 }
 
-// Load file type plugin for find result buffer.
-static void LoadFindResultFtPlugin(editor::FtPlugin* ft_plugin) {
-  using namespace editor;
-
-  ft_plugin->AddQuote(new Quote(kLexComment, L"--", L"", 0));
-  ft_plugin->AddQuote(new Quote(kLexComment, L">>", L"", 0));
-
-  // The text inside find result page all starts with a line number. If the
-  // page itself also displays line numbers, it won't be clear for the user
-  // to view the find result.
-  ft_plugin->options().show_number = false;
-}
-
 FindResultPage* BookFrame::GetFindResultPage() {
   using namespace editor;
 
@@ -1605,8 +1592,8 @@ FindResultPage* BookFrame::GetFindResultPage() {
   }
 
   FileType ft(kFtId_FindResult, wxEmptyString);
-  FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(ft,
-                                               LoadFindResultFtPlugin);
+  FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(ft);
+
   TextBuffer* buffer = TextBuffer::Create(ft_plugin,
                                           options_->file_encoding);
 
