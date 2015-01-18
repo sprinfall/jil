@@ -4,7 +4,7 @@
 
 // Session consists of:
 // - Find history
-// - Recent opened files
+// - Last opened files
 // - Last cursor positions
 // - Top window states
 // - etc.
@@ -20,13 +20,9 @@ class Setting;
 class SplitNode;
 
 class Session {
- public:
+public:
   Session();
   ~Session();
-
-  void set_find_history_limit_(size_t find_history_limit) {
-    find_history_limit_ = find_history_limit;
-  }
 
   bool Load(const wxString& file);
   bool Save(const wxString& file);
@@ -47,6 +43,10 @@ class Session {
 
   wxRect find_window_rect() const { return find_window_rect_; }
   void set_find_window_rect(const wxRect& rect) { find_window_rect_ = rect; }
+
+  void set_find_history_limit_(size_t find_history_limit) {
+    find_history_limit_ = find_history_limit;
+  }
 
   // Add a string to find history.
   // Return true if the find string is new (it didn't exist).
@@ -73,10 +73,6 @@ class Session {
     return find_flags_;
   }
 
- private:
-  bool AddHistoryString(const wxString& s, std::list<wxString>* strings);
-
- public:
   //----------------------------------------------------------------------------
   // Splitter (Layout)
 
@@ -88,29 +84,30 @@ class Session {
     split_root_ = split_root;
   }
 
- private:
+  //----------------------------------------------------------------------------
+  // File history
+
+  const std::list<wxString>& opened_files() const {
+    return opened_files_;
+  }
+  void set_opened_files(const std::list<wxString>& opened_files) {
+    opened_files_ = opened_files;
+  }
+
+  const std::list<wxString>& recent_files() const {
+    return recent_files_;
+  }
+  void set_recent_files(const std::list<wxString>& recent_files) {
+    recent_files_ = recent_files;
+  }
+
+private:
+  bool AddHistoryString(const wxString& s, std::list<wxString>* strings);
+
   void SaveSplitTree(SplitNode* n, Setting* setting);
   SplitNode* RestoreSplitTree(Setting setting);
 
- public:
-  //----------------------------------------------------------------------------
-  // Last opened files.
-
-  const std::list<wxString>& last_opened_files() const {
-    return last_opened_files_;
-  }
-  void set_last_opened_files(const std::list<wxString>& last_opened_files) {
-    last_opened_files_ = last_opened_files;
-  }
-
-  const wxString& last_active_file() const {
-    return last_active_file_;
-  }
-  void set_last_active_file(const wxString& last_active_file) {
-    last_active_file_ = last_active_file;
-  }
-
- private:
+private:
   wxRect book_frame_rect_;
   bool book_frame_maximized_;
 
@@ -129,10 +126,12 @@ class Session {
   SplitNode* split_root_;
 
   // The files opened when last time Jil exits.
-  // If option "restore_last_opened_files" is true, these files will be opened
-  // on the startup.
-  std::list<wxString> last_opened_files_;
-  wxString last_active_file_;
+  // If option "restore_files" is true, these files will be opened on startup.
+  std::list<wxString> opened_files_;
+
+  // Recently opened files.
+  // Displayed in the Recent Files menu.
+  std::list<wxString> recent_files_;
 };
 
 }  // namespace jil

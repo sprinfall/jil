@@ -355,7 +355,9 @@ bool App::OnInit() {
   SetTopWindow(book_frame);
   book_frame->Show();
 
-  RestoreLastOpenedFiles(book_frame);
+  if (options_.restore_files) {
+    RestoreLastOpenedFiles(book_frame);
+  }
 
   // Open the files specified as command line arguments.
   if (!cmdline_files_.empty()) {
@@ -867,22 +869,19 @@ bool App::LoadFileTypes() {
   return true;
 }
 
+// TODO: Stack order
 void App::RestoreLastOpenedFiles(BookFrame* book_frame) {
-  const std::list<wxString>& last_opened_files = session_.last_opened_files();
-  if (!last_opened_files.empty()) {
+  const std::list<wxString>& opened_files = session_.opened_files();
+  if (!opened_files.empty()) {
     wxArrayString files;
 
-    std::list<wxString>::const_iterator it = last_opened_files.begin();
-    for (; it != last_opened_files.end(); ++it) {
+    std::list<wxString>::const_iterator it = opened_files.begin();
+    for (; it != opened_files.end(); ++it) {
       files.Add(*it);
     }
 
     // The last opened files might not exist any more. Silently open them.
     book_frame->OpenFiles(files, true);
-
-    if (!session_.last_active_file().IsEmpty()) {
-      book_frame->OpenFile(session_.last_active_file(), true, true);
-    }
   }
 }
 

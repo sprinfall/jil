@@ -86,7 +86,12 @@ EVT_ACTIVATE(BookFrame::OnActivate)
 EVT_KEYDOWN_HOOK(BookFrame::OnKeyDownHook)
 
 EVT_MENU_RANGE(ID_MENU_FILE_BEGIN, ID_MENU_FILE_END - 1, BookFrame::OnMenuFile)
+EVT_MENU_RANGE(ID_MENU_FILE_RECENT_FILE0, \
+               ID_MENU_FILE_RECENT_FILE9, \
+               BookFrame::OnMenuFileRecentFile)
+
 EVT_MENU(wxID_EXIT, BookFrame::OnQuit)
+
 EVT_MENU_RANGE(ID_MENU_EDIT_BEGIN, ID_MENU_EDIT_END - 1, BookFrame::OnMenuEdit)
 EVT_MENU_RANGE(ID_MENU_TOOLS_BEGIN, \
                ID_MENU_TOOLS_END - 1, \
@@ -126,7 +131,9 @@ BookFrame::BookFrame(Options* options, Session* session)
     , splitter_(NULL)
     , text_books_()  // Zero-initialize
     , tool_book_(NULL)
-    , binding_(NULL) {
+    , binding_(NULL)
+    , recent_files_menu_(NULL) {
+  recent_files_ = session_->recent_files();
 }
 
 bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
@@ -213,59 +220,10 @@ bool BookFrame::Show(bool show) {
   return wxFrame::Show(show);
 }
 
-TextPage* BookFrame::OpenFile(const wxFileName& fn_object,
-                              bool active,
-                              bool silent) {
-  using namespace editor;
-
-  // Check if this file has already been opened.
-  TextPage* text_page = TextPageByFileName(fn_object);
-  if (text_page != NULL) {
-    if (active) {
-      ActiveTextBook()->ActivatePage(text_page);
-    }
-    return text_page;
-  }
-
-  App& app = wxGetApp();
-
-  const FileType& ft = app.FileTypeFromExt(fn_object.GetExt());
-  FtPlugin* ft_plugin = app.GetFtPlugin(ft);
-
-  TextBuffer* buffer = TextBuffer::Create(fn_object,
-                                          ft_plugin,
-                                          options_->cjk_filters,
-                                          options_->file_encoding);
-  if (buffer == NULL) {
-    // Show error message only when it's not silent.
-    if (!silent) {
-      wxString msg = wxString::Format(_("Failed to open file! (%s)"),
-                                      fn_object.GetFullPath().c_str());
-      wxMessageBox(msg, _("Open File"), wxOK | wxCENTRE | wxICON_ERROR, this);
-    }
-
-    return NULL;
-  }
-
-  TextBook* text_book = ActiveTextBook();
-  text_page = CreateTextPage(buffer, text_book->PageParent());
-
-  text_book->AddPage(text_page, active);
-
-  return text_page;
-}
-
 TextPage* BookFrame::OpenFile(const wxString& file_name,
                               bool active,
                               bool silent) {
-  wxFileName fn_object(file_name);
-
-  // Make the path absolute, resolve shortcut, etc.
-  fn_object.Normalize(wxPATH_NORM_ABSOLUTE |
-                      wxPATH_NORM_DOTS |
-                      wxPATH_NORM_SHORTCUT);
-
-  return OpenFile(fn_object, active, silent);
+  return DoOpenFile(file_name, active, silent, true, true);
 }
 
 void BookFrame::OpenFiles(const wxArrayString& file_names, bool silent) {
@@ -278,12 +236,15 @@ void BookFrame::OpenFiles(const wxArrayString& file_names, bool silent) {
   // Activate the first opened file.
   bool active = true;
   for (size_t i = 0; i < file_names.size(); ++i) {
-    if (OpenFile(file_names[i], active, silent) != NULL) {
+    // Don't update Recent Files menu for performance. Update it later.
+    if (DoOpenFile(file_names[i], active, silent, true, false) != NULL) {
       active = false;
     }
   }
 
   ActiveTextBook()->EndBatch();
+
+  UpdateRecentFilesMenu();
 }
 
 void BookFrame::FileNew() {
@@ -1003,6 +964,16 @@ void BookFrame::OnMenuFile(wxCommandEvent& evt) {
   }
 }
 
+void BookFrame::OnMenuFileRecentFile(wxCommandEvent& evt) {
+  size_t i = evt.GetId() - ID_MENU_FILE_RECENT_FILE0;
+  if (i < recent_files_.size()) {
+    std::list<wxString>::iterator it = recent_files_.begin();
+    std::advance(it, i);
+    // NOTE: Don't have to update recent files.
+    DoOpenFile(*it, true, false, false, false);
+  }
+}
+
 void BookFrame::OnQuit(wxCommandEvent& WXUNUSED(evt)) {
   Close(true);  // Go to OnClose().
 }
@@ -1077,23 +1048,13 @@ void BookFrame::OnEditUpdateUI(wxUpdateUIEvent& evt) {
 void BookFrame::OnClose(wxCloseEvent& evt) {
   // Remember opened files.
   std::list<wxString> opened_files;
-  wxString active_file;
 
   TextBook* text_book = ActiveTextBook();
-  if (text_book->PageCount() > 0) {
-    std::vector<TextPage*> text_pages = text_book->TextPages();
+  std::vector<TextPage*> text_pages = text_book->StackTextPages();
 
-    for (size_t i = 0; i < text_pages.size(); ++i) {
-      if (!text_pages[i]->buffer()->new_created()) {
-        opened_files.push_back(text_pages[i]->buffer()->file_path_name());
-      }
-    }
-
-    TextPage* text_page = text_book->ActiveTextPage();
-    if (text_page != NULL) {
-      if (!text_page->buffer()->new_created()) {
-        active_file = text_page->buffer()->file_path_name();
-      }
+  for (size_t i = 0; i < text_pages.size(); ++i) {
+    if (!text_pages[i]->buffer()->new_created()) {
+      opened_files.push_back(text_pages[i]->buffer()->file_path_name());
     }
   }
 
@@ -1105,8 +1066,8 @@ void BookFrame::OnClose(wxCloseEvent& evt) {
 
   // Save session.
 
-  session_->set_last_opened_files(opened_files);
-  session_->set_last_active_file(active_file);
+  session_->set_opened_files(opened_files);
+  session_->set_recent_files(recent_files_);
 
   if (IsMaximized()) {
     session_->set_book_frame_maximized(true);
@@ -1211,7 +1172,7 @@ void BookFrame::UpdateTitle() {
 }
 
 wxString BookFrame::FormatCaretString(TextPage* page) const {
-  wxString format = _("Line") + wxT(" %d, ") + _("Column") + wxT(" %d");
+  wxString format = kTrLine + wxT(" %d, ") + kTrColumn + wxT(" %d");
   return wxString::Format(format,
                           page->caret_point().y,
                           page->caret_point().x);
@@ -1326,8 +1287,11 @@ void BookFrame::OnFindResultPageEvent(wxCommandEvent& evt) {
     TextPage* text_page = TextPageByFileName(fn_object);
     if (text_page == NULL) {
       // The page is closed? Reopen it.
-      text_page = OpenFile(fn_object, true, false);
-      if (text_page == NULL) {
+      text_page = DoOpenFile(fn_object, true, false, NULL);
+      if (text_page != NULL) {
+        AddRecentFile(fn_object.GetFullPath());
+        UpdateRecentFilesMenu();
+      } else {
         return;  // Failed to reopen it.
       }
     } else {
@@ -1440,7 +1404,7 @@ void BookFrame::PopupEncodingMenu() {
   sub_menu->Append(ID_MENU_ENCODING_WINDOWS_1253,
                    ENCODING_DISPLAY_NAME_WINDOWS_1253);
 
-  menu.AppendSubMenu(sub_menu, _("Others..."));
+  menu.AppendSubMenu(sub_menu, kTrOthers);
 
   PopupMenu(&menu, ScreenToClient(wxGetMousePosition()));
 }
@@ -1701,8 +1665,12 @@ void BookFrame::LoadMenus() {
   AppendMenuItem(menu_file, ID_MENU_FILE_SAVE_AS, kTrFileSaveAs);
   AppendMenuItem(menu_file, ID_MENU_FILE_SAVE_ALL, kTrFileSaveAll);
   menu_file->AppendSeparator();
+  recent_files_menu_ = new wxMenu;
+  menu_file->AppendSubMenu(recent_files_menu_, kTrFileRecentFiles);
+  UpdateRecentFilesMenu();
+  menu_file->AppendSeparator();
   // - Exit
-  AppendMenuItem(menu_file, wxID_EXIT, kTrFileExit);  // TODO: ID
+  AppendMenuItem(menu_file, wxID_EXIT, kTrFileExit);
 
   menu_bar->Append(menu_file, kTrMenuFile);
 
@@ -1811,6 +1779,22 @@ bool BookFrame::GetMenuEnableState(int menu_id) {
   return true;
 }
 
+void BookFrame::UpdateRecentFilesMenu() {
+  if (recent_files_menu_ == NULL) {
+    return;
+  }
+
+  ClearMenuItems(recent_files_menu_);
+
+  int id = 0;
+  std::list<wxString>::iterator it = recent_files_.begin();
+  for (int i = 0; it != recent_files_.end(); ++it, ++i) {
+    id = ID_MENU_FILE_RECENT_FILE0 + i;
+    wxString label = wxString::Format(wxT("%d. "), i) + *it; 
+    AppendMenuItem(recent_files_menu_, id, label);
+  }
+}
+
 TextBook* BookFrame::ActiveTextBook() const {
   return text_books_[0];
 }
@@ -1875,6 +1859,84 @@ void BookFrame::SwitchStackPage(bool forward) {
   }
 }
 
+TextPage* BookFrame::DoOpenFile(const wxString& file_name,
+                                bool active,
+                                bool silent,
+                                bool update_recent_files,
+                                bool update_recent_files_menu) {
+  wxFileName fn_object(file_name);
+
+  // Make the path absolute, resolve shortcut, etc.
+  int flags = wxPATH_NORM_ABSOLUTE | wxPATH_NORM_DOTS | wxPATH_NORM_SHORTCUT;
+  fn_object.Normalize(flags);
+
+  bool new_opened = false;
+  TextPage* text_page = DoOpenFile(fn_object, active, silent, &new_opened);
+
+  if (text_page != NULL && new_opened) {
+    if (update_recent_files) {
+      AddRecentFile(fn_object.GetFullPath());
+      if (update_recent_files_menu) {
+        UpdateRecentFilesMenu();
+      }
+    }
+  }
+
+  return text_page;
+}
+
+TextPage* BookFrame::DoOpenFile(const wxFileName& fn_object,
+                                bool active,
+                                bool silent,
+                                bool* new_opened) {
+  using namespace editor;
+
+  // Check if this file has already been opened.
+  TextPage* text_page = TextPageByFileName(fn_object);
+  if (text_page != NULL) {
+    if (active) {
+      ActiveTextBook()->ActivatePage(text_page);
+    }
+
+    if (new_opened != NULL) {
+      *new_opened = false;
+    }
+
+    return text_page;
+  }
+
+  App& app = wxGetApp();
+
+  const FileType& ft = app.FileTypeFromExt(fn_object.GetExt());
+  FtPlugin* ft_plugin = app.GetFtPlugin(ft);
+
+  TextBuffer* buffer = TextBuffer::Create(fn_object,
+                                          ft_plugin,
+                                          options_->cjk_filters,
+                                          options_->file_encoding);
+  if (buffer == NULL) {
+    if (!silent) {
+      // Show error message only when it's not silent.
+      wxString msg = wxString::Format(kTrFailedToOpenFile,
+                                      fn_object.GetFullPath().c_str());
+      wxMessageBox(msg, kTrOpenFile, wxOK | wxCENTRE | wxICON_ERROR, this);
+    }
+
+    return NULL;
+  }
+
+  TextBook* text_book = ActiveTextBook();
+  text_page = CreateTextPage(buffer, text_book->PageParent());
+
+  text_book->AddPage(text_page, active);
+  
+  if (new_opened != NULL) {
+    *new_opened = true;
+  }
+
+  return text_page;
+}
+
 void BookFrame::DoSaveBuffer(editor::TextBuffer* buffer) {
   assert(buffer != NULL);
 
@@ -1886,6 +1948,19 @@ void BookFrame::DoSaveBuffer(editor::TextBuffer* buffer) {
     SaveBufferAs(buffer, this);
   } else {
     SaveBuffer(buffer, this);
+  }
+}
+
+void BookFrame::AddRecentFile(const wxString& recent_file) {
+  if (std::find(recent_files_.begin(), recent_files_.end(), recent_file) !=
+      recent_files_.end()) {
+    return;
+  }
+
+  recent_files_.push_front(recent_file);
+
+  while (recent_files_.size() > 10) {
+    recent_files_.pop_back();
   }
 }
 

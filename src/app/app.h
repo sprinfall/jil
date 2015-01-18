@@ -19,8 +19,12 @@
 
 class wxSingleInstanceChecker;
 
-// App name used internally.
+// App name used for paths, config, and other places the user doesn't see.
+#if defined (__WXMSW__) || defined (__WXMAC__)
+#define kAppName wxT("Jil")
+#else
 #define kAppName wxT("jil")
+#endif
 
 // App name used in window titles, etc.
 #define kAppDisplayName wxT("Jil Text")

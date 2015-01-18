@@ -12,6 +12,14 @@
 #define kTrComingSoon         _("Coming soon...")
 #define kTrFailedToLoad       _("Failed to load:")
 
+#define kTrOpenFile           _("Open File")
+#define kTrFailedToOpenFile   _("Failed to open file! (%s)")
+
+#define kTrLine               _("Line")
+#define kTrColumn             _("Column")
+
+#define kTrOthers             _("Others")
+
 // Menu labels.
 
 #define kTrMenuFile           _("&File")
@@ -32,6 +40,7 @@
 #define kTrFileSaveAs         _("Save &As...")
 #define kTrFileSaveAsFormat   _("Save %s &As...")
 #define kTrFileSaveAll        _("Save A&ll")
+#define kTrFileRecentFiles    _("Recent &Files")
 #define kTrFileExit           _("E&xit")
 
 #define kTrEditUndo           _("&Undo")

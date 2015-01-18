@@ -19,6 +19,7 @@ const char* const FONT_NAME = "font_name";
 const char* const FONT_SIZE = "font_size";
 const char* const THEME = "theme";
 const char* const SWITCH_CWD = "switch_cwd";
+const char* const RESTORE_FILES = "restore_files";
 
 // Names of editor options.
 const char* const WRAP = "wrap";
@@ -38,7 +39,8 @@ class Options {
  public:
   Options()
       : cjk_filters(0)
-      , switch_cwd(false) {
+      , switch_cwd(false)
+      , restore_files(true) {
   }
 
   int cjk_filters;
@@ -46,6 +48,7 @@ class Options {
   wxFont font;
   wxString theme;
   bool switch_cwd;
+  bool restore_files;
 };
 
 }  // namespace jil

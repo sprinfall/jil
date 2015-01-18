@@ -181,8 +181,8 @@ void ParseAppOptions(const Setting& setting, Options* options) {
     wxLogInfo(wxT("Font is not configured. Default is: %s."), font_name);
     font = GetGlobalFont(font_size, font_name);
   } else {
-    // The font might not exist. But GetGlobalFont() will always return
-    // a valid font.
+    // The font might not exist.
+    // But GetGlobalFont will always return a valid font.
     font = GetGlobalFont(font_size, font_name);
   }
 
@@ -193,6 +193,9 @@ void ParseAppOptions(const Setting& setting, Options* options) {
 
   // Theme
   GetWxString(setting_map, THEME, &options->theme);
+
+  // Restore files
+  GetBool(setting_map, RESTORE_FILES, &options->restore_files);
 }
 
 // NOTE: If a setting is not provided, don't set the related option.

@@ -2,6 +2,7 @@
 #define JIL_BOOK_FRAME_H_
 #pragma once
 
+#include <list>
 #include <vector>
 #include "wx/frame.h"
 #include "wx/arrstr.h"
@@ -64,10 +65,6 @@ public:
   void set_binding(editor::Binding* binding) {
     binding_ = binding;
   }
-
-  // \param silent Don't popup error message box on failure.
-  // Return the text page of this file.
-  TextPage* OpenFile(const wxFileName& fn_object, bool active, bool silent);
 
   // \param silent Don't popup error message box on failure.
   // Return the text page of this file.
@@ -155,6 +152,7 @@ protected:
   bool HandleKeyDownHook(wxKeyEvent& evt);
 
   void OnMenuFile(wxCommandEvent& evt);
+  void OnMenuFileRecentFile(wxCommandEvent& evt);
   void OnQuit(wxCommandEvent& evt);
 
   void OnMenuEdit(wxCommandEvent& evt);
@@ -228,11 +226,15 @@ private:
                              int id,
                              const wxString& label,
                              wxItemKind kind = wxITEM_NORMAL);
+
   void LoadMenus();
 
   bool GetFileMenuEnableState(int menu_id);
   bool GetEditMenuEnableState(int menu_id);
   bool GetMenuEnableState(int menu_id);
+
+  // Clear and recreate the items for Recent Files menu.
+  void UpdateRecentFilesMenu();
 
   TextBook* ActiveTextBook() const;
 
@@ -248,7 +250,22 @@ private:
 
   void SwitchStackPage(bool forward);
 
+  TextPage* DoOpenFile(const wxString& file_name,
+                       bool active,
+                       bool silent,
+                       bool update_recent_files,
+                       bool update_recent_files_menu);
+
+  // \param silent Don't popup error message box on failure.
+  // Return the text page of this file.
+  TextPage* DoOpenFile(const wxFileName& fn_object,
+                       bool active,
+                       bool silent,
+                       bool* new_opened = NULL);
+
   void DoSaveBuffer(editor::TextBuffer* buffer);
+
+  void AddRecentFile(const wxString& recent_file);
 
 private:
   Options* options_;
@@ -271,6 +288,10 @@ private:
 
   editor::Binding* binding_;
   editor::Key leader_key_;
+
+  // File menu -> Recent Files
+  std::list<wxString> recent_files_;
+  wxMenu* recent_files_menu_;
 };
 
 }  // namespace jil

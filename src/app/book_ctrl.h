@@ -104,7 +104,7 @@ public:
 
 protected:
   class Tab {
-   public:
+  public:
     Tab(BookPage* _page, int _best_size, bool _active = false)
         : page(_page)
         , best_size(_best_size)

@@ -142,13 +142,10 @@ std::wstring GetEol(FileFormat file_format) {
   switch (file_format) {
     case FF_WIN:
       return L"\r\n";
-
     case FF_UNIX:
       return L"\n";
-
     case FF_MAC:
       return L"\r";
-
     default:
       return L"";
   }

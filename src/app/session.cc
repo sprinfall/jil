@@ -160,14 +160,12 @@ bool Session::Load(const wxString& file) {
   }
 
   //----------------------------------------------------------------------------
-  // Last opened files
+  // File history
 
   Setting fs_setting = config.Root().Get("file_history", Setting::kGroup);
   if (fs_setting) {
-    GetStringArray(fs_setting, "last_opened_files", &last_opened_files_);
-
-    last_active_file_ = wxString::FromUTF8(
-        fs_setting.GetString("last_active_file"));
+    GetStringArray(fs_setting, "opened_files", &opened_files_);
+    GetStringArray(fs_setting, "recent_files", &recent_files_);
   }
 
   return true;
@@ -222,13 +220,11 @@ bool Session::Save(const wxString& file) {
   }
 
   //----------------------------------------------------------------------------
-  // Last opened files
+  // File history
 
   Setting fs_setting = config.Root().Add("file_history", Setting::kGroup);
-
-  SetStringArray(fs_setting, "last_opened_files", last_opened_files_);
-
-  fs_setting.SetString("last_active_file", last_active_file_.ToUTF8().data());
+  SetStringArray(fs_setting, "opened_files", opened_files_);
+  SetStringArray(fs_setting, "recent_files", recent_files_);
 
   // Save to file.
   return config.Save(file);
