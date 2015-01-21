@@ -26,6 +26,8 @@ set(SRCS
     i18n_util.h
     lex_config.cc
     lex_config.h
+    lua_proxy.cc
+    lua_proxy.h
     navigation_dialog.cc
     navigation_dialog.h
     option.cc

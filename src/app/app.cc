@@ -35,6 +35,7 @@
 #include "app/goto_dialog.h"
 #include "app/i18n_strings.h"
 #include "app/lex_config.h"
+#include "app/lua_proxy.h"
 #include "app/option_config.h"
 #include "app/status_fields_config.h"
 #include "app/theme_config.h"
@@ -232,7 +233,8 @@ App::App()
     , server_(NULL)
     , log_file_(NULL)
     , style_(new editor::Style)
-    , binding_(new editor::Binding) {
+    , binding_(new editor::Binding)
+    , lua_proxy_(new LuaProxy) {
 }
 
 // If OnInit() returns false, OnExit() won't be called.
@@ -240,6 +242,7 @@ App::~App() {
   editor::ClearContainer(&file_types_);
   editor::ClearContainer(&ft_plugins_);
 
+  wxDELETE(lua_proxy_);
   wxDELETE(binding_);
   wxDELETE(style_);
 
@@ -340,6 +343,8 @@ bool App::OnInit() {
 
   // Load session.
   session_.Load(user_data_dir + kSessionFile);
+
+  lua_proxy_->Init();
 
   // Create book frame.
   BookFrame* book_frame = new BookFrame(&options_, &session_);

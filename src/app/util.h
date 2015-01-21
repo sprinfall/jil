@@ -34,7 +34,7 @@ wxString ExeDir();
 
 // Resource dir.
 // Mac: <bundle>/Contents/Resources/
-// Others: The same as GetExeDir()
+// Others: The same as ExeDir()
 wxString ResourceDir();
 
 }  // namespace path

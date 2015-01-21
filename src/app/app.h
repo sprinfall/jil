@@ -41,6 +41,7 @@ class Style;
 }  // namespace editor
 
 class BookFrame;
+class LuaProxy;
 class Session;
 
 class App : public wxApp {
@@ -192,6 +193,8 @@ private:
 
   // Status fields for status line.
   std::vector<editor::StatusBar::FieldInfo> status_fields_;
+
+  LuaProxy* lua_proxy_;
 };
 
 DECLARE_APP(App)

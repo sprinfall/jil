@@ -17,8 +17,8 @@ namespace path {
 
 wxString ExeDir() {
   wxFileName exe_fn(wxStandardPaths::Get().GetExecutablePath());
-  return exe_fn.GetPath(
-      wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR, wxPATH_NATIVE);
+  return exe_fn.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR,
+                        wxPATH_NATIVE);
 }
 
 wxString ResourceDir() {
