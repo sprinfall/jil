@@ -72,6 +72,7 @@ set(EXTRA_LIBS
     libconfig
     pugixml
     uchardet
+    lua
     )
 
 # NOTE: Put ${wxWidgets_LIBRARIES} after others, or there will be link errors in Linux/GTK+.

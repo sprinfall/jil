@@ -37,7 +37,8 @@ if(JIL_ENABLE_UT)
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
-
+include_directories(${PROJECT_SOURCE_DIR}/third_party/include)
+include_directories(${PROJECT_SOURCE_DIR}/third_party/include/lua)
 if(WIN32)
     include_directories(${PROJECT_SOURCE_DIR}/third_party/win32/include)
     link_directories(${PROJECT_SOURCE_DIR}/third_party/win32/lib)
