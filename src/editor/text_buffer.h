@@ -200,6 +200,9 @@ public:
 
   //----------------------------------------------------------------------------
 
+  // Return true if the buffer is empty.
+  bool IsEmpty() const;
+
   Coord LineCount() const;
 
   TextLine* Line(Coord ln);

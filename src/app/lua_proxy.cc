@@ -27,7 +27,7 @@ void LuaProxy::Init() {
   wxString lua_file = path::ResourceDir() + wxT("test.lua");
   std::string bytes;
   if (editor::ReadBytes(lua_file, &bytes) != 0) {
-    wxLogError(wxT("Failed to open file: %s"), lua_file);
+    //wxLogError(wxT("Failed to open file: %s"), lua_file);
     return;
   }
 

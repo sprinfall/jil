@@ -2852,10 +2852,10 @@ LineRange TextWindow::GetClientLineRange() const {
 
 //------------------------------------------------------------------------------
 
-void TextWindow::PostEvent(TextWindow::EventType type) {
+void TextWindow::PostEvent(int event_type) {
   wxCommandEvent evt(kTextWindowEvent, GetId());
   evt.SetEventObject(this);
-  evt.SetInt(type);
+  evt.SetInt(event_type);
   GetParent()->GetEventHandler()->AddPendingEvent(evt);
 }
 

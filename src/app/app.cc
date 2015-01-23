@@ -613,7 +613,7 @@ void App::InitCommands() {
   AddTextCmd("toggle_comment", NULL, true, ID_MENU_EDIT_TOGGLE_COMMENT);
 
   AddTextCmd("format", Format, true, ID_MENU_EDIT_FORMAT);
-  AddTextCmd("goto", Goto, false, ID_MENU_EDIT_GOTO);
+  AddTextCmd("goto", Goto, false, ID_MENU_EDIT_GO_TO);
 
   //----------------------------------------------------------------------------
 

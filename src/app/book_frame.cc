@@ -1310,6 +1310,7 @@ void BookFrame::OnFindResultPageEvent(wxCommandEvent& evt) {
     } else {
       // The page might not be active, activate it.
       ActiveTextBook()->ActivatePage(text_page);
+      ActiveTextBook()->SetFocus();
     }
 
     size_t line_id = fr_buffer->Line(caret_y)->id();
@@ -1741,7 +1742,7 @@ void BookFrame::LoadMenus() {
 
   AppendMenuItem(menu_edit, ID_MENU_EDIT_FIND, kTrEditFind);
   AppendMenuItem(menu_edit, ID_MENU_EDIT_REPLACE, kTrEditReplace);
-  AppendMenuItem(menu_edit, ID_MENU_EDIT_GOTO, kTrEditGoto);
+  AppendMenuItem(menu_edit, ID_MENU_EDIT_GO_TO, kTrEditGoTo);
 
   menu_bar->Append(menu_edit, kTrMenuEdit);
 

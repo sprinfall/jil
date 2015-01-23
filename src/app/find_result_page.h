@@ -14,7 +14,7 @@ class FindResultPage : public editor::TextWindow, public BookPage {
 
 public:
   // Detailed event types of kFindResultPageEvent.
-  enum EventType {
+  enum {
     kLocalizeEvent = 1,
   };
 
@@ -45,6 +45,8 @@ protected:
   // OVERRIDE of editor::TextWindow:
   virtual void HandleTextLeftDClick(wxMouseEvent& evt) override;
   virtual void HandleTextRightUp(wxMouseEvent& evt) override;
+
+  void PostEvent(int event_type);
 };
 
 BEGIN_DECLARE_EVENT_TYPES()

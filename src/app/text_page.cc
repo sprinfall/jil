@@ -117,7 +117,7 @@ void TextPage::Page_EditMenu(wxMenu* menu) {
 
   AppendMenuItem(menu, ID_MENU_EDIT_FIND, kTrEditFind);
   AppendMenuItem(menu, ID_MENU_EDIT_REPLACE, kTrEditReplace);
-  AppendMenuItem(menu, ID_MENU_EDIT_GOTO, kTrEditGoto);
+  AppendMenuItem(menu, ID_MENU_EDIT_GO_TO, kTrEditGoTo);
 }
 
 bool TextPage::Page_EditMenuState(int menu_id) {

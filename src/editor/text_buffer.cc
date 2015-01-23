@@ -626,6 +626,10 @@ bool TextBuffer::deleted() const {
 
 //------------------------------------------------------------------------------
 
+bool TextBuffer::IsEmpty() const {
+  return (LineCount() == 1 && IsLineEmpty(1, false));
+}
+
 Coord TextBuffer::LineCount() const {
   return CoordCast(lines_.size());
 }

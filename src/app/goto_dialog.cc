@@ -7,7 +7,7 @@
 namespace jil {
 
 GotoDialog::GotoDialog(wxWindow* parent, wxWindowID id)
-    : wxDialog(parent, id, _("Goto"))
+    : wxDialog(parent, id, _("Go To"))
     , line_text_ctrl_(NULL)
     , line_(0) {
   // Allow integer only. (Better to use unsigned int.)

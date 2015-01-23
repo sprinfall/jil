@@ -61,8 +61,12 @@
 #define kTrEditToggleComment  _("&Toggle Comment")
 #define kTrEditFind           _("&Find")
 #define kTrEditReplace        _("Rep&lace")
-#define kTrEditGoto           _("&Goto...")
+#define kTrEditGoTo           _("&Go To...")
 #define kTrEditFormat         _("&Format")
+
+// For find result page.
+#define kTrEditClearAll       _("C&lear All")
+#define kTrEditGoToLocation   _("&Go To Location")
 
 #define kTrToolsOptions       _("&Options...")
 
@@ -85,5 +89,8 @@
 #define kTrRClickOpenFolder         _("Open Containing Folder")
 #endif
 #define kTrRClickNewFile            _("New File")
+
+#define kTrRClickClearAll           _("Clear All")
+#define kTrRClickGoToLocation       _("Go To Location")
 
 #endif  // JIL_I18N_STRINGS_H_

@@ -493,7 +493,7 @@ protected:
 
   //----------------------------------------------------------------------------
 
-  void PostEvent(EventType type);
+  void PostEvent(int event_type);
 
   wxMenuItem* AppendMenuItem(wxMenu* menu,
                              int id,

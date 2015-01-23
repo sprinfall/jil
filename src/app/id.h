@@ -68,7 +68,12 @@ enum MenuId {
   ID_MENU_EDIT_FORMAT,
   ID_MENU_EDIT_FIND,
   ID_MENU_EDIT_REPLACE,
-  ID_MENU_EDIT_GOTO,
+  ID_MENU_EDIT_GO_TO,
+
+  // Items for find result page.
+  ID_MENU_EDIT_CLEAR_ALL,
+  ID_MENU_EDIT_GO_TO_LOCATION,
+
   ID_MENU_EDIT_END,
 
   // Tools
