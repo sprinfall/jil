@@ -314,9 +314,11 @@ void BookFrame::FileSave() {
 }
 
 void BookFrame::FileSaveAs() {
-  editor::TextBuffer* buffer = ActiveBuffer();
-  if (buffer != NULL) {
-    SaveBufferAs(buffer, this);
+  // NOTE: Save As applies to not only text page, but also tool pages, e.g.,
+  // find result page.
+  BookPage* page = GetCurrentPage();
+  if (page != NULL) {
+    page->Page_OnSaveAs();
   }
 }
 
@@ -957,6 +959,8 @@ bool BookFrame::HandleKeyDownHook(wxKeyEvent& evt) {
 }
 
 void BookFrame::OnMenuFile(wxCommandEvent& evt) {
+  // Find menu has no menu items mapping to text function.
+  // So only search for void function.
   int menu = evt.GetId();
   editor::VoidFunc* void_func = binding_->GetVoidFuncByMenu(menu);
   if (void_func != NULL) {
@@ -1035,8 +1039,12 @@ bool BookFrame::ExecFuncByMenu(int menu) {
 
 void BookFrame::OnFileUpdateUI(wxUpdateUIEvent& evt) {
   int menu_id = evt.GetId();
-  bool state = GetFileMenuEnableState(menu_id);
+  wxString label;
+  bool state = GetFileMenuEnableState(menu_id, &label);
   evt.Enable(state);
+  if (!label.IsEmpty()) {
+    evt.SetText(label);
+  }
 }
 
 void BookFrame::OnEditUpdateUI(wxUpdateUIEvent& evt) {
@@ -1097,6 +1105,11 @@ void BookFrame::OnTextBookPageChange(wxCommandEvent& evt) {
   if (ActiveTextBook()->PageCount() == 0) {
     UpdateStatusFields();
     UpdateTitle();
+
+    // Transfer focus to tool book if it's shown.
+    if (tool_book_->IsShown()) {
+      tool_book_->SetFocus();
+    }
 
     // Close find window.
     ::jil::FindWindow* find_window = GetFindWindow();
@@ -1560,6 +1573,8 @@ FindResultPage* BookFrame::GetFindResultPage() {
 
   TextBuffer* buffer = TextBuffer::Create(ft_plugin,
                                           options_->file_encoding);
+  buffer->set_file_name_object(
+      wxFileName::FileName(kTrPageFindResult + wxT(".txt")));
 
   FindResultPage* fr_page = new FindResultPage(buffer);
 
@@ -1606,7 +1621,7 @@ BookPage* BookFrame::GetFocusedPage() {
 
   // Check tool book.
   if (focused_book == NULL) {
-    if (tool_book_->HasFocus()) {
+    if (tool_book_->IsShown() && tool_book_->HasFocus()) {
       focused_book = tool_book_;
     }
   }
@@ -1616,6 +1631,25 @@ BookPage* BookFrame::GetFocusedPage() {
   }
 
   return focused_book->ActivePage();
+}
+
+BookPage* BookFrame::GetCurrentPage() {
+  BookPage* focused_page = GetFocusedPage();
+  if (focused_page != NULL) {
+    return focused_page;
+  }
+
+  for (size_t i = 0; i < text_books_.size(); ++i) {
+    if (text_books_[i]->ActivePage() != NULL) {
+      return text_books_[i]->ActivePage();
+    }
+  }
+
+  if (tool_book_->IsShown() && tool_book_->ActivePage() != NULL) {
+    return tool_book_->ActivePage();
+  }
+
+  return NULL;
 }
 
 //------------------------------------------------------------------------------
@@ -1729,11 +1763,23 @@ void BookFrame::LoadMenus() {
   SetMenuBar(menu_bar);
 }
 
-bool BookFrame::GetFileMenuEnableState(int menu_id) {
+bool BookFrame::GetFileMenuEnableState(int menu_id, wxString* text) {
   using namespace editor;
 
-  TextPage* page = ActiveTextPage();
-  TextBuffer* buffer = page == NULL ? NULL : page->buffer();
+  if (menu_id == ID_MENU_FILE_SAVE_AS) {
+    BookPage* page = GetCurrentPage();
+    if (page != NULL) {
+      return page->Page_FileMenuState(menu_id, text);
+    } else {
+      if (text != NULL) {
+        *text = kTrFileSaveAs;
+      }
+      return false;
+    }
+  }
+
+  TextBook* text_book = ActiveTextBook();
+  TextPage* text_page = text_book->ActiveTextPage();
 
   bool state = true;
 
@@ -1741,17 +1787,13 @@ bool BookFrame::GetFileMenuEnableState(int menu_id) {
   case ID_MENU_FILE_CLOSE:
     // Fall through.
   case ID_MENU_FILE_CLOSE_ALL:
-    state = (page != NULL);
+    // Fall through.
+  case ID_MENU_FILE_SAVE_ALL:
+    state = (text_page != NULL);
     break;
 
   case ID_MENU_FILE_SAVE:
-    state = (buffer != NULL && buffer->modified());
-    break;
-
-  case ID_MENU_FILE_SAVE_AS:
-    // Fall through.
-  case ID_MENU_FILE_SAVE_ALL:
-    state = (buffer != NULL);
+    state = (text_page != NULL && text_page->buffer_modified());
     break;
 
   default:
@@ -1790,7 +1832,7 @@ void BookFrame::UpdateRecentFilesMenu() {
   std::list<wxString>::iterator it = recent_files_.begin();
   for (int i = 0; it != recent_files_.end(); ++it, ++i) {
     id = ID_MENU_FILE_RECENT_FILE0 + i;
-    wxString label = wxString::Format(wxT("%d. "), i) + *it; 
+    wxString label = wxString::Format(wxT("%d. "), i) + *it;
     AppendMenuItem(recent_files_menu_, id, label);
   }
 }
@@ -1929,7 +1971,7 @@ TextPage* BookFrame::DoOpenFile(const wxFileName& fn_object,
   text_page = CreateTextPage(buffer, text_book->PageParent());
 
   text_book->AddPage(text_page, active);
-  
+
   if (new_opened != NULL) {
     *new_opened = true;
   }

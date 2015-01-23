@@ -141,6 +141,9 @@ public:
   // Example: "example.txt"
   wxString file_name() const;
 
+  // Example: "txt"
+  wxString file_ext() const;
+
   // Example: "~/proj/jil/src/editor/"
   wxString file_path(int flags = wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR,
                      wxPathFormat format = wxPATH_NATIVE) const;

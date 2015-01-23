@@ -20,6 +20,10 @@
 
 #define kTrOthers             _("Others")
 
+// Page titles.
+#define kTrPageFindResult     _("Find Result")
+#define kTrPageUtitled        _("Utitled")
+
 // Menu labels.
 
 #define kTrMenuFile           _("&File")
@@ -67,6 +71,9 @@
 
 // Right click floating menu labels.
 
+#define kTrRClickCopy               _("Copy")
+#define kTrRClickPaste              _("Paste")
+#define kTrRClickCut                _("Cut")
 #define kTrRClickSave               _("Save")
 #define kTrRClickClose              _("Close")
 #define kTrRClickCloseAll           _("Close All")

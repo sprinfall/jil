@@ -220,6 +220,8 @@ protected:
   // Get the page which has focus.
   BookPage* GetFocusedPage();
 
+  BookPage* GetCurrentPage();
+
 private:
   // TODO: TextWindow also has AppendMenuItem, remove one of them.
   wxMenuItem* AppendMenuItem(wxMenu* menu,
@@ -229,7 +231,7 @@ private:
 
   void LoadMenus();
 
-  bool GetFileMenuEnableState(int menu_id);
+  bool GetFileMenuEnableState(int menu_id, wxString* text = NULL);
   bool GetEditMenuEnableState(int menu_id);
   bool GetMenuEnableState(int menu_id);
 

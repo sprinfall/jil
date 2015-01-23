@@ -4,6 +4,7 @@
 #include "editor/text_buffer.h"
 #include "app/id.h"
 #include "app/i18n_strings.h"
+#include "app/save.h"
 
 namespace jil {
 
@@ -41,7 +42,7 @@ wxString FindResultPage::Page_Type() const {
 }
 
 wxString FindResultPage::Page_Label() const {
-  return _("Find Result");
+  return buffer_->file_name_object().GetName();  // No ext
 }
 
 wxString FindResultPage::Page_Description() const {
@@ -65,6 +66,17 @@ bool FindResultPage::Page_EditMenuState(int menu_id) {
   return true;
 }
 
+bool FindResultPage::Page_FileMenuState(int menu_id, wxString* text) {
+  if (menu_id == ID_MENU_FILE_SAVE_AS) {
+    if (text != NULL) {
+      *text = wxString::Format(kTrFileSaveAsFormat, Page_Label());
+    }
+    return true;
+  }
+
+  return false;
+}
+
 bool FindResultPage::Page_OnMenu(int menu_id) {
   editor::TextFunc* text_func = binding_->GetTextFuncByMenu(menu_id);
   if (text_func != NULL) {
@@ -72,6 +84,10 @@ bool FindResultPage::Page_OnMenu(int menu_id) {
     return true;
   }
   return false;
+}
+
+void FindResultPage::Page_OnSaveAs() {
+  SaveBufferAs(buffer_, NULL);
 }
 
 // Double-click goes to the line of this result.
@@ -91,7 +107,7 @@ void FindResultPage::HandleTextLeftDClick(wxMouseEvent& evt) {
 
 void FindResultPage::HandleTextRightUp(wxMouseEvent& evt) {
   wxMenu menu;
-  menu.Append(ID_MENU_EDIT_COPY, _("Copy"));
+  menu.Append(ID_MENU_EDIT_COPY, kTrRClickCopy);
 
   wxPoint pos = text_area()->ClientToScreen(evt.GetPosition());
   pos = ScreenToClient(pos);

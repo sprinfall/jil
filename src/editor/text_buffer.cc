@@ -589,6 +589,10 @@ wxString TextBuffer::file_name() const {
   return file_name_object_.GetFullName();
 }
 
+wxString TextBuffer::file_ext() const {
+  return file_name_object_.GetExt();
+}
+
 wxString TextBuffer::file_path(int flags, wxPathFormat format) const {
   return file_name_object_.GetPath(flags, format);
 }

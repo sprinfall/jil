@@ -28,13 +28,13 @@ void TextPage::Page_Activate(bool active) {
 }
 
 bool TextPage::Page_Close() {
-  if (!buffer()->modified()) {
+  if (!buffer_->modified()) {
     Destroy();
     return true;
   }
 
   wxString confirm_msg;
-  if (buffer()->new_created()) {
+  if (buffer_->new_created()) {
     confirm_msg = _("The file is untitled and changed, save it?");
   } else {
     confirm_msg = wxString::Format(
@@ -73,16 +73,16 @@ wxString TextPage::Page_Type() const {
 }
 
 wxString TextPage::Page_Label() const {
-  return buffer()->file_name();
+  return buffer_->file_name();
 }
 
 wxString TextPage::Page_Description() const {
-  return buffer()->file_path_name();
+  return buffer_->file_path_name();
 }
 
 int TextPage::Page_Flags() const {
   int flags = 0;
-  if (buffer()->modified()) {
+  if (buffer_->modified()) {
     flags |= kModified;
   }
   return flags;
@@ -136,6 +136,17 @@ bool TextPage::Page_EditMenuState(int menu_id) {
   }
 }
 
+bool TextPage::Page_FileMenuState(int menu_id, wxString* text) {
+  if (menu_id == ID_MENU_FILE_SAVE_AS) {
+    if (text != NULL) {
+      *text = wxString::Format(kTrFileSaveAsFormat, Page_Label());
+    }
+    return true;
+  }
+
+  return false;
+}
+
 bool TextPage::Page_OnMenu(int menu_id) {
   editor::TextFunc* text_func = binding_->GetTextFuncByMenu(menu_id);
   if (text_func != NULL) {
@@ -145,21 +156,25 @@ bool TextPage::Page_OnMenu(int menu_id) {
   return false;
 }
 
+void TextPage::Page_OnSaveAs() {
+  SaveBufferAs(buffer_, NULL);
+}
+
 bool TextPage::SaveBuffer() {
   bool saved = false;
-  if (buffer()->new_created() || buffer()->read_only()) {
-    saved = SaveBufferAs(buffer(), wxGetTopLevelParent(this));
+  if (buffer_->new_created() || buffer_->read_only()) {
+    saved = SaveBufferAs(buffer_, wxGetTopLevelParent(this));
   } else {
-    saved = ::jil::SaveBuffer(buffer(), wxGetTopLevelParent(this));
+    saved = ::jil::SaveBuffer(buffer_, wxGetTopLevelParent(this));
   }
   return saved;
 }
 
 void TextPage::HandleTextRightUp(wxMouseEvent& evt) {
   wxMenu menu;
-  menu.Append(ID_MENU_EDIT_CUT, _("Cut"));
-  menu.Append(ID_MENU_EDIT_COPY, _("Copy"));
-  menu.Append(ID_MENU_EDIT_PASTE, _("Paste"));
+  menu.Append(ID_MENU_EDIT_CUT, kTrRClickCut);
+  menu.Append(ID_MENU_EDIT_COPY, kTrRClickCopy);
+  menu.Append(ID_MENU_EDIT_PASTE, kTrRClickPaste);
 
   wxPoint pos = text_area()->ClientToScreen(evt.GetPosition());
   pos = ScreenToClient(pos);

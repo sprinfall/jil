@@ -3,6 +3,9 @@
 #include "wx/filedlg.h"
 #include "editor/text_buffer.h"
 
+#define kTrSaveFile           _("Save File")
+#define kTrSaveFileAs         _("Save File As")
+
 namespace jil {
 
 bool SaveBuffer(editor::TextBuffer* buffer, wxWindow* parent) {
@@ -25,37 +28,48 @@ bool SaveBuffer(editor::TextBuffer* buffer, wxWindow* parent) {
     msg += _("File encoding issue.");
   }
 
-  wxMessageBox(msg, _("Save File"), wxOK | wxCENTRE | wxICON_ERROR, parent);
+  wxMessageBox(msg, kTrSaveFile, wxOK | wxCENTRE | wxICON_ERROR, parent);
 
   return false;
 }
 
 bool SaveBufferAs(editor::TextBuffer* buffer, wxWindow* parent) {
-  wxString ext = buffer->file_name_object().GetExt();
-  wxString file_path_name = wxSaveFileSelector(ext, wxEmptyString);
-  if (file_path_name.empty()) {
-    // Save As is canceled.
+  wxFileDialog file_dialog(NULL,
+                           kTrSaveFileAs,
+                           wxEmptyString,
+                           buffer->file_name(),
+                           wxFileSelectorDefaultWildcardStr,  // "*.*", all files.
+                           wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+
+  if (file_dialog.ShowModal() == wxID_CANCEL) {
     return false;
   }
 
-  if (wxFileExists(file_path_name)) {
-    // Confirm replace.
+  wxString file_path = file_dialog.GetPath();
+  if (file_path.empty()) {
+    // Shouldn't be here. wxFileDialog should have checked it.
+    return false;
+  }
+
+  if (wxFileExists(file_path)) {
+    // Shouldn't be here since flag wxFD_OVERWRITE_PROMPT is used.
+    // But just check it again.
     wxString msg = wxString::Format(
         _("The file already exists. Replace it? (%s)"),
-        file_path_name);
+        file_path);
 
     long flags = wxOK | wxCANCEL | wxCANCEL_DEFAULT | wxICON_EXCLAMATION;
     flags |= wxCENTRE;
 
-    int confirm_result = wxMessageBox(msg, _("Save File As"), flags, parent);
+    int confirm_result = wxMessageBox(msg, kTrSaveFileAs, flags, parent);
     if (confirm_result == wxCANCEL) {
-      // No replace.
       return false;
     }
   }
 
   // Switch buffer to the new saved file.
-  buffer->set_file_path_name(file_path_name);
+  buffer->set_file_path_name(file_path);
+
   buffer->Notify(editor::kFileNameChange);
 
   return SaveBuffer(buffer, parent);
