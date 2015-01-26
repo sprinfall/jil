@@ -205,8 +205,7 @@ public:
 
   Coord LineCount() const;
 
-  TextLine* Line(Coord ln);
-  const TextLine* Line(Coord ln) const;
+  TextLine* Line(Coord ln) const;
 
   const TextLine* LineById(size_t id) const;
 
@@ -395,6 +394,12 @@ public:
                             wchar_t l_key,
                             wchar_t r_key,
                             bool single_line = false) const;
+
+  // Lua wrapper for UnpairedLeftKey.
+  TextPoint unpairedleftkey(const TextPoint& point,
+                            char l_key,
+                            char r_key,
+                            bool single_line) const;
 
   // Find the first unpaired right key after the given point.
   // Examples:

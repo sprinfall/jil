@@ -634,12 +634,7 @@ Coord TextBuffer::LineCount() const {
   return CoordCast(lines_.size());
 }
 
-TextLine* TextBuffer::Line(Coord ln) {
-  assert(ln > 0 && ln <= LineCount());
-  return lines_[ln - 1];
-}
-
-const TextLine* TextBuffer::Line(Coord ln) const {
+TextLine* TextBuffer::Line(Coord ln) const {
   assert(ln > 0 && ln <= LineCount());
   return lines_[ln - 1];
 }
@@ -1217,9 +1212,17 @@ std::wstring TextBuffer::GetIndentStr(Coord ln) const {
   return Line(ln)->GetIndentStr();
 }
 
+// TODO
 Coord TextBuffer::GetExpectedIndent(Coord ln) const {
-  IndentFunc indent_func = ft_plugin_->indent_func();
-  return indent_func(this, ln);
+  //IndentFunc indent_func = ft_plugin_->indent_func();
+  const luabridge::LuaRef& indent_func = ft_plugin_->indent_func();
+  if (!indent_func.isNil()) {
+    Coord indent = indent_func(this, ln);
+    wxLogDebug("expected indent of line %d: %d", ln, indent);
+    return indent;
+  } else {
+    return 0;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1396,6 +1399,16 @@ TextPoint TextBuffer::UnpairedLeftKey(const TextPoint& point,
   }
 
   return kInvalidPoint;
+}
+
+TextPoint TextBuffer::unpairedleftkey(const TextPoint& point,
+                                      char l_key,
+                                      char r_key,
+                                      bool single_line) const {
+  return UnpairedLeftKey(point,
+                         static_cast<wchar_t>(l_key),
+                         static_cast<wchar_t>(r_key),
+                         single_line);
 }
 
 // TODO

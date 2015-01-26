@@ -12,7 +12,7 @@ typedef std::auto_ptr<TextBuffer> TextBufferPtr;
 static const Encoding kEncoding = EncodingFromName(ENCODING_NAME_ISO_8859_1);
 
 TEST(TextBuffer, CharIterator) {
-  FtPlugin ft_plugin(FileType(wxT("txt"), wxT("Text")));
+  FtPlugin ft_plugin(FileType(wxT("txt"), wxT("Text")), NULL);
 
   TextBufferPtr buffer(TextBuffer::Create(&ft_plugin, kEncoding));
 
@@ -39,7 +39,7 @@ TEST(TextBuffer, CharIterator) {
 //                           const Encoding& file_encoding);
 
 TEST(TextBuffer, Create_WithText_EmptyLines) {
-  FtPlugin ft_plugin(FileType("txt", "Text"));
+  FtPlugin ft_plugin(FileType("txt", "Text"), NULL);
   TextBufferPtr buffer;
 
   std::wstring text;
@@ -88,7 +88,7 @@ TEST(TextBuffer, Create_WithText_EmptyLines) {
 }
 
 TEST(TextBuffer, Create_WithText) {
-  FtPlugin ft_plugin(FileType("txt", "Text"));
+  FtPlugin ft_plugin(FileType("txt", "Text"), NULL);
   TextBufferPtr buffer;
 
   std::wstring text = L"abc";
@@ -123,7 +123,7 @@ TEST(TextBuffer, Create_WithText) {
 }
 
 TEST(TextBuffer, PrevNonEmptyLine) {
-  FtPlugin ft_plugin(FileType("cpp", "C++"));
+  FtPlugin ft_plugin(FileType("cpp", "C++"), NULL);
   ft_plugin.AddQuote(new Quote(kLexComment, L"//", L"", kQuoteEscapeEol));
   ft_plugin.AddQuote(new Quote(kLexComment, L"/*", L"*/", kQuoteMultiLine));
 
@@ -146,7 +146,7 @@ TEST(TextBuffer, PrevNonEmptyLine) {
 }
 
 TEST(TextBuffer, PrevLine) {
-  FtPlugin ft_plugin(FileType("cpp", "C++"));
+  FtPlugin ft_plugin(FileType("cpp", "C++"), NULL);
   ft_plugin.AddQuote(new Quote(kLexComment, L"//", L"", kQuoteEscapeEol));
   ft_plugin.AddQuote(new Quote(kLexComment, L"/*", L"*/", kQuoteMultiLine));
 
@@ -198,7 +198,7 @@ private:
 
 // Test the notifications of different text changes.
 TEST(TextBuffer, Notify) {
-  FileType ft(wxT("txt"), wxT("Text"));
+  FileType ft(wxT("txt"), wxT("Text"), NULL);
   FtPlugin ft_plugin(ft);
 
   TestBufferListener listener;

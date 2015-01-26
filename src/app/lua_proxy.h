@@ -2,7 +2,14 @@
 #define JIL_LUA_PROXY_H_
 #pragma once
 
-struct lua_State;
+extern "C" {
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
+}
+#include "LuaBridge/LuaBridge.h"
+
+class wxString;
 
 namespace jil {
 
@@ -11,7 +18,14 @@ public:
   LuaProxy();
   ~LuaProxy();
 
+  lua_State* state() const {
+    return state_;
+  }
+
   void Init();
+
+  // Load the indent lua file, return the indent function.
+  luabridge::LuaRef GetIndentFunc(const wxString& indent_file);
 
 private:
   lua_State* state_;

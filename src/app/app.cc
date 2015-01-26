@@ -9,6 +9,13 @@
 #pragma comment(lib, "vld")
 #endif  // __WXMSW__
 
+extern "C" {
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
+}
+#include "LuaBridge/LuaBridge.h"
+
 #include "wx/image.h"
 #include "wx/intl.h"
 #include "wx/sysopt.h"
@@ -23,6 +30,7 @@
 #include "base/string_util.h"
 
 #include "editor/color.h"
+#include "editor/file_io.h"
 #include "editor/ft_plugin.h"
 #include "editor/style.h"
 #include "editor/text_window.h"
@@ -53,6 +61,7 @@
 
 #define kLexFile wxT("lex.cfg")
 #define kOptionsFile wxT("options.cfg")
+#define kIndentFile wxT("indent.lua")
 #define kStatusFieldsFile wxT("status_fields.cfg")
 #define kSessionFile wxT("session.cfg")
 #define kBindingFile wxT("binding.cfg")
@@ -403,12 +412,20 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
     }
   }
 
-  editor::FtPlugin* ft_plugin = new editor::FtPlugin(ft);
+  editor::FtPlugin* ft_plugin = new editor::FtPlugin(ft, lua_proxy_->state());
 
   wxString ftplugin_dir = ResourceDir(kFtPluginDir, ft_plugin->id());
   wxString ftplugin_user_dir = UserDataDir(kFtPluginDir, ft_plugin->id());
 
   LoadLexFile(ftplugin_dir + kLexFile, ft_plugin);
+
+  wxString indent_lua_file = ftplugin_dir + kIndentFile;
+  luabridge::LuaRef indent_func = lua_proxy_->GetIndentFunc(indent_lua_file);
+  if (indent_func.isNil()) {
+    //wxLogWarning("Can't get the 'indent' function!");
+  } else {
+    ft_plugin->set_indent_func(indent_func);
+  }
 
   editor::Options& ft_editor_options = ft_plugin->options();
   // Copy global options, then overwrite.
