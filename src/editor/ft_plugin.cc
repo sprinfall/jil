@@ -6,7 +6,6 @@
 
 #include "boost/regex.hpp"
 
-#include "editor/indent.h"
 #include "editor/lex.h"
 #include "editor/util.h"
 

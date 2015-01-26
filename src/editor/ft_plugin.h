@@ -25,7 +25,6 @@ extern "C" {
 #include "wx/string.h"
 
 #include "editor/defs.h"
-#include "editor/indent.h"
 #include "editor/lex.h"
 #include "editor/option.h"
 

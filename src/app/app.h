@@ -2,20 +2,29 @@
 #define JIL_APP_H_
 #pragma once
 
-#include <vector>
 #include <list>
 #include <map>
+#include <vector>
+
 #include "wx/app.h"
-#include "wx/ipc.h"
 #include "wx/arrstr.h"
+#include "wx/ipc.h"
+
 #include "editor/defs.h"
 #include "editor/option.h"
 #include "editor/status_bar.h"
 #include "editor/text_func.h"
 #include "editor/theme.h"
+
 #include "app/config.h"
-#include "app/session.h"
 #include "app/option.h"
+#include "app/session.h"
+
+struct lua_State;
+
+namespace luabridge {
+class LuaRef;
+}
 
 class wxSingleInstanceChecker;
 
@@ -41,7 +50,6 @@ class Style;
 }  // namespace editor
 
 class BookFrame;
-class LuaProxy;
 class Session;
 
 class App : public wxApp {
@@ -147,8 +155,6 @@ private:
 
   bool LoadBinding();
 
-  void UseDefaultStatusFields();
-
   bool LoadFileTypes();
 
   // Load lex for the file type.
@@ -156,6 +162,12 @@ private:
 
   // Open the last opened files, activate the last active file.
   void RestoreLastOpenedFiles(BookFrame* book_frame);
+
+  // Bind classes, functions and variables to Lua.
+  void InitLua();
+
+  // Load the indent.lua file, return the indent function.
+  luabridge::LuaRef LoadIndentFunc(const wxString& indent_file);
 
 private:
   wxSingleInstanceChecker* instance_checker_;
@@ -194,7 +206,7 @@ private:
   // Status fields for status line.
   std::vector<editor::StatusBar::FieldInfo> status_fields_;
 
-  LuaProxy* lua_proxy_;
+  lua_State* lua_state_;
 };
 
 DECLARE_APP(App)

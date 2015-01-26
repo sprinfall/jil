@@ -12,7 +12,6 @@
 #include "editor/compile_config.h"
 #include "editor/ft_plugin.h"
 #include "editor/file_io.h"
-#include "editor/indent.h"
 #include "editor/lex.h"
 #include "editor/util.h"
 
@@ -1212,16 +1211,17 @@ std::wstring TextBuffer::GetIndentStr(Coord ln) const {
   return Line(ln)->GetIndentStr();
 }
 
-// TODO
 Coord TextBuffer::GetExpectedIndent(Coord ln) const {
-  //IndentFunc indent_func = ft_plugin_->indent_func();
   const luabridge::LuaRef& indent_func = ft_plugin_->indent_func();
-  if (!indent_func.isNil()) {
-    Coord indent = indent_func(this, ln);
-    wxLogDebug("expected indent of line %d: %d", ln, indent);
-    return indent;
+  if (!indent_func.isNil() && indent_func.isFunction()) {
+    return indent_func(this, ln);
   } else {
-    return 0;
+    // By default, indent the same as the previous line.
+    Coord prev_ln = PrevNonEmptyLine(ln, true);
+    if (prev_ln == 0) {
+      return 0;
+    }
+    return GetIndent(prev_ln);
   }
 }
 

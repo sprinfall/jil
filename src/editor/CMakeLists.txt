@@ -7,7 +7,6 @@ set(HEADERS
     action.h
     file_io.h
     ft_plugin.h
-    indent.h
     key.h
     lex.h
     line_nr_area.h
@@ -38,7 +37,6 @@ set(SRCS
     action.cc
     file_io.cc
     ft_plugin.cc
-    indent.cc
     key.cc
     lex.cc
     line_nr_area.cc
@@ -64,7 +62,6 @@ add_library(editor ${SRCS} ${HEADERS})
 # Unit test
 if(JIL_ENABLE_UT)
     set(UT_SRCS
-        indent_unittest.cc
         text_line_unittest.cc
         text_buffer_unittest.cc
         )

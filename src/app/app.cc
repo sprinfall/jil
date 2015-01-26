@@ -33,6 +33,8 @@ extern "C" {
 #include "editor/file_io.h"
 #include "editor/ft_plugin.h"
 #include "editor/style.h"
+#include "editor/text_buffer.h"
+#include "editor/text_line.h"
 #include "editor/text_window.h"
 #include "editor/util.h"
 
@@ -43,7 +45,6 @@ extern "C" {
 #include "app/goto_dialog.h"
 #include "app/i18n_strings.h"
 #include "app/lex_config.h"
-#include "app/lua_proxy.h"
 #include "app/option_config.h"
 #include "app/status_fields_config.h"
 #include "app/theme_config.h"
@@ -242,8 +243,9 @@ App::App()
     , server_(NULL)
     , log_file_(NULL)
     , style_(new editor::Style)
-    , binding_(new editor::Binding)
-    , lua_proxy_(new LuaProxy) {
+    , binding_(new editor::Binding) {
+  lua_state_ = luaL_newstate();
+  luaL_openlibs(lua_state_);
 }
 
 // If OnInit() returns false, OnExit() won't be called.
@@ -251,7 +253,6 @@ App::~App() {
   editor::ClearContainer(&file_types_);
   editor::ClearContainer(&ft_plugins_);
 
-  wxDELETE(lua_proxy_);
   wxDELETE(binding_);
   wxDELETE(style_);
 
@@ -259,6 +260,8 @@ App::~App() {
   wxDELETE(server_);
   wxDELETE(instance_checker_);
 #endif  // JIL_SINGLE_INSTANCE
+
+  lua_close(lua_state_);
 }
 
 bool App::OnInit() {
@@ -334,9 +337,6 @@ bool App::OnInit() {
 #endif  // __WXMSW__
 
   LoadStatusFields();
-  if (status_fields_.empty()) {
-    UseDefaultStatusFields();
-  }
 
   LoadOptions();
 
@@ -353,7 +353,7 @@ bool App::OnInit() {
   // Load session.
   session_.Load(user_data_dir + kSessionFile);
 
-  lua_proxy_->Init();
+  InitLua();
 
   // Create book frame.
   BookFrame* book_frame = new BookFrame(&options_, &session_);
@@ -412,21 +412,19 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
     }
   }
 
-  editor::FtPlugin* ft_plugin = new editor::FtPlugin(ft, lua_proxy_->state());
+  editor::FtPlugin* ft_plugin = new editor::FtPlugin(ft, lua_state_);
 
   wxString ftplugin_dir = ResourceDir(kFtPluginDir, ft_plugin->id());
   wxString ftplugin_user_dir = UserDataDir(kFtPluginDir, ft_plugin->id());
 
+  // Lex
   LoadLexFile(ftplugin_dir + kLexFile, ft_plugin);
 
-  wxString indent_lua_file = ftplugin_dir + kIndentFile;
-  luabridge::LuaRef indent_func = lua_proxy_->GetIndentFunc(indent_lua_file);
-  if (indent_func.isNil()) {
-    //wxLogWarning("Can't get the 'indent' function!");
-  } else {
-    ft_plugin->set_indent_func(indent_func);
-  }
+  // Indent
+  luabridge::LuaRef indent_func = LoadIndentFunc(ftplugin_dir + kIndentFile);
+  ft_plugin->set_indent_func(indent_func);
 
+  // Options
   editor::Options& ft_editor_options = ft_plugin->options();
   // Copy global options, then overwrite.
   ft_editor_options = editor_options_;
@@ -786,54 +784,6 @@ static void SetFieldInfo(editor::StatusBar::FieldInfo& field_info,
   field_info.size = 0;
 }
 
-void App::UseDefaultStatusFields() {
-  using namespace editor;
-
-  status_fields_.resize(8);
-  size_t i = 0;
-
-  SetFieldInfo(status_fields_[i++],
-               StatusBar::kField_Cwd,
-               wxALIGN_LEFT,
-               StatusBar::kFixedPercentage,
-               30);
-  SetFieldInfo(status_fields_[i++],
-               StatusBar::kField_Space,
-               wxALIGN_LEFT,
-               StatusBar::kStretch,
-               1);
-  SetFieldInfo(status_fields_[i++],
-               StatusBar::kField_KeyStroke,
-               wxALIGN_LEFT,
-               StatusBar::kFixedPixel,
-               100);
-  SetFieldInfo(status_fields_[i++],
-               StatusBar::kField_Space,
-               wxALIGN_LEFT,
-               StatusBar::kStretch,
-               1);
-  SetFieldInfo(status_fields_[i++],
-               StatusBar::kField_Encoding,
-               wxALIGN_LEFT,
-               StatusBar::kFit,
-               20);
-  SetFieldInfo(status_fields_[i++],
-               StatusBar::kField_Caret,
-               wxALIGN_LEFT,
-               StatusBar::kFit,
-               20);
-  SetFieldInfo(status_fields_[i++],
-               StatusBar::kField_FileFormat,
-               wxALIGN_CENTER_HORIZONTAL,
-               StatusBar::kFixedPixel,
-               60);
-  SetFieldInfo(status_fields_[i++],
-               StatusBar::kField_FileType,
-               wxALIGN_RIGHT,
-               StatusBar::kFixedPixel,
-               60);
-}
-
 bool App::LoadFileTypes() {
   using namespace editor;
 
@@ -905,6 +855,57 @@ void App::RestoreLastOpenedFiles(BookFrame* book_frame) {
     // The last opened files might not exist any more. Silently open them.
     book_frame->OpenFiles(files, true);
   }
+}
+
+void App::InitLua() {
+  using namespace editor;
+
+  luabridge::getGlobalNamespace(lua_state_)
+    .beginClass<TextPoint>("Point")
+      .addConstructor<void (*)(Coord, Coord)>()
+      .addData("x", &TextPoint::x)
+      .addData("y", &TextPoint::y)
+      .addFunction("set", &TextPoint::Set)
+      .addFunction("reset", &TextPoint::Reset)
+      .addFunction("isvalid", &TextPoint::Valid)
+    .endClass()
+    .beginClass<TextLine>("Line")
+      .addFunction("getlength", &TextLine::Length)
+      .addFunction("ischar", &TextLine::ischar)
+      .addFunction("getindent", &TextLine::GetIndent)
+      .addFunction("isempty", &TextLine::IsEmpty)
+      .addFunction("firstnonspacechar", &TextLine::FirstNonSpaceChar)
+      .addFunction("lastnonspacechar", &TextLine::LastNonSpaceChar)
+      .addCFunction("startwith", &TextLine::startwith)
+      .addCFunction("endwith", &TextLine::endwith)
+    .endClass()
+    .beginClass<TextBuffer>("Buffer")
+      .addFunction("getlinecount", &TextBuffer::LineCount)
+      .addFunction("getline", &TextBuffer::Line)
+      .addFunction("prevnonemptyline", &TextBuffer::PrevNonEmptyLine)
+      .addFunction("getindent", &TextBuffer::GetIndent)
+      .addFunction("unpairedleftkey", &TextBuffer::unpairedleftkey)
+    .endClass();
+}
+
+luabridge::LuaRef App::LoadIndentFunc(const wxString& indent_file) {
+  std::string bytes;
+  if (editor::ReadBytes(indent_file, &bytes) != 0) {
+    return luabridge::LuaRef(lua_state_);
+  }
+
+  int err = luaL_dostring(lua_state_, bytes.c_str());
+
+  if (err != LUA_OK) {
+    // Get the error message from stack top.
+    if (lua_gettop(lua_state_) != 0) {
+      wxString msg = lua_tostring(lua_state_, -1);
+      wxMessageBox(msg, kTrError, wxOK | wxCENTRE | wxICON_ERROR, NULL);
+    }
+    return luabridge::LuaRef(lua_state_);
+  }
+
+  return luabridge::getGlobal(lua_state_, "indent");
 }
 
 }  // namespace jil
