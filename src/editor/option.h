@@ -2,12 +2,56 @@
 #define JIL_EDITOR_OPTION_H_
 #pragma once
 
+#include <map>
 #include <string>
 #include <vector>
+#include "boost/any.hpp"
 #include "editor/defs.h"
 
 namespace jil {
 namespace editor {
+
+class OptionValue {
+public:
+  OptionValue() {
+  }
+
+  explicit OptionValue(int data) : data_(data) {
+  }
+
+  explicit OptionValue(const std::string& data) : data_(data) {
+  }
+
+  explicit OptionValue(bool data) : data_(data) {
+  }
+
+  int AsInt() const {
+    try {
+      return boost::any_cast<int>(data_);
+    } catch(const boost::bad_any_cast&) {
+      return 0;
+    }
+  }
+
+  std::string AsString() const {
+    try {
+      return boost::any_cast<std::string>(data_);
+    } catch(const boost::bad_any_cast&) {
+      return "";
+    }
+  }
+
+  bool AsBool() const {
+    try {
+      return boost::any_cast<bool>(data_);
+    } catch(const boost::bad_any_cast&) {
+      return false;
+    }
+  }
+
+private:
+  boost::any data_;
+};
 
 // For fast option access (No key-value map).
 class Options {
@@ -26,7 +70,6 @@ public:
   bool wrap;
 
   // The number of spaces to increase indent.
-  // TODO: Just use tab_stop?
   int shift_width;
 
   // The number of spaces a tab occupies.
@@ -64,6 +107,10 @@ public:
   // Similar to Vim option "indentkeys".
   // Examples: '}' for C/C++, "endif" for Vim Script, etc.
   std::vector<std::wstring> indent_keys;
+
+  // Other indent options.
+  // Example: indent_namespace, indent_case for C++.
+  std::map<std::string, OptionValue> indent_options;
 };
 
 }  // namespace editor

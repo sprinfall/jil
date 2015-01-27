@@ -172,19 +172,32 @@ public:
     file_format_ = file_format;
   }
 
+  //----------------------------------------------------------------------------
+
   FtPlugin* ft_plugin() const {
     return ft_plugin_;
   }
 
-  const Options& options() const {
-    return options_;
-  }
-  Options& options() {
-    return options_;
+  //----------------------------------------------------------------------------
+  // Options
+
+  const Options* options() const {
+    return &options_;
   }
 
+  int tab_stop() const {
+    return options_.tab_stop;
+  }
+
+  int shift_width() const {
+    return options_.shift_width;
+  }
+
+  // Get extra indent option.
+  OptionValue GetIndentOption(const std::string& key) const;
+
   //----------------------------------------------------------------------------
-  // Buffer states.
+  // Buffer states
 
   // New buffer. No file path name.
   bool new_created() const;

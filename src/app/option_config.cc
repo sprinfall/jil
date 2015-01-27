@@ -238,6 +238,28 @@ void ParseEditorOptions(const Setting& setting, editor::Options* options) {
       options->indent_keys.push_back(std::wstring(str, str + strlen(str)));
     }
   }
+
+  // Extra indent options.
+  Setting indent_setting = setting_map["indent"];
+  if (indent_setting) {
+    int size = indent_setting.size();
+    for (int i = 0; i < size; ++i) {
+      std::string key = indent_setting[i].name();
+
+      int type = indent_setting[i].type();
+      if (type == Setting::kInt) {
+        options->indent_options[key] = OptionValue(indent_setting[i].GetInt());
+      } else if (type == Setting::kString) {
+        options->indent_options[key] =
+            OptionValue(std::string(indent_setting[i].GetString()));
+      } else if (type == Setting::kBool) {
+        options->indent_options[key] = OptionValue(indent_setting[i].GetBool());
+      } else {
+        // Not supported.
+      }
+    }
+  }
+
 }
 
 }  // namespace jil

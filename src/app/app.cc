@@ -861,6 +861,12 @@ void App::InitLua() {
   using namespace editor;
 
   luabridge::getGlobalNamespace(lua_state_)
+    .beginClass<OptionValue>("Option")
+      .addConstructor<void (*)()>()
+      .addFunction("asnumber", &OptionValue::AsInt)
+      .addFunction("asstring", &OptionValue::AsString)
+      .addFunction("asboolean", &OptionValue::AsBool)
+    .endClass()
     .beginClass<TextPoint>("Point")
       .addConstructor<void (*)(Coord, Coord)>()
       .addData("x", &TextPoint::x)
@@ -880,6 +886,9 @@ void App::InitLua() {
       .addCFunction("endwith", &TextLine::endwith)
     .endClass()
     .beginClass<TextBuffer>("Buffer")
+      .addFunction("tabstop", &TextBuffer::tab_stop)
+      .addFunction("shiftwidth", &TextBuffer::shift_width)
+      .addFunction("getindentoption", &TextBuffer::GetIndentOption)
       .addFunction("getlinecount", &TextBuffer::LineCount)
       .addFunction("getline", &TextBuffer::Line)
       .addFunction("prevnonemptyline", &TextBuffer::PrevNonEmptyLine)

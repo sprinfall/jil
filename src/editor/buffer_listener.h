@@ -33,6 +33,7 @@ public:
       : LineRange(line_range) {
   }
 
+  // TODO: Not used. Remove?
   const boost::any& extra() const { return extra_; }
 
   LineChangeData& set_extra(const boost::any& extra) {

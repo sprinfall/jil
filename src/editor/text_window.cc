@@ -89,6 +89,7 @@ TextWindow::TextWindow(TextBuffer* buffer)
     , scroll_timer_(NULL)
     , scroll_dir_(kScrollDown) {
   text_extent_ = new TextExtent;
+  wrap_ = options_->wrap;
 }
 
 bool TextWindow::Create(wxWindow* parent, wxWindowID id, bool hide) {
@@ -106,7 +107,7 @@ bool TextWindow::Create(wxWindow* parent, wxWindowID id, bool hide) {
     return false;
   }
 
-  if (!options_.show_hscrollbar) {
+  if (!options_->show_hscrollbar) {
     ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_ALWAYS);
   }
 
@@ -253,15 +254,16 @@ void TextWindow::OnBufferChange(ChangeType type) {
 }
 
 void TextWindow::Wrap(bool wrap) {
-  if (wrap == options_.wrap) {
+  if (wrap == wrap_) {
     return;
   }
-  options_.wrap = wrap;
+
+  wrap_ = wrap;
 
   int wrap_delta = 0;
   bool wrap_changed = false;
 
-  if (options_.wrap) {
+  if (wrap_) {
     wrap_changed = wrap_helper()->Wrap(&wrap_delta);
   } else {
     if (wrap_helper_ != NULL) {
@@ -622,7 +624,7 @@ void TextWindow::ScrollToPoint(const TextPoint& point) {
   int y = wxDefaultCoord;
 
   Coord caret_y = point.y;
-  if (options_.wrap) {
+  if (wrap_) {
     caret_y = wrap_helper()->WrapLineNr(caret_y) +
               wrap_helper()->WrappedLineCount(caret_y) -
               1;
@@ -646,7 +648,7 @@ void TextWindow::ScrollToPoint(const TextPoint& point) {
   int x = wxDefaultCoord;
 
   // If wrap is on, no horizontal scroll.
-  if (!options_.wrap) {
+  if (!wrap_) {
     const int kScrollRateX = 3;  // 3 units per scroll.
     if (point.x <= view_start_x) {
       x = point.x - kScrollRateX;
@@ -687,7 +689,7 @@ void TextWindow::Goto(Coord ln) {
 
   Coord y = ln;
 
-  if (options_.wrap) {
+  if (wrap_) {
     ln = wrap_helper()->WrapLineNr(ln);
   }
 
@@ -863,10 +865,6 @@ FtPlugin* TextWindow::ft_plugin() const {
   return buffer_->ft_plugin();
 }
 
-const Options& TextWindow::options() const {
-  return buffer_->options();
-}
-
 //------------------------------------------------------------------------------
 // Wrap
 
@@ -882,7 +880,7 @@ WrapHelper* TextWindow::wrap_helper() const {
 // Handlers for buffer and buffer line changes.
 
 void TextWindow::HandleLineUpdated(const LineChangeData& data) {
-  if (!options_.wrap) {
+  if (!wrap_) {
     // Update text size and virtual size of areas, etc.
     // NOTE: Virtual height is actually not changed.
     HandleTextChange();
@@ -909,7 +907,7 @@ void TextWindow::HandleLineUpdated(const LineChangeData& data) {
 }
 
 void TextWindow::HandleLineAdded(const LineChangeData& data) {
-  if (!options_.wrap) {
+  if (!wrap_) {
     // Update text size and virtual size of areas, etc.
     /*bool area_resized = */HandleTextChange();
 
@@ -949,7 +947,7 @@ void TextWindow::HandleLineAdded(const LineChangeData& data) {
 }
 
 void TextWindow::HandleLineDeleted(const LineChangeData& data) {
-  if (options_.wrap) {
+  if (wrap_) {
     // NOTE: In reverse!
     for (Coord ln = data.last(); ln >= data.first(); --ln) {
       wrap_helper()->RemoveLineWrap(ln);
@@ -972,7 +970,7 @@ void TextWindow::HandleLineDeleted(const LineChangeData& data) {
   }
 
   // Refresh line nr area.
-  if (!options_.wrap) {
+  if (!wrap_) {
     RefreshLineNrAfterLine(buffer_->LineCount(), true);
   } else {
     // For simplicity, just call Refresh().
@@ -1093,7 +1091,7 @@ void TextWindow::OnTextSize(wxSizeEvent& evt) {
     return;
   }
 
-  if (!options_.wrap) {
+  if (!wrap_) {
     UpdateVirtualSize();
     // Don't call Refresh() here!
   } else {
@@ -1153,7 +1151,7 @@ bool TextWindow::OnTextMouse(wxMouseEvent& evt) {
 
 // Paint the text area.
 void TextWindow::OnTextPaint(Renderer& renderer) {
-  if (!options_.wrap) {
+  if (!wrap_) {
     HandleTextPaint(renderer);
   } else {
     HandleWrappedTextPaint(renderer);
@@ -1161,7 +1159,7 @@ void TextWindow::OnTextPaint(Renderer& renderer) {
 }
 
 void TextWindow::HandleTextPaint(Renderer& renderer) {
-  assert(!options_.wrap);
+  assert(!wrap_);
 
   // Get the lines to paint.
   wxRect rect = text_area_->GetUpdateClientRect();
@@ -1210,11 +1208,11 @@ void TextWindow::HandleTextPaint(Renderer& renderer) {
   }
 
   // Rulers.
-  if (!options_.rulers.empty()) {
+  if (!options_->rulers.empty()) {
     renderer.SetPen(wxPen(theme_->GetColor(RULER)), true);
 
-    for (size_t i = 0; i < options_.rulers.size(); ++i) {
-      int ruler_x = x + char_width_ * options_.rulers[i];
+    for (size_t i = 0; i < options_->rulers.size(); ++i) {
+      int ruler_x = x + char_width_ * options_->rulers[i];
       renderer.DrawLine(ruler_x, y1, ruler_x, y2);
     }
 
@@ -1223,7 +1221,7 @@ void TextWindow::HandleTextPaint(Renderer& renderer) {
 }
 
 void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
-  assert(options_.wrap);
+  assert(wrap_);
 
   // Get the lines to paint.
   wxRect rect = text_area_->GetUpdateClientRect();
@@ -1274,13 +1272,13 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
     }
 
     // Rulers.
-    if (!options_.rulers.empty()) {
+    if (!options_->rulers.empty()) {
       renderer.SetPen(wxPen(theme_->GetColor(RULER)), true);
 
       y2 -= line_padding;
 
-      for (size_t i = 0; i < options_.rulers.size(); ++i) {
-        int ruler_x = x + char_width_ * options_.rulers[i];
+      for (size_t i = 0; i < options_->rulers.size(); ++i) {
+        int ruler_x = x + char_width_ * options_->rulers[i];
         renderer.DrawLine(ruler_x, y1, ruler_x, y2);
       }
 
@@ -1306,12 +1304,12 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
       renderer.RestorePen();
 
       // Rulers.
-      if (!options_.rulers.empty()) {
+      if (!options_->rulers.empty()) {
         renderer.SetPen(wxPen(theme_->GetColor(RULER)), true);
 
         int y2 = y + h;
-        for (size_t i = 0; i < options_.rulers.size(); ++i) {
-          int ruler_x = x + char_width_ * options_.rulers[i];
+        for (size_t i = 0; i < options_->rulers.size(); ++i) {
+          int ruler_x = x + char_width_ * options_->rulers[i];
           renderer.DrawLine(ruler_x, y, ruler_x, y2);
         }
 
@@ -1322,7 +1320,7 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
 }
 
 void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
-  assert(!options_.wrap);
+  assert(!wrap_);
 
   // If in select range, draw the select background.
   if (selection_.HasLine(ln)) {
@@ -1360,7 +1358,7 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
                                      Renderer& renderer,
                                      int x,
                                      int& y) {
-  assert(options_.wrap);
+  assert(wrap_);
 
   const TextLine* line = buffer_->Line(ln);
 
@@ -1596,7 +1594,7 @@ void TextWindow::DrawTextLinePiece(Renderer& renderer,
     // Render the space(s) or tab(s).
     if (line_data[i] == kSpaceChar) {
       Coord spaces = CountCharAfter(line_data, i, kSpaceChar) + 1;
-      if (options_.show_space) {
+      if (options_->show_space) {
         renderer.SetPen(space_pen);
         renderer.DrawWhiteSpaces(x, y, spaces);
       }
@@ -1606,11 +1604,11 @@ void TextWindow::DrawTextLinePiece(Renderer& renderer,
       p = i + 1;
     } else if (line_data[i] == kTabChar) {
       // The tab might occupy "< tab_stop" spaces.
-      int tab_spaces = options_.tab_stop - (chars % options_.tab_stop);
+      int tab_spaces = options_->tab_stop - (chars % options_->tab_stop);
       chars += tab_spaces;
 
       int tab_w = char_width_ * tab_spaces;
-      if (options_.show_space) {
+      if (options_->show_space) {
         renderer.SetPen(space_pen);
         renderer.DrawTab(x, y, tab_w, char_height_);
       }
@@ -2022,8 +2020,8 @@ bool TextWindow::OnTextKeyDown(wxKeyEvent& evt) {
   if (code == WXK_TAB && modifiers == 0 && leader_key_->IsEmpty()) {
     if (allow_text_change_) {
       // Input tab (expand or not).
-      if (options_.expand_tab) {
-        int spaces = options_.tab_stop - (caret_point_.x % options_.tab_stop);
+      if (options_->expand_tab) {
+        int spaces = options_->tab_stop - (caret_point_.x % options_->tab_stop);
         // TODO: Continuous tabs cannot be undone together.
         InsertString(std::wstring(spaces, kSpaceChar));
       } else {
@@ -2098,7 +2096,7 @@ void TextWindow::OnTextSetFocus(wxFocusEvent& evt) {
 
 // Paint the line number area.
 void TextWindow::OnLineNrPaint(wxDC& dc) {
-  if (!options_.wrap) {
+  if (!wrap_) {
     HandleLineNrPaint(dc);
   } else {
     HandleWrappedLineNrPaint(dc);
@@ -2106,7 +2104,7 @@ void TextWindow::OnLineNrPaint(wxDC& dc) {
 }
 
 void TextWindow::HandleLineNrPaint(wxDC& dc) {
-  assert(!options_.wrap);
+  assert(!wrap_);
 
   // Get the lines to paint.
   wxRect rect = line_nr_area_->GetUpdateClientRect();
@@ -2147,7 +2145,7 @@ void TextWindow::HandleLineNrPaint(wxDC& dc) {
     }
 
     // Draw right aligned line numbers.
-    if (options_.show_number) {
+    if (options_->show_number) {
       dc.SetFont(line_nr_area_->GetFont());
       dc.SetTextForeground(style_->Get(Style::kNumber)->fg());
 
@@ -2182,7 +2180,7 @@ void TextWindow::HandleLineNrPaint(wxDC& dc) {
     }
 
     // Draw a tilde for each blank line.
-    if (!options_.show_number || line_range.IsEmpty()) {
+    if (!options_->show_number || line_range.IsEmpty()) {
       // Font is not set yet.
       dc.SetFont(line_nr_area_->GetFont());
     }
@@ -2201,7 +2199,7 @@ void TextWindow::HandleLineNrPaint(wxDC& dc) {
 }
 
 void TextWindow::HandleWrappedLineNrPaint(wxDC& dc) {
-  assert(options_.wrap);
+  assert(wrap_);
 
   // Get the lines to paint.
   wxRect rect = line_nr_area_->GetUpdateClientRect();
@@ -2248,7 +2246,7 @@ void TextWindow::HandleWrappedLineNrPaint(wxDC& dc) {
     }
 
     // Draw right aligned line numbers.
-    if (options_.show_number) {
+    if (options_->show_number) {
       dc.SetFont(line_nr_area_->GetFont());
       dc.SetTextForeground(style_->Get(Style::kNumber)->fg());
 
@@ -2283,7 +2281,7 @@ void TextWindow::HandleWrappedLineNrPaint(wxDC& dc) {
     }
 
     // Draw a tilde for each blank line.
-    if (!options_.show_number || wrapped_line_range.IsEmpty()) {
+    if (!options_->show_number || wrapped_line_range.IsEmpty()) {
       // Font is not set yet.
       dc.SetFont(line_nr_area_->GetFont());
     }
@@ -2385,7 +2383,7 @@ TextPoint TextWindow::CalcCaretPoint(const wxPoint& pos, bool vspace) {
     caret_point.y = 1;
   }
 
-  if (!options_.wrap) {
+  if (!wrap_) {
     if (caret_point.y > buffer_->LineCount()) {
       caret_point.y = buffer_->LineCount();
     }
@@ -2413,7 +2411,7 @@ TextPoint TextWindow::CalcCaretPoint(const wxPoint& pos, bool vspace) {
 wxRect TextWindow::ClientRectFromLineRange(wxWindow* area,
                                            const LineRange& line_range) const {
   LineRange line_range_copy = line_range;
-  if (options_.wrap) {
+  if (wrap_) {
     line_range_copy = wrap_helper()->WrapLineRange(line_range_copy);
   }
 
@@ -2430,12 +2428,12 @@ wxRect TextWindow::ClientRectAfterLine(wxWindow* area,
                                        Coord ln,
                                        bool included) const {
   Coord v_ln = ln;
-  if (options_.wrap) {
+  if (wrap_) {
     v_ln = wrap_helper()->WrapLineNr(ln);
   }
 
   if (!included) {
-    if (!options_.wrap) {
+    if (!wrap_) {
       --v_ln;
     } else {
       v_ln -= wrap_helper()->WrappedLineCount(ln);
@@ -2572,7 +2570,7 @@ void TextWindow::UpdateCharSize() {
 }
 
 void TextWindow::UpdateTextSize() {
-  if (!options_.wrap) {
+  if (!wrap_) {
     text_width_ = char_width_ * buffer_->GetMaxLineLength();
     text_height_ = line_height_ * buffer_->LineCount();
   } else {
@@ -2582,7 +2580,7 @@ void TextWindow::UpdateTextSize() {
 }
 
 void TextWindow::UpdateLineNrWidth() {
-  if (options_.show_number) {
+  if (options_->show_number) {
     wxString line_nr_str = wxString::Format(L"%d", buffer_->LineCount());
     line_nr_width_ = text_extent_->GetWidth(line_nr_str.wc_str());
     line_nr_width_ += kLineNrPadding;
@@ -2594,7 +2592,7 @@ void TextWindow::UpdateLineNrWidth() {
 
 void TextWindow::UpdateVirtualSize() {
   Coord line_count = 0;
-  if (!options_.wrap) {
+  if (!wrap_) {
     line_count = buffer_->LineCount();
   } else {
     line_count = wrap_helper()->WrappedLineCount();
@@ -2603,7 +2601,7 @@ void TextWindow::UpdateVirtualSize() {
   // -1 to keep the last line visible when scroll to the end.
   int vh = line_height_ * (line_count + GetPageSize() - 1);
 
-  if (!options_.wrap) {
+  if (!wrap_) {
     // - char_width_ to keep the last char visible when scroll to the end.
     int vw = text_width_ + text_area_->GetClientSize().GetWidth() - char_width_;
     text_area_->SetVirtualSize(vw, vh);
@@ -2643,7 +2641,7 @@ void TextWindow::UpdateCaretPosition() {
   Coord x_off = 0;
   int y = 0;
 
-  if (!options_.wrap) {
+  if (!wrap_) {
     y = caret_point_.y;
   } else {
     Coord sub_ln = wrap_helper()->SubLineNr(caret_point_.y,
@@ -2773,7 +2771,7 @@ int TextWindow::GetLineWidth(const TextLine* line,
 
   std::wstring line_data = line->data().substr(off1, off2 - off1);
   if (!line_data.empty()) {
-    TabbedLineFast(options_.tab_stop, &line_data);
+    TabbedLineFast(options_->tab_stop, &line_data);
     line_width += text_extent_->GetWidth(line_data);
   }
 
@@ -2785,7 +2783,7 @@ int TextWindow::GetLineWidth(Coord ln, Coord off1, Coord off2) const {
 }
 
 Coord TextWindow::GetCharIndex(Coord ln, int client_x, bool vspace) const {
-  return text_extent_->IndexChar(options_.tab_stop,
+  return text_extent_->IndexChar(options_->tab_stop,
                                  buffer_->LineData(ln),
                                  client_x,
                                  vspace);
@@ -2805,7 +2803,7 @@ Coord TextWindow::GetWrappedCharIndex(Coord ln,
 
     // TODO: Avoid copy.
     std::wstring line_data = buffer_->LineData(ln).substr(offset);
-    Coord i = text_extent_->IndexChar(options_.tab_stop,
+    Coord i = text_extent_->IndexChar(options_->tab_stop,
                                       line_data,
                                       client_x,
                                       vspace);

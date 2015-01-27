@@ -243,9 +243,6 @@ protected:
 
   FtPlugin* ft_plugin() const;
 
-  // TODO
-  const Options& options() const;
-
   //----------------------------------------------------------------------------
   // Wrap
 
@@ -506,7 +503,9 @@ protected:
   bool allow_text_change_;
 
   // Reference to the options in text buffer.
-  Options& options_;
+  const Options* options_;
+
+  bool wrap_;
 
   Style* style_;
   SharedTheme theme_;
