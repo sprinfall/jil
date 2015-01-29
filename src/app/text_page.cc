@@ -73,7 +73,11 @@ wxString TextPage::Page_Type() const {
 }
 
 wxString TextPage::Page_Label() const {
-  return buffer_->file_name();
+  wxString label = buffer_->file_name();
+  if (label.IsEmpty()) {
+    label = kTrPageUntitled;
+  }
+  return label;
 }
 
 wxString TextPage::Page_Description() const {
@@ -82,9 +86,15 @@ wxString TextPage::Page_Description() const {
 
 int TextPage::Page_Flags() const {
   int flags = 0;
+
   if (buffer_->modified()) {
     flags |= kModified;
   }
+
+  if (buffer_->file_name().IsEmpty()) {
+    flags |= kUntitled;
+  }
+
   return flags;
 }
 

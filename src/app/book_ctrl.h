@@ -28,6 +28,7 @@ class BookPage {
 public:
   enum Flag {
     kModified = 1,
+    kUntitled,
   };
 
   virtual ~BookPage() {
@@ -87,8 +88,6 @@ public:
 class BookTabArea;
 
 class BookCtrl : public wxPanel {
-  DECLARE_EVENT_TABLE()
-
 public:
   enum ColorId {
     BG = 0,  // The whole book background
@@ -195,6 +194,10 @@ public:
   }
 
 protected:
+  void Init();
+
+  void CreateTabArea();
+
   friend class BookTabArea;
 
   void OnTabSize(wxSizeEvent& evt);
@@ -239,12 +242,20 @@ protected:
 
   int CalcTabBestSize(const wxString& label) const;
 
+  wxSize CalcTabAreaBestSize() const;
+
   void RefreshTabArea();
 
   void PostEvent(wxEventType event_type);
 
 protected:
   editor::SharedTheme theme_;
+
+  int tab_margin_top_;
+  wxSize tab_padding_;
+
+  // The space before/after the first/last tab.
+  int tab_area_padding_x_;
 
   int tab_min_size_;
   int tab_default_size_;

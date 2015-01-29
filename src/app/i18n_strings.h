@@ -22,7 +22,7 @@
 
 // Page titles.
 #define kTrPageFindResult     _("Find Result")
-#define kTrPageUtitled        _("Utitled")
+#define kTrPageUntitled       _("Untitled")
 
 // Menu labels.
 

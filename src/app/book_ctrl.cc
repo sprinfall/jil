@@ -28,13 +28,9 @@
 #include "app/i18n_strings.h"
 #include "app/id.h"
 
-namespace jil {
+#define JIL_TAB_ROUND_CORNER 0
 
-static const int kMarginTop = 3;
-static const int kTabPaddingLeft = 5;
-static const int kTabPaddingX = 20;
-static const int kTabPaddingTop = 3;
-static const int kTabPaddingBottom = 3;
+namespace jil {
 
 const int kFadeAwayChars = 3;
 
@@ -84,9 +80,7 @@ public:
 
 protected:
   virtual wxSize DoGetBestSize() const {
-    int y = 0;
-    GetTextExtent(wxT("T"), NULL, &y, 0, 0);
-    return wxSize(-1, y + kMarginTop + kTabPaddingTop + kTabPaddingBottom);
+    return book_ctrl_->CalcTabAreaBestSize();
   }
 
   void OnSize(wxSizeEvent& evt) {
@@ -129,17 +123,9 @@ END_EVENT_TABLE()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-BEGIN_EVENT_TABLE(BookCtrl, wxPanel)
-END_EVENT_TABLE()
-
 BookCtrl::BookCtrl(const editor::SharedTheme& theme)
-    : theme_(theme)
-    , tab_min_size_(10)
-    , tab_default_size_(130)
-    , free_size_(0)
-    , rclicked_tab_(NULL)
-    , batch_(false)
-    , need_resize_tabs_(false) {
+    : theme_(theme) {
+  Init();
 }
 
 BookCtrl::~BookCtrl() {
@@ -158,13 +144,7 @@ bool BookCtrl::Create(wxWindow* parent, wxWindowID id) {
 
   SetBackgroundColour(theme_->GetColor(BG));
 
-  tab_area_ = new BookTabArea(this, wxID_ANY);
-  if (theme_->GetColor(TAB_AREA_BG).IsOk()) {
-    tab_area_->SetBackgroundColour(theme_->GetColor(TAB_AREA_BG));
-  }
-  if (theme_->GetFont(TAB_FONT).IsOk()) {
-    tab_area_->SetFont(theme_->GetFont(TAB_FONT));
-  }
+  CreateTabArea();
 
   // Book ctrl's min size is the best size of its tab area.
   SetMinSize(tab_area_->GetBestSize());
@@ -432,7 +412,8 @@ void BookCtrl::ResizeTabs(bool refresh) {
 
   free_size_ = 0;  // Reset
 
-  const int client_size = tab_area_->GetClientSize().GetWidth();
+  int client_size = tab_area_->GetClientSize().x;
+  client_size -= tab_area_padding_x_ + tab_area_padding_x_;
 
   int sum_prev_size = 0;
   int sum_best_size = 0;
@@ -515,7 +496,7 @@ void BookCtrl::ResizeTabs(bool refresh) {
       }
 
       while (!large_tabs.empty()) {
-        const int avg_lack_size = lack_size / large_tabs.size();
+        int avg_lack_size = lack_size / large_tabs.size();
         lack_size %= large_tabs.size();
 
         if (avg_lack_size == 0) {
@@ -560,6 +541,35 @@ void BookCtrl::ResizeTabs(bool refresh) {
       RefreshTabArea();
     }
   }
+}
+
+void BookCtrl::Init() {
+  tab_margin_top_ = 3;
+  tab_area_padding_x_ = 3;
+
+  tab_min_size_ = 10;
+  tab_default_size_ = 130;
+
+  free_size_ = 0;
+  rclicked_tab_ = NULL;
+  batch_ = false;
+  need_resize_tabs_ = false;
+}
+
+void BookCtrl::CreateTabArea() {
+  tab_area_ = new BookTabArea(this, wxID_ANY);
+
+  if (theme_->GetColor(TAB_AREA_BG).IsOk()) {
+    tab_area_->SetBackgroundColour(theme_->GetColor(TAB_AREA_BG));
+  }
+
+  if (theme_->GetFont(TAB_FONT).IsOk()) {
+    tab_area_->SetFont(theme_->GetFont(TAB_FONT));
+  }
+
+  // Use char width as the padding.
+  int char_width = tab_area_->GetCharWidth();
+  tab_padding_.Set(char_width, char_width / 2 + 1);
 }
 
 void BookCtrl::OnTabSize(wxSizeEvent& evt) {
@@ -619,25 +629,39 @@ void BookCtrl::OnTabPaint(wxAutoBufferedPaintDC& dc, wxPaintEvent& evt) {
 }
 
 void BookCtrl::DrawTabBackground(Tab* tab, wxGraphicsContext* gc, int x) {
-  const wxRect rect = tab_area_->GetClientRect();
+  wxRect rect = tab_area_->GetClientRect();
+
+  wxColour tab_border;
+  wxColour tab_bg;
 
   if (tab->active) {
-    gc->SetPen(wxPen(theme_->GetColor(ACTIVE_TAB_BORDER)));
-    gc->SetBrush(wxBrush(theme_->GetColor(ACTIVE_TAB_BG)));
+    tab_border = theme_->GetColor(ACTIVE_TAB_BORDER);
+    tab_bg = theme_->GetColor(ACTIVE_TAB_BG);
   } else {
-    gc->SetPen(wxPen(theme_->GetColor(TAB_BORDER)));
-    gc->SetBrush(wxBrush(theme_->GetColor(TAB_BG)));
+    tab_border = theme_->GetColor(TAB_BORDER);
+    tab_bg = theme_->GetColor(TAB_BG);
   }
 
+  // TODO: Check in DrawBackground.
+  // If the tab border and bg are the same color as the tab area bg,
+  // don't have to draw.
+  if (!tab_border.IsOk() && !tab_bg.IsOk() ||
+      tab_border == tab_bg && tab_bg == theme_->GetColor(TAB_AREA_BG)) {
+    return;
+  }
+
+  gc->SetPen(wxPen(tab_border));
+  gc->SetBrush(wxBrush(tab_bg));
+
   wxRect tab_rect(x + 1,
-                  rect.GetTop() + kMarginTop,
+                  rect.GetTop() + tab_margin_top_,
                   tab->size - 1,
-                  rect.GetHeight() - kMarginTop + 1);
+                  rect.GetHeight() - tab_margin_top_ + 1);
 
   wxGraphicsPath border_path = gc->CreatePath();
   border_path.MoveToPoint(tab_rect.GetLeft(), tab_rect.GetBottom());
 
-#if JIL_NOOTBOOK_TAB_ROUND_CORNER
+#if JIL_TAB_ROUND_CORNER
   const wxDouble kRadius = 4.0f;
   // Top left corner.
   border_path.AddArc(tab_rect.GetLeft() + kRadius,
@@ -664,29 +688,30 @@ void BookCtrl::DrawTabBackground(Tab* tab, wxGraphicsContext* gc, int x) {
 #endif  // JIL_NOOTBOOK_TAB_ROUND_CORNER
 
   gc->DrawPath(border_path);
-
-  if (!tab->active) {
-    gc->StrokeLine(x, rect.GetBottom(), x + tab->size + 1, rect.GetBottom());
-  }
 }
 
 void BookCtrl::DrawBackground(wxGraphicsContext* gc) {
-  const wxRect rect = tab_area_->GetClientRect();
+  wxRect rect = tab_area_->GetClientRect();
 
-  int x = rect.GetLeft();
+  int x = rect.GetLeft() + tab_area_padding_x_;
+
+  // Draw bottom line to outline the active tab.
+  wxColour active_tab_border = theme_->GetColor(ACTIVE_TAB_BORDER);
+  if (active_tab_border.IsOk()) {
+    gc->SetPen(wxPen(active_tab_border));
+
+    int y = rect.GetBottom();
+    gc->StrokeLine(rect.GetLeft(), y, rect.GetRight() + 1, y);
+  }
 
   for (TabList::iterator it = tabs_.begin(); it != tabs_.end(); ++it) {
     DrawTabBackground(*it, gc, x);
     x += (*it)->size;
   }
-
-  if (x <= rect.GetRight()) {
-    gc->StrokeLine(x, rect.GetBottom(), rect.GetRight() + 1, rect.GetBottom());
-  }
 }
 
 void BookCtrl::DrawForeground(wxGraphicsContext* gc, wxDC& dc) {
-  const wxRect rect = tab_area_->GetClientRect();
+  wxRect rect = tab_area_->GetClientRect();
 
 #ifdef __WXMSW__
 #if JIL_BOOK_USE_GDIPLUS
@@ -695,7 +720,7 @@ void BookCtrl::DrawForeground(wxGraphicsContext* gc, wxDC& dc) {
 #endif  // JIL_BOOK_USE_GDIPLUS
 #endif  // __WXMSW__
 
-  int x = rect.GetLeft();
+  int x = rect.GetLeft() + tab_area_padding_x_;
 
   for (TabList::iterator it = tabs_.begin(); it != tabs_.end(); ++it) {
     Tab* tab = *it;
@@ -705,10 +730,10 @@ void BookCtrl::DrawForeground(wxGraphicsContext* gc, wxDC& dc) {
 
     gc->SetFont(tab_area_->GetFont(), tab_fg);
 
-    const wxRect tab_rect(x + kTabPaddingLeft,
-                          rect.GetTop() + kTabPaddingTop + kMarginTop,
-                          tab->size - kTabPaddingX,
-                          rect.GetHeight() - kTabPaddingTop - kMarginTop);
+    wxRect tab_rect(x + tab_padding_.x,
+                    rect.GetTop() + tab_padding_.y + tab_margin_top_,
+                    tab->size - tab_padding_.x - tab_padding_.x,
+                    rect.GetHeight() - tab_padding_.y - tab_margin_top_);
 
     if (tab_rect.GetWidth() > 0) {
       if (tab->best_size <= tab->size) {
@@ -754,8 +779,8 @@ void BookCtrl::DrawForeground(wxGraphicsContext* gc, wxDC& dc) {
           gdip_font.reset(GdiplusNewFont(tab_area_->GetFont()));
         }
 
-        const wxColour& tab_bg =
-            theme_->GetColor(tab->active ? ACTIVE_TAB_BG : TAB_BG);
+        ColorId tab_bg_id = tab->active ? ACTIVE_TAB_BG : TAB_BG;
+        const wxColour& tab_bg = theme_->GetColor(tab_bg_id);
 
         std::auto_ptr<Gdiplus::Brush> brush(new Gdiplus::LinearGradientBrush(
           GdiplusRect(wxRect(fade_x,
@@ -1075,13 +1100,15 @@ BookCtrl::TabList::const_iterator BookCtrl::TabByPage(
 }
 
 int BookCtrl::CalcTabBestSize(const wxString& label) const {
-  std::auto_ptr<wxGraphicsContext> gc(wxGraphicsContext::Create(tab_area_));
-  gc->SetFont(tab_area_->GetFont(), *wxWHITE);
+  int label_size = 0;
+  tab_area_->GetTextExtent(label, &label_size, NULL);
+  return label_size + tab_padding_.x + tab_padding_.x;
+}
 
-  wxDouble label_size = 0.0f;
-  gc->GetTextExtent(label, &label_size, NULL, NULL, NULL);
-
-  return static_cast<int>(std::ceil(label_size)) + kTabPaddingX;
+wxSize BookCtrl::CalcTabAreaBestSize() const {
+  int y = tab_area_->GetCharHeight();
+  y += tab_margin_top_ + tab_padding_.y + tab_padding_.y;
+  return wxSize(-1, y);
 }
 
 void BookCtrl::RefreshTabArea() {
