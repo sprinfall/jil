@@ -11,7 +11,6 @@
 #include "editor/theme.h"
 #include "app/compile_config.h"
 
-class wxGraphicsContext;
 class wxMenu;
 class wxSizer;
 
@@ -85,7 +84,41 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class BookTabArea;
+class BookCtrl;
+
+namespace editor {
+class TipHandler;
+}  // namespace editor
+
+class BookTabArea : public wxPanel {
+  DECLARE_EVENT_TABLE()
+
+public:
+  BookTabArea(BookCtrl* book_ctrl, wxWindowID id);
+
+  virtual ~BookTabArea();
+
+  // Page header has no focus.
+  virtual bool AcceptsFocus() const override {
+    return false;
+  }
+
+  void SetToolTipEx(const wxString& tooltip);
+
+protected:
+  virtual wxSize DoGetBestSize() const;
+
+  void OnSize(wxSizeEvent& evt);
+  void OnPaint(wxPaintEvent& evt);
+  void OnMouseEvents(wxMouseEvent& evt);
+  void OnMouseCaptureLost(wxMouseCaptureLostEvent& evt);
+
+private:
+  BookCtrl* book_ctrl_;
+  editor::TipHandler* tip_handler_;
+};
+
+////////////////////////////////////////////////////////////////////////////////
 
 class BookCtrl : public wxPanel {
 public:
@@ -113,7 +146,7 @@ public:
 protected:
   class Tab {
   public:
-    Tab(BookPage* _page, int _best_size, bool _active = false)
+    Tab(BookPage* _page, int _best_size, bool _active)
         : page(_page)
         , best_size(_best_size)
         , size(_best_size)
@@ -155,7 +188,7 @@ public:
   void EndBatch();
 
   // NOTE: Don't check if the page is already in the book or not.
-  virtual bool AddPage(BookPage* page, bool active = false);
+  virtual void AddPage(BookPage* page, bool active);
 
   bool RemovePage(const BookPage* page);
 
@@ -186,8 +219,7 @@ public:
   BookPage* NextPage(const BookPage* page) const;
 
   // Recalculate the size for each tab.
-  // Don't refresh even the tab size changes if @refresh is false.
-  void ResizeTabs(bool refresh = true);
+  void ResizeTabs();
 
   BookPage* rclicked_tab_page() const {
     return rclicked_tab_ == NULL ? NULL : rclicked_tab_->page;
@@ -203,10 +235,6 @@ protected:
   void OnTabSize(wxSizeEvent& evt);
 
   void OnTabPaint(wxAutoBufferedPaintDC& dc, wxPaintEvent& evt);
-  void DrawBackground(wxGraphicsContext* gc);
-  void DrawForeground(wxGraphicsContext* gc, wxDC& dc);
-  // Draw background for one given tab.
-  void DrawTabBackground(Tab* tab, wxGraphicsContext* gc, int x);
 
   void OnTabMouse(wxMouseEvent& evt);
 
@@ -244,12 +272,13 @@ protected:
 
   wxSize CalcTabAreaBestSize() const;
 
-  void RefreshTabArea();
-
   void PostEvent(wxEventType event_type);
 
 protected:
   editor::SharedTheme theme_;
+
+  int char_width_;
+  int ellipsis_width_;  // Size of "...".
 
   int tab_margin_top_;
   wxSize tab_padding_;

@@ -16,7 +16,7 @@ class TextBook : public BookCtrl {
   bool Create(wxWindow* parent, wxWindowID id);
   virtual ~TextBook();
 
-  virtual bool AddPage(BookPage* page, bool active = false) override;
+  virtual void AddPage(BookPage* page, bool active) override;
 
   TextPage* ActiveTextPage() const;
 

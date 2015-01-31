@@ -17,6 +17,8 @@ static const int kSpaceY = 7;
 static const int kPaddingX = 5;
 static const int kPaddingY = 3;
 
+static const wxString kEllipsis = wxT("...");
+
 BEGIN_EVENT_TABLE(NavigationDialog, wxDialog)
 EVT_PAINT         (NavigationDialog::OnPaint)
 EVT_CLOSE         (NavigationDialog::OnClose)
@@ -248,26 +250,16 @@ void NavigationDialog::DrawText(wxDC& dc,
   }
 
   int w = 0;
-  dc.GetTextExtent(text, &w, NULL, NULL, NULL, NULL);
+  dc.GetTextExtent(text, &w, NULL);
   if (w <= rect.width) {
     dc.DrawText(text, rect.x, rect.y);
     return;
   }
 
-  const wxString kEllipsis = wxT("...");
-
   int ellipsis_w = 0;
-  dc.GetTextExtent(kEllipsis, &ellipsis_w, NULL, NULL, NULL, NULL);
+  dc.GetTextExtent(kEllipsis, &ellipsis_w, NULL);
 
-  int max_w = rect.width - ellipsis_w;
-  size_t i = text.size() - 1;
-  for (; i > 0; --i) {
-    dc.GetTextExtent(text.Mid(0, i), &w, NULL, NULL, NULL, NULL);
-    if (w <= max_w) {
-      break;
-    }
-  }
-
+  size_t i = editor::TailorLabel(dc, text, rect.width - ellipsis_w);
   dc.DrawText(text.Mid(0, i) + kEllipsis, rect.x, rect.y);
 }
 

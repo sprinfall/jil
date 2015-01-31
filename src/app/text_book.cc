@@ -30,14 +30,12 @@ bool TextBook::Create(wxWindow* parent, wxWindowID id) {
 TextBook::~TextBook() {
 }
 
-bool TextBook::AddPage(BookPage* page, bool active) {
+void TextBook::AddPage(BookPage* page, bool active) {
   BookCtrl::AddPage(page, active);
 
   Connect(page->Page_Window()->GetId(),
           editor::kTextWindowEvent,
           wxCommandEventHandler(TextBook::OnTextWindowEvent));
-
-  return true;
 }
 
 TextPage* TextBook::ActiveTextPage() const {
@@ -211,9 +209,9 @@ void TextBook::OnTextWindowEvent(wxCommandEvent& evt) {
         tab->best_size = CalcTabBestSize(tab->page->Page_Label());
       }
     }
-    RefreshTabArea();
+    tab_area_->Refresh();
   } else if (type == editor::TextWindow::kModifiedEvent) {
-    RefreshTabArea();
+    tab_area_->Refresh();
   }
 }
 

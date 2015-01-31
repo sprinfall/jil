@@ -1,125 +1,80 @@
 #include "app/book_ctrl.h"
-
 #include <cassert>
 #include <memory>
-
-#ifdef __WXMSW__
-#if JIL_BOOK_USE_GDIPLUS
-#include <objidl.h>
-#include <gdiplus.h>
-#include "wx/msw/private.h"
-#endif  // JIL_BOOK_USE_GDIPLUS
-#endif  // __WXMSW__
-
-#include "wx/sizer.h"
-#include "wx/graphics.h"
-#include "wx/dcgraph.h"
-#include "wx/menu.h"
-#include "wx/wupdlock.h"
 #include "wx/log.h"
-
+#include "wx/menu.h"
+#include "wx/sizer.h"
+#include "wx/wupdlock.h"
 #include "base/math_util.h"
-
 #include "editor/text_extent.h"
-#if !JIL_BOOK_NATIVE_TOOLTIP
 #include "editor/tip.h"
-#endif
-
 #include "app/i18n_strings.h"
 #include "app/id.h"
 
-#define JIL_TAB_ROUND_CORNER 0
-
 namespace jil {
 
-const int kFadeAwayChars = 3;
+static const wxString kEllipsis = wxT("...");
+static const wxString kStar = wxT("*");
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class BookTabArea : public wxPanel {
-  DECLARE_EVENT_TABLE()
+BEGIN_EVENT_TABLE(BookTabArea, wxPanel)
+EVT_SIZE                (BookTabArea::OnSize)
+EVT_PAINT               (BookTabArea::OnPaint)
+EVT_MOUSE_EVENTS        (BookTabArea::OnMouseEvents)
+EVT_MOUSE_CAPTURE_LOST  (BookTabArea::OnMouseCaptureLost)
+END_EVENT_TABLE()
 
-public:
-  BookTabArea(BookCtrl* book_ctrl, wxWindowID id)
-      : wxPanel(book_ctrl, id)
-      , book_ctrl_(book_ctrl)
-#if !JIL_BOOK_NATIVE_TOOLTIP
-      , tip_handler_(NULL)
-#endif
-  {
-    SetBackgroundStyle(wxBG_STYLE_CUSTOM);
-    SetCursor(wxCursor(wxCURSOR_ARROW));
+BookTabArea::BookTabArea(BookCtrl* book_ctrl, wxWindowID id)
+    : wxPanel(book_ctrl, id)
+    , book_ctrl_(book_ctrl)
+    , tip_handler_(NULL) {
+  SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+  SetCursor(wxCursor(wxCURSOR_ARROW));
+}
+
+BookTabArea::~BookTabArea() {
+  if (tip_handler_ != NULL) {
+    PopEventHandler();
+    delete tip_handler_;
   }
+}
 
-  virtual ~BookTabArea() {
-#if !JIL_BOOK_NATIVE_TOOLTIP
-    if (tip_handler_ != NULL) {
-      PopEventHandler();
-      delete tip_handler_;
-    }
-#endif  // !JIL_BOOK_NATIVE_TOOLTIP
+void BookTabArea::SetToolTipEx(const wxString& tooltip) {
+  if (tip_handler_ == NULL) {
+    tip_handler_ = new editor::TipHandler(this);
+    tip_handler_->set_start_on_move(true);
+    PushEventHandler(tip_handler_);
   }
+  tip_handler_->SetTip(tooltip);
+}
 
-  // Page header has no focus.
-  virtual bool AcceptsFocus() const override {
-    return false;
-  }
+wxSize BookTabArea::DoGetBestSize() const {
+  return book_ctrl_->CalcTabAreaBestSize();
+}
 
-  void SetToolTipEx(const wxString& tooltip) {
-#if JIL_BOOK_NATIVE_TOOLTIP
-    SetToolTip(tooltip);
-#else
-    if (tip_handler_ == NULL) {
-      tip_handler_ = new editor::TipHandler(this);
-      tip_handler_->set_start_on_move(true);
-      PushEventHandler(tip_handler_);
-    }
-    tip_handler_->SetTip(tooltip);
-#endif  // JIL_BOOK_NATIVE_TOOLTIP
-  }
+void BookTabArea::OnSize(wxSizeEvent& evt) {
+  book_ctrl_->OnTabSize(evt);
+}
 
-protected:
-  virtual wxSize DoGetBestSize() const {
-    return book_ctrl_->CalcTabAreaBestSize();
-  }
-
-  void OnSize(wxSizeEvent& evt) {
-    book_ctrl_->OnTabSize(evt);
-  }
-
-  void OnPaint(wxPaintEvent& evt) {
-    wxAutoBufferedPaintDC dc(this);
+void BookTabArea::OnPaint(wxPaintEvent& evt) {
+  wxAutoBufferedPaintDC dc(this);
 
 #if !wxALWAYS_NATIVE_DOUBLE_BUFFER
-    dc.SetBackground(GetBackgroundColour());
-    dc.Clear();
+  dc.SetBackground(GetBackgroundColour());
+  dc.Clear();
 #endif
 
-    book_ctrl_->OnTabPaint(dc, evt);
-  }
+  book_ctrl_->OnTabPaint(dc, evt);
+}
 
-  void OnMouseEvents(wxMouseEvent& evt) {
-    book_ctrl_->OnTabMouse(evt);
-  }
+void BookTabArea::OnMouseEvents(wxMouseEvent& evt) {
+  book_ctrl_->OnTabMouse(evt);
+}
 
-  void OnMouseCaptureLost(wxMouseCaptureLostEvent& evt) {
-    // Do nothing.
-  }
-
-private:
-  BookCtrl* book_ctrl_;
-
-#if !JIL_BOOK_NATIVE_TOOLTIP
-  editor::TipHandler* tip_handler_;
-#endif
-};
-
-BEGIN_EVENT_TABLE(BookTabArea, wxPanel)
-EVT_SIZE(BookTabArea::OnSize)
-EVT_PAINT(BookTabArea::OnPaint)
-EVT_MOUSE_EVENTS(BookTabArea::OnMouseEvents)
-EVT_MOUSE_CAPTURE_LOST(BookTabArea::OnMouseCaptureLost)
-END_EVENT_TABLE()
+void BookTabArea::OnMouseCaptureLost(wxMouseCaptureLostEvent& evt) {
+  // Do nothing.
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -156,7 +111,6 @@ bool BookCtrl::Create(wxWindow* parent, wxWindowID id) {
   wxSizer* vsizer = new wxBoxSizer(wxVERTICAL);
   vsizer->Add(tab_area_, 0, wxEXPAND);
   vsizer->Add(page_area_, 1, wxEXPAND);
-
   SetSizer(vsizer);
 
   return true;
@@ -185,19 +139,20 @@ void BookCtrl::EndBatch() {
   Thaw();
 
   if (need_resize_tabs_) {
-    ResizeTabs(true);
+    ResizeTabs();
     need_resize_tabs_ = false;
+    tab_area_->Refresh();
   }
 }
 
-// TODO: No return value.
-bool BookCtrl::AddPage(BookPage* page, bool active) {
-  Tab* tab = new Tab(page, CalcTabBestSize(page->Page_Label()));
+void BookCtrl::AddPage(BookPage* page, bool active) {
+  int tab_best_size = CalcTabBestSize(page->Page_Label());
+  Tab* tab = new Tab(page, tab_best_size, false);
   tabs_.push_back(tab);
 
   // Try to avoid resizing tabs.
-  int expected_size = tab->best_size > tab_default_size_ ?
-      tab->best_size : tab_default_size_;
+  int expected_size = wxMax(tab->best_size, tab_default_size_);
+
   if (expected_size <= free_size_) {
     tab->size = expected_size;
     free_size_ -= expected_size;
@@ -216,8 +171,6 @@ bool BookCtrl::AddPage(BookPage* page, bool active) {
   }
 
   PostEvent(kEvtBookPageChange);
-
-  return true;
 }
 
 bool BookCtrl::RemovePage(const BookPage* page) {
@@ -279,7 +232,7 @@ bool BookCtrl::RemoveAllPages(const BookPage* except_page) {
     }
 
     // The tab is removed, more space is available, resize the left tabs.
-    ResizeTabs(false);
+    ResizeTabs();
 
     tab_area_->Refresh();
 
@@ -405,7 +358,7 @@ BookPage* BookCtrl::NextPage(const BookPage* page) const {
   }
 }
 
-void BookCtrl::ResizeTabs(bool refresh) {
+void BookCtrl::ResizeTabs() {
   if (tabs_.empty()) {
     return;
   }
@@ -415,15 +368,12 @@ void BookCtrl::ResizeTabs(bool refresh) {
   int client_size = tab_area_->GetClientSize().x;
   client_size -= tab_area_padding_x_ + tab_area_padding_x_;
 
-  int sum_prev_size = 0;
   int sum_best_size = 0;
 
+  // Initialize.
   for (TabIter it = tabs_.begin(); it != tabs_.end(); ++it) {
-    sum_prev_size += (*it)->size;
     sum_best_size += (*it)->best_size;
-
-    // Reset tab size to its best size.
-    (*it)->size = (*it)->best_size;
+    (*it)->size = (*it)->best_size;  // Reset tab size to its best size.
   }
 
   if (sum_best_size < client_size) {
@@ -529,22 +479,13 @@ void BookCtrl::ResizeTabs(bool refresh) {
       }
     }
   }
-
-  if (refresh) {
-    // Refresh if the size of tabs is changed.
-    int sum_size = 0;
-    for (TabIter it = tabs_.begin(); it != tabs_.end(); ++it) {
-      sum_size += (*it)->size;
-    }
-
-    if (sum_size != sum_prev_size) {
-      RefreshTabArea();
-    }
-  }
 }
 
 void BookCtrl::Init() {
-  tab_margin_top_ = 3;
+  char_width_ = 0;
+  ellipsis_width_ = 0;
+
+  tab_margin_top_ = 5;
   tab_area_padding_x_ = 3;
 
   tab_min_size_ = 10;
@@ -567,254 +508,105 @@ void BookCtrl::CreateTabArea() {
     tab_area_->SetFont(theme_->GetFont(TAB_FONT));
   }
 
-  // Use char width as the padding.
-  int char_width = tab_area_->GetCharWidth();
-  tab_padding_.Set(char_width, char_width / 2 + 1);
+  char_width_ = tab_area_->GetCharWidth();
+  tab_area_->GetTextExtent(kEllipsis, &ellipsis_width_, NULL);
+  tab_padding_.Set(char_width_, char_width_ / 2 + 1);
 }
 
 void BookCtrl::OnTabSize(wxSizeEvent& evt) {
   if (!batch_) {
     ResizeTabs();
+    tab_area_->Refresh();
   }
   evt.Skip();
 }
 
-#ifdef __WXMSW__
-#if JIL_BOOK_USE_GDIPLUS
-
-static inline Gdiplus::Color GdiplusColor(const wxColour& wx_color) {
-  return Gdiplus::Color(wx_color.Alpha(),
-                        wx_color.Red(),
-                        wx_color.Green(),
-                        wx_color.Blue());
-}
-
-static inline Gdiplus::Rect GdiplusRect(const wxRect& wx_rect) {
-  return Gdiplus::Rect(wx_rect.x, wx_rect.y, wx_rect.width, wx_rect.height);
-}
-
-static Gdiplus::Font* GdiplusNewFont(const wxFont& wx_font) {
-  int style = Gdiplus::FontStyleRegular;
-
-  if (wx_font.GetStyle() == wxFONTSTYLE_ITALIC) {
-    style |= Gdiplus::FontStyleItalic;
-  }
-  if (wx_font.GetUnderlined()) {
-    style |= Gdiplus::FontStyleUnderline;
-  }
-  if (wx_font.GetWeight() == wxFONTWEIGHT_BOLD) {
-    style |= Gdiplus::FontStyleBold;
-  }
-
-  return new Gdiplus::Font(wx_font.GetFaceName().wc_str(),
-                           wx_font.GetPointSize(),
-                           style,
-                           Gdiplus::UnitPoint);
-}
-
-#endif  // JIL_BOOK_USE_GDIPLUS
-#endif  // __WXMSW__
-
 // Paint tab items.
 void BookCtrl::OnTabPaint(wxAutoBufferedPaintDC& dc, wxPaintEvent& evt) {
-#ifdef __WXMAC__
-  wxGraphicsContext* gc = dc.GetGraphicsContext();
-#else
-  wxGCDC gcdc(dc);
-  wxGraphicsContext* gc = gcdc.GetGraphicsContext();
-#endif  // __WXMAC__
-
-  DrawBackground(gc);
-  DrawForeground(gc, dc);
-}
-
-void BookCtrl::DrawTabBackground(Tab* tab, wxGraphicsContext* gc, int x) {
   wxRect rect = tab_area_->GetClientRect();
+  int bottom = rect.GetBottom();
 
-  wxColour tab_border;
-  wxColour tab_bg;
+  const wxColour& tab_border = theme_->GetColor(TAB_BORDER);
+  const wxColour& tab_bg = theme_->GetColor(TAB_BG);
 
-  if (tab->active) {
-    tab_border = theme_->GetColor(ACTIVE_TAB_BORDER);
-    tab_bg = theme_->GetColor(ACTIVE_TAB_BG);
-  } else {
-    tab_border = theme_->GetColor(TAB_BORDER);
-    tab_bg = theme_->GetColor(TAB_BG);
-  }
+  wxPen tab_pen = tab_border.IsOk() ? wxPen(tab_border) : *wxTRANSPARENT_PEN;
+  wxBrush tab_brush = tab_bg.IsOk() ? wxBrush(tab_bg) : *wxTRANSPARENT_BRUSH;
 
-  // TODO: Check in DrawBackground.
-  // If the tab border and bg are the same color as the tab area bg,
-  // don't have to draw.
-  if (!tab_border.IsOk() && !tab_bg.IsOk() ||
-      tab_border == tab_bg && tab_bg == theme_->GetColor(TAB_AREA_BG)) {
-    return;
-  }
+  wxPen active_tab_pen(theme_->GetColor(ACTIVE_TAB_BORDER));
+  wxBrush active_tab_brush(theme_->GetColor(ACTIVE_TAB_BG));
 
-  gc->SetPen(wxPen(tab_border));
-  gc->SetBrush(wxBrush(tab_bg));
+  dc.SetFont(tab_area_->GetFont());
 
-  wxRect tab_rect(x + 1,
-                  rect.GetTop() + tab_margin_top_,
-                  tab->size - 1,
-                  rect.GetHeight() - tab_margin_top_ + 1);
+  int x = rect.x;
 
-  wxGraphicsPath border_path = gc->CreatePath();
-  border_path.MoveToPoint(tab_rect.GetLeft(), tab_rect.GetBottom());
-
-#if JIL_TAB_ROUND_CORNER
-  const wxDouble kRadius = 4.0f;
-  // Top left corner.
-  border_path.AddArc(tab_rect.GetLeft() + kRadius,
-                     tab_rect.GetTop() + kRadius,
-                     kRadius,
-                     base::kRadian180,
-                     base::kRadian270,
-                     true);
-  // Top line.
-  border_path.AddLineToPoint(tab_rect.GetRight() - kRadius, tab_rect.GetTop());
-  // Top right corner.
-  border_path.AddArc(tab_rect.GetRight() - kRadius,
-                     tab_rect.GetTop() + kRadius,
-                     kRadius,
-                     base::kRadian270,
-                     base::kRadian0,
-                     true);
-  // Right line.
-  border_path.AddLineToPoint(tab_rect.GetRight(), tab_rect.GetBottom());
-#else
-  border_path.AddLineToPoint(tab_rect.GetLeft(), tab_rect.GetTop());
-  border_path.AddLineToPoint(tab_rect.GetRight(), tab_rect.GetTop());
-  border_path.AddLineToPoint(tab_rect.GetRight(), tab_rect.GetBottom());
-#endif  // JIL_NOOTBOOK_TAB_ROUND_CORNER
-
-  gc->DrawPath(border_path);
-}
-
-void BookCtrl::DrawBackground(wxGraphicsContext* gc) {
-  wxRect rect = tab_area_->GetClientRect();
-
-  int x = rect.GetLeft() + tab_area_padding_x_;
-
-  // Draw bottom line to outline the active tab.
-  wxColour active_tab_border = theme_->GetColor(ACTIVE_TAB_BORDER);
-  if (active_tab_border.IsOk()) {
-    gc->SetPen(wxPen(active_tab_border));
-
-    int y = rect.GetBottom();
-    gc->StrokeLine(rect.GetLeft(), y, rect.GetRight() + 1, y);
-  }
-
-  for (TabList::iterator it = tabs_.begin(); it != tabs_.end(); ++it) {
-    DrawTabBackground(*it, gc, x);
-    x += (*it)->size;
-  }
-}
-
-void BookCtrl::DrawForeground(wxGraphicsContext* gc, wxDC& dc) {
-  wxRect rect = tab_area_->GetClientRect();
-
-#ifdef __WXMSW__
-#if JIL_BOOK_USE_GDIPLUS
-  std::auto_ptr<Gdiplus::Graphics> graphics;
-  std::auto_ptr<Gdiplus::Font> gdip_font;
-#endif  // JIL_BOOK_USE_GDIPLUS
-#endif  // __WXMSW__
-
-  int x = rect.GetLeft() + tab_area_padding_x_;
+  dc.SetPen(active_tab_pen);
+  dc.DrawLine(x, bottom, x + tab_area_padding_x_, bottom);
+  
+  x += tab_area_padding_x_;
 
   for (TabList::iterator it = tabs_.begin(); it != tabs_.end(); ++it) {
     Tab* tab = *it;
 
+    wxRect tab_rect(x, rect.y, tab->size, rect.height);
+    tab_rect.y += tab_margin_top_;
+    tab_rect.height -= tab_margin_top_;
+
+    // Background
+
+    wxRect tab_bg_rect = tab_rect;
+    tab_bg_rect.Deflate(1, 0);
+    tab_bg_rect.height += 1;  // + 1 to make the bottom line invisible.
+
+    if (tab->active) {
+      dc.SetPen(active_tab_pen);
+      dc.SetBrush(active_tab_brush);
+      dc.DrawLine(tab_rect.x, bottom, tab_rect.x + tab->size, bottom);
+      dc.DrawRectangle(tab_bg_rect);
+    } else {
+      if (!tab_pen.IsTransparent() || !tab_brush.IsTransparent()) {
+        dc.SetPen(tab_pen);
+        dc.SetBrush(tab_brush);
+        dc.DrawRectangle(tab_bg_rect);
+      }
+      dc.SetPen(active_tab_pen);
+      dc.DrawLine(tab_rect.x, bottom, tab_rect.x + tab->size, bottom);
+    }
+
+    // Foreground
+
     ColorId fg_color_id = tab->active ? ACTIVE_TAB_FG : TAB_FG;
-    const wxColour& tab_fg = theme_->GetColor(fg_color_id);
+    dc.SetTextForeground(theme_->GetColor(fg_color_id));
 
-    gc->SetFont(tab_area_->GetFont(), tab_fg);
+    wxRect tab_fg_rect = tab_rect;
+    tab_fg_rect.Deflate(tab_padding_);
+    tab_fg_rect.width -= char_width_;  // *
 
-    wxRect tab_rect(x + tab_padding_.x,
-                    rect.GetTop() + tab_padding_.y + tab_margin_top_,
-                    tab->size - tab_padding_.x - tab_padding_.x,
-                    rect.GetHeight() - tab_padding_.y - tab_margin_top_);
+    wxString label = tab->page->Page_Label();
 
-    if (tab_rect.GetWidth() > 0) {
+    if (!label.IsEmpty()) {
       if (tab->best_size <= tab->size) {
-        // Enough space to display the label completely.
-        gc->DrawText(tab->page->Page_Label(),
-                     tab_rect.GetLeft(),
-                     tab_rect.GetTop());
+        dc.DrawText(label, tab_fg_rect.x, tab_fg_rect.y);
       } else {
-        // No enough space.
-        wxString label = tab->page->Page_Label();
-
-        // Fit label to the given space.
-        label = label.Mid(0,
-                          editor::TailorLabel(dc, label, tab_rect.GetWidth()));
-
-        wxDouble fade_x = tab_rect.GetLeft();
-
-        if (label.size() > kFadeAwayChars) {
-          wxString label_before = label.Mid(0, label.size() - kFadeAwayChars);
-          gc->DrawText(label_before, tab_rect.GetLeft(), tab_rect.GetTop());
-
-          wxDouble label_before_width = 0.0f;
-          gc->GetTextExtent(label_before,
-                            &label_before_width,
-                            NULL,
-                            NULL,
-                            NULL);
-          fade_x += label_before_width;
-
-          label = label.Mid(label.size() - kFadeAwayChars);
+        if (tab_fg_rect.width > ellipsis_width_) {
+          int max_width = tab_fg_rect.width - ellipsis_width_;
+          size_t i = editor::TailorLabel(dc, label, max_width);
+          label = label.Mid(0, i) + kEllipsis;
+          dc.DrawText(label, tab_fg_rect.x, tab_fg_rect.y);
         }
-
-        // Fade away the last several characters.
-
-        wxDouble label_width = 0.0f;
-        gc->GetTextExtent(label, &label_width, NULL, NULL, NULL);
-
-#ifdef __WXMSW__
-#if JIL_BOOK_USE_GDIPLUS
-        // Lazily create GDI+ objects.
-        if (graphics.get() == NULL) {
-          graphics.reset(new Gdiplus::Graphics((HDC)dc.GetHDC()));
-          gdip_font.reset(GdiplusNewFont(tab_area_->GetFont()));
-        }
-
-        ColorId tab_bg_id = tab->active ? ACTIVE_TAB_BG : TAB_BG;
-        const wxColour& tab_bg = theme_->GetColor(tab_bg_id);
-
-        std::auto_ptr<Gdiplus::Brush> brush(new Gdiplus::LinearGradientBrush(
-          GdiplusRect(wxRect(fade_x,
-                             tab_rect.GetTop(),
-                             std::ceil(label_width),
-                             tab_rect.GetHeight())),
-          GdiplusColor(tab_fg),
-          GdiplusColor(tab_bg),
-          Gdiplus::LinearGradientModeHorizontal));
-
-        graphics->DrawString(label.wc_str(*wxConvUI),
-                             -1,
-                             gdip_font.get(),
-                             Gdiplus::PointF(fade_x, tab_rect.GetTop()),
-                             Gdiplus::StringFormat::GenericTypographic(),
-                             brush.get());
-#else
-        gc->DrawText(label, fade_x, tab_rect.GetTop());
-
-#endif  // JIL_BOOK_USE_GDIPLUS
-#else
-        // TODO: Fade away.
-        gc->DrawText(label, fade_x, tab_rect.GetTop());
-#endif  // __WXMSW__
       }
     }
 
-    // Modified indicator.
     if ((tab->page->Page_Flags() & BookPage::kModified) != 0) {
-      dc.SetTextForeground(tab_fg);
-      dc.DrawText(wxT("*"), tab_rect.GetRight() + 5, tab_rect.GetTop());
+      int x = tab_fg_rect.GetRight() + char_width_ / 2;
+      dc.DrawText(kStar, x, tab_fg_rect.y);
     }
 
     x += tab->size;
+  }
+
+  if (x < rect.GetRight()) {
+    dc.SetPen(active_tab_pen);
+    dc.DrawLine(x, bottom, rect.GetRight() + 1, bottom);
   }
 }
 
@@ -1060,7 +852,7 @@ bool BookCtrl::RemovePage(TabList::iterator it) {
   page_area_->Thaw();
 
   // Resize tabs since more space is available.
-  ResizeTabs(false);
+  ResizeTabs();
   tab_area_->Refresh();
 
   PostEvent(kEvtBookPageChange);
@@ -1102,17 +894,14 @@ BookCtrl::TabList::const_iterator BookCtrl::TabByPage(
 int BookCtrl::CalcTabBestSize(const wxString& label) const {
   int label_size = 0;
   tab_area_->GetTextExtent(label, &label_size, NULL);
-  return label_size + tab_padding_.x + tab_padding_.x;
+  // Add char_width_ for *.
+  return label_size + tab_padding_.x + tab_padding_.x + char_width_;
 }
 
 wxSize BookCtrl::CalcTabAreaBestSize() const {
   int y = tab_area_->GetCharHeight();
   y += tab_margin_top_ + tab_padding_.y + tab_padding_.y;
   return wxSize(-1, y);
-}
-
-void BookCtrl::RefreshTabArea() {
-  tab_area_->Refresh();
 }
 
 void BookCtrl::PostEvent(wxEventType event_type) {
