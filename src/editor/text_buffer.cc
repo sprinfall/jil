@@ -1223,8 +1223,8 @@ std::wstring TextBuffer::GetIndentStr(Coord ln) const {
 }
 
 Coord TextBuffer::GetExpectedIndent(Coord ln) const {
-  const luabridge::LuaRef& indent_func = ft_plugin_->indent_func();
-  if (!indent_func.isNil() && indent_func.isFunction()) {
+  IndentFunc indent_func = ft_plugin_->indent_func();
+  if (indent_func != NULL) {
     return indent_func(this, ln);
   } else {
     // By default, indent the same as the previous line.
@@ -1410,16 +1410,6 @@ TextPoint TextBuffer::UnpairedLeftKey(const TextPoint& point,
   }
 
   return kInvalidPoint;
-}
-
-TextPoint TextBuffer::unpairedleftkey(const TextPoint& point,
-                                      char l_key,
-                                      char r_key,
-                                      bool single_line) const {
-  return UnpairedLeftKey(point,
-                         static_cast<wchar_t>(l_key),
-                         static_cast<wchar_t>(r_key),
-                         single_line);
 }
 
 // TODO

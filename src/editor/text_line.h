@@ -6,10 +6,6 @@
 #include <string>
 #include <vector>
 
-extern "C" {
-#include "lua.h"
-}
-
 #include "editor/compile_config.h"
 #include "editor/text_point.h"
 #include "editor/text_range.h"
@@ -55,11 +51,10 @@ public:
     return CoordCast(data_.length());
   }
 
-  wchar_t Char(Coord off) const;
+  // Line length with tabs expanded.
+  Coord TabbedLength(int tab_stop, Coord count = kInvalidCoord) const;
 
-  // Lua wrapper for
-  //   wchar_t Char(Coord off) const
-  bool ischar(Coord off, char c) const;
+  wchar_t Char(Coord off) const;
 
   std::wstring Sub(Coord off, Coord count) const;
 
@@ -92,10 +87,6 @@ public:
                  bool ignore_spaces,
                  Coord* off = NULL) const;
 
-  // Lua CFunction wrapper of:
-  //   bool StartWith(const std::wstring&, bool, Coord*).
-  int startwith(lua_State* L);
-
   // NOTE: ignore_spaces will be ignored if c is an empty space.
   bool EndWith(wchar_t c,
                bool ignore_comments,
@@ -107,13 +98,6 @@ public:
                bool ignore_comments,
                bool ignore_spaces,
                Coord* off = NULL) const;
-
-  // Lua CFunction wrapper of:
-  //   bool EndWith(const std::wstring&, bool, bool, Coord*).
-  int endwith(lua_State* L);
-
-  // Line length with tabs expanded.
-  Coord TabbedLength(int tab_stop, Coord count = kInvalidCoord) const;
 
   //----------------------------------------------------------------------------
 

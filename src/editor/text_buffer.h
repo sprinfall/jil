@@ -185,14 +185,6 @@ public:
     return &options_;
   }
 
-  int tab_stop() const {
-    return options_.tab_stop;
-  }
-
-  int shift_width() const {
-    return options_.shift_width;
-  }
-
   // Get extra indent option.
   OptionValue GetIndentOption(const std::string& key) const;
 
@@ -407,12 +399,6 @@ public:
                             wchar_t l_key,
                             wchar_t r_key,
                             bool single_line = false) const;
-
-  // Lua wrapper for UnpairedLeftKey.
-  TextPoint unpairedleftkey(const TextPoint& point,
-                            char l_key,
-                            char r_key,
-                            bool single_line) const;
 
   // Find the first unpaired right key after the given point.
   // Examples:

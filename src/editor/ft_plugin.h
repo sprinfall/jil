@@ -12,12 +12,6 @@
 #include <utility>
 #include <vector>
 
-extern "C" {
-#include "lua.h"
-#include "lauxlib.h"
-}
-#include "LuaBridge/LuaBridge.h"
-
 #if JIL_MATCH_WORD_WITH_HASH
 #include "boost/unordered_map.hpp"
 #endif
@@ -25,6 +19,7 @@ extern "C" {
 #include "wx/string.h"
 
 #include "editor/defs.h"
+#include "editor/indent.h"
 #include "editor/lex.h"
 #include "editor/option.h"
 
@@ -37,7 +32,7 @@ typedef std::pair<std::wstring, Lex> WordLexPair;
 // File type specific options, lex, etc.
 class FtPlugin {
 public:
-  FtPlugin(const FileType& file_type, lua_State* lua_state);
+  explicit FtPlugin(const FileType& file_type);
   ~FtPlugin();
 
   const wxString& id() const {
@@ -103,23 +98,20 @@ public:
   //----------------------------------------------------------------------------
   // Indent
 
-  luabridge::LuaRef indent_func() const {
+  IndentFunc indent_func() const {
     return indent_func_;
-  }
-
-  void set_indent_func(const luabridge::LuaRef& indent_func) {
-    indent_func_ = indent_func;
   }
 
   bool MatchIndentKey(const std::wstring& str, size_t off, size_t len) const;
 
 private:
-  typedef std::map<wxString, luabridge::LuaRef> IndentFuncMap;
+  void InitIndentFunc();
+
+private:
+  typedef std::map<wxString, IndentFunc> IndentFuncMap;
   static IndentFuncMap indent_funcs_;
 
   FileType file_type_;
-
-  lua_State* lua_state_;
 
   // File type specific options.
   Options options_;
@@ -149,7 +141,7 @@ private:
   std::vector<WordLexPair> suffixes_;
 
   // Indent function for this file type.
-  luabridge::LuaRef indent_func_;
+  IndentFunc indent_func_;
 };
 
 }  // namespace editor

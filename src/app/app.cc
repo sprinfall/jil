@@ -9,13 +9,6 @@
 #pragma comment(lib, "vld")
 #endif  // __WXMSW__
 
-extern "C" {
-#include "lua.h"
-#include "lualib.h"
-#include "lauxlib.h"
-}
-#include "LuaBridge/LuaBridge.h"
-
 #include "wx/image.h"
 #include "wx/intl.h"
 #include "wx/sysopt.h"
@@ -244,8 +237,6 @@ App::App()
     , log_file_(NULL)
     , style_(new editor::Style)
     , binding_(new editor::Binding) {
-  lua_state_ = luaL_newstate();
-  luaL_openlibs(lua_state_);
 }
 
 // If OnInit() returns false, OnExit() won't be called.
@@ -260,8 +251,6 @@ App::~App() {
   wxDELETE(server_);
   wxDELETE(instance_checker_);
 #endif  // JIL_SINGLE_INSTANCE
-
-  lua_close(lua_state_);
 }
 
 bool App::OnInit() {
@@ -353,8 +342,6 @@ bool App::OnInit() {
   // Load session.
   session_.Load(user_data_dir + kSessionFile);
 
-  InitLua();
-
   // Create book frame.
   BookFrame* book_frame = new BookFrame(&options_, &session_);
   book_frame->set_theme(theme_);
@@ -412,17 +399,13 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
     }
   }
 
-  editor::FtPlugin* ft_plugin = new editor::FtPlugin(ft, lua_state_);
+  editor::FtPlugin* ft_plugin = new editor::FtPlugin(ft);
 
   wxString ftplugin_dir = ResourceDir(kFtPluginDir, ft_plugin->id());
   wxString ftplugin_user_dir = UserDataDir(kFtPluginDir, ft_plugin->id());
 
   // Lex
   LoadLexFile(ftplugin_dir + kLexFile, ft_plugin);
-
-  // Indent
-  luabridge::LuaRef indent_func = LoadIndentFunc(ftplugin_dir + kIndentFile);
-  ft_plugin->set_indent_func(indent_func);
 
   // Options
   editor::Options& ft_editor_options = ft_plugin->options();
@@ -855,67 +838,6 @@ void App::RestoreLastOpenedFiles(BookFrame* book_frame) {
     // The last opened files might not exist any more. Silently open them.
     book_frame->OpenFiles(files, true);
   }
-}
-
-void App::InitLua() {
-  using namespace editor;
-
-  luabridge::getGlobalNamespace(lua_state_)
-    .beginClass<OptionValue>("Option")
-      .addConstructor<void (*)()>()
-      .addFunction("AsNumber", &OptionValue::AsInt)
-      .addFunction("AsString", &OptionValue::AsString)
-      .addFunction("AsBool", &OptionValue::AsBool)
-    .endClass()
-    .beginClass<TextPoint>("Point")
-      .addConstructor<void (*)(Coord, Coord)>()
-      .addData("x", &TextPoint::x)
-      .addData("y", &TextPoint::y)
-      .addFunction("Set", &TextPoint::Set)
-      .addFunction("Reset", &TextPoint::Reset)
-      .addFunction("Valid", &TextPoint::Valid)
-    .endClass()
-    .beginClass<TextLine>("Line")
-      .addFunction("GetLength", &TextLine::Length)
-      .addFunction("GetTabbedLength", &TextLine::TabbedLength)
-      .addFunction("ischar", &TextLine::ischar)
-      .addFunction("GetIndent", &TextLine::GetIndent)
-      .addFunction("IsEmpty", &TextLine::IsEmpty)
-      .addFunction("firstnonspacechar", &TextLine::FirstNonSpaceChar)
-      .addFunction("lastnonspacechar", &TextLine::LastNonSpaceChar)
-      .addCFunction("StartWith", &TextLine::LuaStartWith)
-      .addCFunction("EndWith", &TextLine::LuaEndWith)
-    .endClass()
-    .beginClass<TextBuffer>("Buffer")
-      .addFunction("tab_stop", &TextBuffer::tab_stop)
-      .addFunction("shift_width", &TextBuffer::shift_width)
-      .addFunction("GetIndentOption", &TextBuffer::GetIndentOption)
-      .addFunction("GetLineCount", &TextBuffer::LineCount)
-      .addFunction("GetLine", &TextBuffer::Line)
-      .addFunction("prevnonemptyline", &TextBuffer::PrevNonEmptyLine)
-      .addFunction("GetLineIndent", &TextBuffer::GetIndent)
-      .addFunction("unpairedleftkey", &TextBuffer::unpairedleftkey)
-    .endClass();
-}
-
-luabridge::LuaRef App::LoadIndentFunc(const wxString& indent_file) {
-  std::string bytes;
-  if (editor::ReadBytes(indent_file, &bytes) != 0) {
-    return luabridge::LuaRef(lua_state_);
-  }
-
-  int err = luaL_dostring(lua_state_, bytes.c_str());
-
-  if (err != LUA_OK) {
-    // Get the error message from stack top.
-    if (lua_gettop(lua_state_) != 0) {
-      wxString msg = lua_tostring(lua_state_, -1);
-      wxMessageBox(msg, kTrError, wxOK | wxCENTRE | wxICON_ERROR, NULL);
-    }
-    return luabridge::LuaRef(lua_state_);
-  }
-
-  return luabridge::getGlobal(lua_state_, "indent");
 }
 
 }  // namespace jil

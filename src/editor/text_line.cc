@@ -1,10 +1,4 @@
 #include "editor/text_line.h"
-
-extern "C" {
-#include "lauxlib.h"
-}
-#include "LuaBridge/LuaBridge.h"
-
 #include "editor/compile_config.h"
 #include "editor/text_extent.h"
 #include "editor/defs.h"
@@ -30,15 +24,15 @@ TextLine::~TextLine() {
   ClearContainer(&lex_elements_);
 }
 
+Coord TextLine::TabbedLength(int tab_stop, Coord count) const {
+  return TabbedLineLength(tab_stop, data_, count);
+}
+
 wchar_t TextLine::Char(Coord off) const {
   if (off >= Length()) {
     return LF;
   }
   return data_[off];
-}
-
-bool TextLine::ischar(Coord off, char c) const {
-  return (c == Char(off));
 }
 
 std::wstring TextLine::Sub(Coord off, Coord count) const {
@@ -113,26 +107,6 @@ bool TextLine::StartWith(const std::wstring& str,
   }
 
   return false;
-}
-
-int TextLine::startwith(lua_State* L) {
-  int n = lua_gettop(L);  // Number of arguments
-
-  if (n != 3 || !lua_isstring(L, 2) || !lua_isboolean(L, 3)) {
-    luaL_error(L, "incorrect argument");
-  }
-
-  const char* cstr = lua_tostring(L, 2);
-  std::wstring str(cstr, cstr + strlen(cstr));
-
-  bool ignore_spaces = lua_toboolean(L, 3) != 0;
-
-  int off = 0;
-  bool result = StartWith(str, ignore_spaces, &off);
-
-  luabridge::push(L, result);
-  luabridge::push(L, off);
-  return 2;
 }
 
 bool TextLine::EndWith(wchar_t c,
@@ -233,30 +207,6 @@ bool TextLine::EndWith(const std::wstring& str,
   return false;
 }
 
-int TextLine::endwith(lua_State* L) {
-  int n = lua_gettop(L);  // Number of arguments
-
-  if (n != 4 ||
-      !lua_isstring(L, 2) ||
-      !lua_isboolean(L, 3) ||
-      !lua_isboolean(L, 4)) {
-    luaL_error(L, "incorrect argument");
-  }
-
-  const char* cstr = lua_tostring(L, 2);
-  std::wstring str(cstr, cstr + strlen(cstr));
-
-  bool ignore_comments = lua_toboolean(L, 3) != 0;
-  bool ignore_spaces = lua_toboolean(L, 4) != 0;
-
-  int off = 0;
-  bool result = EndWith(str, ignore_comments, ignore_spaces, &off);
-
-  luabridge::push(L, result);
-  luabridge::push(L, off);
-  return 2;
-}
-
 Coord TextLine::FirstNonSpaceChar(Coord off) const {
   assert(off >= 0);
 
@@ -309,10 +259,6 @@ std::wstring TextLine::GetIndentStr() const {
   } else {
     return data_.substr(0, i);
   }
-}
-
-Coord TextLine::TabbedLength(int tab_stop, Coord count) const {
-  return TabbedLineLength(tab_stop, data_, count);
 }
 
 void TextLine::InsertChar(Coord off, wchar_t c) {

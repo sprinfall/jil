@@ -20,12 +20,6 @@
 #include "app/option.h"
 #include "app/session.h"
 
-struct lua_State;
-
-namespace luabridge {
-class LuaRef;
-}
-
 class wxSingleInstanceChecker;
 
 // App name used for paths, config, and other places the user doesn't see.
@@ -163,12 +157,6 @@ private:
   // Open the last opened files, activate the last active file.
   void RestoreLastOpenedFiles(BookFrame* book_frame);
 
-  // Bind classes, functions and variables to Lua.
-  void InitLua();
-
-  // Load the indent.lua file, return the indent function.
-  luabridge::LuaRef LoadIndentFunc(const wxString& indent_file);
-
 private:
   wxSingleInstanceChecker* instance_checker_;
   wxServer* server_;
@@ -205,8 +193,6 @@ private:
 
   // Status fields for status line.
   std::vector<editor::StatusBar::FieldInfo> status_fields_;
-
-  lua_State* lua_state_;
 };
 
 DECLARE_APP(App)
