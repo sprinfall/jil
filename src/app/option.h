@@ -20,6 +20,7 @@ const char* const FONT_SIZE = "font_size";
 const char* const THEME = "theme";
 const char* const SWITCH_CWD = "switch_cwd";
 const char* const RESTORE_FILES = "restore_files";
+const char* const SHOW_FULL_PATH = "show_full_path";
 
 // Names of editor options.
 const char* const WRAP = "wrap";
@@ -40,15 +41,29 @@ class Options {
   Options()
       : cjk_filters(0)
       , switch_cwd(false)
-      , restore_files(true) {
+      , restore_files(true)
+      , show_full_path(true) {
   }
 
   int cjk_filters;
+
+  // Encoding for new created file.
   editor::Encoding file_encoding;
+
+  // Font for the text editor.
   wxFont font;
+
+  // Theme name.
   wxString theme;
+
+  // Switch Current Working Dir when switch text page.
   bool switch_cwd;
+
+  // Remember last open files.
   bool restore_files;
+
+  // Show file full path in the title bar.
+  bool show_full_path;
 };
 
 }  // namespace jil

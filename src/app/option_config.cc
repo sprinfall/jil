@@ -188,14 +188,12 @@ void ParseAppOptions(const Setting& setting, Options* options) {
 
   options->font = font;
 
-  // Switch CWD
   GetBool(setting_map, SWITCH_CWD, &options->switch_cwd);
 
-  // Theme
   GetWxString(setting_map, THEME, &options->theme);
 
-  // Restore files
   GetBool(setting_map, RESTORE_FILES, &options->restore_files);
+  GetBool(setting_map, SHOW_FULL_PATH, &options->show_full_path);
 }
 
 // NOTE: If a setting is not provided, don't set the related option.

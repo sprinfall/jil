@@ -1104,7 +1104,10 @@ void BookFrame::OnTextBookPageChange(wxCommandEvent& evt) {
   // Clear status fields if all pages are removed.
   if (ActiveTextBook()->PageCount() == 0) {
     UpdateStatusFields();
-    UpdateTitle();
+
+    if (options_->show_full_path) {
+      UpdateTitle();
+    }
 
     // Transfer focus to tool book if it's shown.
     if (tool_book_->IsShown()) {
@@ -1121,7 +1124,10 @@ void BookFrame::OnTextBookPageChange(wxCommandEvent& evt) {
 
 void BookFrame::OnTextBookPageSwitch(wxCommandEvent& evt) {
   UpdateStatusFields();
-  UpdateTitle();
+
+  if (options_->show_full_path) {
+    UpdateTitle();
+  }
 }
 
 void BookFrame::OnToolBookPageChange(wxCommandEvent& evt) {
