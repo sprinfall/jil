@@ -12,7 +12,7 @@ editor::StatusBar::FieldId ParseFieldId(const std::string& field_id_str) {
     "cwd",
     "encoding",
     "file_format",
-    "ft_plugin",
+    "file_type",
     "caret",
     "key_stroke",
     "space",

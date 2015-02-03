@@ -1,7 +1,6 @@
 if(JIL_ENABLE_UT)
     add_subdirectory(gtest)
 endif()
-add_subdirectory(lua)
 add_subdirectory(libconfig)
 add_subdirectory(pugixml)
 add_subdirectory(uchardet)
