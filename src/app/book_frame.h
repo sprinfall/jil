@@ -99,6 +99,13 @@ public:
   void ShowFind();
   void ShowReplace();
 
+  // Toggle the wrap state of the active text page.
+  void Wrap();
+  // Toggle the line number show state of the active text page.
+  void ShowNumber();
+  // Toggle the white space show state of the active text page.
+  void ShowSpace();
+
   TextPage* ActiveTextPage() const;
   editor::TextBuffer* ActiveBuffer() const;
 
@@ -156,6 +163,7 @@ protected:
   void OnQuit(wxCommandEvent& evt);
 
   void OnMenuEdit(wxCommandEvent& evt);
+  void OnMenuView(wxCommandEvent& evt);
   void OnMenuTools(wxCommandEvent& evt);
   void OnMenuHelp(wxCommandEvent& evt);
 
@@ -164,6 +172,7 @@ protected:
 
   void OnFileUpdateUI(wxUpdateUIEvent& evt);
   void OnEditUpdateUI(wxUpdateUIEvent& evt);
+  void OnViewUpdateUI(wxUpdateUIEvent& evt);
 
   void OnClose(wxCloseEvent& evt);
 
@@ -231,8 +240,9 @@ private:
 
   void LoadMenus();
 
-  bool GetFileMenuEnableState(int menu_id, wxString* text = NULL);
-  bool GetEditMenuEnableState(int menu_id);
+  bool GetFileMenuState(int menu_id, wxString* text = NULL);
+  bool GetEditMenuState(int menu_id);
+  bool GetViewMenuState(int menu_id, bool* check = NULL);
   bool GetMenuEnableState(int menu_id);
 
   // Clear and recreate the items for Recent Files menu.

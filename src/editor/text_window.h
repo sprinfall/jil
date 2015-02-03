@@ -115,9 +115,20 @@ public:
   virtual void OnBufferChange(ChangeType type) override;
 
   //----------------------------------------------------------------------------
-  // Wrap
+  // Options
 
+  const Options& options() const {
+    return options_;
+  }
+
+  // Wrap or unwrap lines.
   void Wrap(bool wrap);
+
+  // Show or hide line number.
+  void ShowNumber(bool show_number);
+
+  // Show or hide white space.
+  void ShowSpace(bool show_space);
 
   //----------------------------------------------------------------------------
 
@@ -502,10 +513,9 @@ protected:
   // Some text window cannot be changed, e.g., find result.
   bool allow_text_change_;
 
-  // Reference to the options in text buffer.
-  const Options* options_;
-
-  bool wrap_;
+  // Options initially copied from text buffer.
+  // TODO: Only copy view options (wrap, show_number, etc.).
+  Options options_;
 
   Style* style_;
   SharedTheme theme_;

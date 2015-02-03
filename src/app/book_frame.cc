@@ -93,17 +93,26 @@ EVT_MENU_RANGE(ID_MENU_FILE_RECENT_FILE0, \
 EVT_MENU(wxID_EXIT, BookFrame::OnQuit)
 
 EVT_MENU_RANGE(ID_MENU_EDIT_BEGIN, ID_MENU_EDIT_END - 1, BookFrame::OnMenuEdit)
+
+EVT_MENU_RANGE(ID_MENU_VIEW_BEGIN, ID_MENU_VIEW_END - 1, BookFrame::OnMenuView)
+
 EVT_MENU_RANGE(ID_MENU_TOOLS_BEGIN, \
                ID_MENU_TOOLS_END - 1, \
                BookFrame::OnMenuTools)
 EVT_MENU_RANGE(ID_MENU_HELP_BEGIN, ID_MENU_HELP_END - 1, BookFrame::OnMenuHelp)
+
 // Update UI
 EVT_UPDATE_UI_RANGE(ID_MENU_FILE_BEGIN, \
                     ID_MENU_FILE_END - 1, \
                     BookFrame::OnFileUpdateUI)
+
 EVT_UPDATE_UI_RANGE(ID_MENU_EDIT_BEGIN, \
                     ID_MENU_EDIT_END - 1, \
                     BookFrame::OnEditUpdateUI)
+
+EVT_UPDATE_UI_RANGE(ID_MENU_VIEW_BEGIN, \
+                    ID_MENU_VIEW_END - 1, \
+                    BookFrame::OnViewUpdateUI)
 
 EVT_CLOSE(BookFrame::OnClose)
 
@@ -362,6 +371,30 @@ void BookFrame::ShowFind() {
 
 void BookFrame::ShowReplace() {
   ShowFindWindow(::jil::FindWindow::kReplaceMode);
+}
+
+void BookFrame::Wrap() {
+  TextPage* text_page = ActiveTextPage();
+  if (text_page != NULL) {
+    bool wrap = !text_page->options().wrap;
+    text_page->Wrap(wrap);
+  }
+}
+
+void BookFrame::ShowNumber() {
+  TextPage* text_page = ActiveTextPage();
+  if (text_page != NULL) {
+    bool show_number = !text_page->options().show_number;
+    text_page->ShowNumber(show_number);
+  }
+}
+
+void BookFrame::ShowSpace() {
+  TextPage* text_page = ActiveTextPage();
+  if (text_page != NULL) {
+    bool show_space = !text_page->options().show_space;
+    text_page->ShowSpace(show_space);
+  }
 }
 
 TextPage* BookFrame::ActiveTextPage() const {
@@ -990,12 +1023,22 @@ void BookFrame::OnMenuEdit(wxCommandEvent& evt) {
 
 //------------------------------------------------------------------------------
 
+void BookFrame::OnMenuView(wxCommandEvent& evt) {
+  // View menu has no menu items mapping to text function.
+  // So only search for void function.
+  int menu = evt.GetId();
+  editor::VoidFunc* void_func = binding_->GetVoidFuncByMenu(menu);
+  if (void_func != NULL) {
+    void_func->Exec();
+  }
+}
+
+//------------------------------------------------------------------------------
+
 void BookFrame::OnMenuTools(wxCommandEvent& evt) {
-  switch (evt.GetId()) {
-    case ID_MENU_TOOLS_OPTIONS: {
-      // TODO
-      break;
-    }
+  int menu_id = evt.GetId();
+
+  if (menu_id == ID_MENU_TOOLS_OPTIONS) {
   }
 }
 
@@ -1040,7 +1083,7 @@ bool BookFrame::ExecFuncByMenu(int menu) {
 void BookFrame::OnFileUpdateUI(wxUpdateUIEvent& evt) {
   int menu_id = evt.GetId();
   wxString label;
-  bool state = GetFileMenuEnableState(menu_id, &label);
+  bool state = GetFileMenuState(menu_id, &label);
   evt.Enable(state);
   if (!label.IsEmpty()) {
     evt.SetText(label);
@@ -1049,8 +1092,15 @@ void BookFrame::OnFileUpdateUI(wxUpdateUIEvent& evt) {
 
 void BookFrame::OnEditUpdateUI(wxUpdateUIEvent& evt) {
   int menu_id = evt.GetId();
-  bool state = GetEditMenuEnableState(menu_id);
+  bool state = GetEditMenuState(menu_id);
   evt.Enable(state);
+}
+
+void BookFrame::OnViewUpdateUI(wxUpdateUIEvent& evt) {
+  bool check = false;
+  bool state = GetViewMenuState(evt.GetId(), &check);
+  evt.Enable(state);
+  evt.Check(check);
 }
 
 void BookFrame::OnClose(wxCloseEvent& evt) {
@@ -1753,11 +1803,37 @@ void BookFrame::LoadMenus() {
   menu_bar->Append(menu_edit, kTrMenuEdit);
 
   //------------------------------------
+  // View
+
+  wxMenu* view_menu = new wxMenu;
+
+  AppendMenuItem(view_menu, ID_MENU_VIEW_WRAP, kTrViewWrap, wxITEM_CHECK);
+
+  AppendMenuItem(view_menu,
+                 ID_MENU_VIEW_SHOW_NUMBER,
+                 kTrViewShowNumber,
+                 wxITEM_CHECK);
+
+  AppendMenuItem(view_menu,
+                 ID_MENU_VIEW_SHOW_SPACE,
+                 kTrViewShowSpace,
+                 wxITEM_CHECK);
+
+  view_menu->AppendSeparator();
+
+  AppendMenuItem(view_menu,
+                 ID_MENU_VIEW_FULL_SCREEN,
+                 kTrViewFullScreen,
+                 wxITEM_CHECK);
+
+  menu_bar->Append(view_menu, kTrMenuView);
+
+  //------------------------------------
   // Tools
 
-  wxMenu* menu_tools = new wxMenu;
-  menu_tools->Append(ID_MENU_TOOLS_OPTIONS, kTrToolsOptions);
-  menu_bar->Append(menu_tools, kTrMenuTools);
+  wxMenu* tools_menu = new wxMenu;
+  tools_menu->Append(ID_MENU_TOOLS_OPTIONS, kTrToolsOptions);
+  menu_bar->Append(tools_menu, kTrMenuTools);
 
   //------------------------------------
   // Help
@@ -1770,7 +1846,7 @@ void BookFrame::LoadMenus() {
   SetMenuBar(menu_bar);
 }
 
-bool BookFrame::GetFileMenuEnableState(int menu_id, wxString* text) {
+bool BookFrame::GetFileMenuState(int menu_id, wxString* text) {
   using namespace editor;
 
   if (menu_id == ID_MENU_FILE_SAVE_AS) {
@@ -1810,7 +1886,7 @@ bool BookFrame::GetFileMenuEnableState(int menu_id, wxString* text) {
   return state;
 }
 
-bool BookFrame::GetEditMenuEnableState(int menu_id) {
+bool BookFrame::GetEditMenuState(int menu_id) {
   BookPage* focused_page = GetFocusedPage();
   if (focused_page == NULL) {
     return false;
@@ -1818,11 +1894,36 @@ bool BookFrame::GetEditMenuEnableState(int menu_id) {
   return focused_page->Page_EditMenuState(menu_id);
 }
 
+bool BookFrame::GetViewMenuState(int menu_id, bool* check) {
+  TextPage* text_page = ActiveTextPage();
+  bool state = text_page != NULL;
+
+  if (state && check != NULL) {
+    switch (menu_id) {
+      case ID_MENU_VIEW_WRAP:
+        *check = text_page->options().wrap;
+        break;
+
+      case ID_MENU_VIEW_SHOW_NUMBER:
+        *check = text_page->options().show_number;
+        break;
+
+      case ID_MENU_VIEW_SHOW_SPACE:
+        *check = text_page->options().show_space;
+        break;
+    }
+  }
+
+  return state;
+}
+
 bool BookFrame::GetMenuEnableState(int menu_id) {
   if (menu_id >= ID_MENU_FILE_BEGIN && menu_id < ID_MENU_FILE_END) {
-    return GetFileMenuEnableState(menu_id);
+    return GetFileMenuState(menu_id);
   } else if (menu_id >= ID_MENU_EDIT_BEGIN && menu_id < ID_MENU_EDIT_END) {
-    return GetEditMenuEnableState(menu_id);
+    return GetEditMenuState(menu_id);
+  } else if (menu_id >= ID_MENU_VIEW_BEGIN && menu_id < ID_MENU_VIEW_END) {
+    return GetViewMenuState(menu_id);
   }
 
   return true;

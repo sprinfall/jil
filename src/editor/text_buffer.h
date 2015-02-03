@@ -181,8 +181,8 @@ public:
   //----------------------------------------------------------------------------
   // Options
 
-  const Options* options() const {
-    return &options_;
+  const Options& options() const {
+    return options_;
   }
 
   // Get extra indent option.

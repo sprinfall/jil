@@ -28,6 +28,7 @@
 
 #define kTrMenuFile           _("&File")
 #define kTrMenuEdit           _("&Edit")
+#define kTrMenuView           _("&View")
 #define kTrMenuTools          _("&Tools")
 #define kTrMenuHelp           _("&Help")
 
@@ -63,6 +64,11 @@
 #define kTrEditReplace        _("Rep&lace")
 #define kTrEditGoTo           _("&Go To...")
 #define kTrEditFormat         _("&Format")
+
+#define kTrViewWrap           _("&Wrap")
+#define kTrViewShowNumber     _("Show &Line Number")
+#define kTrViewShowSpace      _("Show White &Space")
+#define kTrViewFullScreen     _("&Full Screen")
 
 // For find result page.
 #define kTrEditClearAll       _("C&lear All")

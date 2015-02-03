@@ -168,6 +168,21 @@ void ShowReplace() {
   book_frame->ShowReplace();
 }
 
+void Wrap() {
+  GET_BOOK_FRAME_OR_RETURN;
+  book_frame->Wrap();
+}
+
+void ShowNumber() {
+  GET_BOOK_FRAME_OR_RETURN;
+  book_frame->ShowNumber();
+}
+
+void ShowSpace() {
+  GET_BOOK_FRAME_OR_RETURN;
+  book_frame->ShowSpace();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 #if JIL_SINGLE_INSTANCE
@@ -678,6 +693,10 @@ void App::InitCommands() {
   AddVoidCmd("prev_page", PrevPage, 0);
   AddVoidCmd("next_stack_page", NextStackPage, 0);
   AddVoidCmd("prev_stack_page", PrevStackPage, 0);
+
+  AddVoidCmd("wrap", Wrap, ID_MENU_VIEW_WRAP);
+  AddVoidCmd("show_number", ShowNumber, ID_MENU_VIEW_SHOW_NUMBER);
+  AddVoidCmd("show_space", ShowSpace, ID_MENU_VIEW_SHOW_SPACE);
 }
 
 void App::AddTextCmd(const char* name,
