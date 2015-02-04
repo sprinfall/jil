@@ -183,6 +183,11 @@ void ShowSpace() {
   book_frame->ShowSpace();
 }
 
+void FullScreen() {
+  GET_BOOK_FRAME_OR_RETURN;
+  book_frame->FullScreen();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 #if JIL_SINGLE_INSTANCE
@@ -697,6 +702,7 @@ void App::InitCommands() {
   AddVoidCmd("wrap", Wrap, ID_MENU_VIEW_WRAP);
   AddVoidCmd("show_number", ShowNumber, ID_MENU_VIEW_SHOW_NUMBER);
   AddVoidCmd("show_space", ShowSpace, ID_MENU_VIEW_SHOW_SPACE);
+  AddVoidCmd("full_screen", FullScreen, ID_MENU_VIEW_FULL_SCREEN);
 }
 
 void App::AddTextCmd(const char* name,

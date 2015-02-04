@@ -397,6 +397,23 @@ void BookFrame::ShowSpace() {
   }
 }
 
+void BookFrame::FullScreen() {
+  // Keep menu bar visible.
+  long style = wxFULLSCREEN_NOTOOLBAR |
+               wxFULLSCREEN_NOSTATUSBAR |
+               wxFULLSCREEN_NOBORDER |
+               wxFULLSCREEN_NOCAPTION;
+
+  bool show = !IsFullScreen();
+
+  // Save the screen rect for session in case exits from full screen mode.
+  if (show) {
+    last_screen_rect_ = GetScreenRect();
+  }
+
+  ShowFullScreen(show, style);
+}
+
 TextPage* BookFrame::ActiveTextPage() const {
   TextPage* text_page = ActiveTextBook()->ActiveTextPage();
   if (text_page == NULL) {
@@ -1131,7 +1148,11 @@ void BookFrame::OnClose(wxCloseEvent& evt) {
     session_->set_book_frame_maximized(true);
   } else {
     session_->set_book_frame_maximized(false);
-    session_->set_book_frame_rect(GetScreenRect());
+    if (IsFullScreen()) {
+      session_->set_book_frame_rect(last_screen_rect_);
+    } else {
+      session_->set_book_frame_rect(GetScreenRect());
+    }
   }
 
   ::jil::FindWindow* find_window = GetFindWindow();
@@ -1735,72 +1756,72 @@ void BookFrame::LoadMenus() {
   //------------------------------------
   // File
 
-  wxMenu* menu_file = new wxMenu;
+  wxMenu* file_menu = new wxMenu;
   // - New
-  AppendMenuItem(menu_file, ID_MENU_FILE_NEW, kTrFileNew);
+  AppendMenuItem(file_menu, ID_MENU_FILE_NEW, kTrFileNew);
 
 #if JIL_MULTIPLE_WINDOW
-  menu_file->AppendSeparator();
-  AppendMenuItem(menu_file, ID_MENU_FILE_NEW_WINDOW, kTrFileNewFrame);
+  file_menu->AppendSeparator();
+  AppendMenuItem(file_menu, ID_MENU_FILE_NEW_WINDOW, kTrFileNewFrame);
 #endif  // JIL_MULTIPLE_WINDOW
 
   // - Open
-  menu_file->AppendSeparator();
-  AppendMenuItem(menu_file, ID_MENU_FILE_OPEN, kTrFileOpen);
-  menu_file->AppendSeparator();
+  file_menu->AppendSeparator();
+  AppendMenuItem(file_menu, ID_MENU_FILE_OPEN, kTrFileOpen);
+  file_menu->AppendSeparator();
   // - Close
-  AppendMenuItem(menu_file, ID_MENU_FILE_CLOSE, kTrFileClose);
-  AppendMenuItem(menu_file, ID_MENU_FILE_CLOSE_ALL, kTrFileCloseAll);
-  menu_file->AppendSeparator();
-  AppendMenuItem(menu_file, ID_MENU_FILE_SAVE, kTrFileSave);
-  AppendMenuItem(menu_file, ID_MENU_FILE_SAVE_AS, kTrFileSaveAs);
-  AppendMenuItem(menu_file, ID_MENU_FILE_SAVE_ALL, kTrFileSaveAll);
-  menu_file->AppendSeparator();
+  AppendMenuItem(file_menu, ID_MENU_FILE_CLOSE, kTrFileClose);
+  AppendMenuItem(file_menu, ID_MENU_FILE_CLOSE_ALL, kTrFileCloseAll);
+  file_menu->AppendSeparator();
+  AppendMenuItem(file_menu, ID_MENU_FILE_SAVE, kTrFileSave);
+  AppendMenuItem(file_menu, ID_MENU_FILE_SAVE_AS, kTrFileSaveAs);
+  AppendMenuItem(file_menu, ID_MENU_FILE_SAVE_ALL, kTrFileSaveAll);
+  file_menu->AppendSeparator();
   recent_files_menu_ = new wxMenu;
-  menu_file->AppendSubMenu(recent_files_menu_, kTrFileRecentFiles);
+  file_menu->AppendSubMenu(recent_files_menu_, kTrFileRecentFiles);
   UpdateRecentFilesMenu();
-  menu_file->AppendSeparator();
+  file_menu->AppendSeparator();
   // - Exit
-  AppendMenuItem(menu_file, wxID_EXIT, kTrFileExit);
+  AppendMenuItem(file_menu, wxID_EXIT, kTrFileExit);
 
-  menu_bar->Append(menu_file, kTrMenuFile);
+  menu_bar->Append(file_menu, kTrMenuFile);
 
   //------------------------------------
   // Edit
 
-  wxMenu* menu_edit = new wxMenu;
+  wxMenu* edit_menu = new wxMenu;
 
-  AppendMenuItem(menu_edit, ID_MENU_EDIT_UNDO, kTrEditUndo);
-  AppendMenuItem(menu_edit, ID_MENU_EDIT_REDO, kTrEditRedo);
-  menu_edit->AppendSeparator();
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_UNDO, kTrEditUndo);
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_REDO, kTrEditRedo);
+  edit_menu->AppendSeparator();
 
-  AppendMenuItem(menu_edit, ID_MENU_EDIT_CUT, kTrEditCut);
-  AppendMenuItem(menu_edit, ID_MENU_EDIT_COPY, kTrEditCopy);
-  AppendMenuItem(menu_edit, ID_MENU_EDIT_PASTE, kTrEditPaste);
-  menu_edit->AppendSeparator();
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_CUT, kTrEditCut);
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_COPY, kTrEditCopy);
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_PASTE, kTrEditPaste);
+  edit_menu->AppendSeparator();
 
   // - Line
-  wxMenu* menu_line = new wxMenu;
-  AppendMenuItem(menu_line, ID_MENU_EDIT_AUTO_INDENT, kTrEditAutoIndent);
-  AppendMenuItem(menu_line, ID_MENU_EDIT_INCREASE_INDENT, kTrEditIncreaseIndent);
-  AppendMenuItem(menu_line, ID_MENU_EDIT_DECREASE_INDENT, kTrEditDecreaseIndent);
-  menu_edit->AppendSubMenu(menu_line, kTrEditLine);
+  wxMenu* line_menu = new wxMenu;
+  AppendMenuItem(line_menu, ID_MENU_EDIT_AUTO_INDENT, kTrEditAutoIndent);
+  AppendMenuItem(line_menu, ID_MENU_EDIT_INCREASE_INDENT, kTrEditIncreaseIndent);
+  AppendMenuItem(line_menu, ID_MENU_EDIT_DECREASE_INDENT, kTrEditDecreaseIndent);
+  edit_menu->AppendSubMenu(line_menu, kTrEditLine);
 
   // - Comment
-  wxMenu* menu_comment = new wxMenu;
-  AppendMenuItem(menu_comment, ID_MENU_EDIT_COMMENT, kTrEditComment);
-  AppendMenuItem(menu_comment, ID_MENU_EDIT_UNCOMMENT, kTrEditUncomment);
-  AppendMenuItem(menu_comment, ID_MENU_EDIT_TOGGLE_COMMENT, kTrEditToggleComment);
-  menu_edit->AppendSubMenu(menu_comment, kTrEditComment);
+  wxMenu* comment_menu = new wxMenu;
+  AppendMenuItem(comment_menu, ID_MENU_EDIT_COMMENT, kTrEditComment);
+  AppendMenuItem(comment_menu, ID_MENU_EDIT_UNCOMMENT, kTrEditUncomment);
+  AppendMenuItem(comment_menu, ID_MENU_EDIT_TOGGLE_COMMENT, kTrEditToggleComment);
+  edit_menu->AppendSubMenu(comment_menu, kTrEditComment);
 
-  AppendMenuItem(menu_edit, ID_MENU_EDIT_FORMAT, kTrEditFormat);
-  menu_edit->AppendSeparator();
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_FORMAT, kTrEditFormat);
+  edit_menu->AppendSeparator();
 
-  AppendMenuItem(menu_edit, ID_MENU_EDIT_FIND, kTrEditFind);
-  AppendMenuItem(menu_edit, ID_MENU_EDIT_REPLACE, kTrEditReplace);
-  AppendMenuItem(menu_edit, ID_MENU_EDIT_GO_TO, kTrEditGoTo);
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_FIND, kTrEditFind);
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_REPLACE, kTrEditReplace);
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_GO_TO, kTrEditGoTo);
 
-  menu_bar->Append(menu_edit, kTrMenuEdit);
+  menu_bar->Append(edit_menu, kTrMenuEdit);
 
   //------------------------------------
   // View
@@ -1838,10 +1859,10 @@ void BookFrame::LoadMenus() {
   //------------------------------------
   // Help
 
-  wxMenu* menu_Help = new wxMenu;
-  menu_Help->Append(ID_MENU_HELP_VIEW_ONLINE, kTrHelpViewOnline);
-  menu_Help->Append(ID_MENU_HELP_ABOUT, kTrHelpAbout);
-  menu_bar->Append(menu_Help, kTrMenuHelp);
+  wxMenu* help_menu = new wxMenu;
+  help_menu->Append(ID_MENU_HELP_VIEW_ONLINE, kTrHelpViewOnline);
+  help_menu->Append(ID_MENU_HELP_ABOUT, kTrHelpAbout);
+  menu_bar->Append(help_menu, kTrMenuHelp);
 
   SetMenuBar(menu_bar);
 }

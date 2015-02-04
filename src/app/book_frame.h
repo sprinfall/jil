@@ -106,6 +106,9 @@ public:
   // Toggle the white space show state of the active text page.
   void ShowSpace();
 
+  // Show full screen or not.
+  void FullScreen();
+
   TextPage* ActiveTextPage() const;
   editor::TextBuffer* ActiveBuffer() const;
 
@@ -304,6 +307,9 @@ private:
   // File menu -> Recent Files
   std::list<wxString> recent_files_;
   wxMenu* recent_files_menu_;
+
+  // Screen rect before show full screen.
+  wxRect last_screen_rect_;
 };
 
 }  // namespace jil
