@@ -1916,6 +1916,13 @@ bool BookFrame::GetEditMenuState(int menu_id) {
 }
 
 bool BookFrame::GetViewMenuState(int menu_id, bool* check) {
+  if (menu_id == ID_MENU_VIEW_FULL_SCREEN) {
+    if (check != NULL) {
+      *check = IsFullScreen();
+      return true;
+    }
+  }
+
   TextPage* text_page = ActiveTextPage();
   bool state = text_page != NULL;
 
