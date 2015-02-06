@@ -4,6 +4,7 @@
 
 // Support undo & redo based on Command pattern.
 
+#include <list>
 #include <vector>
 #include "wx/string.h"
 #include "wx/datetime.h"
@@ -13,6 +14,7 @@
 namespace jil {
 namespace editor {
 
+class LexComment;
 class TextBuffer;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -462,6 +464,49 @@ private:
 private:
   std::vector<std::wstring> old_indent_strs_;
   std::vector<std::wstring> new_indent_strs_;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Comment a range of text.
+class CommentAction : public Action, public RangeAction {
+public:
+  CommentAction(TextBuffer* buffer,
+                const TextRange& range,
+                TextDir dir,
+                bool rect,
+                bool selected);
+  virtual ~CommentAction();
+
+  virtual void Exec() override;
+  virtual void Undo() override;
+
+  virtual TextPoint CaretPointAfterExec() const override;
+
+  virtual RangeAction* AsRangeAction() override { return this; }
+
+  virtual TextRange SelectionAfterExec() const override;
+
+private:
+  bool IsComment(const TextPoint& point) const;
+
+  bool ByLine(const TextRange& range) const;
+
+  void CommentLines(const LineRange& line_range);
+
+  void CommentBlock(const TextRange& range);
+
+  void Insert(const TextPoint& point, const std::wstring& str);
+
+  const LexComment& GetSlineComment() const;
+  const LexComment& GetBlockComment() const;
+
+private:
+  typedef std::pair<TextPoint, Coord> ChangeSet;
+  std::list<ChangeSet> change_sets_;
+
+  TextPoint point_begin_delta_;
+  TextPoint point_end_delta_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

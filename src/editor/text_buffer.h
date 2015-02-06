@@ -242,6 +242,9 @@ public:
 
   bool AreLinesAllEmpty(const LineRange& line_range, bool ignore_spaces) const;
 
+  // Get the lex at the given point.
+  Lex GetLex(const TextPoint& point) const;
+
   //----------------------------------------------------------------------------
 
   TextPoint point_begin() const {

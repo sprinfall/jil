@@ -1789,8 +1789,12 @@ void BookFrame::LoadMenus() {
   //------------------------------------
   // Edit
 
+  // Edit menu will be created when some page is focused.
+  // See: virtual bool BookPage::Page_OnMenu(int menu_id) = 0;
+
   wxMenu* edit_menu = new wxMenu;
 
+/*
   AppendMenuItem(edit_menu, ID_MENU_EDIT_UNDO, kTrEditUndo);
   AppendMenuItem(edit_menu, ID_MENU_EDIT_REDO, kTrEditRedo);
   edit_menu->AppendSeparator();
@@ -1820,7 +1824,7 @@ void BookFrame::LoadMenus() {
   AppendMenuItem(edit_menu, ID_MENU_EDIT_FIND, kTrEditFind);
   AppendMenuItem(edit_menu, ID_MENU_EDIT_REPLACE, kTrEditReplace);
   AppendMenuItem(edit_menu, ID_MENU_EDIT_GO_TO, kTrEditGoTo);
-
+*/
   menu_bar->Append(edit_menu, kTrMenuEdit);
 
   //------------------------------------

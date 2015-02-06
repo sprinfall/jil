@@ -733,6 +733,176 @@ bool AutoIndentAction::AutoIndentLine(Coord ln) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+CommentAction::CommentAction(TextBuffer* buffer,
+                             const TextRange& range,
+                             TextDir dir,
+                             bool rect,
+                             bool selected)
+    : Action(buffer, TextPoint())
+    , RangeAction(range, dir, rect, selected)
+    , point_begin_delta_(0, 0)
+    , point_end_delta_(0, 0) {
+}
+
+CommentAction::~CommentAction() {
+}
+
+void CommentAction::Exec() {
+  change_sets_.clear();
+
+  effective_ = true;
+
+  if (range_.IsEmpty()) {
+    CommentLines(range_.GetLineRange());
+    return;
+  }
+
+  // Copy the range to avoid changing it.
+  TextRange range = range_;
+
+  if (range.point_end().x == 0) {
+    // If the range ends at the beginning of a line, don't take that line
+    // into account.
+    Coord ln = range.line_last() - 1;
+    TextPoint point_end(buffer_->LineLength(ln), ln);
+    range.Set(range.point_begin(), point_end);
+
+    // The range might be empty after this change.
+    if (range.IsEmpty()) {
+      CommentLines(range.GetLineRange());
+      return;
+    }
+  }
+
+  bool by_line = ByLine(range);
+
+  buffer_->FreezeNotify();
+
+  if (by_line) {
+    CommentLines(range.GetLineRange());
+  } else {
+    CommentBlock(range);
+  }
+
+  buffer_->ThawNotify();
+  buffer_->Notify(kLineUpdated, range.GetLineRange());
+}
+
+void CommentAction::Undo() {
+  buffer_->FreezeNotify();
+
+  // Use reverse iterator in case there are change sets at the same line.
+  std::list<ChangeSet>::reverse_iterator it = change_sets_.rbegin();
+  for (; it != change_sets_.rend(); ++it) {
+    buffer_->DeleteString(it->first, it->second);
+  }
+
+  buffer_->ThawNotify();
+  buffer_->Notify(kLineUpdated, range_.GetLineRange());
+}
+
+TextPoint CommentAction::CaretPointAfterExec() const {
+  return caret_point_ + delta_point_;
+}
+
+TextRange CommentAction::SelectionAfterExec() const {
+  if (range_.IsEmpty()) {
+    return range_;
+  }
+
+  TextPoint point_begin(range_.point_begin() + point_begin_delta_);
+  TextPoint point_end(range_.point_end() + point_end_delta_);
+  return TextRange(point_begin, point_end);
+}
+
+bool CommentAction::IsComment(const TextPoint& point) const {
+  return (buffer_->GetLex(point).major() == kLexComment);
+}
+
+void CommentAction::CommentLines(const LineRange& line_range) {
+  const LexComment& sline_comment = GetSlineComment();
+
+  if (sline_comment.IsEmpty()) {
+    // No single line comment available.
+    TextPoint point_begin(0, line_range.first());
+    Coord y = line_range.last();
+    TextPoint point_end(buffer_->LineLength(y), y);
+    CommentBlock(TextRange(point_begin, point_end));
+  } else {
+    for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
+      Insert(TextPoint(0, ln), sline_comment.start);
+    }
+  }
+}
+
+void CommentAction::CommentBlock(const TextRange& range) {
+  const LexComment& block_comment = GetBlockComment();
+
+  Insert(range.point_begin(), block_comment.start);
+
+  if (range.LineCount() == 1) {
+    TextPoint point = range.point_end();
+    point.x += CoordCast(block_comment.start.size());
+    Insert(point, block_comment.end);
+  } else {  // > 1
+    Insert(range.point_end(), block_comment.end);
+  }
+}
+
+bool CommentAction::ByLine(const TextRange& range) const {
+  if (GetBlockComment().IsEmpty()) {
+    // No block comment available.
+    return true;
+  }
+
+  if (range.point_begin().x == 0 &&
+      range.point_end().x == buffer_->LineLength(range.point_end().y)) {
+    return true;
+  }
+
+  if (IsComment(range.point_begin()) || IsComment(range.point_end())) {
+    return true;
+  }
+
+  return false;
+}
+
+void CommentAction::Insert(const TextPoint& point, const std::wstring& str) {
+  buffer_->InsertString(point, str);
+
+  Coord str_size = CoordCast(str.size());
+
+  change_sets_.push_back(std::make_pair(point, str_size));
+
+  if (point.y == caret_point_.y) {
+    if (point.x <= caret_point_.x) {
+      delta_point_.Set(str_size, 0);
+    }
+  }
+
+  if (point.y == range_.point_begin().y) {
+    if (point.x <= range_.point_begin().x) {
+      point_begin_delta_.Set(str_size, 0);
+    }
+  }
+
+  if (point.y == range_.point_end().y) {
+    if (point.x < range_.point_end().x) {  // NOTE: < instead of <=
+      point_end_delta_.Set(str_size, 0);
+    }
+  }
+}
+
+const LexComment& CommentAction::GetSlineComment() const {
+  return buffer_->ft_plugin()->sline_comment();
+}
+
+const LexComment& CommentAction::GetBlockComment() const {
+  return buffer_->ft_plugin()->block_comment();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 SetFileFormatAction::SetFileFormatAction(TextBuffer* buffer,
                                          const TextPoint& point,
                                          FileFormat file_format)

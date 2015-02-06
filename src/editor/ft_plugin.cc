@@ -100,8 +100,23 @@ void FtPlugin::SortAnyof() {
 #endif  // !JIL_MATCH_WORD_WITH_HASH
 
 void FtPlugin::AddQuote(Quote* quote) {
+  assert(!quote->start().empty());
+
   quote->set_ignore_case(ignore_case_);
   quotes_.push_back(quote);
+
+  if (quote->lex().major() == kLexComment) {
+    if (quote->end().empty()) {
+      if (sline_comment_.IsEmpty()) {
+        sline_comment_.start = quote->start();
+      }
+    } else {
+      if (block_comment_.IsEmpty()) {
+        block_comment_.start = quote->start();
+        block_comment_.end = quote->end();
+      }
+    }
+  }
 }
 
 void FtPlugin::AddRegexQuote(RegexQuote* regex_quote) {

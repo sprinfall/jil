@@ -273,6 +273,18 @@ private:
   boost::wregex* re_;
 };
 
+////////////////////////////////////////////////////////////////////////////////
+
+class LexComment {
+public:
+  bool IsEmpty() const {
+    return start.empty();
+  }
+
+  std::wstring start;
+  std::wstring end;  // Optional; empty for single line comment.
+};
+
 }  // namespace editor
 }  // namespace jil
 

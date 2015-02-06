@@ -129,7 +129,9 @@ public:
       : point_begin_(rhs.point_begin_), point_end_(rhs.point_end_) {
   }
 
-  Coord LineCount() const { return point_end_.y + 1 - point_begin_.y; }
+  Coord LineCount() const {
+    return point_end_.y + 1 - point_begin_.y;
+  }
 
   bool IsEmpty() const {
     return point_begin_.y < 1 ||
@@ -141,8 +143,12 @@ public:
     return point >= point_begin_ && point < point_end_;
   }
 
-  const TextPoint& point_begin() const { return point_begin_; }
-  const TextPoint& point_end() const { return point_end_; }
+  const TextPoint& point_begin() const {
+    return point_begin_;
+  }
+  const TextPoint& point_end() const {
+    return point_end_;
+  }
 
   void Set(const TextPoint& point_begin, const TextPoint& point_end) {
     assert(point_begin <= point_end);
@@ -165,8 +171,12 @@ public:
   // Get the char range between the begin and end points.
   CharRange GetCharRange() const;
 
-  Coord line_first() const { return point_begin_.y; }
-  Coord line_last() const { return point_end_.y; }
+  Coord line_first() const {
+    return point_begin_.y;
+  }
+  Coord line_last() const {
+    return point_end_.y;
+  }
 
   // If the given line is in this text range.
   bool HasLine(Coord ln) const {

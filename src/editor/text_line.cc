@@ -372,6 +372,23 @@ std::list<const LexElement*> TextLine::lex_elements(
   return range_lex_elements;
 }
 
+Lex TextLine::GetLex(Coord off) const {
+  std::list<LexElement*>::const_iterator it = lex_elements_.begin();
+  for (; it != lex_elements_.end(); ++it) {
+    const LexElement* le = *it;
+
+    if (off < le->off) {
+      break;
+    }
+
+    if (off < le->off + le->len) {
+      return le->lex;
+    }
+  }
+
+  return Lex();
+}
+
 bool TextLine::SpacesOnly() const {
   if (data_.empty()) {
     return false;

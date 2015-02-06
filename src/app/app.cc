@@ -626,7 +626,7 @@ void App::InitCommands() {
              ID_MENU_EDIT_DECREASE_INDENT);
 
   // TODO: Not supported yet.
-  AddTextCmd("comment", NULL, true, ID_MENU_EDIT_COMMENT);
+  AddTextCmd("comment", Comment, true, ID_MENU_EDIT_COMMENT);
   AddTextCmd("uncomment", NULL, true, ID_MENU_EDIT_UNCOMMENT);
   AddTextCmd("toggle_comment", NULL, true, ID_MENU_EDIT_TOGGLE_COMMENT);
 
