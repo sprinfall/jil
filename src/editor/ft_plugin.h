@@ -95,6 +95,13 @@ public:
 
   bool MatchSuffix(const std::wstring& str, size_t off, size_t len, Lex* lex);
 
+  const LexComment& sline_comment() const {
+    return sline_comment_;
+  }
+  const LexComment& block_comment() const {
+    return block_comment_;
+  }
+
   //----------------------------------------------------------------------------
   // Indent
 
@@ -139,6 +146,9 @@ private:
   // and linear search.
   std::vector<WordLexPair> prefixes_;
   std::vector<WordLexPair> suffixes_;
+
+  LexComment sline_comment_;
+  LexComment block_comment_;
 
   // Indent function for this file type.
   IndentFunc indent_func_;

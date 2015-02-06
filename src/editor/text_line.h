@@ -121,6 +121,7 @@ public:
     AddLexElement(lex_element.off, lex_element.len, lex_element.lex);
   }
 
+  // TODO: Change size_t to Coord.
   void AddLexElement(size_t off, size_t len, Lex lex);
 
   void ClearLexElements();
@@ -131,6 +132,9 @@ public:
 
   // Return the lex elements inside the given char range.
   std::list<const LexElement*> lex_elements(const CharRange& char_range) const;
+
+  // Get the lex at the given off.
+  Lex GetLex(Coord off) const;
 
   // Return true if this line only has spaces.
   bool SpacesOnly() const;

@@ -1789,8 +1789,12 @@ void BookFrame::LoadMenus() {
   //------------------------------------
   // Edit
 
+  // Edit menu will be created when some page is focused.
+  // See: virtual bool BookPage::Page_OnMenu(int menu_id) = 0;
+
   wxMenu* edit_menu = new wxMenu;
 
+/*
   AppendMenuItem(edit_menu, ID_MENU_EDIT_UNDO, kTrEditUndo);
   AppendMenuItem(edit_menu, ID_MENU_EDIT_REDO, kTrEditRedo);
   edit_menu->AppendSeparator();
@@ -1820,7 +1824,7 @@ void BookFrame::LoadMenus() {
   AppendMenuItem(edit_menu, ID_MENU_EDIT_FIND, kTrEditFind);
   AppendMenuItem(edit_menu, ID_MENU_EDIT_REPLACE, kTrEditReplace);
   AppendMenuItem(edit_menu, ID_MENU_EDIT_GO_TO, kTrEditGoTo);
-
+*/
   menu_bar->Append(edit_menu, kTrMenuEdit);
 
   //------------------------------------
@@ -1916,6 +1920,13 @@ bool BookFrame::GetEditMenuState(int menu_id) {
 }
 
 bool BookFrame::GetViewMenuState(int menu_id, bool* check) {
+  if (menu_id == ID_MENU_VIEW_FULL_SCREEN) {
+    if (check != NULL) {
+      *check = IsFullScreen();
+      return true;
+    }
+  }
+
   TextPage* text_page = ActiveTextPage();
   bool state = text_page != NULL;
 

@@ -743,6 +743,12 @@ bool TextBuffer::AreLinesAllEmpty(const LineRange& line_range,
   return true;
 }
 
+//------------------------------------------------------------------------------
+
+Lex TextBuffer::GetLex(const TextPoint& point) const {
+  return Line(point.y)->GetLex(point.x);
+}
+
 void TextBuffer::GetText(std::wstring* text) const {
   std::wstring eol = GetEol(file_format_);
   *text = lines_[0]->data();

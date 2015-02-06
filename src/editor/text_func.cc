@@ -279,7 +279,7 @@ void DecreaseIndent(TextWindow* tw) {
   }
 
   const Selection& selection = tw->selection();
-  const bool selected = !selection.IsEmpty();
+  bool selected = !selection.IsEmpty();
   DecreaseIndentAction* dia = new DecreaseIndentAction(tw->buffer(),
                                                        text_range,
                                                        selection.dir,
@@ -349,6 +349,29 @@ void NewLineBelow(TextWindow* tw) {
 
 void NewLineAbove(TextWindow* tw) {
   tw->NewLineAbove();
+}
+
+void Comment(TextWindow* tw) {
+  TextRange text_range = tw->selection().range;
+  if (text_range.IsEmpty()) {
+    text_range.Set(tw->caret_point(), tw->caret_point());
+  }
+
+  if (tw->buffer()->AreLinesAllEmpty(text_range.GetLineRange(), true)) {
+    // Don't have to create indent action if all lines are empty.
+    return;
+  }
+
+  const Selection& selection = tw->selection();
+  bool selected = !selection.IsEmpty();
+  CommentAction* ca = new CommentAction(tw->buffer(),
+                                        text_range,
+                                        selection.dir,
+                                        selection.rect,
+                                        selected);
+  ca->set_caret_point(tw->caret_point());
+  ca->set_update_caret(true);
+  tw->Exec(ca);
 }
 
 }  // namespace editor
