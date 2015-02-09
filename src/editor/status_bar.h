@@ -106,6 +106,7 @@ private:
   wxString field_values_[kField_Count];
 
   int char_height_;
+  wxSize padding_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

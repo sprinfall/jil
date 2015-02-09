@@ -11,13 +11,10 @@ namespace jil {
 namespace editor {
 
 BEGIN_EVENT_TABLE(StatusBar, wxPanel)
-EVT_PAINT(StatusBar::OnPaint)
-EVT_SIZE(StatusBar::OnSize)
-EVT_LEFT_DOWN(StatusBar::OnMouseLeftDown)
+EVT_PAINT     (StatusBar::OnPaint)
+EVT_SIZE      (StatusBar::OnSize)
+EVT_LEFT_DOWN (StatusBar::OnMouseLeftDown)
 END_EVENT_TABLE()
-
-static const int kPaddingX = 3;
-static const int kPaddingY = 3;
 
 StatusBar::StatusBar()
     : char_height_(0) {
@@ -30,14 +27,19 @@ bool StatusBar::Create(wxWindow* parent, wxWindowID id) {
     return false;
   }
 
+  SetBackgroundStyle(wxBG_STYLE_PAINT);
+
   if (theme_->GetFont(FONT).IsOk()) {
     SetFont(theme_->GetFont(FONT));
   }
 
   // Cache the char height after set font.
-  GetTextExtent(wxT("T"), NULL, &char_height_, NULL, NULL);
+  char_height_ = GetCharHeight();
 
-  SetBackgroundStyle(wxBG_STYLE_PAINT);
+  // Determine padding by char width.
+  int char_width = GetCharWidth();
+  padding_.Set(char_width, char_width / 2 + 1);
+
   return true;
 }
 
@@ -73,7 +75,7 @@ void StatusBar::UpdateFieldSizes() {
                       NULL,
                       NULL);
         field_info.size += field_info.size_value;
-        field_info.size += kPaddingX + kPaddingX;
+        field_info.size += padding_.x + padding_.x;
         break;
 
       case kFixedPixel:
@@ -141,7 +143,7 @@ void StatusBar::ClearFieldValues() {
 }
 
 wxSize StatusBar::DoGetBestSize() const {
-  return wxSize(-1, char_height_ + kPaddingY + kPaddingY);
+  return wxSize(-1, char_height_ + padding_.y + padding_.y);
 }
 
 void StatusBar::OnPaint(wxPaintEvent& evt) {
@@ -186,7 +188,7 @@ void StatusBar::OnPaint(wxPaintEvent& evt) {
     }
 
     wxString label = GetFieldValue(field_info.id);
-    field_rect.Deflate(kPaddingX, 0);
+    field_rect.Deflate(padding_.x, 0);
 
     int expected_size = 0;
     dc.GetTextExtent(label, &expected_size, NULL, NULL, NULL);
