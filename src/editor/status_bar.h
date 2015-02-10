@@ -20,11 +20,6 @@ public:
     COLOR_COUNT
   };
 
-  enum FontId {
-    FONT = 0,
-    FONT_COUNT
-  };
-
   enum FieldId {
     kField_Cwd = 0,
     kField_Encoding,
@@ -60,11 +55,16 @@ public:
 
 public:
   StatusBar();
-  bool Create(wxWindow* parent, wxWindowID id);
   virtual ~StatusBar();
+
+  bool Create(wxWindow* parent, wxWindowID id);
 
   void set_theme(const SharedTheme& theme) {
     theme_ = theme;
+  }
+
+  void set_font(const wxFont& font) {
+    font_ = font;
   }
 
   void AddField(FieldId id,
@@ -100,6 +100,8 @@ private:
 
 private:
   SharedTheme theme_;
+
+  wxFont font_;
 
   std::vector<FieldInfo> field_infos_;
 

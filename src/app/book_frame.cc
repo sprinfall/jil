@@ -167,6 +167,7 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
 
   for (size_t i = 0; i < text_books_.size(); ++i) {
     text_books_[i] = new TextBook(theme_->GetTheme(THEME_TEXT_BOOK));
+    text_books_[i]->set_tab_font(options_->fonts[kFont_Tab]);
     text_books_[i]->Create(splitter_, wxID_ANY);
 
     Connect(text_books_[i]->GetId(),
@@ -198,7 +199,9 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
   // Create status line.
   status_bar_ = new editor::StatusBar;
   status_bar_->set_theme(theme_->GetTheme(THEME_STATUS_BAR));
+  status_bar_->set_font(options_->fonts[kFont_Status]);
   status_bar_->SetFields(wxGetApp().status_fields());
+
   status_bar_->Create(this, ID_STATUS_BAR);
 
   status_bar_->SetFieldValue(editor::StatusBar::kField_Cwd, wxGetCwd(), false);
@@ -1663,8 +1666,7 @@ FindResultPage* BookFrame::GetFindResultPage() {
 
   fr_page->Create(tool_book_->PageParent(), ID_FIND_RESULT_PAGE, true);
 
-  fr_page->SetTextFont(options_->font);
-  fr_page->SetLineNrFont(options_->font);
+  fr_page->SetTextFont(options_->fonts[kFont_Text]);
 
   Connect(fr_page->GetId(),
           kFindResultPageEvent,
@@ -1993,8 +1995,7 @@ TextPage* BookFrame::CreateTextPage(editor::TextBuffer* buffer,
 
   page->Create(parent, id, true);
 
-  page->SetTextFont(options_->font);
-  page->SetLineNrFont(options_->font);
+  page->SetTextFont(options_->fonts[kFont_Text]);
 
   return page;
 }

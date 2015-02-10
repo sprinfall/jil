@@ -22,7 +22,7 @@ void Setting::AsMap(SettingMap* setting_map) const {
     return;
   }
 
-  const int size = this->size();
+  int size = this->size();
 
   for (int i = 0; i < size; ++i) {
     Setting setting = Get(i);

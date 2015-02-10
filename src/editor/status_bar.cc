@@ -29,8 +29,8 @@ bool StatusBar::Create(wxWindow* parent, wxWindowID id) {
 
   SetBackgroundStyle(wxBG_STYLE_PAINT);
 
-  if (theme_->GetFont(FONT).IsOk()) {
-    SetFont(theme_->GetFont(FONT));
+  if (font_.IsOk()) {
+    SetFont(font_);
   }
 
   // Cache the char height after set font.

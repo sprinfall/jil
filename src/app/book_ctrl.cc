@@ -93,6 +93,8 @@ BookCtrl::~BookCtrl() {
 }
 
 bool BookCtrl::Create(wxWindow* parent, wxWindowID id) {
+  assert(theme_);
+
   if (!wxPanel::Create(parent, id)) {
     return false;
   }
@@ -504,8 +506,8 @@ void BookCtrl::CreateTabArea() {
     tab_area_->SetBackgroundColour(theme_->GetColor(TAB_AREA_BG));
   }
 
-  if (theme_->GetFont(TAB_FONT).IsOk()) {
-    tab_area_->SetFont(theme_->GetFont(TAB_FONT));
+  if (tab_font_.IsOk()) {
+    tab_area_->SetFont(tab_font_);
   }
 
   char_width_ = tab_area_->GetCharWidth();
@@ -541,7 +543,7 @@ void BookCtrl::OnTabPaint(wxAutoBufferedPaintDC& dc, wxPaintEvent& evt) {
 
   dc.SetPen(active_tab_pen);
   dc.DrawLine(x, bottom, x + tab_area_padding_x_, bottom);
-  
+
   x += tab_area_padding_x_;
 
   for (TabList::iterator it = tabs_.begin(); it != tabs_.end(); ++it) {

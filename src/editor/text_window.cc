@@ -182,15 +182,12 @@ void TextWindow::SetFocus() {
 
 void TextWindow::SetTextFont(const wxFont& font) {
   text_area_->SetOwnFont(font);
-
-  HandleTextFontChange();
-  text_area_->Refresh();
-}
-
-void TextWindow::SetLineNrFont(const wxFont& font) {
   line_nr_area_->SetOwnFont(font);
 
+  HandleTextFontChange();
   HandleLineNrFontChange();
+
+  text_area_->Refresh();
   line_nr_area_->Refresh();
 }
 
@@ -1974,9 +1971,7 @@ bool TextWindow::HandleTextMouseWheel(wxMouseEvent& evt) {
     const int kMinFontSize = 8;
     if (point_size >= kMinFontSize) {
       font.SetPointSize(point_size);
-
       SetTextFont(font);
-      SetLineNrFont(font);
     }
 
     return true;
