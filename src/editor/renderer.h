@@ -23,17 +23,25 @@ public:
   void SetFont(const wxFont& font, const wxColour& fg);
 
   const wxBrush& GetBrush() const;
-  void SetBrush(const wxBrush& brush, bool save_old = false);
+  void SetBrush(const wxBrush& brush, bool backup = false);
 
   const wxPen& GetPen() const;
-  void SetPen(const wxPen& pen, bool save_old = false);
+  void SetPen(const wxPen& pen, bool backup = false);
+
+  void SetStyle(const wxColour& brush_color,
+                const wxColour& pen_color,
+                bool backup);
 
   void SetTextBackground(const wxColour& bg);
 
-  void SaveBrush();
+  void BackupBrush();
   void RestoreBrush();
-  void SavePen();
+
+  void BackupPen();
   void RestorePen();
+
+  void BackupStyle();
+  void RestoreStyle();
 
   void DrawText(const std::wstring& text,
                 Coord off,

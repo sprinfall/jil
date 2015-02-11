@@ -1337,16 +1337,22 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
   // If in select range, draw the select background.
   if (selection_.HasLine(ln)) {
     const wxColour& visual_bg = style_->Get(Style::kVisual)->bg();
-    renderer.SetBrush(wxBrush(visual_bg), true);
-    renderer.SetPen(wxPen(visual_bg), true);
 
     CharRange char_range = selection_.GetCharRange(ln);
 
     if (char_range.IsEmpty()) {
-      // Draw a vertical line for empty rect selection.
-      int x = GetLineWidth(ln, 0, char_range.begin());
-      renderer.DrawLine(x, y, x, y + line_height_);
+      if (selection_.rect) {
+        renderer.SetStyle(visual_bg, visual_bg, true);
+
+        // Draw a vertical line for empty rect selection.
+        int x = GetLineWidth(ln, 0, char_range.begin());
+        renderer.DrawLine(x, y, x, y + line_height_);
+
+        renderer.RestoreStyle();
+      }
     } else {
+      renderer.SetStyle(visual_bg, visual_bg, true);
+
       int x_begin = GetLineWidth(ln, 0, char_range.begin());
       int x_end = GetLineWidth(ln, 0, char_range.end());
       int w = x_end - x_begin;
@@ -1355,10 +1361,9 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
       }
 
       renderer.DrawRectangle(x_begin, y, w, line_height_);
-    }
 
-    renderer.RestoreBrush();
-    renderer.RestorePen();
+      renderer.RestoreStyle();
+    }
   }
 
   DrawTextLine(renderer, buffer_->Line(ln), x, y);
@@ -1379,8 +1384,7 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
   // If in select range, draw the select background.
   if (selection_.HasLine(ln)) {
     const wxColour& visual_bg = style_->Get(Style::kVisual)->bg();
-    renderer.SetBrush(wxBrush(visual_bg), true);
-    renderer.SetPen(wxPen(visual_bg), true);
+    renderer.SetStyle(visual_bg, visual_bg, true);
 
     CharRange select_char_range = selection_.GetCharRange(ln);
     int _y = y;
@@ -1412,8 +1416,7 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
       _y += line_height_;
     }
 
-    renderer.RestorePen();
-    renderer.RestoreBrush();
+    renderer.RestoreStyle();
   }
 
   const std::wstring& line_data = line->data();

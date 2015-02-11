@@ -28,8 +28,8 @@ const wxBrush& Renderer::GetBrush() const {
   return dc_->GetBrush();
 }
 
-void Renderer::SetBrush(const wxBrush& brush, bool save_old) {
-  if (save_old) {
+void Renderer::SetBrush(const wxBrush& brush, bool backup) {
+  if (backup) {
     brush_ = GetBrush();
   }
   dc_->SetBrush(brush);
@@ -39,18 +39,25 @@ const wxPen& Renderer::GetPen() const {
   return dc_->GetPen();
 }
 
-void Renderer::SetPen(const wxPen& pen, bool save_old) {
-  if (save_old) {
+void Renderer::SetPen(const wxPen& pen, bool backup) {
+  if (backup) {
     pen_ = GetPen();
   }
   dc_->SetPen(pen);
+}
+
+void Renderer::SetStyle(const wxColour& brush_color,
+                        const wxColour& pen_color,
+                        bool backup) {
+  SetBrush(wxBrush(brush_color), backup);
+  SetPen(wxPen(brush_color), backup);
 }
 
 void Renderer::SetTextBackground(const wxColour& bg) {
   dc_->SetTextBackground(bg);
 }
 
-void Renderer::SaveBrush() {
+void Renderer::BackupBrush() {
   brush_ = GetBrush();
 }
 
@@ -58,11 +65,21 @@ void Renderer::RestoreBrush() {
   dc_->SetBrush(brush_);
 }
 
-void Renderer::SavePen() {
+void Renderer::BackupPen() {
   pen_ = GetPen();
 }
 
 void Renderer::RestorePen() {
+  dc_->SetPen(pen_);
+}
+
+void Renderer::BackupStyle() {
+  brush_ = GetBrush();
+  pen_ = GetPen();
+}
+
+void Renderer::RestoreStyle() {
+  dc_->SetBrush(brush_);
   dc_->SetPen(pen_);
 }
 
