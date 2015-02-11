@@ -209,6 +209,8 @@ protected:
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// NOTE:
+// The end of regex quote only supports back reference "\1".
 class RegexQuote : public Quote {
 public:
   typedef boost::match_results<std::wstring::const_iterator> MatchResult;
@@ -233,7 +235,6 @@ private:
   void CreateRegex();
 
   bool CreateConcreteEnd(const std::wstring& str,
-                         size_t off,
                          MatchResult& m,
                          std::wstring* concrete_end) const;
 
