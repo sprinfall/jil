@@ -501,9 +501,12 @@ private:
   const LexComment& GetSlineComment() const;
   const LexComment& GetBlockComment() const;
 
+  Coord GetMinIndent(const LineRange& line_range) const;
+
 private:
-  typedef std::pair<TextPoint, Coord> ChangeSet;
-  std::list<ChangeSet> change_sets_;
+  // Keep the changes for undo.
+  typedef std::pair<TextPoint, Coord> ChangeInfo;
+  std::list<ChangeInfo> change_infos_;
 
   TextPoint point_begin_delta_;
   TextPoint point_end_delta_;

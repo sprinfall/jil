@@ -261,6 +261,10 @@ std::wstring TextLine::GetIndentStr() const {
   }
 }
 
+Coord TextLine::GetIndentStrLength() const {
+  return FirstNonSpaceChar();
+}
+
 void TextLine::InsertChar(Coord off, wchar_t c) {
   data_.insert(off, 1, c);
 }

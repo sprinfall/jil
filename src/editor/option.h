@@ -69,6 +69,9 @@ public:
     tab_stop = 4;
     expand_tab = true;
 
+    comment_add_space = true;
+    comment_respect_indent = true;
+
     wrap = false;
     show_number = true;
     show_space = false;
@@ -109,6 +112,10 @@ public:
   // Extra indent options.
   // E.g., indent_namespace, indent_case for C++.
   std::map<std::string, OptionValue> indent_options;
+
+  // Comment options.
+  bool comment_add_space;
+  bool comment_respect_indent;
 
   //----------------------------------------------------------------------------
   // View options

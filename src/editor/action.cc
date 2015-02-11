@@ -748,9 +748,12 @@ CommentAction::~CommentAction() {
 }
 
 void CommentAction::Exec() {
-  change_sets_.clear();
+  change_infos_.clear();
 
   effective_ = true;
+
+  // Comment options.
+  bool add_space = buffer_->options().comment_add_space;
 
   if (range_.IsEmpty()) {
     CommentLines(range_.GetLineRange());
@@ -792,8 +795,8 @@ void CommentAction::Undo() {
   buffer_->FreezeNotify();
 
   // Use reverse iterator in case there are change sets at the same line.
-  std::list<ChangeSet>::reverse_iterator it = change_sets_.rbegin();
-  for (; it != change_sets_.rend(); ++it) {
+  std::list<ChangeInfo>::reverse_iterator it = change_infos_.rbegin();
+  for (; it != change_infos_.rend(); ++it) {
     buffer_->DeleteString(it->first, it->second);
   }
 
@@ -829,8 +832,19 @@ void CommentAction::CommentLines(const LineRange& line_range) {
     TextPoint point_end(buffer_->LineLength(y), y);
     CommentBlock(TextRange(point_begin, point_end));
   } else {
+    TextPoint p(0, 1);
+    if (buffer_->options().comment_respect_indent) {
+      p.x = GetMinIndent(line_range);
+    }
+
+    std::wstring comment_start = sline_comment.start;
+    if (buffer_->options().comment_add_space) {
+      comment_start.append(1, kSpaceChar);
+    }
+
     for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
-      Insert(TextPoint(0, ln), sline_comment.start);
+      p.y = ln;
+      Insert(p, comment_start);
     }
   }
 }
@@ -838,15 +852,21 @@ void CommentAction::CommentLines(const LineRange& line_range) {
 void CommentAction::CommentBlock(const TextRange& range) {
   const LexComment& block_comment = GetBlockComment();
 
-  Insert(range.point_begin(), block_comment.start);
+  std::wstring comment_start = block_comment.start;
+  std::wstring comment_end = block_comment.end;
 
-  if (range.LineCount() == 1) {
-    TextPoint point = range.point_end();
-    point.x += CoordCast(block_comment.start.size());
-    Insert(point, block_comment.end);
-  } else {  // > 1
-    Insert(range.point_end(), block_comment.end);
+  if (buffer_->options().comment_add_space) {
+    comment_start.append(1, kSpaceChar);
+    comment_end.insert(comment_end.begin(), 1, kSpaceChar);
   }
+
+  Insert(range.point_begin(), comment_start);
+
+  TextPoint point_end = range.point_end();
+  if (range.LineCount() == 1) {
+    point_end.x += CoordCast(comment_start.size());
+  }
+  Insert(point_end, comment_end);
 }
 
 bool CommentAction::ByLine(const TextRange& range) const {
@@ -872,7 +892,7 @@ void CommentAction::Insert(const TextPoint& point, const std::wstring& str) {
 
   Coord str_size = CoordCast(str.size());
 
-  change_sets_.push_back(std::make_pair(point, str_size));
+  change_infos_.push_back(std::make_pair(point, str_size));
 
   if (point.y == caret_point_.y) {
     if (point.x <= caret_point_.x) {
@@ -899,6 +919,25 @@ const LexComment& CommentAction::GetSlineComment() const {
 
 const LexComment& CommentAction::GetBlockComment() const {
   return buffer_->ft_plugin()->block_comment();
+}
+
+Coord CommentAction::GetMinIndent(const LineRange& line_range) const {
+  Coord min_indent = kInvalidCoord;
+  Coord indent = 0;
+
+  for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
+    if (!buffer_->IsLineEmpty(ln, true)) {
+      indent = buffer_->GetIndentStrLength(ln);
+
+      if (min_indent == kInvalidCoord) {
+        min_indent = indent;
+      } else if (min_indent > indent) {
+        min_indent = indent;
+      }
+    }
+  }
+
+  return min_indent;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

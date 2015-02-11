@@ -75,6 +75,9 @@ public:
   // Return original indent string.
   std::wstring GetIndentStr() const;
 
+  // Return the length of the original indent string.
+  Coord GetIndentStrLength() const;
+
   // Return true if the line is empty.
   // \param ignore_spaces A line is empty if it has only empty spaces.
   bool IsEmpty(bool ignore_spaces) const;

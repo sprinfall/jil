@@ -353,6 +353,9 @@ public:
   // Get the original indent string of the given line.
   std::wstring GetIndentStr(Coord ln) const;
 
+  // Get the length of the original indent string of the given line.
+  Coord GetIndentStrLength(Coord ln) const;
+
   // Get the expected indent (as spaces) of the given line.
   Coord GetExpectedIndent(Coord ln) const;
 

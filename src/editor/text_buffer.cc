@@ -1228,6 +1228,10 @@ std::wstring TextBuffer::GetIndentStr(Coord ln) const {
   return Line(ln)->GetIndentStr();
 }
 
+Coord TextBuffer::GetIndentStrLength(Coord ln) const {
+  return Line(ln)->GetIndentStrLength();
+}
+
 Coord TextBuffer::GetExpectedIndent(Coord ln) const {
   IndentFunc indent_func = ft_plugin_->indent_func();
   if (indent_func != NULL) {
