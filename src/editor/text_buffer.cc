@@ -599,10 +599,10 @@ wxString TextBuffer::file_path(int flags, wxPathFormat format) const {
 //------------------------------------------------------------------------------
 
 OptionValue TextBuffer::GetIndentOption(const std::string& key) const {
-  typedef std::map<std::string, OptionValue> OptionMap;
-  OptionMap::const_iterator it = options_.indent_options.find(key);
-  if (it != options_.indent_options.end()) {
-    return it->second;
+  for (size_t i = 0; i < options_.indent_options.size(); ++i) {
+    if (key == options_.indent_options[i].first) {
+      options_.indent_options[i].second;
+    }
   }
   return OptionValue();
 }

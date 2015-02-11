@@ -15,6 +15,7 @@
 
 namespace jil {
 
+////////////////////////////////////////////////////////////////////////////////
 // Helper functions.
 
 static int ParseCjk(const std::string& cjk) {
@@ -102,9 +103,9 @@ static bool GetString(const SettingMap& settings,
   return false;
 }
 
-static bool GetStdWString(const SettingMap& settings,
-                          const char* key,
-                          std::wstring* value) {
+static bool GetWString(const SettingMap& settings,
+                       const char* key,
+                       std::wstring* value) {
   Setting setting = GetSetting(settings, key, Setting::kString);
   if (setting) {
     const char* str = setting.GetString();
@@ -143,6 +144,35 @@ static bool GetInt(const SettingMap& settings, const char* key, int* value) {
   }
   return false;
 }
+
+static void GetOptionTable(Setting setting, editor::OptionTable* option_table) {
+  if (!setting) {
+    return;
+  }
+
+  int size = setting.size();
+
+  for (int i = 0; i < size; ++i) {
+    std::string key = setting[i].name();
+    editor::OptionValue value;
+
+    int type = setting[i].type();
+
+    if (type == Setting::kBool) {
+      value = editor::OptionValue(setting[i].GetBool());
+    } else if (type == Setting::kInt) {
+      value = editor::OptionValue(setting[i].GetInt());
+    } else if (type == Setting::kString) {
+      value = editor::OptionValue(std::string(setting[i].GetString()));
+    }
+
+    if (!value.IsEmpty()) {
+      option_table->push_back(std::make_pair(key, value));
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 void ParseAppOptions(const Setting& setting, Options* options) {
   SettingMap setting_map;
@@ -193,13 +223,14 @@ void ParseEditorOptions(const Setting& setting, editor::Options* options) {
   setting.AsMap(&setting_map);
 
   //----------------------------------------------------------------------------
+  // Text options
 
   GetInt(setting_map, SHIFT_WIDTH, &options->shift_width);
   GetInt(setting_map, TAB_STOP, &options->tab_stop);
   GetBool(setting_map, EXPAND_TAB, &options->expand_tab);
 
-  GetStdWString(setting_map, OPERATORS, &options->operators);
-  GetStdWString(setting_map, DELIMITERS, &options->delimiters);
+  GetWString(setting_map, OPERATORS, &options->operators);
+  GetWString(setting_map, DELIMITERS, &options->delimiters);
 
   // Indent keys
   Setting ik_setting = GetSetting(setting_map, INDENT_KEYS, Setting::kArray);
@@ -214,23 +245,7 @@ void ParseEditorOptions(const Setting& setting, editor::Options* options) {
   }
 
   // Extra indent options
-  Setting indent_setting = setting_map["indent"];
-  if (indent_setting) {
-    int size = indent_setting.size();
-    for (int i = 0; i < size; ++i) {
-      std::string key = indent_setting[i].name();
-
-      int type = indent_setting[i].type();
-      if (type == Setting::kInt) {
-        options->indent_options[key] = OptionValue(indent_setting[i].GetInt());
-      } else if (type == Setting::kString) {
-        options->indent_options[key] =
-          OptionValue(std::string(indent_setting[i].GetString()));
-      } else if (type == Setting::kBool) {
-        options->indent_options[key] = OptionValue(indent_setting[i].GetBool());
-      }
-    }
-  }
+  GetOptionTable(setting_map["indent"], &options->indent_options);
 
   // Comment options
   Setting comment_setting = setting_map["comment"];
@@ -240,6 +255,7 @@ void ParseEditorOptions(const Setting& setting, editor::Options* options) {
   }
 
   //----------------------------------------------------------------------------
+  // View options
 
   GetBool(setting_map, WRAP, &options->wrap);
   GetBool(setting_map, SHOW_NUMBER, &options->show_number);
@@ -249,7 +265,6 @@ void ParseEditorOptions(const Setting& setting, editor::Options* options) {
   Setting rulers_setting = GetSetting(setting_map, RULERS, Setting::kArray);
   if (rulers_setting) {
     options->rulers.clear();  // Clear global setting.
-
     for (int i = 0; i < rulers_setting.size(); ++i) {
       options->rulers.push_back(rulers_setting[i].GetInt());
     }
