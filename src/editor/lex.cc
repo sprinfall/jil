@@ -74,7 +74,7 @@ size_t RegexQuote::MatchStart(const std::wstring& str,
                                     *start_re_,
                                     flags);
   if (result) {
-    CreateConcreteEnd(str, off, m, concrete_end);
+    CreateConcreteEnd(str, m, concrete_end);
     return off + (m[0].second - m[0].first);
   }
 
@@ -82,14 +82,13 @@ size_t RegexQuote::MatchStart(const std::wstring& str,
 }
 
 bool RegexQuote::CreateConcreteEnd(const std::wstring& str,
-                                   size_t off,
                                    RegexQuote::MatchResult& m,
                                    std::wstring* concrete_end) const {
   if (end_.empty()) {
     return true;
   }
 
-  // NOTE: So far, only support back reference "\1".
+  // NOTE: only support back reference "\1".
   size_t br_pos = end_.find(L"\\1");
   if (br_pos == std::wstring::npos) {
     return true;
@@ -102,7 +101,7 @@ bool RegexQuote::CreateConcreteEnd(const std::wstring& str,
   std::wstring sub;
   size_t sub_size = std::distance(m[1].first, m[1].second);
   if (sub_size > 0) {
-    size_t sub_off = std::distance(str.begin(), m[1].first) + off;
+    size_t sub_off = std::distance(str.begin(), m[1].first);
     sub = str.substr(sub_off, sub_size);
   }  // else: The sub matched string is empty.
 

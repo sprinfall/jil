@@ -182,15 +182,12 @@ void TextWindow::SetFocus() {
 
 void TextWindow::SetTextFont(const wxFont& font) {
   text_area_->SetOwnFont(font);
-
-  HandleTextFontChange();
-  text_area_->Refresh();
-}
-
-void TextWindow::SetLineNrFont(const wxFont& font) {
   line_nr_area_->SetOwnFont(font);
 
+  HandleTextFontChange();
   HandleLineNrFontChange();
+
+  text_area_->Refresh();
   line_nr_area_->Refresh();
 }
 
@@ -1340,16 +1337,22 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
   // If in select range, draw the select background.
   if (selection_.HasLine(ln)) {
     const wxColour& visual_bg = style_->Get(Style::kVisual)->bg();
-    renderer.SetBrush(wxBrush(visual_bg), true);
-    renderer.SetPen(wxPen(visual_bg), true);
 
     CharRange char_range = selection_.GetCharRange(ln);
 
     if (char_range.IsEmpty()) {
-      // Draw a vertical line for empty rect selection.
-      int x = GetLineWidth(ln, 0, char_range.begin());
-      renderer.DrawLine(x, y, x, y + line_height_);
+      if (selection_.rect) {
+        renderer.SetStyle(visual_bg, visual_bg, true);
+
+        // Draw a vertical line for empty rect selection.
+        int x = GetLineWidth(ln, 0, char_range.begin());
+        renderer.DrawLine(x, y, x, y + line_height_);
+
+        renderer.RestoreStyle();
+      }
     } else {
+      renderer.SetStyle(visual_bg, visual_bg, true);
+
       int x_begin = GetLineWidth(ln, 0, char_range.begin());
       int x_end = GetLineWidth(ln, 0, char_range.end());
       int w = x_end - x_begin;
@@ -1358,10 +1361,9 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
       }
 
       renderer.DrawRectangle(x_begin, y, w, line_height_);
-    }
 
-    renderer.RestoreBrush();
-    renderer.RestorePen();
+      renderer.RestoreStyle();
+    }
   }
 
   DrawTextLine(renderer, buffer_->Line(ln), x, y);
@@ -1382,8 +1384,7 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
   // If in select range, draw the select background.
   if (selection_.HasLine(ln)) {
     const wxColour& visual_bg = style_->Get(Style::kVisual)->bg();
-    renderer.SetBrush(wxBrush(visual_bg), true);
-    renderer.SetPen(wxPen(visual_bg), true);
+    renderer.SetStyle(visual_bg, visual_bg, true);
 
     CharRange select_char_range = selection_.GetCharRange(ln);
     int _y = y;
@@ -1415,8 +1416,7 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
       _y += line_height_;
     }
 
-    renderer.RestorePen();
-    renderer.RestoreBrush();
+    renderer.RestoreStyle();
   }
 
   const std::wstring& line_data = line->data();
@@ -1436,9 +1436,9 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
       int _x = x;
       int _y = y;
 
-      std::list<const LexElement*> lex_elements = line->lex_elements(sub_range);
+      std::list<const LexElem*> lex_elems = line->lex_elems(sub_range);
 
-      if (lex_elements.empty()) {
+      if (lex_elems.empty()) {
         // Without lex elements.
 
         // Get the range, [i, j), of the line piece to draw.
@@ -1455,9 +1455,9 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
 
       Coord i = sub_range.begin();
 
-      std::list<const LexElement*>::iterator le_it = lex_elements.begin();
-      for (; le_it != lex_elements.end(); ++le_it) {
-        const LexElement* le = *le_it;
+      std::list<const LexElem*>::iterator le_it = lex_elems.begin();
+      for (; le_it != lex_elems.end(); ++le_it) {
+        const LexElem* le = *le_it;
 
         // Draw the line piece before the lex element.
         if (i < le->off) {
@@ -1535,14 +1535,14 @@ void TextWindow::DrawTextLine(Renderer& renderer,
   renderer.SetPen(*wxRED_PEN);
 #endif
 
-  const std::list<LexElement*>& lex_elements = line->lex_elements();
+  const std::list<LexElem*>& lex_elems = line->lex_elems();
 
   Coord i = 0;
   Coord j = 0;
 
-  std::list<LexElement*>::const_iterator le_it = lex_elements.begin();
-  for (; le_it != lex_elements.end(); ++le_it) {
-    const LexElement* le = *le_it;
+  std::list<LexElem*>::const_iterator le_it = lex_elems.begin();
+  for (; le_it != lex_elems.end(); ++le_it) {
+    const LexElem* le = *le_it;
 
     if (i < le->off) {
       // Line piece (spaces, operators, plain-text, etc.) with no lex.
@@ -1974,9 +1974,7 @@ bool TextWindow::HandleTextMouseWheel(wxMouseEvent& evt) {
     const int kMinFontSize = 8;
     if (point_size >= kMinFontSize) {
       font.SetPointSize(point_size);
-
       SetTextFont(font);
-      SetLineNrFont(font);
     }
 
     return true;

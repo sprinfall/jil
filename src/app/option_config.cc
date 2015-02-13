@@ -15,6 +15,7 @@
 
 namespace jil {
 
+////////////////////////////////////////////////////////////////////////////////
 // Helper functions.
 
 static int ParseCjk(const std::string& cjk) {
@@ -102,9 +103,9 @@ static bool GetString(const SettingMap& settings,
   return false;
 }
 
-static bool GetStdWString(const SettingMap& settings,
-                          const char* key,
-                          std::wstring* value) {
+static bool GetWString(const SettingMap& settings,
+                       const char* key,
+                       std::wstring* value) {
   Setting setting = GetSetting(settings, key, Setting::kString);
   if (setting) {
     const char* str = setting.GetString();
@@ -144,6 +145,35 @@ static bool GetInt(const SettingMap& settings, const char* key, int* value) {
   return false;
 }
 
+static void GetOptionTable(Setting setting, editor::OptionTable* option_table) {
+  if (!setting) {
+    return;
+  }
+
+  int size = setting.size();
+
+  for (int i = 0; i < size; ++i) {
+    std::string key = setting[i].name();
+    editor::OptionValue value;
+
+    int type = setting[i].type();
+
+    if (type == Setting::kBool) {
+      value = editor::OptionValue(setting[i].GetBool());
+    } else if (type == Setting::kInt) {
+      value = editor::OptionValue(setting[i].GetInt());
+    } else if (type == Setting::kString) {
+      value = editor::OptionValue(std::string(setting[i].GetString()));
+    }
+
+    if (!value.IsEmpty()) {
+      option_table->push_back(std::make_pair(key, value));
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 void ParseAppOptions(const Setting& setting, Options* options) {
   SettingMap setting_map;
   setting.AsMap(&setting_map);
@@ -164,29 +194,18 @@ void ParseAppOptions(const Setting& setting, Options* options) {
   }
   options->file_encoding = editor::EncodingFromName(fenc_str);
 
-  // Font
-  wxFont font;
-
-  int font_size = kDefaultFontSize;
-  GetInt(setting_map, FONT_SIZE, &font_size);
-  if (font_size < kMinFontSize) {
-    font_size = kMinFontSize;
+  // Fonts
+  Setting fonts_setting = GetSetting(setting_map, FONTS, Setting::kGroup);
+  if (fonts_setting) {
+    options->fonts[kFont_Text] = fonts_setting.GetFont("text");
+    options->fonts[kFont_Tab] = fonts_setting.GetFont("tab");
+    options->fonts[kFont_Status] = fonts_setting.GetFont("status");
   }
 
-  wxString font_name;
-  GetWxString(setting_map, FONT_NAME, &font_name);
-
-  if (font_name.IsEmpty()) {
-    font_name = GetDefaultFontName();
-    wxLogInfo(wxT("Font is not configured. Default is: %s."), font_name);
-    font = GetGlobalFont(font_size, font_name);
-  } else {
-    // The font might not exist.
-    // But GetGlobalFont will always return a valid font.
-    font = GetGlobalFont(font_size, font_name);
+  if (!options->fonts[kFont_Text].IsOk()) {
+    wxFont font = GetGlobalFont(kDefaultFontSize, GetDefaultFontName());
+    options->fonts[kFont_Text] = font;
   }
-
-  options->font = font;
 
   GetBool(setting_map, SWITCH_CWD, &options->switch_cwd);
 
@@ -203,61 +222,53 @@ void ParseEditorOptions(const Setting& setting, editor::Options* options) {
   SettingMap setting_map;
   setting.AsMap(&setting_map);
 
-  GetBool(setting_map, WRAP, &options->wrap);
-  GetBool(setting_map, EXPAND_TAB, &options->expand_tab);
-  GetBool(setting_map, SHOW_NUMBER, &options->show_number);
-  GetBool(setting_map, SHOW_SPACE, &options->show_space);
-  GetBool(setting_map, SHOW_HSCROLLBAR, &options->show_hscrollbar);
+  //----------------------------------------------------------------------------
+  // Text options
 
   GetInt(setting_map, SHIFT_WIDTH, &options->shift_width);
   GetInt(setting_map, TAB_STOP, &options->tab_stop);
+  GetBool(setting_map, EXPAND_TAB, &options->expand_tab);
 
-  GetStdWString(setting_map, OPERATORS, &options->operators);
-  GetStdWString(setting_map, DELIMITERS, &options->delimiters);
+  GetWString(setting_map, OPERATORS, &options->operators);
+  GetWString(setting_map, DELIMITERS, &options->delimiters);
 
-  Setting rulers_setting = GetSetting(setting_map, RULERS, Setting::kArray);
-  if (rulers_setting) {
-    options->rulers.clear();  // Clear global setting.
-
-    for (int i = 0; i < rulers_setting.size(); ++i) {
-      options->rulers.push_back(rulers_setting[i].GetInt());
-    }
-  }
-
-  Setting indent_keys_setting = GetSetting(setting_map,
-                                           INDENT_KEYS,
-                                           Setting::kArray);
-  if (indent_keys_setting) {
+  // Indent keys
+  Setting ik_setting = GetSetting(setting_map, INDENT_KEYS, Setting::kArray);
+  if (ik_setting) {
     options->indent_keys.clear();  // Clear global setting.
 
-    for (int i = 0; i < indent_keys_setting.size(); ++i) {
-      const char* str = indent_keys_setting[i].GetString();
+    for (int i = 0; i < ik_setting.size(); ++i) {
+      const char* str = ik_setting[i].GetString();
       // Assume that the string is pure ascii.
       options->indent_keys.push_back(std::wstring(str, str + strlen(str)));
     }
   }
 
-  // Extra indent options.
-  Setting indent_setting = setting_map["indent"];
-  if (indent_setting) {
-    int size = indent_setting.size();
-    for (int i = 0; i < size; ++i) {
-      std::string key = indent_setting[i].name();
+  // Extra indent options
+  GetOptionTable(setting_map["indent"], &options->indent_options);
 
-      int type = indent_setting[i].type();
-      if (type == Setting::kInt) {
-        options->indent_options[key] = OptionValue(indent_setting[i].GetInt());
-      } else if (type == Setting::kString) {
-        options->indent_options[key] =
-            OptionValue(std::string(indent_setting[i].GetString()));
-      } else if (type == Setting::kBool) {
-        options->indent_options[key] = OptionValue(indent_setting[i].GetBool());
-      } else {
-        // Not supported.
-      }
-    }
+  // Comment options
+  Setting comment_setting = setting_map["comment"];
+  if (comment_setting) {
+    options->comment_add_space = comment_setting.GetBool("add_space");
+    options->comment_respect_indent = comment_setting.GetBool("respect_indent");
   }
 
+  //----------------------------------------------------------------------------
+  // View options
+
+  GetBool(setting_map, WRAP, &options->wrap);
+  GetBool(setting_map, SHOW_NUMBER, &options->show_number);
+  GetBool(setting_map, SHOW_SPACE, &options->show_space);
+  GetBool(setting_map, SHOW_HSCROLLBAR, &options->show_hscrollbar);
+
+  Setting rulers_setting = GetSetting(setting_map, RULERS, Setting::kArray);
+  if (rulers_setting) {
+    options->rulers.clear();  // Clear global setting.
+    for (int i = 0; i < rulers_setting.size(); ++i) {
+      options->rulers.push_back(rulers_setting[i].GetInt());
+    }
+  }
 }
 
 }  // namespace jil

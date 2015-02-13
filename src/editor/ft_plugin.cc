@@ -122,6 +122,9 @@ void FtPlugin::AddQuote(Quote* quote) {
 void FtPlugin::AddRegexQuote(RegexQuote* regex_quote) {
   regex_quote->set_ignore_case(ignore_case_);
   regex_quotes_.push_back(regex_quote);
+
+  if (regex_quote->lex().major() == kLexComment) {
+  }
 }
 
 void FtPlugin::AddRegex(Lex lex, const std::wstring& pattern) {

@@ -599,10 +599,10 @@ wxString TextBuffer::file_path(int flags, wxPathFormat format) const {
 //------------------------------------------------------------------------------
 
 OptionValue TextBuffer::GetIndentOption(const std::string& key) const {
-  typedef std::map<std::string, OptionValue> OptionMap;
-  OptionMap::const_iterator it = options_.indent_options.find(key);
-  if (it != options_.indent_options.end()) {
-    return it->second;
+  for (size_t i = 0; i < options_.indent_options.size(); ++i) {
+    if (key == options_.indent_options[i].first) {
+      options_.indent_options[i].second;
+    }
   }
   return OptionValue();
 }
@@ -1228,6 +1228,10 @@ std::wstring TextBuffer::GetIndentStr(Coord ln) const {
   return Line(ln)->GetIndentStr();
 }
 
+Coord TextBuffer::GetIndentStrLength(Coord ln) const {
+  return Line(ln)->GetIndentStrLength();
+}
+
 Coord TextBuffer::GetExpectedIndent(Coord ln) const {
   IndentFunc indent_func = ft_plugin_->indent_func();
   if (indent_func != NULL) {
@@ -1623,6 +1627,60 @@ bool TextBuffer::CanUndo() const {
 
 bool TextBuffer::CanRedo() const {
   return !redo_actions_.empty();
+}
+
+//------------------------------------------------------------------------------
+// Lex
+
+bool TextBuffer::GetQuoteInfo(const TextPoint& point,
+                              QuoteInfo* quote_info) const {
+  const QuoteElem* qe_start = NULL;
+  const QuoteElem* qe_end = NULL;
+
+  if (!Line(point.y)->GetQuoteElem(point.x, &qe_start, &qe_end)) {
+    return false;
+  }
+
+  if (qe_start != NULL) {
+    quote_info->start_point.Set(qe_start->off, point.y);
+    quote_info->start_len = qe_start->len;
+  } else {
+    for (Coord ln = point.y - 1; ln >= 1; --ln) {
+      const QuoteElem* qe = Line(ln)->LastUnendedQuoteStart();
+      if (qe != NULL) {
+        qe_start = qe;
+        quote_info->start_point.Set(qe_start->off, ln);
+        quote_info->start_len = qe_start->len;
+        break;
+      }
+    }
+
+    if (qe_start == NULL) {
+      return false;
+    }
+  }
+
+  if (qe_end != NULL) {
+    quote_info->end_point.Set(qe_end->off, point.y);
+    quote_info->end_len = qe_end->len;
+  } else {
+    Coord line_count = LineCount();
+    for (Coord ln = point.y + 1; ln <= line_count; ++ln) {
+      const QuoteElem* qe = Line(ln)->FirstUnstartedQuoteEnd();
+      if (qe != NULL) {
+        qe_end = qe;
+        quote_info->end_point.Set(qe_end->off, ln);
+        quote_info->end_len = qe_end->len;
+        break;
+      }
+    }
+
+    if (qe_end == NULL) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 //------------------------------------------------------------------------------
@@ -2598,16 +2656,16 @@ static bool IsUnescapedBackSlash(const std::wstring& str, size_t i) {
 }
 
 void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
-  line->ClearLexElements();
-  line->ClearQuoteInfos();
+  line->ClearLexElems();
+  line->ClearQuoteElems();
 
   const std::wstring& line_data = line->data();
 
   // quote != NULL: this line continues the last quote.
   size_t quote_off = quote != NULL ? 0 : kNpos;
 
-  LexElement le;  // Current lex element.
-  LexElement prev_le;  // Previous lex element.
+  LexElem le;  // Current lex element.
+  LexElem prev_le;  // Previous lex element.
 
   size_t i = 0;
 
@@ -2634,12 +2692,12 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
         quote_i += quote->end().length();
 
         if (i == 0 || !IsUnescapedBackSlash(line_data, i - 1)) {  // Quote ends.
-          line->AddQuoteInfo(quote, quote_off, i - quote_off, kQuoteBody);
-          line->AddQuoteInfo(quote, i, quote_i - i, kQuoteEnd);
+          line->AddQuoteElem(quote, quote_off, i - quote_off, kQuoteBody);
+          line->AddQuoteElem(quote, i, quote_i - i, kQuoteEnd);
 
           i = quote_i;
           le.Set(quote_off, i - quote_off, quote->lex());
-          line->AddLexElement(le);
+          line->AddLexElem(le);
 
           quote = NULL;
         } else {  // Quote continues.
@@ -2653,7 +2711,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
 
       if (quote_i > i) {  // Quote starts.
         quote_off = i;
-        line->AddQuoteInfo(quote, i, quote_i - i, kQuoteStart);
+        line->AddQuoteElem(quote, i, quote_i - i, kQuoteStart);
 
         if (!quote->multi_line() && quote->end().empty()) {
           // Single line quote ends with EOL.
@@ -2675,7 +2733,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
         if (regex_i > i) {
           le.len = regex_i - i;
           prev_le = le;
-          line->AddLexElement(le);
+          line->AddLexElem(le);
           i = regex_i;
           continue;
         }
@@ -2685,7 +2743,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
             // Look back to check the lex of previous word.
             // FIXME: Currently, only a single operator can be suffix.
             if (ft_plugin_->MatchSuffix(line_data, i, 1, &prev_le.lex)) {
-              line->AddLexElement(prev_le);
+              line->AddLexElem(prev_le);
             }
           }
 
@@ -2711,7 +2769,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
 
         // Match anyof.
         if (ft_plugin_->MatchAnyof(line_data, le.off, le.len, &le.lex)) {
-          line->AddLexElement(le);
+          line->AddLexElem(le);
           prev_le = le;
           continue;
         }
@@ -2724,7 +2782,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
                                       prev_le.off,
                                       prev_le.len,
                                       &le.lex)) {
-            line->AddLexElement(le);
+            line->AddLexElem(le);
             prev_le = le;
             continue;
           }
@@ -2744,19 +2802,19 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
   assert(quote_off != kNpos);
 
   if (line_data.size() > quote_off) {
-    line->AddLexElement(quote_off, line_data.size() - quote_off, quote->lex());
+    line->AddLexElem(quote_off, line_data.size() - quote_off, quote->lex());
   }
 
   if (quote->multi_line()) {
     // Quote continues to next line.
     // Note the line might be empty. Add quote info even the line is empty.
     size_t count = line_data.size() - quote_off;
-    line->AddQuoteInfo(quote, quote_off, count, kQuoteBody);
+    line->AddQuoteElem(quote, quote_off, count, kQuoteBody);
     return;
   }
 
   // Single line quote.
-  line->AddQuoteInfo(quote,
+  line->AddQuoteElem(quote,
                      quote_off,
                      line_data.size() - quote_off,
                      kQuoteBody);
@@ -2766,7 +2824,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
         !(!line_data.empty() &&
           IsUnescapedBackSlash(line_data, line_data.size() - 1))) {
       // Quote ends.
-      line->AddQuoteInfo(quote, line_data.size(), 0, kQuoteEnd);
+      line->AddQuoteElem(quote, line_data.size(), 0, kQuoteEnd);
       quote = NULL;
     }  // else: EOL is escaped, quote continues.
 
@@ -2775,7 +2833,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
         !quote->escape_eol() ||
         !IsUnescapedBackSlash(line_data, line_data.size() - 1)) {
       // Quote is invalid with no end marker found. Just end it.
-      line->AddQuoteInfo(quote, line_data.size(), 0, kQuoteEnd);
+      line->AddQuoteElem(quote, line_data.size(), 0, kQuoteEnd);
       quote = NULL;
     }  // else: Quote continues.
   }
@@ -2925,10 +2983,10 @@ void TextBuffer::ScanLexOnLineDeleted(const LineRange& line_range) {
     Quote* next_quote = NULL;
 
     TextLine* next_line = Line(line_range.first());
-    if (!next_line->quote_infos().empty()) {
-      const QuoteInfo& qi = next_line->quote_infos().front();
-      if (qi.part != kQuoteStart) {
-        next_quote = qi.quote;
+    if (!next_line->quote_elems().empty()) {
+      const QuoteElem& quote_elem = next_line->quote_elems().front();
+      if (quote_elem.part != kQuoteStart) {
+        next_quote = quote_elem.quote;
       }
     }
 

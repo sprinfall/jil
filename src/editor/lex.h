@@ -112,12 +112,12 @@ inline bool operator>(Lex lhs, Lex rhs) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class LexElement {
+class LexElem {
 public:
-  LexElement() : off(0), len(0) {
+  LexElem() : off(0), len(0) {
   }
 
-  LexElement(Coord _off, Coord _len, Lex _lex)
+  LexElem(Coord _off, Coord _len, Lex _lex)
       : off(_off), len(_len), lex(_lex) {
   }
 
@@ -207,8 +207,18 @@ protected:
   bool ignore_case_;
 };
 
+class QuoteElem {
+public:
+  Quote* quote;
+  Coord off;
+  Coord len;
+  QuotePart part;
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 
+// NOTE:
+// The end of regex quote only supports back reference "\1".
 class RegexQuote : public Quote {
 public:
   typedef boost::match_results<std::wstring::const_iterator> MatchResult;
@@ -233,7 +243,6 @@ private:
   void CreateRegex();
 
   bool CreateConcreteEnd(const std::wstring& str,
-                         size_t off,
                          MatchResult& m,
                          std::wstring* concrete_end) const;
 

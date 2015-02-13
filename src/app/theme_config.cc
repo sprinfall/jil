@@ -98,7 +98,7 @@ bool LoadThemeFile(const wxString& theme_file,
   // Window items
 
   // Book frame
-  SharedTheme bf_theme(new Theme(BookFrame::COLOR_COUNT, 0));
+  SharedTheme bf_theme(new Theme(0, BookFrame::COLOR_COUNT));
   Setting bf_setting = root.Get("book_frame", Setting::kGroup);
   if (bf_setting) {
     bf_theme->SetColor(BookFrame::BG, bf_setting.GetColor("bg"));
@@ -106,7 +106,7 @@ bool LoadThemeFile(const wxString& theme_file,
   theme->SetTheme(THEME_BOOK_FRAME, bf_theme);
 
   // Text book
-  SharedTheme tb_theme(new Theme(BookCtrl::COLOR_COUNT, BookCtrl::FONT_COUNT));
+  SharedTheme tb_theme(new Theme(0, BookCtrl::COLOR_COUNT));
   Setting tb_setting = root.Get("text_book", Setting::kGroup);
   if (tb_setting) {
     tb_theme->SetColor(BookCtrl::BG,
@@ -132,17 +132,11 @@ bool LoadThemeFile(const wxString& theme_file,
 
     tb_theme->SetColor(BookCtrl::ACTIVE_TAB_BORDER,
                        tb_setting.GetColor("active_tab_border"));
-
-    wxFont tab_font = tb_setting.GetFont("tab_font");
-    if (!tab_font.IsOk()) {
-      tab_font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
-    }
-    tb_theme->SetFont(BookCtrl::TAB_FONT, tab_font);
   }
   theme->SetTheme(THEME_TEXT_BOOK, tb_theme);
 
   // Text page
-  SharedTheme tp_theme(new Theme(TextWindow::COLOR_COUNT, 0));
+  SharedTheme tp_theme(new Theme(0, TextWindow::COLOR_COUNT));
   Setting tp_setting = root.Get("text_page", Setting::kGroup);
   if (tp_setting) {
     tp_theme->SetColor(TextWindow::RULER, tp_setting.GetColor("ruler"));
@@ -150,24 +144,17 @@ bool LoadThemeFile(const wxString& theme_file,
   theme->SetTheme(THEME_TEXT_PAGE, tp_theme);
 
   // Status bar
-  SharedTheme sb_theme(new Theme(StatusBar::COLOR_COUNT,
-                                 StatusBar::FONT_COUNT));
+  SharedTheme sb_theme(new Theme(0, StatusBar::COLOR_COUNT));
   Setting sb_setting = root.Get("status_bar", Setting::kGroup);
   if (sb_setting) {
     sb_theme->SetColor(StatusBar::BORDER, sb_setting.GetColor("border"));
     sb_theme->SetColor(StatusBar::FG, sb_setting.GetColor("fg"));
     sb_theme->SetColor(StatusBar::BG, sb_setting.GetColor("bg"));
-
-    wxFont font = sb_setting.GetFont("font");
-    if (!font.IsOk()) {
-      font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
-    }
-    sb_theme->SetFont(StatusBar::FONT, font);
   }
   theme->SetTheme(THEME_STATUS_BAR, sb_theme);
 
   // Navigation dialog
-  SharedTheme nd_theme(new Theme(NavigationDialog::COLOR_COUNT, 0));
+  SharedTheme nd_theme(new Theme(0, NavigationDialog::COLOR_COUNT));
   Setting nd_setting = root.Get("navigation_dialog", Setting::kGroup);
   if (nd_setting) {
     nd_theme->SetColor(NavigationDialog::BG, nd_setting.GetColor("bg"));

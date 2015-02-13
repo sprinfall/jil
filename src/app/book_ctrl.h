@@ -138,11 +138,6 @@ public:
     COLOR_COUNT
   };
 
-  enum FontId {
-    TAB_FONT = 0,  // Tab text font
-    FONT_COUNT
-  };
-
 protected:
   class Tab {
   public:
@@ -169,11 +164,15 @@ public:
   explicit BookCtrl(const editor::SharedTheme& theme);
   virtual ~BookCtrl();
 
+  void set_tab_font(const wxFont& tab_font) {
+    tab_font_ = tab_font;
+  }
+
   bool Create(wxWindow* parent, wxWindowID id);
 
   virtual bool HasFocus() const override;
 
-  wxPanel* PageParent() {
+  wxPanel* PageParent() const {
     return page_area_;
   }
 
@@ -276,6 +275,8 @@ protected:
 
 protected:
   editor::SharedTheme theme_;
+
+  wxFont tab_font_;
 
   int char_width_;
   int ellipsis_width_;  // Size of "...".

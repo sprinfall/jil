@@ -98,7 +98,6 @@ public:
   // Font
 
   void SetTextFont(const wxFont& font);
-  void SetLineNrFont(const wxFont& font);
 
   //----------------------------------------------------------------------------
 

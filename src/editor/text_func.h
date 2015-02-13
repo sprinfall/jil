@@ -109,6 +109,7 @@ void NewLineBreak(TextWindow* tw);
 void NewLineBelow(TextWindow* tw);
 void NewLineAbove(TextWindow* tw);
 void Comment(TextWindow* tw);
+void Uncomment(TextWindow* tw);
 
 }  // namespace editor
 }  // namespace jil

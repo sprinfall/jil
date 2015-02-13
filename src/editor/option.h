@@ -18,13 +18,17 @@ public:
   OptionValue() {
   }
 
+  explicit OptionValue(bool data) : data_(data) {
+  }
+
   explicit OptionValue(int data) : data_(data) {
   }
 
   explicit OptionValue(const std::string& data) : data_(data) {
   }
 
-  explicit OptionValue(bool data) : data_(data) {
+  bool IsEmpty() const {
+    return data_.empty();
   }
 
   int AsInt() const {
@@ -55,6 +59,8 @@ private:
   boost::any data_;
 };
 
+typedef std::vector<std::pair<std::string, OptionValue> > OptionTable;
+
 ////////////////////////////////////////////////////////////////////////////////
 
 // For fast option access (No key-value map).
@@ -68,6 +74,9 @@ public:
     shift_width = 4;
     tab_stop = 4;
     expand_tab = true;
+
+    comment_add_space = true;
+    comment_respect_indent = true;
 
     wrap = false;
     show_number = true;
@@ -108,7 +117,11 @@ public:
 
   // Extra indent options.
   // E.g., indent_namespace, indent_case for C++.
-  std::map<std::string, OptionValue> indent_options;
+  OptionTable indent_options;
+
+  // Comment options.
+  bool comment_add_space;
+  bool comment_respect_indent;
 
   //----------------------------------------------------------------------------
   // View options
