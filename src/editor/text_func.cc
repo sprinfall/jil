@@ -358,7 +358,6 @@ void Comment(TextWindow* tw) {
   }
 
   if (tw->buffer()->AreLinesAllEmpty(text_range.GetLineRange(), true)) {
-    // Don't have to create indent action if all lines are empty.
     return;
   }
 
@@ -372,6 +371,28 @@ void Comment(TextWindow* tw) {
   ca->set_caret_point(tw->caret_point());
   ca->set_update_caret(true);
   tw->Exec(ca);
+}
+
+void Uncomment(TextWindow* tw) {
+  TextRange text_range = tw->selection().range;
+  if (text_range.IsEmpty()) {
+    text_range.Set(tw->caret_point(), tw->caret_point());
+  }
+
+  //if (tw->buffer()->AreLinesAllEmpty(text_range.GetLineRange(), true)) {
+  //  return;
+  //}
+
+  const Selection& selection = tw->selection();
+  bool selected = !selection.IsEmpty();
+  UncommentAction* uca = new UncommentAction(tw->buffer(),
+                                             text_range,
+                                             selection.dir,
+                                             selection.rect,
+                                             selected);
+  uca->set_caret_point(tw->caret_point());
+  uca->set_update_caret(true);
+  tw->Exec(uca);
 }
 
 }  // namespace editor

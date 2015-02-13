@@ -112,12 +112,12 @@ inline bool operator>(Lex lhs, Lex rhs) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class LexElement {
+class LexElem {
 public:
-  LexElement() : off(0), len(0) {
+  LexElem() : off(0), len(0) {
   }
 
-  LexElement(Coord _off, Coord _len, Lex _lex)
+  LexElem(Coord _off, Coord _len, Lex _lex)
       : off(_off), len(_len), lex(_lex) {
   }
 
@@ -205,6 +205,14 @@ protected:
 
   // Match with case ignored. E.g., VB's comment: REM
   bool ignore_case_;
+};
+
+class QuoteElem {
+public:
+  Quote* quote;
+  Coord off;
+  Coord len;
+  QuotePart part;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

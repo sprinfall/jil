@@ -21,7 +21,7 @@ TextLine::TextLine(size_t id, const std::wstring& data)
 }
 
 TextLine::~TextLine() {
-  ClearContainer(&lex_elements_);
+  ClearContainer(&lex_elems_);
 }
 
 Coord TextLine::TabbedLength(int tab_stop, Coord count) const {
@@ -122,13 +122,13 @@ bool TextLine::EndWith(wchar_t c,
   bool do_ignore_spaces = ignore_spaces && !IsSpace(c);
 
   if (ignore_comments) {
-    std::list<LexElement*>::const_reverse_iterator it = lex_elements_.rbegin();
-    for (; it != lex_elements_.rend(); ++it) {
+    std::list<LexElem*>::const_reverse_iterator it = lex_elems_.rbegin();
+    for (; it != lex_elems_.rend(); ++it) {
       if (do_ignore_spaces) {
         for (; len > 0 && IsSpace(data_[len-1]); --len) {}
       }
 
-      const LexElement* le = *it;
+      const LexElem* le = *it;
       if (le->off + le->len >= len && le->lex == kLexComment) {
         len = le->off;
       } else {
@@ -173,13 +173,13 @@ bool TextLine::EndWith(const std::wstring& str,
   bool do_ignore_spaces = ignore_spaces && !IsSpace(str[str.size()-1]);
 
   if (ignore_comments) {
-    std::list<LexElement*>::const_reverse_iterator it = lex_elements_.rbegin();
-    for (; it != lex_elements_.rend(); ++it) {
+    std::list<LexElem*>::const_reverse_iterator it = lex_elems_.rbegin();
+    for (; it != lex_elems_.rend(); ++it) {
       if (do_ignore_spaces) {
         for (; len > 0 && IsSpace(data_[len-1]); --len) {}
       }
 
-      const LexElement* le = *it;
+      const LexElem* le = *it;
       if (le->off + le->len >= len && le->lex == kLexComment) {
         len = le->off;
       } else {
@@ -332,34 +332,34 @@ TextLine* TextLine::Split(Coord off, size_t line_id) {
 //------------------------------------------------------------------------------
 // Lex
 
-void TextLine::AddLexElement(size_t off, size_t len, Lex lex) {
+void TextLine::AddLexElem(size_t off, size_t len, Lex lex) {
   // Merge continuous same lex elements.
-  if (!lex_elements_.empty()) {
-    LexElement* prev_le = lex_elements_.back();
+  if (!lex_elems_.empty()) {
+    LexElem* prev_le = lex_elems_.back();
     if (lex == prev_le->lex && off == (prev_le->off + prev_le->len)) {
       prev_le->len += len;
       return;
     }
   }
-  lex_elements_.push_back(new LexElement(off, len, lex));
+  lex_elems_.push_back(new LexElem(off, len, lex));
 }
 
-void TextLine::ClearLexElements() {
-  ClearContainer(&lex_elements_);
+void TextLine::ClearLexElems() {
+  ClearContainer(&lex_elems_);
 }
 
-std::list<const LexElement*> TextLine::lex_elements(
+std::list<const LexElem*> TextLine::lex_elems(
     const CharRange& char_range) const {
-  std::list<const LexElement*> range_lex_elements;
+  std::list<const LexElem*> range_lex_elements;
 
   CharRange adjusted_char_range = char_range;
   if (adjusted_char_range.end() == kInvalidCoord) {
     adjusted_char_range.set_end(Length());
   }
 
-  std::list<LexElement*>::const_iterator it = lex_elements_.begin();
-  for (; it != lex_elements_.end(); ++it) {
-    const LexElement* le = *it;
+  std::list<LexElem*>::const_iterator it = lex_elems_.begin();
+  for (; it != lex_elems_.end(); ++it) {
+    const LexElem* le = *it;
 
     if (le->off >= adjusted_char_range.end()) {
       break;
@@ -377,9 +377,19 @@ std::list<const LexElement*> TextLine::lex_elements(
 }
 
 Lex TextLine::GetLex(Coord off) const {
-  std::list<LexElement*>::const_iterator it = lex_elements_.begin();
-  for (; it != lex_elements_.end(); ++it) {
-    const LexElement* le = *it;
+  if (off >= Length()) {
+    if (!quote_elems_.empty()) {
+      const QuoteElem& qe = quote_elems_.back();
+      if (qe.part != kQuoteEnd && (qe.off + qe.len) == Length()) {
+        return qe.quote->lex();
+      }
+    }
+    return Lex();
+  }
+
+  std::list<LexElem*>::const_iterator it = lex_elems_.begin();
+  for (; it != lex_elems_.end(); ++it) {
+    const LexElem* le = *it;
 
     if (off < le->off) {
       break;
@@ -408,15 +418,15 @@ bool TextLine::SpacesOnly() const {
 }
 
 bool TextLine::CommentsOnly() const {
-  if (lex_elements_.empty()) {
+  if (lex_elems_.empty()) {
     return false;
   }
 
   Coord i = 0;
 
-  std::list<LexElement*>::const_iterator it = lex_elements_.begin();
-  for (; it != lex_elements_.end(); ++it) {
-    const LexElement* le = *it;
+  std::list<LexElem*>::const_iterator it = lex_elems_.begin();
+  for (; it != lex_elems_.end(); ++it) {
+    const LexElem* le = *it;
 
     if (le->lex != kLexComment) {
       return false;
@@ -447,39 +457,141 @@ bool TextLine::CommentsOnly() const {
   return true;
 }
 
-void TextLine::AddQuoteInfo(Quote* quote,
+bool TextLine::IsComment(Coord off) const {
+  return (GetLex(off).major() == kLexComment);
+}
+
+void TextLine::AddQuoteElem(Quote* quote,
                             size_t off,
                             size_t len,
                             QuotePart part) {
-  QuoteInfo qi = { quote, off, len, part };
-  quote_infos_.push_back(qi);
+  QuoteElem qe = { quote, off, len, part };
+  quote_elems_.push_back(qe);
 }
 
 Quote* TextLine::UnendedQuote(bool multi_line) const {
-  if (!quote_infos_.empty()) {
-    const QuoteInfo& qi = quote_infos_.back();
-    if (qi.part != kQuoteEnd && multi_line == qi.quote->multi_line()) {
-      return qi.quote;
+  if (!quote_elems_.empty()) {
+    const QuoteElem& qe = quote_elems_.back();
+    if (qe.part != kQuoteEnd && multi_line == qe.quote->multi_line()) {
+      return qe.quote;
     }
   }
   return NULL;
 }
 
 bool TextLine::EndQuote(Quote* quote) const {
-  std::list<QuoteInfo>::const_iterator it = quote_infos_.begin();
-  for (; it != quote_infos_.end(); ++it) {
-    const QuoteInfo& qi = *it;
+  std::list<QuoteElem>::const_iterator it = quote_elems_.begin();
+  for (; it != quote_elems_.end(); ++it) {
+    const QuoteElem& qe = *it;
 
-    if (qi.quote == quote) {
-      if (qi.part == kQuoteEnd) {
+    if (qe.quote == quote) {
+      if (qe.part == kQuoteEnd) {
         return true;
-      } else if (qi.part == kQuoteStart) {
+      } else if (qe.part == kQuoteStart) {
         return false;
       }
     }
   }
 
   return false;
+}
+
+bool TextLine::GetQuoteElem(Coord off,
+                            const QuoteElem** start,
+                            const QuoteElem** end) const {
+  std::list<QuoteElem>::const_iterator it = quote_elems_.begin();
+
+  bool found = false;
+
+  for (; it != quote_elems_.end(); ++it) {
+    const QuoteElem& qe = *it;
+
+    if (off < qe.off) {
+      break;
+    }
+
+    if (off <= qe.off + qe.len) {
+      found = true;
+      break;
+    }
+  }
+
+  if (found) {
+    const QuoteElem& qe = *it;
+
+    if (qe.part == kQuoteStart) {
+      *start = &qe;
+
+      ++it;
+      if (it != quote_elems_.end()) {
+        if (it->part == kQuoteBody) {
+          ++it;
+          if (it != quote_elems_.end()) {
+            *end = &(*it);
+          }
+        } else {
+          *end = &(*it);
+        }
+      }
+    } else if (qe.part == kQuoteEnd) {
+      *end = &qe;
+
+      if (it != quote_elems_.begin()) {
+        --it;
+        if (it->part == kQuoteBody) {
+          if (it != quote_elems_.begin()) {
+            --it;
+            *start = &(*it);
+          }
+        } else {
+          *start = &(*it);
+        }
+      }
+    } else if (qe.part == kQuoteBody) {
+      if (it != quote_elems_.begin()) {
+        std::list<QuoteElem>::const_iterator prev_it = it;
+        --prev_it;
+        *start = &(*prev_it);
+      }
+
+      ++it;
+      if (it != quote_elems_.end()) {
+        *end = &(*it);
+      }
+    }
+  }
+
+  return found;
+}
+
+const QuoteElem* TextLine::FirstUnstartedQuoteEnd() const {
+  std::list<QuoteElem>::const_iterator it = quote_elems_.begin();
+
+  for (; it != quote_elems_.end(); ++it) {
+    if (it->part == kQuoteEnd) {
+      return &(*it);
+    } else if (it->part == kQuoteStart) {
+      // Embedded quote is not supported.
+      break;
+    }
+  }
+
+  return NULL;
+}
+
+const QuoteElem* TextLine::LastUnendedQuoteStart() const {
+  std::list<QuoteElem>::const_reverse_iterator it = quote_elems_.rbegin();
+
+  for (; it != quote_elems_.rend(); ++it) {
+    if (it->part == kQuoteStart) {
+      return &(*it);
+    } else if (it->part == kQuoteEnd) {
+      // Embedded quote is not supported.
+      break;
+    }
+  }
+
+  return NULL;
 }
 
 }  // namespace editor

@@ -504,8 +504,49 @@ private:
   Coord GetMinIndent(const LineRange& line_range) const;
 
 private:
-  // Keep the changes for undo.
   typedef std::pair<TextPoint, Coord> ChangeInfo;
+  std::list<ChangeInfo> change_infos_;
+
+  TextPoint point_begin_delta_;
+  TextPoint point_end_delta_;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Uncomment a range of text.
+class UncommentAction : public Action, public RangeAction {
+public:
+  UncommentAction(TextBuffer* buffer,
+                  const TextRange& range,
+                  TextDir dir,
+                  bool rect,
+                  bool selected);
+  virtual ~UncommentAction();
+
+  virtual void Exec() override;
+  virtual void Undo() override;
+
+  virtual TextPoint CaretPointAfterExec() const override;
+
+  virtual RangeAction* AsRangeAction() override {
+    return this;
+  }
+
+  virtual TextRange SelectionAfterExec() const override;
+
+private:
+  bool IsComment(const TextPoint& point) const;
+
+  TextRange TrimRange(const TextRange& range) const;
+
+  void UncommentLines(const LineRange& line_range);
+
+  void Delete(const TextPoint& point, Coord count);
+
+private:
+  LineRange refresh_line_range_;
+
+  typedef std::pair<TextPoint, std::wstring> ChangeInfo;
   std::list<ChangeInfo> change_infos_;
 
   TextPoint point_begin_delta_;

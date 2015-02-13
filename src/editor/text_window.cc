@@ -1436,9 +1436,9 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
       int _x = x;
       int _y = y;
 
-      std::list<const LexElement*> lex_elements = line->lex_elements(sub_range);
+      std::list<const LexElem*> lex_elems = line->lex_elems(sub_range);
 
-      if (lex_elements.empty()) {
+      if (lex_elems.empty()) {
         // Without lex elements.
 
         // Get the range, [i, j), of the line piece to draw.
@@ -1455,9 +1455,9 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
 
       Coord i = sub_range.begin();
 
-      std::list<const LexElement*>::iterator le_it = lex_elements.begin();
-      for (; le_it != lex_elements.end(); ++le_it) {
-        const LexElement* le = *le_it;
+      std::list<const LexElem*>::iterator le_it = lex_elems.begin();
+      for (; le_it != lex_elems.end(); ++le_it) {
+        const LexElem* le = *le_it;
 
         // Draw the line piece before the lex element.
         if (i < le->off) {
@@ -1535,14 +1535,14 @@ void TextWindow::DrawTextLine(Renderer& renderer,
   renderer.SetPen(*wxRED_PEN);
 #endif
 
-  const std::list<LexElement*>& lex_elements = line->lex_elements();
+  const std::list<LexElem*>& lex_elems = line->lex_elems();
 
   Coord i = 0;
   Coord j = 0;
 
-  std::list<LexElement*>::const_iterator le_it = lex_elements.begin();
-  for (; le_it != lex_elements.end(); ++le_it) {
-    const LexElement* le = *le_it;
+  std::list<LexElem*>::const_iterator le_it = lex_elems.begin();
+  for (; le_it != lex_elems.end(); ++le_it) {
+    const LexElem* le = *le_it;
 
     if (i < le->off) {
       // Line piece (spaces, operators, plain-text, etc.) with no lex.

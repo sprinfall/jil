@@ -41,6 +41,14 @@ enum Bracket {
   kNoBracket = kBracketCount
 };
 
+class QuoteInfo {
+public:
+  TextPoint start_point;
+  TextPoint end_point;
+  Coord start_len;
+  Coord end_len;
+};
+
 // Text buffer is the model of an opened text file.
 // A view implemented interface BufferListener listens to the change of it.
 // A text buffer may have multiple views.
@@ -439,6 +447,11 @@ public:
 
   bool CanUndo() const;
   bool CanRedo() const;
+
+  //----------------------------------------------------------------------------
+  // Lex
+
+  bool GetQuoteInfo(const TextPoint& point, QuoteInfo* quote_info) const;
 
   //----------------------------------------------------------------------------
   // Line length table.

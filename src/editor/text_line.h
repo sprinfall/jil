@@ -16,15 +16,6 @@ namespace editor {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct QuoteInfo {
-  Quote* quote;
-  size_t off;
-  size_t len;
-  QuotePart part;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
 class TextLine {
 public:
   TextLine(size_t id, const wchar_t* data, size_t len);
@@ -120,21 +111,21 @@ public:
   //----------------------------------------------------------------------------
   // Lex
 
-  void AddLexElement(const LexElement& lex_element) {
-    AddLexElement(lex_element.off, lex_element.len, lex_element.lex);
+  void AddLexElem(const LexElem& lex_elem) {
+    AddLexElem(lex_elem.off, lex_elem.len, lex_elem.lex);
   }
 
   // TODO: Change size_t to Coord.
-  void AddLexElement(size_t off, size_t len, Lex lex);
+  void AddLexElem(size_t off, size_t len, Lex lex);
 
-  void ClearLexElements();
+  void ClearLexElems();
 
-  const std::list<LexElement*>& lex_elements() const {
-    return lex_elements_;
+  const std::list<LexElem*>& lex_elems() const {
+    return lex_elems_;
   }
 
   // Return the lex elements inside the given char range.
-  std::list<const LexElement*> lex_elements(const CharRange& char_range) const;
+  std::list<const LexElem*> lex_elems(const CharRange& char_range) const;
 
   // Get the lex at the given off.
   Lex GetLex(Coord off) const;
@@ -145,10 +136,13 @@ public:
   // Return true if this line only has comments.
   bool CommentsOnly() const;
 
-  void AddQuoteInfo(Quote* quote, size_t off, size_t len, QuotePart part);
+  // Return true if it's comment at the given off.
+  bool IsComment(Coord off) const;
 
-  void ClearQuoteInfos() {
-    quote_infos_.clear();
+  void AddQuoteElem(Quote* quote, size_t off, size_t len, QuotePart part);
+
+  void ClearQuoteElems() {
+    quote_elems_.clear();
   }
 
   Quote* UnendedQuote(bool multi_line) const;
@@ -156,17 +150,24 @@ public:
   // Return true if this line ends the given quote.
   bool EndQuote(Quote* quote) const;
 
-  const std::list<QuoteInfo>& quote_infos() const {
-    return quote_infos_;
+  const std::list<QuoteElem>& quote_elems() const {
+    return quote_elems_;
   }
+
+  bool GetQuoteElem(Coord off,
+                    const QuoteElem** start,
+                    const QuoteElem** end) const;
+
+  const QuoteElem* FirstUnstartedQuoteEnd() const;
+  const QuoteElem* LastUnendedQuoteStart() const;
 
 private:
   size_t id_;
   std::wstring data_;
 
-  std::list<LexElement*> lex_elements_;
+  std::list<LexElem*> lex_elems_;
 
-  std::list<QuoteInfo> quote_infos_;
+  std::list<QuoteElem> quote_elems_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -175,8 +176,6 @@ class LinePred {
 public:
   virtual bool Check(const TextLine* line) const = 0;
 };
-
-////////////////////////////////////////////////////////////////////////////////
 
 class LineStartWith : public LinePred {
 public:

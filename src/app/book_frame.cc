@@ -822,7 +822,7 @@ void BookFrame::FindAll(const std::wstring& str,
     fr_line->set_id(line->id());
 
     // Add lex element for the prefix line number.
-    fr_line->AddLexElement(0,
+    fr_line->AddLexElem(0,
                            ln_str_buf.size(),
                            Lex(kLexConstant, kLexConstantNumber));
 
@@ -830,7 +830,7 @@ void BookFrame::FindAll(const std::wstring& str,
     // TODO: Multiple line match when using regex.
     size_t off = range.point_begin().x + ln_str_buf.size() + 1;
     size_t len = range.point_end().x - range.point_begin().x;
-    fr_line->AddLexElement(off, len, Lex(kLexIdentifier));
+    fr_line->AddLexElem(off, len, Lex(kLexIdentifier));
   }
 
   // Add match count line.

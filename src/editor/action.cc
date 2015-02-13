@@ -794,7 +794,7 @@ void CommentAction::Exec() {
 void CommentAction::Undo() {
   buffer_->FreezeNotify();
 
-  // Use reverse iterator in case there are change sets at the same line.
+  // Use reverse iterator in case there are changes at the same line.
   std::list<ChangeInfo>::reverse_iterator it = change_infos_.rbegin();
   for (; it != change_infos_.rend(); ++it) {
     buffer_->DeleteString(it->first, it->second);
@@ -938,6 +938,166 @@ Coord CommentAction::GetMinIndent(const LineRange& line_range) const {
   }
 
   return min_indent;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+UncommentAction::UncommentAction(TextBuffer* buffer,
+                                 const TextRange& range,
+                                 TextDir dir,
+                                 bool rect,
+                                 bool selected)
+    : Action(buffer, TextPoint())
+    , RangeAction(range, dir, rect, selected)
+    , refresh_line_range_(kInvalidCoord, 0)
+    , point_begin_delta_(0, 0)
+    , point_end_delta_(0, 0) {
+}
+
+UncommentAction::~UncommentAction() {
+}
+
+void UncommentAction::Exec() {
+  refresh_line_range_.Set(kInvalidCoord, 0);
+  change_infos_.clear();
+
+  // Copy the range to avoid changing it.
+  TextRange range = range_;
+
+  // If the range ends at the beginning of a line, don't take that line
+  // into account.
+  if (!range_.IsEmpty() && range.point_end().x == 0) {
+    Coord ln = range.line_last() - 1;
+    TextPoint point_end(buffer_->LineLength(ln), ln);
+    range.Set(range.point_begin(), point_end);
+  }
+
+  // Trim the spaces of the range.
+  if (!range.IsEmpty()) {
+    range = TrimRange(range);
+  }
+
+  // Try to uncomment by block.
+  if (IsComment(range.point_begin())) {
+    QuoteInfo quote_info;
+    if (buffer_->GetQuoteInfo(range.point_begin(), &quote_info)) {
+      TextPoint quote_end_point = quote_info.end_point;
+      quote_end_point.x += quote_info.end_len;
+
+      if (range.point_begin() >= quote_info.start_point &&
+          range.point_end() <= quote_end_point) {
+        buffer_->FreezeNotify();
+
+        // Delete quote end firstly in case they are at the same line.
+        if (quote_info.end_len != 0) {
+          Delete(quote_info.end_point, quote_info.end_len);
+        }
+
+        // Delete quote start.
+        Delete(quote_info.start_point, quote_info.start_len);
+
+        buffer_->ThawNotify();
+        buffer_->Notify(kLineUpdated, refresh_line_range_);
+
+        return;
+      }
+    }
+  }
+
+  // Uncomment by line.
+}
+
+void UncommentAction::Undo() {
+  buffer_->FreezeNotify();
+
+  // Use reverse iterator in case there are changes at the same line.
+  std::list<ChangeInfo>::reverse_iterator it = change_infos_.rbegin();
+  for (; it != change_infos_.rend(); ++it) {
+    buffer_->InsertString(it->first, it->second);
+  }
+
+  buffer_->ThawNotify();
+  buffer_->Notify(kLineUpdated, refresh_line_range_);
+}
+
+TextPoint UncommentAction::CaretPointAfterExec() const {
+  return caret_point_ + delta_point_;
+}
+
+TextRange UncommentAction::SelectionAfterExec() const {
+  if (range_.IsEmpty()) {
+    return range_;
+  }
+
+  TextPoint point_begin(range_.point_begin() + point_begin_delta_);
+  TextPoint point_end(range_.point_end() + point_end_delta_);
+  return TextRange(point_begin, point_end);
+}
+
+bool UncommentAction::IsComment(const TextPoint& point) const {
+  return (buffer_->GetLex(point).major() == kLexComment);
+}
+
+TextRange UncommentAction::TrimRange(const TextRange& range) const {
+  TextPoint begin = range.point_begin();
+  TextPoint end = range.point_end();
+
+  begin.x = buffer_->Line(begin.y)->FirstNonSpaceChar(begin.x);
+  end.x = buffer_->Line(end.y)->LastNonSpaceChar(end.x);
+
+  return TextRange(begin, end);
+}
+
+void UncommentAction::UncommentLines(const LineRange& line_range) {
+  //for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
+  //  TextLine* line = buffer_->Line(ln);
+  //}
+}
+
+void UncommentAction::Delete(const TextPoint& point, Coord count) {
+  if (!effective_) {
+    effective_ = true;
+  }
+
+  // Update the refresh line range.
+  if (refresh_line_range_.first() == kInvalidCoord ||
+      refresh_line_range_.first() > point.y) {
+    refresh_line_range_.set_first(point.y);
+  }
+  if (refresh_line_range_.last() < point.y) {
+    refresh_line_range_.set_last(point.y);
+  }
+
+  std::wstring str;
+  buffer_->DeleteString(point, count, &str);
+
+  change_infos_.push_back(std::make_pair(point, str));
+
+  if (caret_point_.y == point.y) {
+    if (caret_point_.x > point.x) {
+      if (caret_point_.x >= point.x + count) {
+        delta_point_.Set(-count, 0);
+      } else {
+        delta_point_.Set(point.x - caret_point_.x, 0);
+      }
+    }
+  }
+
+  if (point.y == range_.point_begin().y) {
+    if (range_.point_begin().x > point.x) {
+      if (range_.point_begin().x > point.x + count) {
+        point_begin_delta_.Set(-count, 0);
+      } else {
+        delta_point_.Set(point.x - range_.point_begin().x, 0);
+      }
+    }
+  }
+
+  //if (point.y == range_.point_end().y) {
+  //  if (point.x < range_.point_end().x) {  // NOTE: < instead of <=
+  //    point_end_delta_.Set(str_size, 0);
+  //  }
+  //}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
