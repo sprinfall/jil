@@ -125,9 +125,6 @@ void TextPage::Page_EditMenu(wxMenu* menu) {
   wxMenu* comment_menu = new wxMenu;
   AppendMenuItem(comment_menu, ID_MENU_EDIT_COMMENT, kTrEditComment);
   AppendMenuItem(comment_menu, ID_MENU_EDIT_UNCOMMENT, kTrEditUncomment);
-  AppendMenuItem(comment_menu,
-                 ID_MENU_EDIT_TOGGLE_COMMENT,
-                 kTrEditToggleComment);
   menu->AppendSubMenu(comment_menu, kTrEditComment);
 
   AppendMenuItem(menu, ID_MENU_EDIT_FORMAT, kTrEditFormat);

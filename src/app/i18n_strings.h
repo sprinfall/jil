@@ -59,7 +59,6 @@
 #define kTrEditAutoIndent     _("&Auto Indent")
 #define kTrEditComment        _("&Comment")
 #define kTrEditUncomment      _("&Uncomment")
-#define kTrEditToggleComment  _("&Toggle Comment")
 #define kTrEditFind           _("&Find")
 #define kTrEditReplace        _("Rep&lace")
 #define kTrEditGoTo           _("&Go To...")

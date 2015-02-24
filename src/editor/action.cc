@@ -1005,6 +1005,7 @@ void UncommentAction::Exec() {
   }
 
   // Uncomment by line.
+  UncommentLines(range.GetLineRange());
 }
 
 void UncommentAction::Undo() {
@@ -1039,19 +1040,77 @@ bool UncommentAction::IsComment(const TextPoint& point) const {
 }
 
 TextRange UncommentAction::TrimRange(const TextRange& range) const {
-  TextPoint begin = range.point_begin();
-  TextPoint end = range.point_end();
+  TextPoint point_begin = range.point_begin();
+  TextPoint point_end = range.point_end();
 
-  begin.x = buffer_->Line(begin.y)->FirstNonSpaceChar(begin.x);
-  end.x = buffer_->Line(end.y)->LastNonSpaceChar(end.x);
+  TextLine* begin_line = buffer_->Line(point_begin.y);
+  TextLine* end_line = buffer_->Line(point_end.y);
 
-  return TextRange(begin, end);
+  point_end.x = end_line->LastNonSpaceChar(point_end.x);
+
+  if (point_begin.y == point_end.y) {
+    // Avoid to trim to an invalid text range.
+    if (point_begin.x < point_end.x) {
+      point_begin.x = begin_line->FirstNonSpaceChar(point_begin.x);
+    }
+    if (point_begin.x > point_end.x) {
+      point_begin.x = point_end.x;
+    }
+  } else {
+    point_begin.x = begin_line->FirstNonSpaceChar(point_begin.x);
+  }
+
+  return TextRange(point_begin, point_end);
 }
 
 void UncommentAction::UncommentLines(const LineRange& line_range) {
-  //for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
-  //  TextLine* line = buffer_->Line(ln);
-  //}
+  buffer_->FreezeNotify();
+
+  for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
+    TextLine* line = buffer_->Line(ln);
+
+    Coord x = line->FirstNonSpaceChar();
+    if (x == line->Length()) {
+      continue;
+    }
+
+    const QuoteElem* quote_start = NULL;
+    const QuoteElem* quote_end = NULL;
+    if (!line->GetQuoteElem(x, &quote_start, &quote_end)) {
+      continue;
+    }
+
+    if (quote_start == NULL || quote_end == NULL) {
+      // The quote starts or ends in another line.
+      continue;
+    }
+
+    if (quote_start->quote->lex().major() != kLexComment) {
+      continue;
+    }
+
+    if (quote_start->off != x) {
+      // Non-space char before the quote start.
+      continue;
+    }
+
+    Coord quote_end_off = quote_end->off + quote_end->len;
+    if (line->FirstNonSpaceChar(quote_end_off) != line->Length()) {
+      // Non-space char after the quote end.
+      continue;
+    }
+
+    // Delete quote end firstly in case they are at the same line.
+    if (quote_end->len != 0) {
+      Delete(TextPoint(quote_end->off, ln), quote_end->len);
+    }
+
+    // Delete quote start.
+    Delete(TextPoint(quote_start->off, ln), quote_start->len);
+  }
+
+  buffer_->ThawNotify();
+  buffer_->Notify(kLineUpdated, refresh_line_range_);
 }
 
 void UncommentAction::Delete(const TextPoint& point, Coord count) {
@@ -1083,21 +1142,25 @@ void UncommentAction::Delete(const TextPoint& point, Coord count) {
     }
   }
 
-  if (point.y == range_.point_begin().y) {
-    if (range_.point_begin().x > point.x) {
-      if (range_.point_begin().x > point.x + count) {
+  if (range_.point_begin().y == point.y) {
+    if (range_.point_begin().x >= point.x) {
+      if (range_.point_begin().x >= point.x + count) {
         point_begin_delta_.Set(-count, 0);
       } else {
-        delta_point_.Set(point.x - range_.point_begin().x, 0);
+        point_begin_delta_.Set(point.x - range_.point_begin().x, 0);
       }
     }
   }
 
-  //if (point.y == range_.point_end().y) {
-  //  if (point.x < range_.point_end().x) {  // NOTE: < instead of <=
-  //    point_end_delta_.Set(str_size, 0);
-  //  }
-  //}
+  if (range_.point_end().y == point.y) {
+    if (range_.point_end().x >= point.x) {
+      if (range_.point_end().x >= point.x + count) {
+        point_end_delta_.Set(-count, 0);
+      } else {
+        point_end_delta_.Set(point.x - range_.point_end().x, 0);
+      }
+    }
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

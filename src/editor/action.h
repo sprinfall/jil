@@ -483,7 +483,9 @@ public:
 
   virtual TextPoint CaretPointAfterExec() const override;
 
-  virtual RangeAction* AsRangeAction() override { return this; }
+  virtual RangeAction* AsRangeAction() override {
+    return this;
+  }
 
   virtual TextRange SelectionAfterExec() const override;
 

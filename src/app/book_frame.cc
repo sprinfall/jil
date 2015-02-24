@@ -1791,42 +1791,10 @@ void BookFrame::LoadMenus() {
   //------------------------------------
   // Edit
 
-  // Edit menu will be created when some page is focused.
+  // Edit menu items will be created when some page is focused.
   // See: virtual bool BookPage::Page_OnMenu(int menu_id) = 0;
 
   wxMenu* edit_menu = new wxMenu;
-
-/*
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_UNDO, kTrEditUndo);
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_REDO, kTrEditRedo);
-  edit_menu->AppendSeparator();
-
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_CUT, kTrEditCut);
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_COPY, kTrEditCopy);
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_PASTE, kTrEditPaste);
-  edit_menu->AppendSeparator();
-
-  // - Line
-  wxMenu* line_menu = new wxMenu;
-  AppendMenuItem(line_menu, ID_MENU_EDIT_AUTO_INDENT, kTrEditAutoIndent);
-  AppendMenuItem(line_menu, ID_MENU_EDIT_INCREASE_INDENT, kTrEditIncreaseIndent);
-  AppendMenuItem(line_menu, ID_MENU_EDIT_DECREASE_INDENT, kTrEditDecreaseIndent);
-  edit_menu->AppendSubMenu(line_menu, kTrEditLine);
-
-  // - Comment
-  wxMenu* comment_menu = new wxMenu;
-  AppendMenuItem(comment_menu, ID_MENU_EDIT_COMMENT, kTrEditComment);
-  AppendMenuItem(comment_menu, ID_MENU_EDIT_UNCOMMENT, kTrEditUncomment);
-  AppendMenuItem(comment_menu, ID_MENU_EDIT_TOGGLE_COMMENT, kTrEditToggleComment);
-  edit_menu->AppendSubMenu(comment_menu, kTrEditComment);
-
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_FORMAT, kTrEditFormat);
-  edit_menu->AppendSeparator();
-
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_FIND, kTrEditFind);
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_REPLACE, kTrEditReplace);
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_GO_TO, kTrEditGoTo);
-*/
   menu_bar->Append(edit_menu, kTrMenuEdit);
 
   //------------------------------------

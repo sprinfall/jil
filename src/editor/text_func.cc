@@ -379,10 +379,6 @@ void Uncomment(TextWindow* tw) {
     text_range.Set(tw->caret_point(), tw->caret_point());
   }
 
-  //if (tw->buffer()->AreLinesAllEmpty(text_range.GetLineRange(), true)) {
-  //  return;
-  //}
-
   const Selection& selection = tw->selection();
   bool selected = !selection.IsEmpty();
   UncommentAction* uca = new UncommentAction(tw->buffer(),
