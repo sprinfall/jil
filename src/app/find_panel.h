@@ -1,10 +1,9 @@
-#ifndef JIL_FIND_WINDOW_H_
-#define JIL_FIND_WINDOW_H_
+#ifndef JIL_FIND_PANEL_H_
+#define JIL_FIND_PANEL_H_
 #pragma once
 
-// Find & Replace window.
+// Find & Replace panel.
 
-#include "wx/minifram.h"
 #include "wx/panel.h"
 #include "app/defs.h"
 
@@ -15,26 +14,27 @@ class wxBitmapButton;
 namespace jil {
 
 class BitmapToggleButton;
+class Separator;
 class Session;
 class BookFrame;
 
-class FindWindow : public wxMiniFrame {
-  DECLARE_DYNAMIC_CLASS(FindWindow)
+class FindPanel : public wxPanel {
+  DECLARE_DYNAMIC_CLASS(FindPanel)
   DECLARE_EVENT_TABLE()
 
- public:
+public:
   enum Mode {
     kFindMode = 0,
     kReplaceMode
   };
 
- public:
-  FindWindow();
-  FindWindow(Session* session, int mode);
+public:
+  FindPanel();
+  FindPanel(Session* session, int mode);
 
   bool Create(BookFrame* book_frame, wxWindowID id);
 
-  virtual ~FindWindow();
+  virtual ~FindPanel();
 
   void set_session(Session* session) {
     session_ = session;
@@ -55,10 +55,10 @@ class FindWindow : public wxMiniFrame {
 
   void SetFindString(const wxString& find_string);
 
- protected:
-  void OnActivate(wxActivateEvent& evt);
-  void OnClose(wxCloseEvent& evt);
-  void OnKeyDownHook(wxKeyEvent& evt);
+protected:
+  //void OnActivate(wxActivateEvent& evt);
+  //void OnClose(wxCloseEvent& evt);
+  //void OnKeyDownHook(wxKeyEvent& evt);
 
   void OnUseRegexToggle(wxCommandEvent& evt);
   void OnCaseSensitiveToggle(wxCommandEvent& evt);
@@ -72,22 +72,16 @@ class FindWindow : public wxMiniFrame {
   void OnReplace(wxCommandEvent& evt);
   void OnReplaceAll(wxCommandEvent& evt);
 
- private:
+private:
   // Add a string to find history and find combobox.
   void AddFindString(const wxString& string);
   // Add a string to replace history and replace combobox.
   void AddReplaceString(const wxString& string);
 
-  void UpdateSizes();
-
   void LayoutAsFind();
   void LayoutAsReplace();
 
-  wxBitmapButton* NewBitmapButton(wxWindowID id,
-                                  const wxChar* const bitmap,
-                                  const wxString& tooltip);
-
- private:
+private:
   Session* session_;
 
   BookFrame* book_frame_;
@@ -97,8 +91,7 @@ class FindWindow : public wxMiniFrame {
   // See enum FindFlag.
   int flags_;
 
-  // For tab traversal.
-  wxPanel* panel_;
+  Separator* top_border_;
 
   BitmapToggleButton* use_regex_toggle_;
   BitmapToggleButton* case_sensitive_toggle_;
@@ -117,4 +110,4 @@ class FindWindow : public wxMiniFrame {
 
 }  // namespace jil
 
-#endif  // JIL_FIND_WINDOW_H_
+#endif  // JIL_FIND_PANEL_H_

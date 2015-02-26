@@ -10,8 +10,7 @@ namespace jil {
 
 // Setting names.
 const char* const kBookFrame = "book_frame";
-const char* const kFindWindow = "find_window";
-const char* const kWindow = "window";
+const char* const kFindPanel = "find_panel";
 const char* const kRect = "rect";
 const char* const kMaximized = "maximized";
 const char* const kFindViewType = "view_type";
@@ -113,48 +112,43 @@ bool Session::Load(const wxString& file) {
     return false;
   }
 
-  Setting w_setting = config.Root().Get(kWindow, Setting::kGroup);
-  if (!w_setting) {
-    return false;
-  }
+  Setting root_setting = config.Root();
 
   //----------------------------------------------------------------------------
   // Book frame
 
-  Setting bf_setting = w_setting.Get(kBookFrame, Setting::kGroup);
+  Setting bf_setting = root_setting.Get(kBookFrame, Setting::kGroup);
   if (bf_setting) {
     GetRect(bf_setting, kRect, &book_frame_rect_);
     book_frame_maximized_ = bf_setting.GetBool(kMaximized);
   }
 
   //----------------------------------------------------------------------------
-  // Find window
+  // Find panel
 
-  Setting fw_setting = w_setting.Get(kFindWindow, Setting::kGroup);
-  if (fw_setting) {
-    GetRect(fw_setting, kRect, &find_window_rect_);
+  Setting fp_setting = root_setting.Get(kFindPanel, Setting::kGroup);
+  if (fp_setting) {
+    GetStringArray(fp_setting, kRecentFindStrings, &recent_find_strings_);
+    GetStringArray(fp_setting, kRecentReplaceStrings, &recent_replace_strings_);
+
+    find_flags_ = SetBit(find_flags_,
+                         kFindUseRegex,
+                         fp_setting.GetBool("use_regex"));
+    find_flags_ = SetBit(find_flags_,
+                         kFindCaseSensitive,
+                         fp_setting.GetBool("case_sensitive"));
+    find_flags_ = SetBit(find_flags_,
+                         kFindMatchWholeWord,
+                         fp_setting.GetBool("match_whole_word"));
+    find_flags_ = SetBit(find_flags_,
+                         kFindReversely,
+                         fp_setting.GetBool("reversely"));
   }
-
-  GetStringArray(fw_setting, kRecentFindStrings, &recent_find_strings_);
-  GetStringArray(fw_setting, kRecentReplaceStrings, &recent_replace_strings_);
-
-  find_flags_ = SetBit(find_flags_,
-                       kFindUseRegex,
-                       fw_setting.GetBool("use_regex"));
-  find_flags_ = SetBit(find_flags_,
-                       kFindCaseSensitive,
-                       fw_setting.GetBool("case_sensitive"));
-  find_flags_ = SetBit(find_flags_,
-                       kFindMatchWholeWord,
-                       fw_setting.GetBool("match_whole_word"));
-  find_flags_ = SetBit(find_flags_,
-                       kFindReversely,
-                       fw_setting.GetBool("reversely"));
 
   //----------------------------------------------------------------------------
   // Split tree
 
-  Setting split_setting = config.Root().Get("split", Setting::kGroup);
+  Setting split_setting = root_setting.Get("split", Setting::kGroup);
   if (split_setting) {
     split_root_ = RestoreSplitTree(split_setting);
   }
@@ -162,7 +156,7 @@ bool Session::Load(const wxString& file) {
   //----------------------------------------------------------------------------
   // File history
 
-  Setting fs_setting = config.Root().Get("file_history", Setting::kGroup);
+  Setting fs_setting = root_setting.Get("file_history", Setting::kGroup);
   if (fs_setting) {
     GetStringArray(fs_setting, "opened_files", &opened_files_);
     GetStringArray(fs_setting, "recent_files", &recent_files_);
@@ -173,12 +167,13 @@ bool Session::Load(const wxString& file) {
 
 bool Session::Save(const wxString& file) {
   Config config;
-  Setting w_setting = config.Root().Add(kWindow, Setting::kGroup);
+
+  Setting root_setting = config.Root();
 
   //----------------------------------------------------------------------------
   // Book frame
 
-  Setting bf_setting = w_setting.Add(kBookFrame, Setting::kGroup);
+  Setting bf_setting = root_setting.Add(kBookFrame, Setting::kGroup);
 
   if (!book_frame_rect_.IsEmpty()) {
     SetRect(bf_setting, kRect, book_frame_rect_);
@@ -187,42 +182,38 @@ bool Session::Save(const wxString& file) {
   bf_setting.SetBool(kMaximized, book_frame_maximized_);
 
   //----------------------------------------------------------------------------
-  // Find window
+  // Find panel
 
-  Setting fw_setting = w_setting.Add(kFindWindow, Setting::kGroup);
+  Setting fp_setting = root_setting.Add(kFindPanel, Setting::kGroup);
 
-  if (!find_window_rect_.IsEmpty()) {
-    SetRect(fw_setting, kRect, find_window_rect_);
-  }
-
-  SetStringArray(fw_setting,
+  SetStringArray(fp_setting,
                  kRecentFindStrings,
                  recent_find_strings_,
                  find_history_limit_);
 
-  SetStringArray(fw_setting,
+  SetStringArray(fp_setting,
                  kRecentReplaceStrings,
                  recent_replace_strings_,
                  find_history_limit_);
 
-  fw_setting.SetBool("use_regex", GetBit(find_flags_, kFindUseRegex));
-  fw_setting.SetBool("case_sensitive", GetBit(find_flags_, kFindCaseSensitive));
-  fw_setting.SetBool("match_whole_word",
+  fp_setting.SetBool("use_regex", GetBit(find_flags_, kFindUseRegex));
+  fp_setting.SetBool("case_sensitive", GetBit(find_flags_, kFindCaseSensitive));
+  fp_setting.SetBool("match_whole_word",
                      GetBit(find_flags_, kFindMatchWholeWord));
-  fw_setting.SetBool("reversely", GetBit(find_flags_, kFindReversely));
+  fp_setting.SetBool("reversely", GetBit(find_flags_, kFindReversely));
 
   //----------------------------------------------------------------------------
   // Split tree
 
   if (split_root_ != NULL) {
-    Setting split_setting = config.Root().Add("split", Setting::kGroup);
+    Setting split_setting = root_setting.Add("split", Setting::kGroup);
     SaveSplitTree(split_root_, &split_setting);
   }
 
   //----------------------------------------------------------------------------
   // File history
 
-  Setting fs_setting = config.Root().Add("file_history", Setting::kGroup);
+  Setting fs_setting = root_setting.Add("file_history", Setting::kGroup);
   SetStringArray(fs_setting, "opened_files", opened_files_);
   SetStringArray(fs_setting, "recent_files", recent_files_);
 
