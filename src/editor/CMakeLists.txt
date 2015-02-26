@@ -64,9 +64,11 @@ add_library(editor ${SRCS} ${HEADERS})
 # Unit test
 if(JIL_ENABLE_UT)
     set(UT_SRCS
+        action_unittest.cc
         indent_unittest.cc
         text_line_unittest.cc
         text_buffer_unittest.cc
+        text_range_unittest.cc
         )
     set(UT_TARGET_NAME editor_unittest)
     add_executable(${UT_TARGET_NAME} ${UT_SRCS})

@@ -1,272 +1,323 @@
 #include <memory>
 #include <vector>
-#include "editor/edit_action.h"
+#include "editor/action.h"
+#include "editor/defs.h"
+#include "editor/ft_plugin.h"
 #include "editor/text_buffer.h"
+#include "editor/util.h"
 #include "gtest/gtest.h"
 
 using namespace jil::editor;
 
+typedef std::auto_ptr<TextBuffer> TextBufferPtr;
+
+static const FileType kFtTxt("txt", "Text");
+static const Encoding kEncoding = EncodingFromName(ENCODING_NAME_ISO_8859_1);
+
 ////////////////////////////////////////////////////////////////////////////////
 // InsertCharAction
 
-TEST(EditAction, InsertChar) {
-  std::auto_ptr<TextBuffer> buffer(TextBuffer::Create(wxEmptyString, NULL, wxEmptyString));
+TEST(InsertCharAction, InsertChar) {
+  FtPlugin ft_plugin(kFtTxt);
+  TextBufferPtr buffer(TextBuffer::Create(&ft_plugin, kEncoding));
 
-  TextPoint insert_coord(0, 1);
-  InsertCharAction insert_char(buffer.get(), insert_coord, L'a');
-  insert_char.Exec();
+  TextPoint point(0, 1);
+  InsertCharAction ica(buffer.get(), point, L'a');
 
-  EXPECT_EQ(TextPoint(1, 0), insert_char.delta_point());
-  EXPECT_EQ(L"a", buffer->GetLine(1).data());
+  for (int i = 0; i < 2; ++i) {
+    ica.Exec();
 
-  insert_char.Undo();
-}
+    EXPECT_TRUE(ica.effective());
 
-TEST(EditAction, InsertChar_LineEnding) {
-  std::auto_ptr<TextBuffer> buffer(TextBuffer::Create(L"abc", NULL, wxEmptyString));
+    EXPECT_EQ(TextPoint(1, 0), ica.delta_point());
+    EXPECT_EQ(L"a", buffer->LineData(1));
 
-  {
-    const TextPoint coord(3, 1);
-    InsertCharAction insert_char(buffer.get(), coord, kLineEndingChar);
-    insert_char.Exec();
+    ica.Undo();
 
-    EXPECT_EQ(TextPoint(-3, 1), insert_char.delta_point());
-    EXPECT_EQ(2, buffer->LineCount());
-    EXPECT_EQ(L"abc", buffer->GetLine(1).data());
-    EXPECT_EQ(L"", buffer->GetLine(2).data());
-
-    insert_char.Undo();
-    EXPECT_EQ(1, buffer->LineCount());
-    EXPECT_EQ(L"abc", buffer->GetLine(1).data());
-  }
-
-  {
-    const TextPoint coord(1, 1);
-    InsertCharAction insert_char(buffer.get(), coord, kLineEndingChar);
-    insert_char.Exec();
-
-    EXPECT_EQ(TextPoint(-1, 1), insert_char.delta_point());
-    EXPECT_EQ(2, buffer->LineCount());
-    EXPECT_EQ(L"a", buffer->GetLine(1).data());
-    EXPECT_EQ(L"bc", buffer->GetLine(2).data());
-
-    insert_char.Undo();
-    EXPECT_EQ(1, buffer->LineCount());
-    EXPECT_EQ(L"abc", buffer->GetLine(1).data());
+    EXPECT_EQ(L"", buffer->LineData(1));
   }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// DeleteChar
+TEST(InsertCharAction, InsertLineEndingChar) {
+  FtPlugin ft_plugin(kFtTxt);
+  TextBufferPtr buffer(TextBuffer::Create(L"abc", &ft_plugin, kEncoding));
 
-TEST(EditAction, DeleteChar_Backward) {
-  std::auto_ptr<TextBuffer> buffer(TextBuffer::Create(L"a", NULL, wxEmptyString));
+  {
+    TextPoint point(3, 1);
+    InsertCharAction ica(buffer.get(), point, LF);
 
-  const TextPoint coord(1, 1);
-  DeleteCharAction delete_char(buffer.get(), coord, kBackward);
-  delete_char.Exec();
+    for (int i = 0; i < 2; ++i) {
+      ica.Exec();
 
-  EXPECT_EQ(TextPoint(-1, 0), delete_char.delta_point());
-  EXPECT_EQ(L"", buffer->GetLine(1).data());
+      EXPECT_TRUE(ica.effective());
 
-  delete_char.Undo();
-  EXPECT_EQ(L"a", buffer->GetLine(1).data());
-}
+      EXPECT_EQ(TextPoint(-3, 1), ica.delta_point());
+      EXPECT_EQ(2, buffer->LineCount());
+      EXPECT_EQ(L"abc", buffer->LineData(1));
+      EXPECT_EQ(L"", buffer->LineData(2));
 
-TEST(EditAction, DeleteChar_Backward_LineEnding) {
-  std::auto_ptr<TextBuffer> buffer(TextBuffer::Create(L"abc\nde", NULL, wxEmptyString));
+      ica.Undo();
 
-  const TextPoint coord(0, 2);
-  DeleteCharAction delete_char(buffer.get(), coord, kBackward);
-  delete_char.Exec();
+      EXPECT_EQ(1, buffer->LineCount());
+      EXPECT_EQ(L"abc", buffer->LineData(1));
+    }
+  }
 
-  EXPECT_EQ(TextPoint(3, -1), delete_char.delta_point());
-  EXPECT_EQ(1, buffer->LineCount());
-  EXPECT_EQ(L"abcde", buffer->GetLine(1).data());
+  {
+    TextPoint point(1, 1);
+    InsertCharAction ica(buffer.get(), point, LF);
 
-  delete_char.Undo();
-  EXPECT_EQ(2, buffer->LineCount());
-  EXPECT_EQ(L"abc", buffer->GetLine(1).data());
-  EXPECT_EQ(L"de", buffer->GetLine(2).data());
-}
+    for (int i = 0; i < 2; ++i) {
+      ica.Exec();
 
-TEST(EditAction, DeleteChar_Backward_LineEnding_Negative) {
-  std::auto_ptr<TextBuffer> buffer(TextBuffer::Create(L"abc", NULL, wxEmptyString));
+      EXPECT_TRUE(ica.effective());
 
-  const TextPoint coord(0, 1);
-  DeleteCharAction delete_char(buffer.get(), coord, kBackward);
-  delete_char.Exec();
+      EXPECT_EQ(TextPoint(-1, 1), ica.delta_point());
+      EXPECT_EQ(2, buffer->LineCount());
+      EXPECT_EQ(L"a", buffer->LineData(1));
+      EXPECT_EQ(L"bc", buffer->LineData(2));
 
-  // Nothing is deleted.
-  EXPECT_EQ(TextPoint(0, 0), delete_char.delta_point());
-  EXPECT_EQ(1, buffer->LineCount());
-  EXPECT_EQ(L"abc", buffer->GetLine(1).data());
+      ica.Undo();
 
-  delete_char.Undo();
-  EXPECT_EQ(1, buffer->LineCount());
-  EXPECT_EQ(L"abc", buffer->GetLine(1).data());
-}
-
-TEST(EditAction, DeleteChar_Forward) {
-  std::auto_ptr<TextBuffer> buffer(TextBuffer::Create(L"a", NULL, wxEmptyString));
-
-  const TextPoint coord(0, 1);
-  DeleteCharAction delete_char(buffer.get(), coord, kForward);
-  delete_char.Exec();
-
-  EXPECT_EQ(TextPoint(0, 0), delete_char.delta_point());
-  EXPECT_EQ(L"", buffer->GetLine(1).data());
-
-  delete_char.Undo();
-  EXPECT_EQ(L"a", buffer->GetLine(1).data());
-}
-
-TEST(EditAction, DeleteChar_Forward_LineEnding) {
-  std::auto_ptr<TextBuffer> buffer(TextBuffer::Create(L"abc\nde", NULL, wxEmptyString));
-
-  const TextPoint coord(3, 1);
-  DeleteCharAction delete_char(buffer.get(), coord, kForward);
-  delete_char.Exec();
-
-  EXPECT_EQ(TextPoint(0, 0), delete_char.delta_point());
-  EXPECT_EQ(1, buffer->LineCount());
-  EXPECT_EQ(L"abcde", buffer->GetLine(1).data());
-
-  delete_char.Undo();
-  EXPECT_EQ(2, buffer->LineCount());
-  EXPECT_EQ(L"abc", buffer->GetLine(1).data());
-  EXPECT_EQ(L"de", buffer->GetLine(2).data());
-}
-
-TEST(EditAction, DeleteChar_Forward_LineEnding_Negative) {
-  std::auto_ptr<TextBuffer> buffer(TextBuffer::Create(L"abc", NULL, wxEmptyString));
-
-  const TextPoint coord(3, 1);
-  DeleteCharAction delete_char(buffer.get(), coord, kForward);
-  delete_char.Exec();
-
-  EXPECT_EQ(TextPoint(0, 0), delete_char.delta_point());
-  EXPECT_EQ(1, buffer->LineCount());
-  EXPECT_EQ(L"abc", buffer->GetLine(1).data());
-
-  delete_char.Undo();
-  EXPECT_EQ(1, buffer->LineCount());
-  EXPECT_EQ(L"abc", buffer->GetLine(1).data());
+      EXPECT_EQ(1, buffer->LineCount());
+      EXPECT_EQ(L"abc", buffer->LineData(1));
+    }
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// InsertString
+// InsertStringAction
 
-TEST(EditAction, InsertString) {
-  std::auto_ptr<TextBuffer> buffer(TextBuffer::Create(wxEmptyString, NULL, wxEmptyString));
+TEST(InsertStringAction, InsertString) {
+  FtPlugin ft_plugin(kFtTxt);
+  TextBufferPtr buffer(TextBuffer::Create(&ft_plugin, kEncoding));
 
-  const TextPoint coord(0, 1);
-  InsertStringAction insert_string(buffer.get(), L"abc", coord);
-  insert_string.Exec();
+  TextPoint point(0, 1);
+  InsertStringAction isa(buffer.get(), point, L"abc");
 
-  EXPECT_EQ(TextPoint(3, 0), insert_string.delta_point());
-  EXPECT_EQ(1, buffer->LineCount());
-  EXPECT_EQ(L"abc", buffer->GetLine(1).data());
+  for (int i = 0; i < 2; ++i) {
+    isa.Exec();
 
-  insert_string.Undo();
-  EXPECT_EQ(1, buffer->LineCount());
-  EXPECT_EQ(L"", buffer->GetLine(1).data());
+    EXPECT_TRUE(isa.effective());
+
+    EXPECT_EQ(TextPoint(3, 0), isa.delta_point());
+    EXPECT_EQ(1, buffer->LineCount());
+    EXPECT_EQ(L"abc", buffer->LineData(1));
+
+    isa.Undo();
+
+    EXPECT_EQ(1, buffer->LineCount());
+    EXPECT_EQ(L"", buffer->LineData(1));
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// DeleteLine
+// DeleteAction
 
-TEST(EditAction, DeleteLine) {
-  std::auto_ptr<TextBuffer> buffer(TextBuffer::Create(L"abc\nde", NULL, wxEmptyString));
+//------------------------------------------------------------------------------
+// Delete Char
 
-  const TextPoint coord(3, 1);
-  DeleteLineAction delete_line(buffer.get(), coord);
-  delete_line.Exec();
+TEST(DeleteAction, DeletePrevChar) {
+  FtPlugin ft_plugin(kFtTxt);
+  TextBufferPtr buffer(TextBuffer::Create(L"a", &ft_plugin, kEncoding));
 
-  EXPECT_EQ(TextPoint(-1, 0), delete_line.delta_point());
-  EXPECT_EQ(1, buffer->LineCount());
-  EXPECT_EQ(L"de", buffer->GetLine(1).data());
+  TextPoint point(1, 1);
+  DeleteAction da(buffer.get(), point, kChar, kPrev);
 
-  delete_line.Undo();
-  EXPECT_EQ(2, buffer->LineCount());
-  EXPECT_EQ(L"abc", buffer->GetLine(1).data());
-  EXPECT_EQ(L"de", buffer->GetLine(2).data());
+  for (int i = 0; i < 2; ++i) {
+    da.Exec();
+
+    EXPECT_TRUE(da.effective());
+
+    EXPECT_EQ(TextPoint(-1, 0), da.delta_point());
+    EXPECT_EQ(L"", buffer->LineData(1));
+
+    da.Undo();
+
+    EXPECT_EQ(L"a", buffer->LineData(1));
+  }
 }
 
-TEST(EditAction, DeleteLine_LastLine) {
-  std::auto_ptr<TextBuffer> buffer(TextBuffer::Create(L"abc\nde", NULL, wxEmptyString));
+TEST(DeleteAction, DeletePrevLineEndingChar) {
+  FtPlugin ft_plugin(kFtTxt);
+  TextBufferPtr buffer(TextBuffer::Create(L"abc\nde", &ft_plugin, kEncoding));
 
-  const TextPoint coord(2, 2);
-  DeleteLineAction delete_line(buffer.get(), coord);
-  delete_line.Exec();
+  TextPoint point(0, 2);
+  DeleteAction da(buffer.get(), point, kChar, kPrev);
 
-  EXPECT_EQ(TextPoint(-2, 0), delete_line.delta_point());
-  EXPECT_EQ(2, buffer->LineCount());
-  EXPECT_EQ(L"abc", buffer->GetLine(1).data());
-  EXPECT_EQ(L"", buffer->GetLine(2).data());
+  for (int i = 0; i < 2; ++i) {
+    da.Exec();
 
-  //delete_line.Undo();
-  //EXPECT_EQ(2, buffer->LineCount());
-  //EXPECT_EQ(L"abc", buffer->GetLine(1).data());
-  //EXPECT_EQ(L"de", buffer->GetLine(2).data());
+    EXPECT_TRUE(da.effective());
+
+    EXPECT_EQ(TextPoint(3, -1), da.delta_point());
+    EXPECT_EQ(1, buffer->LineCount());
+    EXPECT_EQ(L"abcde", buffer->LineData(1));
+
+    da.Undo();
+
+    EXPECT_EQ(2, buffer->LineCount());
+    EXPECT_EQ(L"abc", buffer->LineData(1));
+    EXPECT_EQ(L"de", buffer->LineData(2));
+  }
 }
 
-TEST(EditAction, DeleteLine_LastLine2) {
-  std::auto_ptr<TextBuffer> buffer(TextBuffer::Create(L"abc", NULL, wxEmptyString));
+TEST(DeleteAction, DeletePrevLineEndingChar_Negative) {
+  FtPlugin ft_plugin(kFtTxt);
+  TextBufferPtr buffer(TextBuffer::Create(L"abc", &ft_plugin, kEncoding));
 
-  const TextPoint coord(1, 1);
-  DeleteLineAction delete_line(buffer.get(), coord);
-  delete_line.Exec();
+  TextPoint point(0, 1);
+  DeleteAction da(buffer.get(), point, kChar, kPrev);
 
-  EXPECT_EQ(TextPoint(-1, 0), delete_line.delta_point());
-  EXPECT_EQ(1, buffer->LineCount());
-  EXPECT_EQ(L"", buffer->GetLine(1).data());
+  for (int i = 0; i < 2; ++i) {
+    da.Exec();
 
-  delete_line.Undo();
-  EXPECT_EQ(1, buffer->LineCount());
-  EXPECT_EQ(L"abc", buffer->GetLine(1).data());
+    // Nothing is deleted.
+    EXPECT_FALSE(da.effective());
+
+    EXPECT_EQ(TextPoint(0, 0), da.delta_point());
+    EXPECT_EQ(1, buffer->LineCount());
+    EXPECT_EQ(L"abc", buffer->LineData(1));
+
+    da.Undo();
+
+    EXPECT_EQ(1, buffer->LineCount());
+    EXPECT_EQ(L"abc", buffer->LineData(1));
+  }
 }
 
-TEST(EditAction, DeleteLine_LastLine3) {
-  std::auto_ptr<TextBuffer> buffer(TextBuffer::Create(wxEmptyString, NULL, wxEmptyString));
+TEST(DeleteAction, DeleteNextChar) {
+  FtPlugin ft_plugin(kFtTxt);
+  TextBufferPtr buffer(TextBuffer::Create(L"a", &ft_plugin, kEncoding));
 
-  const TextPoint coord(0, 1);
-  DeleteLineAction delete_line(buffer.get(), coord);
-  delete_line.Exec();
+  TextPoint point(0, 1);
+  DeleteAction da(buffer.get(), point, kChar, kNext);
 
-  EXPECT_EQ(TextPoint(0, 0), delete_line.delta_point());
-  EXPECT_EQ(1, buffer->LineCount());
-  EXPECT_EQ(L"", buffer->GetLine(1).data());
+  for (int i = 0; i < 2; ++i) {
+    da.Exec();
 
-  delete_line.Undo();
-  EXPECT_EQ(1, buffer->LineCount());
-  EXPECT_EQ(L"", buffer->GetLine(1).data());
+    EXPECT_TRUE(da.effective());
+
+    EXPECT_EQ(TextPoint(0, 0), da.delta_point());
+    EXPECT_EQ(L"", buffer->LineData(1));
+
+    da.Undo();
+
+    EXPECT_EQ(L"a", buffer->LineData(1));
+  }
+}
+
+TEST(DeleteAction, DeleteNextLineEndingChar) {
+  FtPlugin ft_plugin(kFtTxt);
+  TextBufferPtr buffer(TextBuffer::Create(L"abc\nde", &ft_plugin, kEncoding));
+
+  TextPoint point(3, 1);
+  DeleteAction da(buffer.get(), point, kChar, kNext);
+
+  for (int i = 0; i < 2; ++i) {
+    da.Exec();
+
+    EXPECT_TRUE(da.effective());
+
+    EXPECT_EQ(TextPoint(0, 0), da.delta_point());
+    EXPECT_EQ(1, buffer->LineCount());
+    EXPECT_EQ(L"abcde", buffer->LineData(1));
+
+    da.Undo();
+
+    EXPECT_EQ(2, buffer->LineCount());
+    EXPECT_EQ(L"abc", buffer->LineData(1));
+    EXPECT_EQ(L"de", buffer->LineData(2));
+  }
+}
+
+TEST(DeleteAction, DeleteNextLineEndingChar_Negative) {
+  FtPlugin ft_plugin(kFtTxt);
+  TextBufferPtr buffer(TextBuffer::Create(L"abc", &ft_plugin, kEncoding));
+
+  TextPoint point(3, 1);
+  DeleteAction da(buffer.get(), point, kChar, kNext);
+  
+  for (int i = 0; i < 2; ++i) {
+    da.Exec();
+
+    EXPECT_FALSE(da.effective());
+
+    EXPECT_EQ(TextPoint(0, 0), da.delta_point());
+    EXPECT_EQ(1, buffer->LineCount());
+    EXPECT_EQ(L"abc", buffer->LineData(1));
+
+    da.Undo();
+
+    EXPECT_EQ(1, buffer->LineCount());
+    EXPECT_EQ(L"abc", buffer->LineData(1));
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// DeleteSegment
+// DeleteRangeAction
 
-TEST(EditAction, DeleteSegment) {
-  std::auto_ptr<TextBuffer> buffer(TextBuffer::Create(L"abc\ndef\nghi\n", NULL, wxEmptyString));
+TEST(DeleteRangeAction, DeleteRange_Forward) {
+  FtPlugin ft_plugin(kFtTxt);
+  TextBufferPtr buffer(TextBuffer::Create(L"abc\ndef\nghi\n", &ft_plugin, kEncoding));
 
   // a{bc
   // def
   // g}hi
-  //
-  const TextPoint coord_begin(1, 1);
-  const TextPoint coord_end(1, 3);
-  DeleteAction delete_action(buffer.get(), coord_begin, coord_end);
-  delete_action.Exec();
+  TextRange range(TextPoint(1, 1), TextPoint(1, 3));
 
-  EXPECT_EQ(TextPoint(0, 0), delete_action.delta_point());
-  EXPECT_EQ(2, buffer->LineCount());
-  EXPECT_EQ(L"ahi", buffer->GetLine(1).data());
-  EXPECT_EQ(L"", buffer->GetLine(2).data());
+  DeleteRangeAction dra(buffer.get(), range, kForward, false, false);
 
-  delete_action.Undo();
-  EXPECT_EQ(4, buffer->LineCount());
-  EXPECT_EQ(L"abc", buffer->GetLine(1).data());
-  EXPECT_EQ(L"def", buffer->GetLine(2).data());
-  EXPECT_EQ(L"ghi", buffer->GetLine(3).data());
-  EXPECT_EQ(L"", buffer->GetLine(4).data());
+  for (int i = 0; i < 2; ++i) {
+    dra.Exec();
+
+    EXPECT_TRUE(dra.effective());
+
+    TextPoint delta_point = range.point_begin() - range.point_end();
+    EXPECT_EQ(delta_point, dra.delta_point());
+
+    EXPECT_EQ(2, buffer->LineCount());
+    EXPECT_EQ(L"ahi", buffer->LineData(1));
+    EXPECT_EQ(L"", buffer->LineData(2));
+
+    dra.Undo();
+
+    EXPECT_EQ(4, buffer->LineCount());
+    EXPECT_EQ(L"abc", buffer->LineData(1));
+    EXPECT_EQ(L"def", buffer->LineData(2));
+    EXPECT_EQ(L"ghi", buffer->LineData(3));
+    EXPECT_EQ(L"", buffer->LineData(4));
+  }
+}
+
+TEST(DeleteRangeAction, DeleteRange_Backward) {
+  FtPlugin ft_plugin(kFtTxt);
+  TextBufferPtr buffer(TextBuffer::Create(L"abc\ndef\nghi\n", &ft_plugin, kEncoding));
+
+  // a{bc
+  // def
+  // g}hi
+  TextRange range(TextPoint(1, 1), TextPoint(1, 3));
+
+  DeleteRangeAction dra(buffer.get(), range, kBackward, false, false);
+
+  for (int i = 0; i < 2; ++i) {
+    dra.Exec();
+
+    EXPECT_TRUE(dra.effective());
+
+    EXPECT_EQ(TextPoint(0, 0), dra.delta_point());
+
+    EXPECT_EQ(2, buffer->LineCount());
+    EXPECT_EQ(L"ahi", buffer->LineData(1));
+    EXPECT_EQ(L"", buffer->LineData(2));
+
+    dra.Undo();
+
+    EXPECT_EQ(4, buffer->LineCount());
+    EXPECT_EQ(L"abc", buffer->LineData(1));
+    EXPECT_EQ(L"def", buffer->LineData(2));
+    EXPECT_EQ(L"ghi", buffer->LineData(3));
+    EXPECT_EQ(L"", buffer->LineData(4));
+  }
 }

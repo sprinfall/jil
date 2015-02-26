@@ -9,10 +9,11 @@ using namespace jil::editor;
 
 typedef std::auto_ptr<TextBuffer> TextBufferPtr;
 
+static const FileType kFtTxt("txt", "Text");
 static const Encoding kEncoding = EncodingFromName(ENCODING_NAME_ISO_8859_1);
 
 TEST(TextBuffer, CharIterator) {
-  FtPlugin ft_plugin(FileType(wxT("txt"), wxT("Text")), NULL);
+  FtPlugin ft_plugin(kFtTxt);
 
   TextBufferPtr buffer(TextBuffer::Create(&ft_plugin, kEncoding));
 
@@ -39,7 +40,7 @@ TEST(TextBuffer, CharIterator) {
 //                           const Encoding& file_encoding);
 
 TEST(TextBuffer, Create_WithText_EmptyLines) {
-  FtPlugin ft_plugin(FileType("txt", "Text"), NULL);
+  FtPlugin ft_plugin(kFtTxt);
   TextBufferPtr buffer;
 
   std::wstring text;
@@ -88,7 +89,7 @@ TEST(TextBuffer, Create_WithText_EmptyLines) {
 }
 
 TEST(TextBuffer, Create_WithText) {
-  FtPlugin ft_plugin(FileType("txt", "Text"), NULL);
+  FtPlugin ft_plugin(kFtTxt);
   TextBufferPtr buffer;
 
   std::wstring text = L"abc";
@@ -123,7 +124,7 @@ TEST(TextBuffer, Create_WithText) {
 }
 
 TEST(TextBuffer, PrevNonEmptyLine) {
-  FtPlugin ft_plugin(FileType("cpp", "C++"), NULL);
+  FtPlugin ft_plugin(FileType("cpp", "C++"));
   ft_plugin.AddQuote(new Quote(kLexComment, L"//", L"", kQuoteEscapeEol));
   ft_plugin.AddQuote(new Quote(kLexComment, L"/*", L"*/", kQuoteMultiLine));
 
@@ -146,7 +147,7 @@ TEST(TextBuffer, PrevNonEmptyLine) {
 }
 
 TEST(TextBuffer, PrevLine) {
-  FtPlugin ft_plugin(FileType("cpp", "C++"), NULL);
+  FtPlugin ft_plugin(FileType("cpp", "C++"));
   ft_plugin.AddQuote(new Quote(kLexComment, L"//", L"", kQuoteEscapeEol));
   ft_plugin.AddQuote(new Quote(kLexComment, L"/*", L"*/", kQuoteMultiLine));
 
@@ -198,8 +199,7 @@ private:
 
 // Test the notifications of different text changes.
 TEST(TextBuffer, Notify) {
-  FileType ft(wxT("txt"), wxT("Text"), NULL);
-  FtPlugin ft_plugin(ft);
+  FtPlugin ft_plugin(kFtTxt);
 
   TestBufferListener listener;
 
