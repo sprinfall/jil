@@ -39,7 +39,7 @@
 #include "app/config.h"
 #include "app/defs.h"
 #include "app/find_result_page.h"
-#include "app/find_window.h"
+#include "app/find_panel.h"
 #include "app/i18n_strings.h"
 #include "app/navigation_dialog.h"
 #include "app/save.h"
@@ -140,6 +140,9 @@ BookFrame::BookFrame(Options* options, Session* session)
     , splitter_(NULL)
     , text_books_()  // Zero-initialize
     , tool_book_(NULL)
+    , find_panel_(NULL)
+    , status_bar_(NULL)
+    , style_(NULL)
     , binding_(NULL)
     , recent_files_menu_(NULL) {
   recent_files_ = session_->recent_files();
@@ -369,11 +372,11 @@ void BookFrame::SwitchToPrevStackPage() {
 }
 
 void BookFrame::ShowFind() {
-  ShowFindWindow(::jil::FindWindow::kFindMode);
+  ShowFindPanel(FindPanel::kFindMode);
 }
 
 void BookFrame::ShowReplace() {
-  ShowFindWindow(::jil::FindWindow::kReplaceMode);
+  ShowFindPanel(FindPanel::kReplaceMode);
 }
 
 void BookFrame::Wrap() {
@@ -852,18 +855,28 @@ void BookFrame::OnSize(wxSizeEvent& evt) {
 }
 
 void BookFrame::UpdateLayout() {
-  const wxRect client_rect = GetClientRect();
+  wxRect client_rect = GetClientRect();
 
-  const int status_height = status_bar_->GetBestSize().y;
-  const int book_area_height = client_rect.GetHeight() - status_height;
+  int find_panel_height = 0;
+  if (find_panel_ != NULL) {
+    find_panel_height = find_panel_->GetBestSize().y;
+  }
 
-  splitter_->SetSize(0, 0, client_rect.GetWidth(), book_area_height);
+  int status_bar_height = status_bar_->GetBestSize().y;
+
+  int book_height = client_rect.height - find_panel_height - status_bar_height;
+
+  splitter_->SetSize(0, 0, client_rect.width, book_height);
   splitter_->Split();
 
-  status_bar_->SetSize(0,
-                       book_area_height,
-                       client_rect.GetWidth(),
-                       status_height);
+  int y = book_height;
+
+  if (find_panel_ != NULL) {
+    find_panel_->SetSize(0, y, client_rect.width, find_panel_height);
+    y += find_panel_height;
+  }
+
+  status_bar_->SetSize(0, y, client_rect.width, status_bar_height);
 }
 
 void BookFrame::RestoreSplitTree(SplitNode* n) {
@@ -1158,10 +1171,8 @@ void BookFrame::OnClose(wxCloseEvent& evt) {
     }
   }
 
-  ::jil::FindWindow* find_window = GetFindWindow();
-  if (find_window != NULL) {
-    session_->set_find_window_rect(find_window->GetScreenRect());
-    session_->set_find_flags(find_window->flags());
+  if (find_panel_ != NULL) {
+    session_->set_find_flags(find_panel_->flags());
   }
 
   evt.Skip();
@@ -1188,10 +1199,10 @@ void BookFrame::OnTextBookPageChange(wxCommandEvent& evt) {
       tool_book_->SetFocus();
     }
 
-    // Close find window.
-    ::jil::FindWindow* find_window = GetFindWindow();
-    if (find_window != NULL) {
-      find_window->Close();
+    // Close find panel.
+    if (find_panel_ != NULL) {
+      find_panel_->Close();
+      find_panel_ = NULL;
     }
   }
 }
@@ -1581,43 +1592,17 @@ void BookFrame::OnStatusFileFormatMenu(wxCommandEvent& evt) {
   }
 }
 
-::jil::FindWindow* BookFrame::GetFindWindow() const {
-  wxWindow* w = FindWindowById(ID_FIND_WINDOW, this);
-  if (w == NULL) {
-    return NULL;
+void BookFrame::ShowFindPanel(int mode) {
+  if (find_panel_ == NULL) {
+    find_panel_ = new FindPanel(session_, mode);
+    find_panel_->Create(this, ID_FIND_PANEL);
   } else {
-    return wxDynamicCast(w, ::jil::FindWindow);
-  }
-}
-
-void BookFrame::ShowFindWindow(int find_window_mode) {
-  const int kFindDefaultWidth = 300;
-
-  wxRect rect = session_->find_window_rect();
-  if (rect.IsEmpty()) {
-    // Determine find window rect according to client rect.
-    wxRect client_rect = GetClientRect();
-    client_rect.SetLeftTop(ClientToScreen(client_rect.GetLeftTop()));
-    rect = wxRect(client_rect.GetRight() - kFindDefaultWidth,
-                  client_rect.GetTop(),
-                  kFindDefaultWidth,
-                  -1);
-  } else {
-    rect.SetHeight(-1);
+    find_panel_->set_mode(mode);
+    find_panel_->UpdateLayout();
   }
 
-  ::jil::FindWindow* find_window = GetFindWindow();
-  if (find_window == NULL) {
-    find_window = new ::jil::FindWindow(session_, find_window_mode);
-    find_window->Create(this, ID_FIND_WINDOW);
-  } else {
-    find_window->set_mode(find_window_mode);
-    find_window->UpdateLayout();
-  }
-
-  if (!find_window->IsShown()) {
-    find_window->SetSize(rect);
-    find_window->Show();
+  if (!find_panel_->IsShown()) {
+    find_panel_->Show();
   }
 
   // Find the selected text.
@@ -1630,12 +1615,11 @@ void BookFrame::ShowFindWindow(int find_window_mode) {
       // inside a single line, it might be what the user wants to find.
       std::wstring find_string;
       text_page->buffer()->GetText(select_range, &find_string);
-      find_window->SetFindString(wxString(find_string.c_str()));
+      find_panel_->SetFindString(wxString(find_string.c_str()));
     }
   }
 
-  // Activate it.
-  find_window->Raise();
+  UpdateLayout();
 }
 
 FindResultPage* BookFrame::GetFindResultPage() {

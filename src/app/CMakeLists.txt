@@ -15,8 +15,8 @@ set(SRCS
     defs.h
     find_result_page.cc
     find_result_page.h
-    find_window.cc
-    find_window.h
+    find_panel.cc
+    find_panel.h
     font_util.cc
     font_util.h
     goto_dialog.cc
@@ -34,6 +34,7 @@ set(SRCS
     option_config.h
     save.cc
     save.h
+    separator.h
     session.cc
     session.h
     skin.cc

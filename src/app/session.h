@@ -28,7 +28,7 @@ public:
   bool Save(const wxString& file);
 
   //----------------------------------------------------------------------------
-  // Book frame states:
+  // Book frame
 
   wxRect book_frame_rect() const { return book_frame_rect_; }
   void set_book_frame_rect(const wxRect& rect) { book_frame_rect_ = rect; }
@@ -39,10 +39,7 @@ public:
   }
 
   //----------------------------------------------------------------------------
-  // Find window states:
-
-  wxRect find_window_rect() const { return find_window_rect_; }
-  void set_find_window_rect(const wxRect& rect) { find_window_rect_ = rect; }
+  // Find panel
 
   void set_find_history_limit_(size_t find_history_limit) {
     find_history_limit_ = find_history_limit;
@@ -111,15 +108,13 @@ private:
   wxRect book_frame_rect_;
   bool book_frame_maximized_;
 
-  wxRect find_window_rect_;
-
   std::list<wxString> recent_find_strings_;
   std::list<wxString> recent_replace_strings_;
 
   // Max number of find/replace strings to save.
   size_t find_history_limit_;
 
-  // Last find flags.
+  // Find flags.
   // See enum FindFlag.
   int find_flags_;
 
