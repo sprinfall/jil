@@ -7,16 +7,17 @@
 // wxSizer* vsizer = new wxBoxSizer(wxVERTICAL);
 // vsizer->Add(new Separator(this, 1, wxHORIZONTAL), 0, wxEXPAND);
 
-#include "wx/panel.h"
+#include "wx/control.h"
 
 namespace jil {
 
-class Separator: public wxPanel {
+// NOTE: If derive from wxPanel there will be focus issue.
+class Separator : public wxControl {
 public:
   Separator(wxWindow* parent,
             int size = 1,
             wxOrientation orientation = wxHORIZONTAL)
-      : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxNO_BORDER)
+      : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
       , size_(size)
       , orientation_(orientation) {
     SetColor(*wxLIGHT_GREY);

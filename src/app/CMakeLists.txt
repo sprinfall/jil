@@ -43,6 +43,8 @@ set(SRCS
     splitter.h
     status_fields_config.cc
     status_fields_config.h
+    text_button.cc
+    text_button.h
     text_book.cc
     text_book.h
     text_page.cc

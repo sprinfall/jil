@@ -4,8 +4,12 @@
 
 // Find & Replace panel.
 
+#define JIL_USE_NATIVE_BUTTON 0
+
 #include "wx/panel.h"
+#include "editor/theme.h"
 #include "app/defs.h"
+#include "app/text_button.h"
 
 class wxComboBox;
 class wxButton;
@@ -14,15 +18,20 @@ class wxBitmapButton;
 namespace jil {
 
 class BitmapToggleButton;
+class BookFrame;
 class Separator;
 class Session;
-class BookFrame;
 
 class FindPanel : public wxPanel {
   DECLARE_DYNAMIC_CLASS(FindPanel)
   DECLARE_EVENT_TABLE()
 
 public:
+  enum ColorId {
+    BORDER = 0,
+    COLOR_COUNT
+  };
+
   enum Mode {
     kFindMode = 0,
     kReplaceMode
@@ -35,6 +44,12 @@ public:
   bool Create(BookFrame* book_frame, wxWindowID id);
 
   virtual ~FindPanel();
+
+  virtual bool Show(bool show = true) override;
+
+  void set_theme(const editor::SharedTheme& theme) {
+    theme_ = theme;
+  }
 
   void set_session(Session* session) {
     session_ = session;
@@ -56,9 +71,9 @@ public:
   void SetFindString(const wxString& find_string);
 
 protected:
-  //void OnActivate(wxActivateEvent& evt);
   //void OnClose(wxCloseEvent& evt);
   //void OnKeyDownHook(wxKeyEvent& evt);
+  void OnSetFocus(wxFocusEvent& evt);
 
   void OnUseRegexToggle(wxCommandEvent& evt);
   void OnCaseSensitiveToggle(wxCommandEvent& evt);
@@ -81,7 +96,13 @@ private:
   void LayoutAsFind();
   void LayoutAsReplace();
 
+  void InitButtonStyle();
+
+  TextButton* CreateTextButton(int id, const wxString& label);
+
 private:
+  editor::SharedTheme theme_;
+
   Session* session_;
 
   BookFrame* book_frame_;
@@ -102,10 +123,19 @@ private:
   wxComboBox* find_combobox_;
   wxComboBox* replace_combobox_;
 
+#if JIL_USE_NATIVE_BUTTON
   wxButton* find_button_;
   wxButton* find_all_button_;
   wxButton* replace_button_;
   wxButton* replace_all_button_;
+#else
+  TextButton::SharedStyle button_style_;
+
+  TextButton* find_button_;
+  TextButton* find_all_button_;
+  TextButton* replace_button_;
+  TextButton* replace_all_button_;
+#endif
 };
 
 }  // namespace jil

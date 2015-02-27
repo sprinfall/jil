@@ -9,14 +9,14 @@ enum {
 };
 
 BEGIN_EVENT_TABLE(BitmapToggleButton, wxControl)
-EVT_PAINT(BitmapToggleButton::OnPaint)
-EVT_LEFT_DOWN(BitmapToggleButton::OnLeftDown)
-EVT_LEFT_UP(BitmapToggleButton::OnLeftUp)
-END_EVENT_TABLE();
+EVT_PAINT     (BitmapToggleButton::OnPaint)
+EVT_LEFT_DOWN (BitmapToggleButton::OnLeftDown)
+EVT_LEFT_UP   (BitmapToggleButton::OnLeftUp)
+END_EVENT_TABLE()
 
 BitmapToggleButton::BitmapToggleButton(wxWindow* parent, wxWindowID id)
     : wxControl(parent, id, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
-    , accept_focus_(true), toggle_(false) {
+    , accept_focus_(false), toggle_(false) {
   SetBackgroundStyle(wxBG_STYLE_PAINT);
   SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
 }

@@ -18,18 +18,18 @@ enum FindFlag {
 const char* const kFtId_FindResult = "jil-find_result";
 
 // Top level theme IDs.
-// TODO: THEME_TOOL_BOOK
 enum ThemeId {
   THEME_BOOK_FRAME = 0,
   THEME_TEXT_BOOK,
   THEME_TEXT_PAGE,
+  THEME_FIND_PANEL,
   THEME_STATUS_BAR,
   THEME_NAVIGATION_DIALOG,
   THEME_COUNT,
 };
 
 // Split parts.
-const char* const kSplit_Text = "text";  // Text books
+const char* const kSplit_Text = "text";  // Text book
 const char* const kSplit_Tool = "tool";  // Tool book
 
 }  // namespace jil

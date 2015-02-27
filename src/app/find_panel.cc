@@ -9,11 +9,12 @@
 #include "editor/text_buffer.h"
 
 #include "app/bitmap_toggle_button.h"
-#include "app/session.h"
-#include "app/text_page.h"
 #include "app/book_frame.h"
 #include "app/separator.h"
+#include "app/session.h"
 #include "app/skin.h"
+#include "app/text_button.h"
+#include "app/text_page.h"
 #include "app/util.h"
 
 #define kTrUseRegex _("Use regular expression")
@@ -30,7 +31,6 @@
 namespace jil {
 
 const int kPadding = 5;
-const int kReplaceSizerIndex = 1;
 
 // Control ID's.
 enum {
@@ -54,9 +54,9 @@ enum {
 IMPLEMENT_DYNAMIC_CLASS(FindPanel, wxPanel);
 
 BEGIN_EVENT_TABLE(FindPanel, wxPanel)
-//EVT_ACTIVATE(FindPanel::OnActivate)
 //EVT_CLOSE(FindPanel::OnClose)
 //EVT_CHAR_HOOK(FindPanel::OnKeyDownHook)
+EVT_SET_FOCUS(FindPanel::OnSetFocus)
 EVT_TOGGLEBUTTON(kUseRegexToggleId, FindPanel::OnUseRegexToggle)
 EVT_TOGGLEBUTTON(kCaseSensitiveToggleId, FindPanel::OnCaseSensitiveToggle)
 EVT_TOGGLEBUTTON(kMatchWholeWordToggleId, FindPanel::OnMatchWholeWordToggle)
@@ -66,7 +66,7 @@ EVT_BUTTON(kFindButtonId, FindPanel::OnFind)
 EVT_BUTTON(kFindAllButtonId, FindPanel::OnFindAll)
 EVT_BUTTON(kReplaceButtonId, FindPanel::OnReplace)
 EVT_BUTTON(kReplaceAllButtonId, FindPanel::OnReplaceAll)
-END_EVENT_TABLE();
+END_EVENT_TABLE()
 
 FindPanel::FindPanel()
     : session_(NULL), mode_(kFindMode), book_frame_(NULL) {
@@ -77,6 +77,7 @@ FindPanel::FindPanel(Session* session, int mode)
 }
 
 bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
+  assert(theme_);
   assert(session_ != NULL);
 
   // Restore find options from session.
@@ -89,11 +90,15 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
     return false;
   }
 
+  SetBackgroundColour(wxColour(84, 84, 84));
+
+  // Create text button style.
+  InitButtonStyle();
+
   //------------------------------------
 
   top_border_ = new Separator(this);
-  // TODO: theme
-  top_border_->SetColor(wxColour(125, 125, 125));
+  top_border_->SetColor(theme_->GetColor(BORDER));
 
   //------------------------------------
 
@@ -135,12 +140,12 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   //------------------------------------
 
-  mode_toggle_ = new BitmapToggleButton(this, kModeToggleId);
-  mode_toggle_->SetToolTip(kTrSwitchMode);
-  mode_toggle_->SetBitmaps(skin::GetIcon(wxT("fw_mode")),
-                           skin::GetIcon(wxT("fw_mode_toggle")));
+  //mode_toggle_ = new BitmapToggleButton(this, kModeToggleId);
+  //mode_toggle_->SetToolTip(kTrSwitchMode);
+  //mode_toggle_->SetBitmaps(skin::GetIcon(wxT("fw_mode")),
+  //                         skin::GetIcon(wxT("fw_mode_toggle")));
 
-  mode_toggle_->Hide(); // TODO
+  //mode_toggle_->Hide(); // TODO
 
   //------------------------------------
 
@@ -178,20 +183,27 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   //------------------------------------
 
+#if JIL_USE_NATIVE_BUTTON
   find_button_ = new wxButton(this, kFindButtonId, kTrFind);
   find_all_button_ = new wxButton(this, kFindAllButtonId, kTrFindAll);
   replace_button_ = new wxButton(this, kReplaceButtonId, kTrReplace);
   replace_all_button_ = new wxButton(this, kReplaceAllButtonId, kTrReplaceAll);
 
   find_button_->SetDefault();  // Set default for ENTER key.
+#else
+  find_button_ = CreateTextButton(kFindButtonId, kTrFind);
+  find_all_button_ = CreateTextButton(kFindAllButtonId, kTrFindAll);
+  replace_button_ = CreateTextButton(kReplaceButtonId, kTrReplace);
+  replace_all_button_ = CreateTextButton(kReplaceAllButtonId, kTrReplaceAll);
+#endif
 
   //------------------------------------
 
   if (mode_ == kFindMode) {
-    mode_toggle_->set_toggle(false);
+    //mode_toggle_->set_toggle(false);
     LayoutAsFind();
   } else {
-    mode_toggle_->set_toggle(true);
+    //mode_toggle_->set_toggle(true);
     LayoutAsReplace();
   }
 
@@ -201,12 +213,22 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 FindPanel::~FindPanel() {
 }
 
+bool FindPanel::Show(bool show) {
+  bool result = wxPanel::Show(show);
+
+  // Focus and select the text so the user can change it directly.
+  find_combobox_->SetFocus();
+  find_combobox_->SelectAll();
+
+  return result;
+}
+
 void FindPanel::UpdateLayout() {
   if (mode_ == kFindMode) {
-    mode_toggle_->set_toggle(false);
+    //mode_toggle_->set_toggle(false);
     LayoutAsFind();
   } else {
-    mode_toggle_->set_toggle(true);
+    //mode_toggle_->set_toggle(true);
     LayoutAsReplace();
   }
 }
@@ -216,15 +238,7 @@ void FindPanel::SetFindString(const wxString& find_string) {
   AddFindString(find_string);
 }
 
-//// Update control values on activate.
-//void FindPanel::OnActivate(wxActivateEvent& evt) {
-//  // Focus and select the text so the user can change it directly.
-//  find_combobox_->SetFocus();
-//  find_combobox_->SelectAll();
-//}
-
 //void FindPanel::OnClose(wxCloseEvent& evt) {
-//  session_->set_find_window_rect(GetScreenRect());
 //  session_->set_find_flags(flags_);
 //
 //  evt.Skip();
@@ -237,6 +251,12 @@ void FindPanel::SetFindString(const wxString& find_string) {
 //    evt.Skip();
 //  }
 //}
+
+void FindPanel::OnSetFocus(wxFocusEvent& evt) {
+  // Focus and select the text so the user can change it directly.
+  find_combobox_->SetFocus();
+  find_combobox_->SelectAll();
+}
 
 void FindPanel::OnUseRegexToggle(wxCommandEvent& evt) {
   flags_ = SetBit(flags_, kFindUseRegex, evt.IsChecked());
@@ -425,6 +445,32 @@ void FindPanel::LayoutAsReplace() {
   SetSizer(vsizer);
 
   Layout();
+}
+
+void FindPanel::InitButtonStyle() {
+  button_style_.reset(new TextButton::Style);
+
+  button_style_->SetColor(TextButton::BG, TextButton::NORMAL, wxColour(75, 75, 75));
+  button_style_->SetColor(TextButton::BG, TextButton::HOVER, wxColour(95, 95, 95));
+  button_style_->SetColor(TextButton::BG, TextButton::PRESSED, wxColour(105, 105, 105));
+  button_style_->SetColor(TextButton::BG, TextButton::DISABLED, wxColour(155, 155, 155));
+
+  button_style_->SetColor(TextButton::FG, TextButton::NORMAL, *wxWHITE);
+  button_style_->SetColor(TextButton::FG, TextButton::HOVER, *wxWHITE);
+  button_style_->SetColor(TextButton::FG, TextButton::PRESSED, *wxWHITE);
+  button_style_->SetColor(TextButton::FG, TextButton::DISABLED, wxColour(225, 225, 225));
+
+  button_style_->SetColor(TextButton::BORDER, TextButton::NORMAL, wxColour(155, 155, 155));
+  button_style_->SetColor(TextButton::BORDER, TextButton::HOVER, wxColour(155, 155, 155));
+  button_style_->SetColor(TextButton::BORDER, TextButton::PRESSED, wxColour(155, 155, 155));
+  button_style_->SetColor(TextButton::BORDER, TextButton::DISABLED, wxColour(128, 128, 128));
+}
+
+TextButton* FindPanel::CreateTextButton(int id, const wxString& label) {
+  TextButton* button = new TextButton(button_style_);
+  button->Create(this, id, label);
+  button->SetMinSize(wxSize(80, -1));
+  return button;
 }
 
 }  // namespace jil

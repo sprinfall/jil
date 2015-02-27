@@ -1595,14 +1595,11 @@ void BookFrame::OnStatusFileFormatMenu(wxCommandEvent& evt) {
 void BookFrame::ShowFindPanel(int mode) {
   if (find_panel_ == NULL) {
     find_panel_ = new FindPanel(session_, mode);
+    find_panel_->set_theme(theme_->GetTheme(THEME_FIND_PANEL));
     find_panel_->Create(this, ID_FIND_PANEL);
   } else {
     find_panel_->set_mode(mode);
     find_panel_->UpdateLayout();
-  }
-
-  if (!find_panel_->IsShown()) {
-    find_panel_->Show();
   }
 
   // Find the selected text.
@@ -1620,6 +1617,8 @@ void BookFrame::ShowFindPanel(int mode) {
   }
 
   UpdateLayout();
+
+  find_panel_->SetFocus();
 }
 
 FindResultPage* BookFrame::GetFindResultPage() {

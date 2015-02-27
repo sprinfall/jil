@@ -14,6 +14,7 @@
 #include "app/config.h"
 #include "app/book_ctrl.h"
 #include "app/book_frame.h"
+#include "app/find_panel.h"
 
 namespace jil {
 
@@ -142,6 +143,14 @@ bool LoadThemeFile(const wxString& theme_file,
     tp_theme->SetColor(TextWindow::RULER, tp_setting.GetColor("ruler"));
   }
   theme->SetTheme(THEME_TEXT_PAGE, tp_theme);
+
+  // Find panel
+  SharedTheme fp_theme(new Theme(0, FindPanel::COLOR_COUNT));
+  Setting fp_setting = root.Get("find_panel", Setting::kGroup);
+  if (fp_setting) {
+    fp_theme->SetColor(FindPanel::BORDER, fp_setting.GetColor("border"));
+  }
+  theme->SetTheme(THEME_FIND_PANEL, fp_theme);
 
   // Status bar
   SharedTheme sb_theme(new Theme(0, StatusBar::COLOR_COUNT));
