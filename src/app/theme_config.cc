@@ -15,15 +15,14 @@
 #include "app/book_ctrl.h"
 #include "app/book_frame.h"
 #include "app/find_panel.h"
+#include "app/text_button.h"
 
 namespace jil {
 
 using namespace editor;
 
-namespace {
-
 // Read style value from the setting.
-void ReadStyle(Setting setting, StyleValue* style_value) {
+static void ReadStyle(Setting setting, StyleValue* style_value) {
   assert(setting);
 
   Setting fg_setting = setting.Get("fg");
@@ -65,7 +64,9 @@ void ReadStyle(Setting setting, StyleValue* style_value) {
 }
 
 // Read style value from the child setting with the given name.
-void ReadStyle(Setting parent, const char* name, StyleValue* style_value) {
+static void ReadStyle(Setting parent,
+                      const char* name,
+                      StyleValue* style_value) {
   assert(parent);
 
   style_value->Set();  // Clear
@@ -76,7 +77,27 @@ void ReadStyle(Setting parent, const char* name, StyleValue* style_value) {
   }
 }
 
-}  // namespace
+static SharedTheme GetButtonTheme(Setting button_setting) {
+  assert(button_setting);
+
+  const char* kButtonParts[] = { "bg", "fg", "border" };
+  const char* kButtonStates[] = { "normal", "hover", "pressed", "disabled" };
+
+  SharedTheme button_theme(new Theme(TextButton::PARTS));
+
+  for (int part = 0; part < TextButton::PARTS; ++part) {
+    Setting fg_setting = button_setting.Get(kButtonParts[part], Setting::kGroup);
+    if (fg_setting) {
+      SharedTheme part_theme(new Theme(0, TextButton::STATES));
+      for (int state = 0; state < TextButton::STATES; ++state) {
+        part_theme->SetColor(state, fg_setting.GetColor(kButtonStates[state]));
+      }
+      button_theme->SetTheme(part, part_theme);
+    }
+  }
+
+  return button_theme;
+}
 
 // TODO: Error handling
 bool LoadThemeFile(const wxString& theme_file,
@@ -145,10 +166,15 @@ bool LoadThemeFile(const wxString& theme_file,
   theme->SetTheme(THEME_TEXT_PAGE, tp_theme);
 
   // Find panel
-  SharedTheme fp_theme(new Theme(0, FindPanel::COLOR_COUNT));
+  SharedTheme fp_theme(new Theme(FindPanel::THEME_COUNT, FindPanel::COLOR_COUNT));
   Setting fp_setting = root.Get("find_panel", Setting::kGroup);
   if (fp_setting) {
     fp_theme->SetColor(FindPanel::BORDER, fp_setting.GetColor("border"));
+
+    Setting button_setting = fp_setting.Get("button", Setting::kGroup);
+    if (button_setting) {
+      fp_theme->SetTheme(FindPanel::BUTTON, GetButtonTheme(button_setting));
+    }
   }
   theme->SetTheme(THEME_FIND_PANEL, fp_theme);
 

@@ -32,6 +32,11 @@ public:
     COLOR_COUNT
   };
 
+  enum ThemeId {
+    BUTTON = 0,
+    THEME_COUNT
+  };
+
   enum Mode {
     kFindMode = 0,
     kReplaceMode

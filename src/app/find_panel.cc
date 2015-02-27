@@ -450,20 +450,19 @@ void FindPanel::LayoutAsReplace() {
 void FindPanel::InitButtonStyle() {
   button_style_.reset(new TextButton::Style);
 
-  button_style_->SetColor(TextButton::BG, TextButton::NORMAL, wxColour(75, 75, 75));
-  button_style_->SetColor(TextButton::BG, TextButton::HOVER, wxColour(95, 95, 95));
-  button_style_->SetColor(TextButton::BG, TextButton::PRESSED, wxColour(105, 105, 105));
-  button_style_->SetColor(TextButton::BG, TextButton::DISABLED, wxColour(155, 155, 155));
+  editor::SharedTheme button_theme = theme_->GetTheme(BUTTON);
+  if (button_theme.get() == NULL) {
+    return;
+  }
 
-  button_style_->SetColor(TextButton::FG, TextButton::NORMAL, *wxWHITE);
-  button_style_->SetColor(TextButton::FG, TextButton::HOVER, *wxWHITE);
-  button_style_->SetColor(TextButton::FG, TextButton::PRESSED, *wxWHITE);
-  button_style_->SetColor(TextButton::FG, TextButton::DISABLED, wxColour(225, 225, 225));
-
-  button_style_->SetColor(TextButton::BORDER, TextButton::NORMAL, wxColour(155, 155, 155));
-  button_style_->SetColor(TextButton::BORDER, TextButton::HOVER, wxColour(155, 155, 155));
-  button_style_->SetColor(TextButton::BORDER, TextButton::PRESSED, wxColour(155, 155, 155));
-  button_style_->SetColor(TextButton::BORDER, TextButton::DISABLED, wxColour(128, 128, 128));
+  for (int part = 0; part < TextButton::PARTS; ++part) {
+    editor::SharedTheme part_theme = button_theme->GetTheme(part);
+    if (part_theme) {
+      for (int state = 0; state < TextButton::STATES; ++state) {
+        button_style_->SetColor(part, state, part_theme->GetColor(state));
+      }
+    }
+  }
 }
 
 TextButton* FindPanel::CreateTextButton(int id, const wxString& label) {
