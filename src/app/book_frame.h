@@ -217,8 +217,11 @@ protected:
   void OnStatusEncodingMenu(wxCommandEvent& evt);
   void OnStatusFileFormatMenu(wxCommandEvent& evt);
 
-  // \param find_panel_mode See FindPanel::Mode
+  // \param mode See FindPanel::Mode
   void ShowFindPanel(int mode);
+
+  // Close find panel, update layout, etc.
+  void CloseFindPanel();
 
   // Get find result page, create it if necessary.
   FindResultPage* GetFindResultPage();

@@ -50,7 +50,7 @@ public:
 
   virtual ~FindPanel();
 
-  virtual bool Show(bool show = true) override;
+  virtual bool Destroy() override;
 
   void set_theme(const editor::SharedTheme& theme) {
     theme_ = theme;
@@ -71,15 +71,14 @@ public:
     return flags_;
   }
 
+  virtual void SetFocus() override;
+
   void UpdateLayout();
 
   void SetFindString(const wxString& find_string);
 
 protected:
   void OnPaint(wxPaintEvent& evt);
-  //void OnClose(wxCloseEvent& evt);
-  //void OnKeyDownHook(wxKeyEvent& evt);
-  void OnSetFocus(wxFocusEvent& evt);
 
   void OnUseRegexToggle(wxCommandEvent& evt);
   void OnCaseSensitiveToggle(wxCommandEvent& evt);

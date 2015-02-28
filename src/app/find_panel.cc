@@ -55,9 +55,6 @@ IMPLEMENT_DYNAMIC_CLASS(FindPanel, wxPanel);
 
 BEGIN_EVENT_TABLE(FindPanel, wxPanel)
 EVT_PAINT(FindPanel::OnPaint)
-//EVT_CLOSE(FindPanel::OnClose)
-//EVT_CHAR_HOOK(FindPanel::OnKeyDownHook)
-EVT_SET_FOCUS(FindPanel::OnSetFocus)
 EVT_TOGGLEBUTTON(kUseRegexToggleId, FindPanel::OnUseRegexToggle)
 EVT_TOGGLEBUTTON(kCaseSensitiveToggleId, FindPanel::OnCaseSensitiveToggle)
 EVT_TOGGLEBUTTON(kMatchWholeWordToggleId, FindPanel::OnMatchWholeWordToggle)
@@ -86,7 +83,6 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   book_frame_ = book_frame;
 
-  // Note: Window title will be set later according to the mode.
   if (!wxPanel::Create(book_frame, id)) {
     return false;
   }
@@ -203,14 +199,19 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 FindPanel::~FindPanel() {
 }
 
-bool FindPanel::Show(bool show) {
-  bool result = wxPanel::Show(show);
+//bool FindPanel::Show(bool show) {
+//  bool result = wxPanel::Show(show);
+//
+//  // Focus and select the text so the user can change it directly.
+//  find_combobox_->SetFocus();
+//  find_combobox_->SelectAll();
+//
+//  return result;
+//}
 
-  // Focus and select the text so the user can change it directly.
-  find_combobox_->SetFocus();
-  find_combobox_->SelectAll();
-
-  return result;
+bool FindPanel::Destroy() {
+  session_->set_find_flags(flags_);
+  return wxPanel::Destroy();
 }
 
 void FindPanel::UpdateLayout() {
@@ -241,24 +242,13 @@ void FindPanel::SetFindString(const wxString& find_string) {
   AddFindString(find_string);
 }
 
-//void FindPanel::OnClose(wxCloseEvent& evt) {
-//  session_->set_find_flags(flags_);
-//
-//  evt.Skip();
-//}
+void FindPanel::SetFocus() {
+  wxPanel::SetFocus();
 
-//void FindPanel::OnKeyDownHook(wxKeyEvent& evt) {
-//  if (evt.GetKeyCode() == WXK_ESCAPE) {
-//    Close();
-//  } else {
-//    evt.Skip();
-//  }
-//}
-
-void FindPanel::OnSetFocus(wxFocusEvent& evt) {
-  // Focus and select the text so the user can change it directly.
   find_combobox_->SetFocus();
-  find_combobox_->SelectAll();
+  if (!find_combobox_->GetValue().IsEmpty()) {
+    find_combobox_->SelectAll();
+  }
 }
 
 void FindPanel::OnUseRegexToggle(wxCommandEvent& evt) {

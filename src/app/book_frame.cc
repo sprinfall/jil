@@ -944,12 +944,17 @@ bool BookFrame::HandleKeyDownHook(wxKeyEvent& evt) {
 
   if (code == WXK_ESCAPE) {
     if (!leader_key_.IsEmpty()) {
+      // Clear leader key in the status bar.
       leader_key_.Reset();
       status_bar_->SetFieldValue(editor::StatusBar::kField_KeyStroke,
                                  wxEmptyString,
                                  true);
       return true;
+    } else if (find_panel_ != NULL) {
+      CloseFindPanel();
+      return true;
     }
+
     // Return false to let current text window clear selection.
     return false;
   }
@@ -1201,8 +1206,7 @@ void BookFrame::OnTextBookPageChange(wxCommandEvent& evt) {
 
     // Close find panel.
     if (find_panel_ != NULL) {
-      find_panel_->Close();
-      find_panel_ = NULL;
+      CloseFindPanel();
     }
   }
 }
@@ -1621,6 +1625,19 @@ void BookFrame::ShowFindPanel(int mode) {
   find_panel_->SetFocus();
 }
 
+void BookFrame::CloseFindPanel() {
+  assert(find_panel_ != NULL);
+
+  // Destroy find panel.
+  find_panel_->Destroy();
+  find_panel_ = NULL;
+
+  UpdateLayout();
+
+  // Transfer focus to text book.
+  ActiveTextBook()->SetFocus();
+}
+
 FindResultPage* BookFrame::GetFindResultPage() {
   using namespace editor;
 
@@ -1672,28 +1689,21 @@ void BookFrame::ActivateToolPage(BookPage* page) {
 }
 
 BookPage* BookFrame::GetFocusedPage() {
+  // Check tool book.
+  if (tool_book_->IsShown() && tool_book_->HasFocus()) {
+    return tool_book_->ActivePage();
+  }
+
   BookCtrl* focused_book = NULL;
 
   // Find active book in text books.
   for (size_t i = 0; i < text_books_.size(); ++i) {
     if (text_books_[i]->HasFocus()) {
-      focused_book = text_books_[i];
-      break;
+      return text_books_[i]->ActivePage();
     }
   }
 
-  // Check tool book.
-  if (focused_book == NULL) {
-    if (tool_book_->IsShown() && tool_book_->HasFocus()) {
-      focused_book = tool_book_;
-    }
-  }
-
-  if (focused_book == NULL) {
-    return NULL;
-  }
-
-  return focused_book->ActivePage();
+  return text_books_[0]->ActivePage();
 }
 
 BookPage* BookFrame::GetCurrentPage() {
