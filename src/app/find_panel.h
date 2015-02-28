@@ -19,7 +19,6 @@ namespace jil {
 
 class BitmapToggleButton;
 class BookFrame;
-class Separator;
 class Session;
 
 class FindPanel : public wxPanel {
@@ -28,7 +27,8 @@ class FindPanel : public wxPanel {
 
 public:
   enum ColorId {
-    BORDER = 0,
+    BG = 0,
+    BORDER,
     COLOR_COUNT
   };
 
@@ -76,6 +76,7 @@ public:
   void SetFindString(const wxString& find_string);
 
 protected:
+  void OnPaint(wxPaintEvent& evt);
   //void OnClose(wxCloseEvent& evt);
   //void OnKeyDownHook(wxKeyEvent& evt);
   void OnSetFocus(wxFocusEvent& evt);
@@ -116,8 +117,6 @@ private:
 
   // See enum FindFlag.
   int flags_;
-
-  Separator* top_border_;
 
   BitmapToggleButton* use_regex_toggle_;
   BitmapToggleButton* case_sensitive_toggle_;

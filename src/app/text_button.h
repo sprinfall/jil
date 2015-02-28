@@ -1,5 +1,5 @@
-#ifndef CSUI_TEXT_BUTTON_H_
-#define CSUI_TEXT_BUTTON_H_
+#ifndef JIL_TEXT_BUTTON_H_
+#define JIL_TEXT_BUTTON_H_
 #pragma once
 
 // A button displaying text label.
@@ -7,7 +7,7 @@
 #include "wx/control.h"
 #include "boost/shared_ptr.hpp"
 
-namespace jil {\
+namespace jil {
 
 class TextButton : public wxControl {
   DECLARE_CLASS(TextButton)
@@ -60,17 +60,13 @@ public:
     return accepts_focus_;
   }
 
+  void set_padding(const wxSize& padding) {
+    padding_ = padding;
+  }
+
   void set_accepts_focus(bool accepts_focus) {
     accepts_focus_ = accepts_focus;
   }
-
-#if defined (__WXMSW__)
-  virtual bool MSWCommand(WXUINT param, WXWORD id) override;
-#endif
-
-  void SetColors(const wxColor& bg_normal,
-                 const wxColor& bg_select,
-                 const wxColor& fg);
 
 protected:
   virtual wxSize DoGetBestSize() const override;
@@ -90,6 +86,8 @@ protected:
 private:
   SharedStyle style_;
 
+  wxSize padding_;
+
   bool pressed_;
   bool hover_;
 
@@ -98,4 +96,4 @@ private:
 
 }  // namespace jil
 
-#endif  // CSUI_TEXT_BUTTON_H_
+#endif  // JIL_TEXT_BUTTON_H_

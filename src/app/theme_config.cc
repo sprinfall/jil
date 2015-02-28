@@ -169,6 +169,7 @@ bool LoadThemeFile(const wxString& theme_file,
   SharedTheme fp_theme(new Theme(FindPanel::THEME_COUNT, FindPanel::COLOR_COUNT));
   Setting fp_setting = root.Get("find_panel", Setting::kGroup);
   if (fp_setting) {
+    fp_theme->SetColor(FindPanel::BG, fp_setting.GetColor("bg"));
     fp_theme->SetColor(FindPanel::BORDER, fp_setting.GetColor("border"));
 
     Setting button_setting = fp_setting.Get("button", Setting::kGroup);

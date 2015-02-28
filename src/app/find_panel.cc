@@ -6,11 +6,11 @@
 #include "wx/sizer.h"
 #include "wx/log.h"
 
+#include "editor/color.h"
 #include "editor/text_buffer.h"
 
 #include "app/bitmap_toggle_button.h"
 #include "app/book_frame.h"
-#include "app/separator.h"
 #include "app/session.h"
 #include "app/skin.h"
 #include "app/text_button.h"
@@ -54,6 +54,7 @@ enum {
 IMPLEMENT_DYNAMIC_CLASS(FindPanel, wxPanel);
 
 BEGIN_EVENT_TABLE(FindPanel, wxPanel)
+EVT_PAINT(FindPanel::OnPaint)
 //EVT_CLOSE(FindPanel::OnClose)
 //EVT_CHAR_HOOK(FindPanel::OnKeyDownHook)
 EVT_SET_FOCUS(FindPanel::OnSetFocus)
@@ -90,15 +91,11 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
     return false;
   }
 
-  SetBackgroundColour(wxColour(84, 84, 84));
+  SetBackgroundStyle(wxBG_STYLE_PAINT);
+  SetBackgroundColour(theme_->GetColor(BG));
 
   // Create text button style.
   InitButtonStyle();
-
-  //------------------------------------
-
-  top_border_ = new Separator(this);
-  top_border_->SetColor(theme_->GetColor(BORDER));
 
   //------------------------------------
 
@@ -183,19 +180,12 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   //------------------------------------
 
-#if JIL_USE_NATIVE_BUTTON
-  find_button_ = new wxButton(this, kFindButtonId, kTrFind);
-  find_all_button_ = new wxButton(this, kFindAllButtonId, kTrFindAll);
-  replace_button_ = new wxButton(this, kReplaceButtonId, kTrReplace);
-  replace_all_button_ = new wxButton(this, kReplaceAllButtonId, kTrReplaceAll);
-
-  find_button_->SetDefault();  // Set default for ENTER key.
-#else
   find_button_ = CreateTextButton(kFindButtonId, kTrFind);
   find_all_button_ = CreateTextButton(kFindAllButtonId, kTrFindAll);
   replace_button_ = CreateTextButton(kReplaceButtonId, kTrReplace);
   replace_all_button_ = CreateTextButton(kReplaceAllButtonId, kTrReplaceAll);
-#endif
+
+  //find_button_->SetDefault();  // Set default for ENTER key.
 
   //------------------------------------
 
@@ -231,6 +221,19 @@ void FindPanel::UpdateLayout() {
     //mode_toggle_->set_toggle(true);
     LayoutAsReplace();
   }
+}
+
+void FindPanel::OnPaint(wxPaintEvent& evt) {
+  wxAutoBufferedPaintDC dc(this);
+#if !wxALWAYS_NATIVE_DOUBLE_BUFFER
+  dc.SetBackground(GetBackgroundColour());
+  dc.Clear();
+#endif
+
+  wxRect rect = GetClientRect();
+
+  dc.SetPen(wxPen(theme_->GetColor(BORDER)));
+  dc.DrawLine(rect.x, rect.y, rect.GetRight() + 1, rect.GetTop());
 }
 
 void FindPanel::SetFindString(const wxString& find_string) {
@@ -394,7 +397,6 @@ void FindPanel::LayoutAsFind() {
   ctrl_hsizer->Add(find_all_button_, 0, flags, kPadding);
 
   wxSizer* vsizer = new wxBoxSizer(wxVERTICAL);
-  vsizer->Add(top_border_, 0, wxEXPAND);
   vsizer->Add(ctrl_hsizer, 0, wxEXPAND | wxALL, kPadding);
   SetSizer(vsizer);
 
@@ -440,7 +442,6 @@ void FindPanel::LayoutAsReplace() {
   ctrl_hsizer->Add(body_vsizer, 1, wxEXPAND);
 
   wxSizer* vsizer = new wxBoxSizer(wxVERTICAL);
-  vsizer->Add(top_border_, 0, wxEXPAND);
   vsizer->Add(ctrl_hsizer, 0, wxEXPAND | wxALL, kPadding);
   SetSizer(vsizer);
 

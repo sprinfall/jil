@@ -1,15 +1,8 @@
 #include "app/text_button.h"
-
 #include "wx/dcbuffer.h"
-#include "wx/dcgraph.h"
-#include "wx/graphics.h"
-
 #include "editor/color.h"
 
-namespace jil {\
-
-const int LABEL_PADDING_X = 10;
-const int LABEL_PADDING_Y = 7;
+namespace jil {
 
 IMPLEMENT_CLASS(TextButton, wxControl);
 
@@ -26,58 +19,41 @@ EVT_KILL_FOCUS          (TextButton::OnKillFocus)
 END_EVENT_TABLE()
 
 TextButton::TextButton(SharedStyle style)
-    : style_(style), pressed_(false), hover_(false), accepts_focus_(true) {
+    : style_(style)
+    , padding_(10, 7)
+    , pressed_(false)
+    , hover_(false)
+    , accepts_focus_(true) {
 }
 
 TextButton::~TextButton() {
 }
 
-bool TextButton::Create(wxWindow* parent, wxWindowID id, const wxString& label) {
+bool TextButton::Create(wxWindow* parent,
+                        wxWindowID id,
+                        const wxString& label) {
   assert(style_);
 
-  if (!wxControl::Create(parent, id, wxDefaultPosition, wxDefaultSize, /*wxWANTS_CHARS | */wxBORDER_NONE)) {
+  if (!wxControl::Create(parent,
+                         id,
+                         wxDefaultPosition,
+                         wxDefaultSize,
+                         wxBORDER_NONE)) {
     return false;
   }
 
   SetLabel(label);
 
-  SetBackgroundColour(parent->GetBackgroundColour());
   SetBackgroundStyle(wxBG_STYLE_PAINT);
+  SetBackgroundColour(parent->GetBackgroundColour());
 
   return true;
-}
-
-// From MSW wxButton implementation.
-#if defined (__WXMSW__)
-
-bool TextButton::MSWCommand(WXUINT param, WXWORD WXUNUSED(id)) {
-  bool processed = false;
-
-  switch (param) {
-  case 1:  // message came from an accelerator
-
-    if (IsEnabled()) {
-      PostEvent();
-      processed = true;
-    }
-
-    break;
-  }
-
-  return processed;
-}
-
-#endif // __WXMSW__
-
-void TextButton::SetColors(const wxColor& bg_normal,
-                           const wxColor& bg_select,
-                           const wxColor& fg) {
 }
 
 wxSize TextButton::DoGetBestSize() const {
   wxSize best_size;
   GetTextExtent(GetLabel(), &best_size.x, &best_size.y);
-  best_size.IncBy(LABEL_PADDING_X, LABEL_PADDING_Y);
+  best_size.IncBy(padding_.x, padding_.y);
 
   wxSize min_size = GetMinSize();
   if (best_size.x < min_size.x) {
@@ -99,18 +75,10 @@ void TextButton::PostEvent() {
 
 void TextButton::OnPaint(wxPaintEvent& evt) {
   wxAutoBufferedPaintDC dc(this);
-
 #if (!wxALWAYS_NATIVE_DOUBLE_BUFFER)
   dc.SetBackground(wxBrush(GetBackgroundColour()));
-  dc.Clear();  // Color the background!
+  dc.Clear();
 #endif
-
-#ifdef __WXMAC__
-  wxGraphicsContext* gc = dc.GetGraphicsContext();
-#else
-  wxGCDC gcdc(dc);
-  wxGraphicsContext* gc = gcdc.GetGraphicsContext();
-#endif // __WXMAC__
 
   State state = NORMAL;
   if (IsEnabled()) {
@@ -129,21 +97,11 @@ void TextButton::OnPaint(wxPaintEvent& evt) {
   wxColour fg = style_->GetColor(FG, state);
   wxColour border = style_->GetColor(BORDER, state);
 
-  gc->SetPen(wxPen(border));
-  gc->SetBrush(wxBrush(bg));
+  dc.SetPen(wxPen(border));
+  dc.SetBrush(wxBrush(bg));
 
   wxRect client_rect = GetClientRect();
-
-  const wxDouble kRadius = 4.0f;
-  gc->DrawRoundedRectangle(client_rect.GetLeft(),
-                           client_rect.GetTop(),
-                           client_rect.GetWidth() - 1,
-                           client_rect.GetHeight() - 1,
-                           kRadius);
-  //gc->DrawRectangle(client_rect.GetLeft(),
-  //                  client_rect.GetTop(),
-  //                  client_rect.GetWidth() - 1,
-  //                  client_rect.GetHeight() - 1);
+  dc.DrawRectangle(client_rect);
 
   dc.SetFont(GetFont());
   dc.SetTextForeground(fg);
@@ -195,9 +153,9 @@ void TextButton::OnMouseCaptureLost(wxMouseCaptureLostEvent& evt) {
 }
 
 void TextButton::OnKeyUp(wxKeyEvent& evt) {
-  //if (evt.GetKeyCode() == WXK_SPACE || evt.GetKeyCode() == WXK_RETURN) {
-  //  PostEvent();
-  //}
+  if (evt.GetKeyCode() == WXK_SPACE) {
+    PostEvent();
+  }
   evt.Skip();
 }
 
