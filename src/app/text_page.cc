@@ -127,9 +127,6 @@ void TextPage::Page_EditMenu(wxMenu* menu) {
   AppendMenuItem(comment_menu, ID_MENU_EDIT_UNCOMMENT, kTrEditUncomment);
   menu->AppendSubMenu(comment_menu, kTrEditComment);
 
-  AppendMenuItem(menu, ID_MENU_EDIT_FORMAT, kTrEditFormat);
-  menu->AppendSeparator();
-
   AppendMenuItem(menu, ID_MENU_EDIT_FIND, kTrEditFind);
   AppendMenuItem(menu, ID_MENU_EDIT_REPLACE, kTrEditReplace);
   AppendMenuItem(menu, ID_MENU_EDIT_GO_TO, kTrEditGoTo);

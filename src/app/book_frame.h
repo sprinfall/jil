@@ -232,6 +232,9 @@ protected:
   // Get the page which has focus.
   BookPage* GetFocusedPage();
 
+  // The focused page must be the current page, but the current page might
+  // not be focused.
+  // Only used by Save As.
   BookPage* GetCurrentPage();
 
 private:
@@ -250,8 +253,6 @@ private:
 
   // Clear and recreate the items for Recent Files menu.
   void UpdateRecentFilesMenu();
-
-  TextBook* ActiveTextBook() const;
 
   // Create text page with the given buffer.
   TextPage* CreateTextPage(editor::TextBuffer* buffer,
@@ -289,7 +290,7 @@ private:
   // Splitter splits sub windows.
   Splitter* splitter_;
 
-  std::vector<TextBook*> text_books_;
+  TextBook* text_book_;
   ToolBook* tool_book_;
 
   // Current page type.

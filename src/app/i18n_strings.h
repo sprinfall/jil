@@ -62,7 +62,6 @@
 #define kTrEditFind           _("&Find")
 #define kTrEditReplace        _("Rep&lace")
 #define kTrEditGoTo           _("&Go To...")
-#define kTrEditFormat         _("&Format")
 
 #define kTrViewWrap           _("&Wrap")
 #define kTrViewShowNumber     _("Show &Line Number")

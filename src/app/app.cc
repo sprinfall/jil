@@ -627,7 +627,6 @@ void App::InitCommands() {
 
   AddTextCmd("comment", Comment, true, ID_MENU_EDIT_COMMENT);
   AddTextCmd("uncomment", Uncomment, true, ID_MENU_EDIT_UNCOMMENT);
-  AddTextCmd("format", Format, true, ID_MENU_EDIT_FORMAT);
   AddTextCmd("goto", Goto, false, ID_MENU_EDIT_GO_TO);
 
   //----------------------------------------------------------------------------
