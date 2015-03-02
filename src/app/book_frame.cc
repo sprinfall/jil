@@ -1866,17 +1866,18 @@ bool BookFrame::GetFileMenuState(int menu_id, wxString* text) {
 }
 
 bool BookFrame::GetEditMenuState(int menu_id) {
-  if (menu_id == ID_MENU_EDIT_FIND ||
-      menu_id == ID_MENU_EDIT_REPLACE) {
-    // Always enable these menu items.
+  // Always enable these menu items.
+  if (menu_id == ID_MENU_EDIT_FIND || menu_id == ID_MENU_EDIT_REPLACE) {
     return true;
   }
 
+  // Let the focused page determine the state.
   BookPage* focused_page = GetFocusedPage();
-  if (focused_page == NULL) {
-    return false;
+  if (focused_page != NULL) {
+    return focused_page->Page_EditMenuState(menu_id);
   }
-  return focused_page->Page_EditMenuState(menu_id);
+
+  return false;
 }
 
 bool BookFrame::GetViewMenuState(int menu_id, bool* check) {

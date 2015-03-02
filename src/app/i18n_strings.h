@@ -53,7 +53,7 @@
 #define kTrEditCut            _("Cu&t")
 #define kTrEditCopy           _("&Copy")
 #define kTrEditPaste          _("&Paste")
-#define kTrEditLine           _("&Line")
+#define kTrEditIndent         _("&Indent")
 #define kTrEditIncreaseIndent _("&Increase Indent")
 #define kTrEditDecreaseIndent _("&Decrease Indent")
 #define kTrEditAutoIndent     _("&Auto Indent")

@@ -99,33 +99,42 @@ int TextPage::Page_Flags() const {
 }
 
 void TextPage::Page_EditMenu(wxMenu* menu) {
+  //------------------------------------
+
   AppendMenuItem(menu, ID_MENU_EDIT_UNDO, kTrEditUndo);
   AppendMenuItem(menu, ID_MENU_EDIT_REDO, kTrEditRedo);
   menu->AppendSeparator();
+
+  //------------------------------------
 
   AppendMenuItem(menu, ID_MENU_EDIT_CUT, kTrEditCut);
   AppendMenuItem(menu, ID_MENU_EDIT_COPY, kTrEditCopy);
   AppendMenuItem(menu, ID_MENU_EDIT_PASTE, kTrEditPaste);
   menu->AppendSeparator();
 
-  // - Line
-  wxMenu* line_menu = new wxMenu;
-  AppendMenuItem(line_menu,
-                 ID_MENU_EDIT_AUTO_INDENT,
-                 kTrEditAutoIndent);
-  AppendMenuItem(line_menu,
+  //------------------------------------
+
+  wxMenu* indent_menu = new wxMenu;
+  AppendMenuItem(indent_menu,
                  ID_MENU_EDIT_INCREASE_INDENT,
                  kTrEditIncreaseIndent);
-  AppendMenuItem(line_menu,
+  AppendMenuItem(indent_menu,
                  ID_MENU_EDIT_DECREASE_INDENT,
                  kTrEditDecreaseIndent);
-  menu->AppendSubMenu(line_menu, kTrEditLine);
+  AppendMenuItem(indent_menu,
+                 ID_MENU_EDIT_AUTO_INDENT,
+                 kTrEditAutoIndent);
+  menu->AppendSubMenu(indent_menu, kTrEditIndent);
 
-  // - Comment
+  //------------------------------------
+
   wxMenu* comment_menu = new wxMenu;
   AppendMenuItem(comment_menu, ID_MENU_EDIT_COMMENT, kTrEditComment);
   AppendMenuItem(comment_menu, ID_MENU_EDIT_UNCOMMENT, kTrEditUncomment);
   menu->AppendSubMenu(comment_menu, kTrEditComment);
+  menu->AppendSeparator();
+
+  //------------------------------------
 
   AppendMenuItem(menu, ID_MENU_EDIT_FIND, kTrEditFind);
   AppendMenuItem(menu, ID_MENU_EDIT_REPLACE, kTrEditReplace);
