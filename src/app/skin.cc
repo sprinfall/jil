@@ -14,7 +14,7 @@ static wxString GetIconDir() {
   return icon_dir;
 }
 
-wxBitmap GetIcon(const wxChar* const icon_name) {
+wxBitmap GetIcon(const wxString& icon_name) {
   wxBitmap icon(GetIconDir() + icon_name + wxT(".png"), wxBITMAP_TYPE_PNG);
   return icon;
 }

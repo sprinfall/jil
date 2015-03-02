@@ -22,7 +22,8 @@
 
 #include "base/string_util.h"
 
-#include "editor/color.h"
+#include "ui/color.h"
+
 #include "editor/file_io.h"
 #include "editor/ft_plugin.h"
 #include "editor/style.h"

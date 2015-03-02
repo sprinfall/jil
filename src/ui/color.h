@@ -1,11 +1,11 @@
-#ifndef JIL_EDITOR_COLOR_H_
-#define JIL_EDITOR_COLOR_H_
+#ifndef JIL_UI_COLOR_H_
+#define JIL_UI_COLOR_H_
 #pragma once
 
 #include "wx/colour.h"
 
 namespace jil {
-namespace editor {
+namespace ui {
 
 struct Color {
   static wxColour Get(const wxChar* const name);
@@ -88,7 +88,7 @@ wxColour IncColor(const wxColour& from, unsigned char delta);
 // Example: DecColor(wxColour(125, 125, 125), 1) -> wxColour(124, 124, 124)
 wxColour DecColor(const wxColour& from, unsigned char delta);
 
-}  // namespace editor
+}  // namespace ui
 }  // namespace jil
 
-#endif  // JIL_EDITOR_COLOR_H_
+#endif  // JIL_UI_COLOR_H_

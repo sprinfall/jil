@@ -3,12 +3,13 @@
 #pragma once
 
 #include "wx/bitmap.h"
+#include "wx/string.h"
 
 namespace jil {
 namespace skin {
 
 // Note: The bitmap returned will be invalid if it doesn't exist.
-wxBitmap GetIcon(const wxChar* const icon_name);
+wxBitmap GetIcon(const wxString& icon_name);
 
 }  // namespace skin
 }  // namespace jil

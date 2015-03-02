@@ -4,18 +4,18 @@
 #include "boost/algorithm/string.hpp"
 #include "wx/log.h"
 #include "wx/filename.h"
+#include "ui/color.h"
+#include "ui/text_button.h"
 #include "editor/lex.h"
 #include "editor/style.h"
 #include "editor/text_window.h"
 #include "editor/status_bar.h"
-#include "editor/color.h"
 #include "app/navigation_dialog.h"
 #include "app/defs.h"
 #include "app/config.h"
 #include "app/book_ctrl.h"
 #include "app/book_frame.h"
 #include "app/find_panel.h"
-#include "app/text_button.h"
 
 namespace jil {
 
@@ -83,13 +83,13 @@ static SharedTheme GetButtonTheme(Setting button_setting) {
   const char* kButtonParts[] = { "bg", "fg", "border" };
   const char* kButtonStates[] = { "normal", "hover", "pressed", "disabled" };
 
-  SharedTheme button_theme(new Theme(TextButton::PARTS));
+  SharedTheme button_theme(new Theme(ui::ButtonStyle::PARTS));
 
-  for (int part = 0; part < TextButton::PARTS; ++part) {
+  for (int part = 0; part < ui::ButtonStyle::PARTS; ++part) {
     Setting fg_setting = button_setting.Get(kButtonParts[part], Setting::kGroup);
     if (fg_setting) {
-      SharedTheme part_theme(new Theme(0, TextButton::STATES));
-      for (int state = 0; state < TextButton::STATES; ++state) {
+      SharedTheme part_theme(new Theme(0, ui::ButtonStyle::STATES));
+      for (int state = 0; state < ui::ButtonStyle::STATES; ++state) {
         part_theme->SetColor(state, fg_setting.GetColor(kButtonStates[state]));
       }
       button_theme->SetTheme(part, part_theme);

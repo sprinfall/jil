@@ -15,10 +15,11 @@
 #include "base/string_util.h"
 #include "base/math_util.h"
 
+#include "ui/color.h"
+
 #include "editor/compile_config.h"
 #include "editor/util.h"
 #include "editor/style.h"
-#include "editor/color.h"
 #include "editor/line_nr_area.h"
 #include "editor/text_area.h"
 #include "editor/text_buffer.h"

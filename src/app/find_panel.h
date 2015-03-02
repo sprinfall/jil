@@ -4,20 +4,19 @@
 
 // Find & Replace panel.
 
-#define JIL_USE_NATIVE_BUTTON 0
-
 #include "wx/panel.h"
+#include "ui/text_button.h"
 #include "editor/theme.h"
 #include "app/defs.h"
-#include "app/text_button.h"
 
 class wxComboBox;
-class wxButton;
-class wxBitmapButton;
 
 namespace jil {
 
+namespace ui {
 class BitmapToggleButton;
+}  // namespace ui
+
 class BookFrame;
 class Session;
 
@@ -103,7 +102,8 @@ private:
 
   void InitButtonStyle();
 
-  TextButton* CreateTextButton(int id, const wxString& label);
+  ui::BitmapToggleButton* CreateToggleButton(int id, const wxString& bitmap);
+  ui::TextButton* CreateTextButton(int id, const wxString& label);
 
 private:
   editor::SharedTheme theme_;
@@ -117,28 +117,21 @@ private:
   // See enum FindFlag.
   int flags_;
 
-  BitmapToggleButton* use_regex_toggle_;
-  BitmapToggleButton* case_sensitive_toggle_;
-  BitmapToggleButton* match_whole_word_toggle_;
-  BitmapToggleButton* search_reversely_toggle_;
-  BitmapToggleButton* mode_toggle_;
+  ui::BitmapToggleButton* use_regex_toggle_;
+  ui::BitmapToggleButton* case_sensitive_toggle_;
+  ui::BitmapToggleButton* match_whole_word_toggle_;
+  ui::BitmapToggleButton* search_reversely_toggle_;
+  ui::BitmapToggleButton* mode_toggle_;
 
   wxComboBox* find_combobox_;
   wxComboBox* replace_combobox_;
 
-#if JIL_USE_NATIVE_BUTTON
-  wxButton* find_button_;
-  wxButton* find_all_button_;
-  wxButton* replace_button_;
-  wxButton* replace_all_button_;
-#else
-  TextButton::SharedStyle button_style_;
+  ui::SharedButtonStyle button_style_;
 
-  TextButton* find_button_;
-  TextButton* find_all_button_;
-  TextButton* replace_button_;
-  TextButton* replace_all_button_;
-#endif
+  ui::TextButton* find_button_;
+  ui::TextButton* find_all_button_;
+  ui::TextButton* replace_button_;
+  ui::TextButton* replace_all_button_;
 };
 
 }  // namespace jil

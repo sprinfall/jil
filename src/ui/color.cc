@@ -1,8 +1,8 @@
-#include "editor/color.h"
+#include "ui/color.h"
 #include "wx/gdicmn.h"
 
 namespace jil {
-namespace editor {
+namespace ui {
 
 wxColour Color::Get(const wxChar* const name) {
   return wxTheColourDatabase->Find(name);
@@ -97,5 +97,5 @@ wxColour DecColor(const wxColour& from, unsigned char delta) {
                   DecUChar(from.Blue(), delta));
 }
 
-}  // namespace editor
+}  // namespace ui
 }  // namespace jil

@@ -1,8 +1,9 @@
-#include "app/text_button.h"
+#include "ui/text_button.h"
 #include "wx/dcbuffer.h"
-#include "editor/color.h"
+#include "ui/color.h"
 
 namespace jil {
+namespace ui {
 
 IMPLEMENT_CLASS(TextButton, wxControl);
 
@@ -18,7 +19,7 @@ EVT_SET_FOCUS           (TextButton::OnSetFocus)
 EVT_KILL_FOCUS          (TextButton::OnKillFocus)
 END_EVENT_TABLE()
 
-TextButton::TextButton(SharedStyle style)
+TextButton::TextButton(SharedButtonStyle style)
     : style_(style)
     , padding_(10, 7)
     , pressed_(false)
@@ -48,6 +49,14 @@ bool TextButton::Create(wxWindow* parent,
   SetBackgroundColour(parent->GetBackgroundColour());
 
   return true;
+}
+
+bool TextButton::Enable(bool enable) {
+  if (wxControl::Enable(enable)) {
+    Refresh();
+    return true;
+  }
+  return false;
 }
 
 wxSize TextButton::DoGetBestSize() const {
@@ -80,22 +89,22 @@ void TextButton::OnPaint(wxPaintEvent& evt) {
   dc.Clear();
 #endif
 
-  State state = NORMAL;
+  ButtonStyle::State state = ButtonStyle::NORMAL;
   if (IsEnabled()) {
     if (pressed_) {
-      state = PRESSED;
+      state = ButtonStyle::PRESSED;
     } else if (hover_) {
-      state = HOVER;
+      state = ButtonStyle::HOVER;
     } else if (wxWindow::FindFocus() == this) {
-      state = HOVER;
+      state = ButtonStyle::HOVER;
     }
   } else {
-    state = DISABLED;
+    state = ButtonStyle::DISABLED;
   }
 
-  wxColour bg = style_->GetColor(BG, state);
-  wxColour fg = style_->GetColor(FG, state);
-  wxColour border = style_->GetColor(BORDER, state);
+  wxColour bg = style_->GetColor(ButtonStyle::BG, state);
+  wxColour fg = style_->GetColor(ButtonStyle::FG, state);
+  wxColour border = style_->GetColor(ButtonStyle::BORDER, state);
 
   dc.SetPen(wxPen(border));
   dc.SetBrush(wxBrush(bg));
@@ -169,4 +178,5 @@ void TextButton::OnKillFocus(wxFocusEvent& evt) {
   evt.Skip();
 }
 
+}  // namespace ui
 }  // namespace jil

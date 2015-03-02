@@ -6,14 +6,15 @@
 #include "wx/sizer.h"
 #include "wx/log.h"
 
-#include "editor/color.h"
+#include "ui/bitmap_toggle_button.h"
+#include "ui/color.h"
+#include "ui/text_button.h"
+
 #include "editor/text_buffer.h"
 
-#include "app/bitmap_toggle_button.h"
 #include "app/book_frame.h"
 #include "app/session.h"
 #include "app/skin.h"
-#include "app/text_button.h"
 #include "app/text_page.h"
 #include "app/util.h"
 
@@ -95,38 +96,27 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   //------------------------------------
 
-  use_regex_toggle_ = new BitmapToggleButton(this, kUseRegexToggleId);
-  use_regex_toggle_->SetBitmaps(skin::GetIcon(wxT("fw_regex")),
-                                skin::GetIcon(wxT("fw_regex_toggle")));
+  use_regex_toggle_ = CreateToggleButton(kUseRegexToggleId, wxT("find_regex"));
   use_regex_toggle_->SetToolTip(kTrUseRegex);
 
-  case_sensitive_toggle_ = new BitmapToggleButton(this,
-                                                  kCaseSensitiveToggleId);
-  case_sensitive_toggle_->SetBitmaps(skin::GetIcon(wxT("fw_case")),
-                                     skin::GetIcon(wxT("fw_case_toggle")));
+  case_sensitive_toggle_ = CreateToggleButton(kCaseSensitiveToggleId,
+                                              wxT("find_case"));
   case_sensitive_toggle_->SetToolTip(kTrCaseSensitive);
 
-  match_whole_word_toggle_ = new BitmapToggleButton(this,
-                                                    kMatchWholeWordToggleId);
-  match_whole_word_toggle_->SetBitmaps(
-      skin::GetIcon(wxT("fw_whole_word")),
-      skin::GetIcon(wxT("fw_whole_word_toggle")));
+  match_whole_word_toggle_ = CreateToggleButton(kMatchWholeWordToggleId,
+                                                wxT("find_whole_word"));
   match_whole_word_toggle_->SetToolTip(kTrMatchWholeWord);
 
-  search_reversely_toggle_ = new BitmapToggleButton(this,
-                                                    kSearchReverselyToggleId);
-  search_reversely_toggle_->SetBitmaps(
-      skin::GetIcon(wxT("fw_reversely")),
-      skin::GetIcon(wxT("fw_reversely_toggle")),
-      skin::GetIcon(wxT("fw_reversely_disabled")),
-      skin::GetIcon(wxT("fw_reversely_toggle_disabled")));
+  search_reversely_toggle_ = CreateToggleButton(kSearchReverselyToggleId,
+                                                wxT("find_reversely"));
   search_reversely_toggle_->SetToolTip(kTrSearchReversely);
 
-  // Initialize the toggle states.
+  // Initialize the toggle button states.
   use_regex_toggle_->set_toggle(GetBit(flags_, kFindUseRegex));
   case_sensitive_toggle_->set_toggle(GetBit(flags_, kFindCaseSensitive));
   match_whole_word_toggle_->set_toggle(GetBit(flags_, kFindMatchWholeWord));
   search_reversely_toggle_->set_toggle(GetBit(flags_, kFindReversely));
+
   if (GetBit(flags_, kFindUseRegex)) {
     search_reversely_toggle_->Enable(false);
   }
@@ -198,16 +188,6 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
 FindPanel::~FindPanel() {
 }
-
-//bool FindPanel::Show(bool show) {
-//  bool result = wxPanel::Show(show);
-//
-//  // Focus and select the text so the user can change it directly.
-//  find_combobox_->SetFocus();
-//  find_combobox_->SelectAll();
-//
-//  return result;
-//}
 
 bool FindPanel::Destroy() {
   session_->set_find_flags(flags_);
@@ -439,25 +419,33 @@ void FindPanel::LayoutAsReplace() {
 }
 
 void FindPanel::InitButtonStyle() {
-  button_style_.reset(new TextButton::Style);
+  button_style_.reset(new ui::ButtonStyle);
 
   editor::SharedTheme button_theme = theme_->GetTheme(BUTTON);
   if (button_theme.get() == NULL) {
     return;
   }
 
-  for (int part = 0; part < TextButton::PARTS; ++part) {
+  for (int part = 0; part < ui::ButtonStyle::PARTS; ++part) {
     editor::SharedTheme part_theme = button_theme->GetTheme(part);
     if (part_theme) {
-      for (int state = 0; state < TextButton::STATES; ++state) {
+      for (int state = 0; state < ui::ButtonStyle::STATES; ++state) {
         button_style_->SetColor(part, state, part_theme->GetColor(state));
       }
     }
   }
 }
 
-TextButton* FindPanel::CreateTextButton(int id, const wxString& label) {
-  TextButton* button = new TextButton(button_style_);
+ui::BitmapToggleButton* FindPanel::CreateToggleButton(int id, const wxString& bitmap) {
+  ui::BitmapToggleButton* button = new ui::BitmapToggleButton(button_style_);
+  button->Create(this, id);
+  button->SetBitmap(skin::GetIcon(bitmap));
+  button->set_user_best_size(wxSize(24, 24));
+  return button;
+}
+
+ui::TextButton* FindPanel::CreateTextButton(int id, const wxString& label) {
+  ui::TextButton* button = new ui::TextButton(button_style_);
   button->Create(this, id, label);
   button->SetMinSize(wxSize(80, -1));
   return button;

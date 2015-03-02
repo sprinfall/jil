@@ -2,10 +2,10 @@
 #include "wx/dcbuffer.h"
 #include "wx/menu.h"
 #include "wx/log.h"
+#include "ui/color.h"
 #include "editor/text_extent.h"
 #include "editor/ft_plugin.h"
 #include "editor/text_buffer.h"
-#include "editor/color.h"
 
 namespace jil {
 namespace editor {
@@ -209,7 +209,7 @@ void StatusBar::DrawBackground(wxDC& dc, const wxRect& bg_rect) {
   wxColour bg_bottom = theme_->GetColor(BG);
 
   int gradient_color_delta = (bg_rect.GetHeight() + 2) / 3;
-  wxColour bg_top = IncColor(bg_bottom, gradient_color_delta);
+  wxColour bg_top = ui::IncColor(bg_bottom, gradient_color_delta);
 
   dc.GradientFillLinear(bg_rect, bg_bottom, bg_top, wxNORTH);
 

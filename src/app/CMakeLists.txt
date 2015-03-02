@@ -1,8 +1,6 @@
 set(SRCS
     app.cc
     app.h
-    bitmap_toggle_button.cc
-    bitmap_toggle_button.h
     binding_config.cc
     binding_config.h
     book_ctrl.cc
@@ -43,8 +41,6 @@ set(SRCS
     splitter.h
     status_fields_config.cc
     status_fields_config.h
-    text_button.cc
-    text_button.h
     text_book.cc
     text_book.h
     text_page.cc
@@ -71,6 +67,7 @@ add_executable(${TARGET_NAME} WIN32 MACOSX_BUNDLE ${JIL_RC} ${SRCS})
 
 set(EXTRA_LIBS
     base
+    ui
     editor
     libconfig
     pugixml

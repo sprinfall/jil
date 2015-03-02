@@ -1,7 +1,6 @@
 set(HEADERS
     binding.h
     buffer_listener.h
-    color.h
     compile_config.h
     defs.h
     action.h
@@ -34,7 +33,6 @@ set(HEADERS
 
 set(SRCS
     binding.cc
-    color.cc
     action.cc
     file_io.cc
     ft_plugin.cc
