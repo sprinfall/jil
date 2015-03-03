@@ -4,7 +4,7 @@
 
 // A replacement of wxBitmapToggleButton.
 
-#include "ui/text_button.h"
+#include "ui/button_base.h"
 #include "wx/tglbtn.h"  // For wxEVT_TOGGLEBUTTON, etc.
 #include "wx/bitmap.h"
 
@@ -16,11 +16,12 @@ namespace ui {
 //   Event type: wxEVT_TOGGLEBUTTON
 //   Macro: EVT_TOGGLEBUTTON(id, func)
 
-class BitmapToggleButton : public TextButton {
-  DECLARE_EVENT_TABLE()
+class BitmapToggleButton : public ButtonBase {
+  DECLARE_CLASS(BitmapToggleButton)
+  DECLARE_NO_COPY_CLASS(BitmapToggleButton)
 
 public:
-  BitmapToggleButton(SharedButtonStyle style);
+  explicit BitmapToggleButton(SharedButtonStyle style);
   virtual ~BitmapToggleButton();
 
   bool Create(wxWindow* parent, wxWindowID id);
@@ -49,10 +50,11 @@ public:
 protected:
   virtual wxSize DoGetBestSize() const override;
 
-  virtual void PostEvent() override;
+  virtual ButtonStyle::State GetState() override;
 
-  void OnPaint(wxPaintEvent& evt);
-  void OnMouseLeftUp(wxMouseEvent& evt);
+  virtual void DrawForeground(wxDC& dc, ButtonStyle::State state) override;
+
+  virtual void PostEvent() override;
 
 private:
   wxSize user_best_size_;

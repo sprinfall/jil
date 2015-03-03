@@ -22,7 +22,6 @@
 #define kTrCaseSensitive _("Case sensitive")
 #define kTrMatchWholeWord _("Match whole word")
 #define kTrSearchReversely _("Search reversely")
-#define kTrSwitchMode _("Switch between find and replace modes")
 
 #define kTrFind _("Find")
 #define kTrReplace _("Replace")
@@ -123,15 +122,6 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   //------------------------------------
 
-  //mode_toggle_ = new BitmapToggleButton(this, kModeToggleId);
-  //mode_toggle_->SetToolTip(kTrSwitchMode);
-  //mode_toggle_->SetBitmaps(skin::GetIcon(wxT("fw_mode")),
-  //                         skin::GetIcon(wxT("fw_mode_toggle")));
-
-  //mode_toggle_->Hide(); // TODO
-
-  //------------------------------------
-
   find_combobox_ = new wxComboBox(this, kFindComboBoxId);
 
   // Initialize find combobox with find history.
@@ -176,10 +166,8 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   //------------------------------------
 
   if (mode_ == kFindMode) {
-    //mode_toggle_->set_toggle(false);
     LayoutAsFind();
   } else {
-    //mode_toggle_->set_toggle(true);
     LayoutAsReplace();
   }
 
@@ -196,10 +184,8 @@ bool FindPanel::Destroy() {
 
 void FindPanel::UpdateLayout() {
   if (mode_ == kFindMode) {
-    //mode_toggle_->set_toggle(false);
     LayoutAsFind();
   } else {
-    //mode_toggle_->set_toggle(true);
     LayoutAsReplace();
   }
 }

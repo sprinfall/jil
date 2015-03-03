@@ -5,7 +5,7 @@
 // Find & Replace panel.
 
 #include "wx/panel.h"
-#include "ui/text_button.h"
+#include "ui/button_style.h"
 #include "editor/theme.h"
 #include "app/defs.h"
 
@@ -15,6 +15,7 @@ namespace jil {
 
 namespace ui {
 class BitmapToggleButton;
+class TextButton;
 }  // namespace ui
 
 class BookFrame;
@@ -107,6 +108,7 @@ private:
 
 private:
   editor::SharedTheme theme_;
+  ui::SharedButtonStyle button_style_;
 
   Session* session_;
 
@@ -121,12 +123,9 @@ private:
   ui::BitmapToggleButton* case_sensitive_toggle_;
   ui::BitmapToggleButton* match_whole_word_toggle_;
   ui::BitmapToggleButton* search_reversely_toggle_;
-  ui::BitmapToggleButton* mode_toggle_;
 
   wxComboBox* find_combobox_;
   wxComboBox* replace_combobox_;
-
-  ui::SharedButtonStyle button_style_;
 
   ui::TextButton* find_button_;
   ui::TextButton* find_all_button_;
