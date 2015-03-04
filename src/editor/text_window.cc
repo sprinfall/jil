@@ -1204,20 +1204,20 @@ void TextWindow::HandleTextPaint(Renderer& renderer) {
   // Blank lines.
   if (ln <= line_range.last()) {
     const wxColour& blank_bg = style_->Get(Style::kBlank)->bg();
+    int blank_h = line_height_ * (line_range.last() - ln + 1);
 
     if (blank_bg != style_->Get(Style::kNormal)->bg()) {
       renderer.SetPen(wxPen(blank_bg), true);
       renderer.SetBrush(wxBrush(blank_bg), true);
 
       int blank_w = text_area_->GetVirtualSize().x;
-      int blank_h = line_height_ * (line_range.last() - ln + 1);
       renderer.DrawRectangle(x, y2, blank_w, blank_h);
-
-      y2 += blank_h;
 
       renderer.RestoreBrush();
       renderer.RestorePen();
     }
+
+    y2 += blank_h;
   }
 
   // Rulers.
@@ -1303,31 +1303,31 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
   if (!blank_line_range.IsEmpty()) {
     const wxColour& blank_bg = style_->Get(Style::kBlank)->bg();
 
+    int y = client_rect.y + line_height_ * (blank_line_range.first() - 1);
+    int h = line_height_ * blank_line_range.LineCount();
+
     if (blank_bg != style_->Get(Style::kNormal)->bg()) {
       renderer.SetPen(wxPen(blank_bg), true);
       renderer.SetBrush(wxBrush(blank_bg), true);
 
-      int y = client_rect.y + line_height_ * (blank_line_range.first() - 1);
       int w = text_area_->GetVirtualSize().x;
-      int h = line_height_ * blank_line_range.LineCount();
-
       renderer.DrawRectangle(x, y + line_padding, w, h);
 
       renderer.RestoreBrush();
       renderer.RestorePen();
+    }
 
-      // Rulers.
-      if (!options_.rulers.empty()) {
-        renderer.SetPen(wxPen(theme_->GetColor(RULER)), true);
+    // Rulers.
+    if (!options_.rulers.empty()) {
+      renderer.SetPen(wxPen(theme_->GetColor(RULER)), true);
 
-        int y2 = y + h;
-        for (size_t i = 0; i < options_.rulers.size(); ++i) {
-          int ruler_x = x + char_width_ * options_.rulers[i];
-          renderer.DrawLine(ruler_x, y, ruler_x, y2);
-        }
-
-        renderer.RestorePen();
+      int y2 = y + h;
+      for (size_t i = 0; i < options_.rulers.size(); ++i) {
+        int ruler_x = x + char_width_ * options_.rulers[i];
+        renderer.DrawLine(ruler_x, y, ruler_x, y2);
       }
+
+      renderer.RestorePen();
     }
   }
 }

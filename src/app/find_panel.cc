@@ -88,7 +88,6 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   }
 
   SetBackgroundStyle(wxBG_STYLE_PAINT);
-  SetBackgroundColour(theme_->GetColor(BG));
 
   // Create text button style.
   InitButtonStyle();
@@ -198,9 +197,39 @@ void FindPanel::OnPaint(wxPaintEvent& evt) {
 #endif
 
   wxRect rect = GetClientRect();
+  wxRect update_rect = GetUpdateClientRect();
 
-  dc.SetPen(wxPen(theme_->GetColor(BORDER)));
-  dc.DrawLine(rect.x, rect.y, rect.GetRight() + 1, rect.GetTop());
+  // Background
+  wxRect bg_rect(update_rect.x, 0, update_rect.width, 0);
+  bg_rect.y = rect.y + 2;
+  bg_rect.height = rect.height - 2;
+  wxColour bg_top = theme_->GetColor(BG_TOP);
+  wxColour bg_bottom = theme_->GetColor(BG_BOTTOM);
+  dc.GradientFillLinear(bg_rect, bg_bottom, bg_top, wxNORTH);
+
+  // Borders
+  int border_y = rect.y;
+  dc.SetPen(wxPen(theme_->GetColor(BORDER_OUTER)));
+  dc.DrawLine(bg_rect.x, border_y, bg_rect.GetRight() + 1, border_y);
+  ++border_y;
+  dc.SetPen(wxPen(theme_->GetColor(BORDER_INNER)));
+  dc.DrawLine(bg_rect.x, border_y, bg_rect.GetRight() + 1, border_y);
+
+  //wxRect bg_rect = GetUpdateClientRect();
+  //bg_rect.SetTop(rect.GetTop());
+  //bg_rect.SetBottom(rect.GetBottom());
+
+  //wxColour bg_top = theme_->GetColor(BG_TOP);
+  //wxColour bg_bottom = theme_->GetColor(BG_BOTTOM);
+  //dc.GradientFillLinear(bg_rect, bg_bottom, bg_top, wxNORTH);
+
+  //int y = bg_rect.y;
+  //dc.SetPen(wxPen(theme_->GetColor(BORDER_OUTER)));
+  //dc.DrawLine(bg_rect.x, y, bg_rect.GetRight() + 1, y);
+
+  //++y;
+  //dc.SetPen(wxPen(theme_->GetColor(BORDER_INNER)));
+  //dc.DrawLine(bg_rect.x, y, bg_rect.GetRight() + 1, y);
 }
 
 void FindPanel::SetFindString(const wxString& find_string) {

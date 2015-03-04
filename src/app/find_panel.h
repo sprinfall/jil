@@ -27,14 +27,16 @@ class FindPanel : public wxPanel {
 
 public:
   enum ColorId {
-    BG = 0,
-    BORDER,
-    COLOR_COUNT
+    BG_TOP = 0,
+    BG_BOTTOM,
+    BORDER_OUTER,
+    BORDER_INNER,
+    COLORS
   };
 
   enum ThemeId {
     BUTTON = 0,
-    THEME_COUNT
+    THEMES
   };
 
   enum Mode {

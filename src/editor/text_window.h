@@ -53,7 +53,7 @@ public:
 
   enum ColorId {
     RULER = 0,
-    COLOR_COUNT
+    COLORS
   };
 
 public:

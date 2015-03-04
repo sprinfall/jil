@@ -158,7 +158,7 @@ bool LoadThemeFile(const wxString& theme_file,
   theme->SetTheme(THEME_TEXT_BOOK, tb_theme);
 
   // Text page
-  SharedTheme tp_theme(new Theme(0, TextWindow::COLOR_COUNT));
+  SharedTheme tp_theme(new Theme(0, TextWindow::COLORS));
   Setting tp_setting = root.Get("text_page", Setting::kGroup);
   if (tp_setting) {
     tp_theme->SetColor(TextWindow::RULER, tp_setting.GetColor("ruler"));
@@ -166,11 +166,15 @@ bool LoadThemeFile(const wxString& theme_file,
   theme->SetTheme(THEME_TEXT_PAGE, tp_theme);
 
   // Find panel
-  SharedTheme fp_theme(new Theme(FindPanel::THEME_COUNT, FindPanel::COLOR_COUNT));
+  SharedTheme fp_theme(new Theme(FindPanel::THEMES, FindPanel::COLORS));
   Setting fp_setting = root.Get("find_panel", Setting::kGroup);
   if (fp_setting) {
-    fp_theme->SetColor(FindPanel::BG, fp_setting.GetColor("bg"));
-    fp_theme->SetColor(FindPanel::BORDER, fp_setting.GetColor("border"));
+    fp_theme->SetColor(FindPanel::BG_TOP, fp_setting.GetColor("bg_top"));
+    fp_theme->SetColor(FindPanel::BG_BOTTOM, fp_setting.GetColor("bg_bottom"));
+    fp_theme->SetColor(FindPanel::BORDER_OUTER,
+                       fp_setting.GetColor("border_outer"));
+    fp_theme->SetColor(FindPanel::BORDER_INNER,
+                       fp_setting.GetColor("border_inner"));
 
     Setting button_setting = fp_setting.Get("button", Setting::kGroup);
     if (button_setting) {
@@ -180,12 +184,16 @@ bool LoadThemeFile(const wxString& theme_file,
   theme->SetTheme(THEME_FIND_PANEL, fp_theme);
 
   // Status bar
-  SharedTheme sb_theme(new Theme(0, StatusBar::COLOR_COUNT));
+  SharedTheme sb_theme(new Theme(0, StatusBar::COLORS));
   Setting sb_setting = root.Get("status_bar", Setting::kGroup);
   if (sb_setting) {
-    sb_theme->SetColor(StatusBar::BORDER, sb_setting.GetColor("border"));
     sb_theme->SetColor(StatusBar::FG, sb_setting.GetColor("fg"));
-    sb_theme->SetColor(StatusBar::BG, sb_setting.GetColor("bg"));
+    sb_theme->SetColor(StatusBar::BORDER_OUTER,
+                       sb_setting.GetColor("border_outer"));
+    sb_theme->SetColor(StatusBar::BORDER_INNER,
+                       sb_setting.GetColor("border_inner"));
+    sb_theme->SetColor(StatusBar::BG_TOP, sb_setting.GetColor("bg_top"));
+    sb_theme->SetColor(StatusBar::BG_BOTTOM, sb_setting.GetColor("bg_bottom"));
   }
   theme->SetTheme(THEME_STATUS_BAR, sb_theme);
 

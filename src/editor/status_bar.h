@@ -14,10 +14,12 @@ class StatusBar : public wxPanel {
 
 public:
   enum ColorId {
-    BORDER = 0,
-    FG,
-    BG,
-    COLOR_COUNT
+    FG = 0,
+    BORDER_OUTER,
+    BORDER_INNER,
+    BG_TOP,
+    BG_BOTTOM,
+    COLORS,
   };
 
   enum FieldId {
@@ -84,7 +86,6 @@ protected:
   virtual wxSize DoGetBestSize() const override;
 
   void OnPaint(wxPaintEvent& evt);
-  void DrawBackground(wxDC& dc, const wxRect& bg_rect);
 
   void OnSize(wxSizeEvent& evt);
   void OnMouseLeftDown(wxMouseEvent& evt);

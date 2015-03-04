@@ -154,27 +154,35 @@ void StatusBar::OnPaint(wxPaintEvent& evt) {
 #endif
 
   const wxRect rect = GetClientRect();
-
-  dc.SetTextForeground(theme_->GetColor(FG));
-  dc.SetFont(GetFont());
-
   wxRect update_rect = GetUpdateClientRect();
-  update_rect.SetTop(rect.GetTop());
-  update_rect.SetBottom(rect.GetBottom());
 
   // Background
-  DrawBackground(dc, update_rect);
+  wxRect bg_rect(update_rect.x, 0, update_rect.width, 0);
+  bg_rect.y = rect.y + 2;
+  bg_rect.height = rect.height - 2;
+  wxColour bg_top = theme_->GetColor(BG_TOP);
+  wxColour bg_bottom = theme_->GetColor(BG_BOTTOM);
+  dc.GradientFillLinear(bg_rect, bg_bottom, bg_top, wxNORTH);
+
+  // Borders
+  int border_y = rect.y;
+  dc.SetPen(wxPen(theme_->GetColor(BORDER_OUTER)));
+  dc.DrawLine(bg_rect.x, border_y, bg_rect.GetRight() + 1, border_y);
+  ++border_y;
+  dc.SetPen(wxPen(theme_->GetColor(BORDER_INNER)));
+  dc.DrawLine(bg_rect.x, border_y, bg_rect.GetRight() + 1, border_y);
 
   // Foreground
   dc.SetBrush(*wxTRANSPARENT_BRUSH);
-
-  int label_y = rect.GetTop() + (rect.GetHeight() - char_height_) / 2;
+  dc.SetFont(GetFont());
+  dc.SetTextForeground(theme_->GetColor(FG));
 
   int x = rect.GetLeft();
 
   for (size_t i = 0; i < field_infos_.size(); ++i) {
     FieldInfo& field_info = field_infos_[i];
-    wxRect field_rect(x, rect.GetTop(), field_info.size, rect.GetHeight());
+    // y + 1 and height - 1 for the top border.
+    wxRect field_rect(x, rect.y + 1, field_info.size, rect.height - 1);
 
     if (field_rect.GetLeft() >= update_rect.GetRight()) {
       // At the right of update rect.
@@ -197,27 +205,11 @@ void StatusBar::OnPaint(wxPaintEvent& evt) {
       label = label.Mid(0, TailorLabel(dc, label, field_rect.GetWidth()));
     }
 
-    dc.DrawLabel(label,
-                 field_rect,
-                 field_info.align | wxALIGN_CENTER_VERTICAL);
+    int flags = field_info.align | wxALIGN_CENTER_VERTICAL;
+    dc.DrawLabel(label, field_rect, flags);
 
     x += field_info.size;
   }
-}
-
-void StatusBar::DrawBackground(wxDC& dc, const wxRect& bg_rect) {
-  wxColour bg_bottom = theme_->GetColor(BG);
-
-  int gradient_color_delta = (bg_rect.GetHeight() + 2) / 3;
-  wxColour bg_top = ui::IncColor(bg_bottom, gradient_color_delta);
-
-  dc.GradientFillLinear(bg_rect, bg_bottom, bg_top, wxNORTH);
-
-  dc.SetPen(wxPen(theme_->GetColor(BORDER)));
-  dc.DrawLine(bg_rect.GetLeft(),
-              bg_rect.GetTop(),
-              bg_rect.GetRight() + 1,
-              bg_rect.GetTop());
 }
 
 void StatusBar::OnSize(wxSizeEvent& evt) {
