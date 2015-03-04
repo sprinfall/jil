@@ -11,9 +11,12 @@ namespace ui {
 class ButtonStyle {
 public:
   enum Part {
-    BG = 0,
-    FG,
-    BORDER,
+    FG = 0,
+    BG1,
+    BG2,
+    BG3,
+    BORDER_OUTER,
+    BORDER_INNER,
     PARTS,
   };
 

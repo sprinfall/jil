@@ -68,23 +68,73 @@ void ButtonBase::OnPaint(wxPaintEvent& evt) {
 
   ButtonStyle::State state = GetState();
 
-  wxColour bg = style_->GetColor(ButtonStyle::BG, state);
-  wxColour border = style_->GetColor(ButtonStyle::BORDER, state);
+  wxColour bg1 = style_->GetColor(ButtonStyle::BG1, state);
+  wxColour bg2 = style_->GetColor(ButtonStyle::BG2, state);
+  wxColour bg3 = style_->GetColor(ButtonStyle::BG3, state);
+  wxColour border_outer = style_->GetColor(ButtonStyle::BORDER_OUTER, state);
+  wxColour border_inner = style_->GetColor(ButtonStyle::BORDER_INNER, state);
 
-  if (!bg.IsOk()) {
-    bg = GetBackgroundColour();
+  const wxRect client_rect = GetClientRect();
+
+  // Background rects
+  wxRect inner_rect = client_rect;
+  inner_rect.Deflate(2, 2);
+
+  wxRect rect1 = inner_rect;
+  rect1.height = inner_rect.height / 2 - 2;
+
+  wxRect rect2 = inner_rect;
+  rect2.y = inner_rect.y + rect1.height;
+  rect2.height = inner_rect.height - rect1.height - 2;
+
+  wxRect rect3 = inner_rect;
+  rect3.y = inner_rect.y + rect1.height + rect2.height;
+  rect3.height = 2;
+
+  // Background
+  dc.GradientFillLinear(rect1, bg2, bg1, wxNORTH);
+
+  dc.SetPen(wxPen(bg2));
+  dc.SetBrush(wxBrush(bg2));
+  dc.DrawRectangle(rect2);
+
+  dc.SetPen(wxPen(bg3));
+  dc.SetBrush(wxBrush(bg3));
+  dc.DrawRectangle(rect3);
+
+  // Borders
+  dc.SetBrush(*wxTRANSPARENT_BRUSH);
+
+  wxRect border_rect = client_rect;
+  dc.SetPen(wxPen(border_outer));
+  dc.DrawRoundedRectangle(border_rect, 1.0);
+
+  border_rect.Deflate(1, 1);
+  dc.SetPen(wxPen(border_inner));
+  dc.DrawRectangle(border_rect);
+
+  // Draw 3 more inner borders.
+  if (state == ButtonStyle::HOVER) {
+    int r = border_inner.Red();
+    int g = border_inner.Green();
+    int b = border_inner.Blue();
+
+    int delta_r = (bg2.Red() - r) / 4;
+    int delta_g = (bg2.Green() - g) / 4;
+    int delta_b = (bg2.Blue() - b) / 4;
+
+    for (size_t i = 0; i < 3; ++i) {
+      r += delta_r;
+      g += delta_g;
+      b += delta_b;
+
+      border_rect.Deflate(1, 1);
+      dc.SetPen(wxPen(wxColour(r, g, b)));
+      dc.DrawRectangle(border_rect);
+    }
   }
 
-  wxRect rect = GetClientRect();
-
-  int color_delta = (rect.GetHeight() + 1) / 2;
-  wxColour bg_top = ui::IncColor(bg, color_delta);
-  dc.GradientFillLinear(rect, bg, bg_top, wxNORTH);
-
-  dc.SetPen(wxPen(border));
-  dc.SetBrush(*wxTRANSPARENT_BRUSH);
-  dc.DrawRectangle(rect);
-
+  // Foreground
   DrawForeground(dc, state);
 }
 
