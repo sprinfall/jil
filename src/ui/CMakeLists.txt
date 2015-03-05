@@ -9,6 +9,7 @@ set(HEADERS
 set(SRCS
     bitmap_toggle_button.cc
     button_base.cc
+    button_style.cc
     color.cc
     text_button.cc
     )

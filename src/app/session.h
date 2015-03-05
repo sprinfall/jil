@@ -48,19 +48,19 @@ public:
   // Add a string to find history.
   // Return true if the find string is new (it didn't exist).
   bool AddFindString(const wxString& find_string) {
-    return AddHistoryString(find_string, &recent_find_strings_);
+    return AddHistoryString(find_string, &find_strings_);
   }
-  const std::list<wxString>& recent_find_strings() const {
-    return recent_find_strings_;
+  const std::list<wxString>& find_strings() const {
+    return find_strings_;
   }
 
   // Add a string to replace history.
   // Return true if the replace string is new (it didn't exist).
   bool AddReplaceString(const wxString& replace_string) {
-    return AddHistoryString(replace_string, &recent_replace_strings_);
+    return AddHistoryString(replace_string, &replace_strings_);
   }
-  const std::list<wxString>& recent_replace_strings() const {
-    return recent_replace_strings_;
+  const std::list<wxString>& replace_strings() const {
+    return replace_strings_;
   }
 
   void set_find_flags(int find_flags) {
@@ -108,8 +108,8 @@ private:
   wxRect book_frame_rect_;
   bool book_frame_maximized_;
 
-  std::list<wxString> recent_find_strings_;
-  std::list<wxString> recent_replace_strings_;
+  std::list<wxString> find_strings_;
+  std::list<wxString> replace_strings_;
 
   // Max number of find/replace strings to save.
   size_t find_history_limit_;

@@ -22,8 +22,9 @@ public:
 
   enum State {
     NORMAL = 0,
-    HOVER,
+    NORMAL_HOVER,
     PRESSED,
+    PRESSED_HOVER,
     DISABLED,
     STATES,
   };
@@ -40,6 +41,9 @@ public:
     assert(state >= 0 && state < STATES);
     colors_[part][state] = color;
   }
+
+  // Fix missing colors.
+  void Fix();
 
 private:
   wxColor colors_[PARTS][STATES];

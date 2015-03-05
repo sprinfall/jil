@@ -107,23 +107,23 @@ void ButtonBase::OnPaint(wxPaintEvent& evt) {
 
   wxRect border_rect = client_rect;
   dc.SetPen(wxPen(border_outer));
-  dc.DrawRoundedRectangle(border_rect, 1.0);
+  dc.DrawRectangle(border_rect);
 
   border_rect.Deflate(1, 1);
   dc.SetPen(wxPen(border_inner));
   dc.DrawRectangle(border_rect);
 
-  // Draw 3 more inner borders.
-  if (state == ButtonStyle::HOVER) {
+  // Draw 2 more inner borders.
+  if (state == ButtonStyle::NORMAL_HOVER || state == ButtonStyle::PRESSED_HOVER) {
     int r = border_inner.Red();
     int g = border_inner.Green();
     int b = border_inner.Blue();
 
-    int delta_r = (bg2.Red() - r) / 4;
-    int delta_g = (bg2.Green() - g) / 4;
-    int delta_b = (bg2.Blue() - b) / 4;
+    int delta_r = (bg2.Red() - r) / 3;
+    int delta_g = (bg2.Green() - g) / 3;
+    int delta_b = (bg2.Blue() - b) / 3;
 
-    for (size_t i = 0; i < 3; ++i) {
+    for (size_t i = 0; i < 2; ++i) {
       r += delta_r;
       g += delta_g;
       b += delta_b;

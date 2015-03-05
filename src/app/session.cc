@@ -13,9 +13,8 @@ const char* const kBookFrame = "book_frame";
 const char* const kFindPanel = "find_panel";
 const char* const kRect = "rect";
 const char* const kMaximized = "maximized";
-const char* const kFindViewType = "view_type";
-const char* const kRecentFindStrings = "recent_find_strings";
-const char* const kRecentReplaceStrings = "recent_replace_strings";
+const char* const kFindStrings = "find_strings";
+const char* const kReplaceStrings = "replace_strings";
 
 namespace {
 
@@ -128,8 +127,8 @@ bool Session::Load(const wxString& file) {
 
   Setting fp_setting = root_setting.Get(kFindPanel, Setting::kGroup);
   if (fp_setting) {
-    GetStringArray(fp_setting, kRecentFindStrings, &recent_find_strings_);
-    GetStringArray(fp_setting, kRecentReplaceStrings, &recent_replace_strings_);
+    GetStringArray(fp_setting, kFindStrings, &find_strings_);
+    GetStringArray(fp_setting, kReplaceStrings, &replace_strings_);
 
     find_flags_ = SetBit(find_flags_,
                          kFindUseRegex,
@@ -140,9 +139,6 @@ bool Session::Load(const wxString& file) {
     find_flags_ = SetBit(find_flags_,
                          kFindMatchWholeWord,
                          fp_setting.GetBool("match_whole_word"));
-    find_flags_ = SetBit(find_flags_,
-                         kFindReversely,
-                         fp_setting.GetBool("reversely"));
   }
 
   //----------------------------------------------------------------------------
@@ -187,20 +183,19 @@ bool Session::Save(const wxString& file) {
   Setting fp_setting = root_setting.Add(kFindPanel, Setting::kGroup);
 
   SetStringArray(fp_setting,
-                 kRecentFindStrings,
-                 recent_find_strings_,
+                 kFindStrings,
+                 find_strings_,
                  find_history_limit_);
 
   SetStringArray(fp_setting,
-                 kRecentReplaceStrings,
-                 recent_replace_strings_,
+                 kReplaceStrings,
+                 replace_strings_,
                  find_history_limit_);
 
   fp_setting.SetBool("use_regex", GetBit(find_flags_, kFindUseRegex));
   fp_setting.SetBool("case_sensitive", GetBit(find_flags_, kFindCaseSensitive));
   fp_setting.SetBool("match_whole_word",
                      GetBit(find_flags_, kFindMatchWholeWord));
-  fp_setting.SetBool("reversely", GetBit(find_flags_, kFindReversely));
 
   //----------------------------------------------------------------------------
   // Split tree

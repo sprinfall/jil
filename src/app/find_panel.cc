@@ -13,15 +13,15 @@
 #include "editor/text_buffer.h"
 
 #include "app/book_frame.h"
+#include "app/id.h"
 #include "app/session.h"
 #include "app/skin.h"
 #include "app/text_page.h"
 #include "app/util.h"
 
-#define kTrUseRegex _("Use regular expression")
+#define kTrUseRegex _("Regular expression")
 #define kTrCaseSensitive _("Case sensitive")
 #define kTrMatchWholeWord _("Match whole word")
-#define kTrSearchReversely _("Search reversely")
 
 #define kTrFind _("Find")
 #define kTrReplace _("Replace")
@@ -32,38 +32,17 @@ namespace jil {
 
 const int kPadding = 5;
 
-// Control ID's.
-enum {
-  kCaseSensitiveToggleId = wxID_HIGHEST + 100,
-  kMatchWholeWordToggleId,
-  kSearchReverselyToggleId,
-  kUseRegexToggleId,
-
-  kModeToggleId,
-
-  kFindComboBoxId,
-  kReplaceComboBoxId,
-  kLocationComboBoxId,
-
-  kFindButtonId,
-  kFindAllButtonId,
-  kReplaceButtonId,
-  kReplaceAllButtonId,
-};
-
 IMPLEMENT_DYNAMIC_CLASS(FindPanel, wxPanel);
 
 BEGIN_EVENT_TABLE(FindPanel, wxPanel)
 EVT_PAINT(FindPanel::OnPaint)
-EVT_TOGGLEBUTTON(kUseRegexToggleId, FindPanel::OnUseRegexToggle)
-EVT_TOGGLEBUTTON(kCaseSensitiveToggleId, FindPanel::OnCaseSensitiveToggle)
-EVT_TOGGLEBUTTON(kMatchWholeWordToggleId, FindPanel::OnMatchWholeWordToggle)
-EVT_TOGGLEBUTTON(kSearchReverselyToggleId, FindPanel::OnSearchReverselyToggle)
-EVT_TOGGLEBUTTON(kModeToggleId, FindPanel::OnModeToggle)
-EVT_BUTTON(kFindButtonId, FindPanel::OnFind)
-EVT_BUTTON(kFindAllButtonId, FindPanel::OnFindAll)
-EVT_BUTTON(kReplaceButtonId, FindPanel::OnReplace)
-EVT_BUTTON(kReplaceAllButtonId, FindPanel::OnReplaceAll)
+EVT_TOGGLEBUTTON(ID_REGEX_TOGGLE_BUTTON, FindPanel::OnRegexToggle)
+EVT_TOGGLEBUTTON(ID_CASE_TOGGLE_BUTTON, FindPanel::OnCaseToggle)
+EVT_TOGGLEBUTTON(ID_WHOLE_WORD_TOGGLE_BUTTON, FindPanel::OnWholeWordToggle)
+EVT_BUTTON(ID_FIND_BUTTON, FindPanel::OnFind)
+EVT_BUTTON(ID_FIND_ALL_BUTTON, FindPanel::OnFindAll)
+EVT_BUTTON(ID_REPLACE_BUTTON, FindPanel::OnReplace)
+EVT_BUTTON(ID_REPLACE_ALL_BUTTON, FindPanel::OnReplaceAll)
 END_EVENT_TABLE()
 
 FindPanel::FindPanel()
@@ -88,44 +67,36 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   }
 
   SetBackgroundStyle(wxBG_STYLE_PAINT);
-  SetBackgroundColour(theme_->GetColor(BG_TOP));  // TODO
+  SetBackgroundColour(theme_->GetColor(BG_TOP));
 
   // Create text button style.
   InitButtonStyle();
 
   //------------------------------------
 
-  use_regex_toggle_ = CreateToggleButton(kUseRegexToggleId, wxT("find_regex"));
-  use_regex_toggle_->SetToolTip(kTrUseRegex);
+  regex_toggle_button_ = NewToggleButton(ID_REGEX_TOGGLE_BUTTON,
+                                         wxT("find_regex"));
+  regex_toggle_button_->SetToolTip(kTrUseRegex);
 
-  case_sensitive_toggle_ = CreateToggleButton(kCaseSensitiveToggleId,
-                                              wxT("find_case"));
-  case_sensitive_toggle_->SetToolTip(kTrCaseSensitive);
+  case_toggle_button_ = NewToggleButton(ID_CASE_TOGGLE_BUTTON,
+                                        wxT("find_case"));
+  case_toggle_button_->SetToolTip(kTrCaseSensitive);
 
-  match_whole_word_toggle_ = CreateToggleButton(kMatchWholeWordToggleId,
-                                                wxT("find_whole_word"));
-  match_whole_word_toggle_->SetToolTip(kTrMatchWholeWord);
+  whole_word_toggle_button_ = NewToggleButton(ID_WHOLE_WORD_TOGGLE_BUTTON,
+                                              wxT("find_whole_word"));
+  whole_word_toggle_button_->SetToolTip(kTrMatchWholeWord);
 
-  search_reversely_toggle_ = CreateToggleButton(kSearchReverselyToggleId,
-                                                wxT("find_reversely"));
-  search_reversely_toggle_->SetToolTip(kTrSearchReversely);
-
-  // Initialize the toggle button states.
-  use_regex_toggle_->set_toggle(GetBit(flags_, kFindUseRegex));
-  case_sensitive_toggle_->set_toggle(GetBit(flags_, kFindCaseSensitive));
-  match_whole_word_toggle_->set_toggle(GetBit(flags_, kFindMatchWholeWord));
-  search_reversely_toggle_->set_toggle(GetBit(flags_, kFindReversely));
-
-  if (GetBit(flags_, kFindUseRegex)) {
-    search_reversely_toggle_->Enable(false);
-  }
+  // Initialize toggle button states.
+  regex_toggle_button_->set_toggle(GetBit(flags_, kFindUseRegex));
+  case_toggle_button_->set_toggle(GetBit(flags_, kFindCaseSensitive));
+  whole_word_toggle_button_->set_toggle(GetBit(flags_, kFindMatchWholeWord));
 
   //------------------------------------
 
-  find_combobox_ = new wxComboBox(this, kFindComboBoxId);
+  find_combobox_ = new wxComboBox(this, ID_FIND_COMBOBOX);
 
   // Initialize find combobox with find history.
-  const std::list<wxString>& find_strings = session_->recent_find_strings();
+  const std::list<wxString>& find_strings = session_->find_strings();
   {
     std::list<wxString>::const_iterator it = find_strings.begin();
     for (; it != find_strings.end(); ++it) {
@@ -139,10 +110,10 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   //------------------------------------
 
-  replace_combobox_ = new wxComboBox(this, kReplaceComboBoxId);
+  replace_combobox_ = new wxComboBox(this, ID_REPLACE_COMBOBOX);
 
   // Initialize replace combobox with replace history.
-  const std::list<wxString>& replace_strings = session_->recent_replace_strings();
+  const std::list<wxString>& replace_strings = session_->replace_strings();
   {
     std::list<wxString>::const_iterator it = replace_strings.begin();
     for (; it != replace_strings.end(); ++it) {
@@ -156,10 +127,10 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   //------------------------------------
 
-  find_button_ = CreateTextButton(kFindButtonId, kTrFind);
-  find_all_button_ = CreateTextButton(kFindAllButtonId, kTrFindAll);
-  replace_button_ = CreateTextButton(kReplaceButtonId, kTrReplace);
-  replace_all_button_ = CreateTextButton(kReplaceAllButtonId, kTrReplaceAll);
+  find_button_ = NewTextButton(ID_FIND_BUTTON, kTrFind);
+  find_all_button_ = NewTextButton(ID_FIND_ALL_BUTTON, kTrFindAll);
+  replace_button_ = NewTextButton(ID_REPLACE_BUTTON, kTrReplace);
+  replace_all_button_ = NewTextButton(ID_REPLACE_ALL_BUTTON, kTrReplaceAll);
 
   //find_button_->SetDefault();  // Set default for ENTER key.
 
@@ -231,32 +202,16 @@ void FindPanel::SetFocus() {
   }
 }
 
-void FindPanel::OnUseRegexToggle(wxCommandEvent& evt) {
+void FindPanel::OnRegexToggle(wxCommandEvent& evt) {
   flags_ = SetBit(flags_, kFindUseRegex, evt.IsChecked());
-  // Not supported yet.
-  search_reversely_toggle_->Enable(!evt.IsChecked());
 }
 
-void FindPanel::OnCaseSensitiveToggle(wxCommandEvent& evt) {
+void FindPanel::OnCaseToggle(wxCommandEvent& evt) {
   flags_ = SetBit(flags_, kFindCaseSensitive, evt.IsChecked());
 }
 
-void FindPanel::OnMatchWholeWordToggle(wxCommandEvent& evt) {
+void FindPanel::OnWholeWordToggle(wxCommandEvent& evt) {
   flags_ = SetBit(flags_, kFindMatchWholeWord, evt.IsChecked());
-}
-
-void FindPanel::OnSearchReverselyToggle(wxCommandEvent& evt) {
-  flags_ = SetBit(flags_, kFindReversely, evt.IsChecked());
-}
-
-void FindPanel::OnModeToggle(wxCommandEvent& evt) {
-  if (evt.IsChecked()) {
-    LayoutAsReplace();
-    mode_ = kReplaceMode;
-  } else {
-    LayoutAsFind();
-    mode_ = kFindMode;
-  }
 }
 
 void FindPanel::OnFind(wxCommandEvent& evt) {
@@ -358,10 +313,10 @@ void FindPanel::LayoutAsFind() {
 
   wxSizer* ctrl_hsizer = new wxBoxSizer(wxHORIZONTAL);
 
-  ctrl_hsizer->Add(use_regex_toggle_, 0, flags, 0);
-  ctrl_hsizer->Add(case_sensitive_toggle_, 0, flags, kPadding);
-  ctrl_hsizer->Add(match_whole_word_toggle_, 0, flags, kPadding);
-  ctrl_hsizer->Add(search_reversely_toggle_, 0, flags, kPadding);
+  ctrl_hsizer->Add(regex_toggle_button_, 0, flags, 0);
+  ctrl_hsizer->Add(case_toggle_button_, 0, flags, 2);
+  ctrl_hsizer->Add(whole_word_toggle_button_, 0, flags, 2);
+
   ctrl_hsizer->Add(find_combobox_, 1, flags, kPadding);
   ctrl_hsizer->Add(find_button_, 0, flags, kPadding);
   ctrl_hsizer->Add(find_all_button_, 0, flags, kPadding);
@@ -386,10 +341,9 @@ void FindPanel::LayoutAsReplace() {
   wxSizer* flag_vsizer = new wxBoxSizer(wxVERTICAL);
 
   wxSizer* find_flag_hsizer = new wxBoxSizer(wxHORIZONTAL);
-  find_flag_hsizer->Add(use_regex_toggle_, 0, flags, 0);
-  find_flag_hsizer->Add(case_sensitive_toggle_, 0, flags, kPadding);
-  find_flag_hsizer->Add(match_whole_word_toggle_, 0, flags, kPadding);
-  find_flag_hsizer->Add(search_reversely_toggle_, 0, flags, kPadding);
+  find_flag_hsizer->Add(regex_toggle_button_, 0, flags, 0);
+  find_flag_hsizer->Add(case_toggle_button_, 0, flags, 2);
+  find_flag_hsizer->Add(whole_word_toggle_button_, 0, flags, 2);
 
   flag_vsizer->Add(find_flag_hsizer, 0, wxEXPAND);
 
@@ -436,9 +390,12 @@ void FindPanel::InitButtonStyle() {
       }
     }
   }
+
+  button_style_->Fix();
 }
 
-ui::BitmapToggleButton* FindPanel::CreateToggleButton(int id, const wxString& bitmap) {
+ui::BitmapToggleButton* FindPanel::NewToggleButton(int id,
+                                                      const wxString& bitmap) {
   ui::BitmapToggleButton* button = new ui::BitmapToggleButton(button_style_);
   button->Create(this, id);
   button->SetBitmap(skin::GetIcon(bitmap));
@@ -446,7 +403,7 @@ ui::BitmapToggleButton* FindPanel::CreateToggleButton(int id, const wxString& bi
   return button;
 }
 
-ui::TextButton* FindPanel::CreateTextButton(int id, const wxString& label) {
+ui::TextButton* FindPanel::NewTextButton(int id, const wxString& label) {
   ui::TextButton* button = new ui::TextButton(button_style_);
   button->Create(this, id, label);
   button->SetMinSize(wxSize(80, -1));

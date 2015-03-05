@@ -82,12 +82,9 @@ public:
 protected:
   void OnPaint(wxPaintEvent& evt);
 
-  void OnUseRegexToggle(wxCommandEvent& evt);
-  void OnCaseSensitiveToggle(wxCommandEvent& evt);
-  void OnMatchWholeWordToggle(wxCommandEvent& evt);
-  void OnSearchReverselyToggle(wxCommandEvent& evt);
-
-  void OnModeToggle(wxCommandEvent& evt);
+  void OnRegexToggle(wxCommandEvent& evt);
+  void OnCaseToggle(wxCommandEvent& evt);
+  void OnWholeWordToggle(wxCommandEvent& evt);
 
   void OnFind(wxCommandEvent& evt);
   void OnFindAll(wxCommandEvent& evt);
@@ -105,11 +102,12 @@ private:
 
   void InitButtonStyle();
 
-  ui::BitmapToggleButton* CreateToggleButton(int id, const wxString& bitmap);
-  ui::TextButton* CreateTextButton(int id, const wxString& label);
+  ui::BitmapToggleButton* NewToggleButton(int id, const wxString& bitmap);
+  ui::TextButton* NewTextButton(int id, const wxString& label);
 
 private:
   editor::SharedTheme theme_;
+
   ui::SharedButtonStyle button_style_;
 
   Session* session_;
@@ -121,10 +119,10 @@ private:
   // See enum FindFlag.
   int flags_;
 
-  ui::BitmapToggleButton* use_regex_toggle_;
-  ui::BitmapToggleButton* case_sensitive_toggle_;
-  ui::BitmapToggleButton* match_whole_word_toggle_;
-  ui::BitmapToggleButton* search_reversely_toggle_;
+  // Flag toggle buttons.
+  ui::BitmapToggleButton* regex_toggle_button_;
+  ui::BitmapToggleButton* case_toggle_button_;
+  ui::BitmapToggleButton* whole_word_toggle_button_;
 
   wxComboBox* find_combobox_;
   wxComboBox* replace_combobox_;

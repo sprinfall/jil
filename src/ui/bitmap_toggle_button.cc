@@ -39,12 +39,10 @@ ButtonStyle::State BitmapToggleButton::GetState() {
   }
 
   if (toggle_ || pressed_) {
-    return ButtonStyle::PRESSED;
-  } else if (hover_) {
-    return ButtonStyle::HOVER;
+    return hover_ ? ButtonStyle::PRESSED_HOVER : ButtonStyle::PRESSED;
+  } else {
+    return hover_ ? ButtonStyle::NORMAL_HOVER : ButtonStyle::NORMAL;
   }
-
-  return ButtonStyle::NORMAL;
 }
 
 void BitmapToggleButton::DrawForeground(wxDC& dc, ButtonStyle::State state) {

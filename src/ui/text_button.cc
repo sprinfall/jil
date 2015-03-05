@@ -45,14 +45,10 @@ ButtonStyle::State TextButton::GetState() {
   }
 
   if (pressed_) {
-    return ButtonStyle::PRESSED;
-  } else if (hover_) {
-    return ButtonStyle::HOVER;
-  } else if (wxWindow::FindFocus() == this) {
-    return ButtonStyle::HOVER;
+    return hover_ ? ButtonStyle::PRESSED_HOVER : ButtonStyle::PRESSED;
+  } else {
+    return hover_ ? ButtonStyle::NORMAL_HOVER : ButtonStyle::NORMAL;
   }
-
-  return ButtonStyle::NORMAL;
 }
 
 void TextButton::DrawForeground(wxDC& dc, ButtonStyle::State state) {
