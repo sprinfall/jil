@@ -132,6 +132,9 @@ EVT_MENU_RANGE(ID_MENU_ENCODING_BEGIN, \
 EVT_MENU_RANGE(ID_MENU_FILE_FORMAT_BEGIN, \
                ID_MENU_FILE_FORMAT_END - 1, \
                BookFrame::OnStatusFileFormatMenu)
+
+EVT_FIND_PANEL(ID_FIND_PANEL, BookFrame::OnFindPanelEvent)
+
 END_EVENT_TABLE()
 
 BookFrame::BookFrame(Options* options, Session* session)
@@ -1634,6 +1637,28 @@ void BookFrame::CloseFindPanel() {
   // Transfer focus to text book.
   // TODO: The previous focused might be a tool page.
   text_book_->SetFocus();
+}
+
+void BookFrame::OnFindPanelEvent(FindPanelEvent& evt) {
+  int type = evt.GetInt();
+
+  switch (type) {
+    case FindPanel::kFindEvent:
+      FindInActivePage(evt.find_str(), evt.flags());
+      break;
+
+    case FindPanel::kFindAllEvent:
+      FindAllInActivePage(evt.find_str(), evt.flags());
+      break;
+
+    case FindPanel::kReplaceEvent:
+      ReplaceInActivePage(evt.find_str(), evt.replace_str(), evt.flags());
+      break;
+
+    case FindPanel::kReplaceAllEvent:
+      ReplaceAllInActivePage(evt.find_str(), evt.replace_str(), evt.flags());
+      break;
+  }
 }
 
 FindResultPage* BookFrame::GetFindResultPage() {

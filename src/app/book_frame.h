@@ -30,6 +30,7 @@ class TextWindow;
 class BookCtrl;
 class BookPage;
 class FindPanel;
+class FindPanelEvent;
 class FindResultPage;
 class Session;
 class Splitter;
@@ -222,6 +223,9 @@ protected:
 
   // Close find panel, update layout, etc.
   void CloseFindPanel();
+
+  // Handle find panel events.
+  void OnFindPanelEvent(FindPanelEvent& evt);
 
   // Get find result page, create it if necessary.
   FindResultPage* GetFindResultPage();

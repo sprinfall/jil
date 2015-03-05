@@ -12,7 +12,6 @@
 
 #include "editor/text_buffer.h"
 
-#include "app/book_frame.h"
 #include "app/id.h"
 #include "app/session.h"
 #include "app/skin.h"
@@ -32,6 +31,9 @@ namespace jil {
 
 const int kPadding = 5;
 
+DEFINE_EVENT_TYPE(kFindPanelEvent)
+//IMPLEMENT_DYNAMIC_CLASS(FindPanelEvent)
+
 IMPLEMENT_DYNAMIC_CLASS(FindPanel, wxPanel);
 
 BEGIN_EVENT_TABLE(FindPanel, wxPanel)
@@ -46,23 +48,21 @@ EVT_BUTTON(ID_REPLACE_ALL_BUTTON, FindPanel::OnReplaceAll)
 END_EVENT_TABLE()
 
 FindPanel::FindPanel()
-    : session_(NULL), mode_(kFindMode), book_frame_(NULL) {
+    : session_(NULL), mode_(kFindMode) {
 }
 
 FindPanel::FindPanel(Session* session, int mode)
-    : session_(session), mode_(mode), book_frame_(NULL) {
+    : session_(session), mode_(mode) {
 }
 
-bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
+bool FindPanel::Create(wxWindow* parent, wxWindowID id) {
   assert(theme_);
   assert(session_ != NULL);
 
   // Restore find options from session.
   flags_ = session_->find_flags();
 
-  book_frame_ = book_frame;
-
-  if (!wxPanel::Create(book_frame, id)) {
+  if (!wxPanel::Create(parent, id)) {
     return false;
   }
 
@@ -215,63 +215,47 @@ void FindPanel::OnWholeWordToggle(wxCommandEvent& evt) {
 }
 
 void FindPanel::OnFind(wxCommandEvent& evt) {
-  wxString str = find_combobox_->GetValue();
-  if (str.IsEmpty()) {
-    return;
+  wxString find_str = find_combobox_->GetValue();
+  if (!find_str.IsEmpty()) {
+    AddFindString(find_str);
+    PostEvent(kFindEvent, find_str, wxEmptyString);
   }
-
-  AddFindString(str);
-
-  book_frame_->FindInActivePage(str.ToStdWstring(), flags_);
 }
 
 void FindPanel::OnFindAll(wxCommandEvent& evt) {
-  wxString str = find_combobox_->GetValue();
-  if (str.IsEmpty()) {
-    return;
+  wxString find_str = find_combobox_->GetValue();
+  if (!find_str.IsEmpty()) {
+    AddFindString(find_str);
+    PostEvent(kFindAllEvent, find_str, wxEmptyString);
   }
-
-  AddFindString(str);
-
-  book_frame_->FindAllInActivePage(str.ToStdWstring(), flags_);
 }
 
 void FindPanel::OnReplace(wxCommandEvent& evt) {
-  wxString str = find_combobox_->GetValue();
-  if (str.IsEmpty()) {
-    return;
+  wxString find_str = find_combobox_->GetValue();
+  if (!find_str.IsEmpty()) {
+    AddFindString(find_str);
+
+    wxString replace_str = replace_combobox_->GetValue();
+    if (!replace_str.IsEmpty()) {
+      AddReplaceString(replace_str);
+    }
+
+    PostEvent(kReplaceEvent, find_str, replace_str);
   }
-
-  AddFindString(str);
-
-  wxString replace_str = replace_combobox_->GetValue();
-
-  if (!replace_str.IsEmpty()) {
-    AddReplaceString(replace_str);
-  }
-
-  book_frame_->ReplaceInActivePage(str.ToStdWstring(),
-                                   replace_str.ToStdWstring(),
-                                   flags_);
 }
 
 void FindPanel::OnReplaceAll(wxCommandEvent& evt) {
-  wxString str = find_combobox_->GetValue();
-  if (str.IsEmpty()) {
-    return;
+  wxString find_str = find_combobox_->GetValue();
+  if (!find_str.IsEmpty()) {
+    AddFindString(find_str);
+
+    wxString replace_str = replace_combobox_->GetValue();
+    if (!replace_str.IsEmpty()) {
+      AddReplaceString(replace_str);
+    }
+
+    PostEvent(kReplaceAllEvent, find_str, replace_str);
   }
-
-  AddFindString(str);
-
-  wxString replace_str = replace_combobox_->GetValue();
-
-  if (!replace_str.IsEmpty()) {
-    AddReplaceString(replace_str);
-  }
-
-  book_frame_->ReplaceAllInActivePage(str.ToStdWstring(),
-                                      replace_str.ToStdWstring(),
-                                      flags_);
 }
 
 void FindPanel::AddFindString(const wxString& string) {
@@ -395,7 +379,7 @@ void FindPanel::InitButtonStyle() {
 }
 
 ui::BitmapToggleButton* FindPanel::NewToggleButton(int id,
-                                                      const wxString& bitmap) {
+                                                   const wxString& bitmap) {
   ui::BitmapToggleButton* button = new ui::BitmapToggleButton(button_style_);
   button->Create(this, id);
   button->SetBitmap(skin::GetIcon(bitmap));
@@ -408,6 +392,18 @@ ui::TextButton* FindPanel::NewTextButton(int id, const wxString& label) {
   button->Create(this, id, label);
   button->SetMinSize(wxSize(80, -1));
   return button;
+}
+
+void FindPanel::PostEvent(int event_type,
+                          const wxString& find_str,
+                          const wxString& replace_str) {
+  FindPanelEvent evt(GetId());
+  evt.SetEventObject(this);
+  evt.SetInt(event_type);
+  evt.set_flags(flags_);
+  evt.set_find_str(find_str.ToStdWstring());
+  evt.set_replace_str(replace_str.ToStdWstring());
+  GetParent()->GetEventHandler()->AddPendingEvent(evt);
 }
 
 }  // namespace jil
