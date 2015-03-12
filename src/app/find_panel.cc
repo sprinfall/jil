@@ -32,7 +32,6 @@ namespace jil {
 const int kPadding = 5;
 
 DEFINE_EVENT_TYPE(kFindPanelEvent)
-//IMPLEMENT_DYNAMIC_CLASS(FindPanelEvent)
 
 IMPLEMENT_DYNAMIC_CLASS(FindPanel, wxPanel);
 
@@ -45,6 +44,8 @@ EVT_BUTTON(ID_FIND_BUTTON, FindPanel::OnFind)
 EVT_BUTTON(ID_FIND_ALL_BUTTON, FindPanel::OnFindAll)
 EVT_BUTTON(ID_REPLACE_BUTTON, FindPanel::OnReplace)
 EVT_BUTTON(ID_REPLACE_ALL_BUTTON, FindPanel::OnReplaceAll)
+EVT_TEXT(ID_FIND_COMBOBOX, FindPanel::OnFindText)
+EVT_TEXT_ENTER(ID_FIND_COMBOBOX, FindPanel::OnFindTextEnter)
 END_EVENT_TABLE()
 
 FindPanel::FindPanel()
@@ -94,6 +95,7 @@ bool FindPanel::Create(wxWindow* parent, wxWindowID id) {
   //------------------------------------
 
   find_combobox_ = new wxComboBox(this, ID_FIND_COMBOBOX);
+  find_combobox_->SetWindowStyleFlag(wxTE_PROCESS_ENTER);
 
   // Initialize find combobox with find history.
   const std::list<wxString>& find_strings = session_->find_strings();
@@ -215,36 +217,43 @@ void FindPanel::OnWholeWordToggle(wxCommandEvent& evt) {
 }
 
 void FindPanel::OnFind(wxCommandEvent& evt) {
-  wxString find_str = find_combobox_->GetValue();
-  if (!find_str.IsEmpty()) {
-    AddFindString(find_str);
-    PostEvent(kFindEvent, find_str, wxEmptyString);
-  }
+  HandleFind(false);
 }
 
 void FindPanel::OnFindAll(wxCommandEvent& evt) {
-  wxString find_str = find_combobox_->GetValue();
-  if (!find_str.IsEmpty()) {
-    AddFindString(find_str);
-    PostEvent(kFindAllEvent, find_str, wxEmptyString);
-  }
+  HandleFind(true);
 }
 
 void FindPanel::OnReplace(wxCommandEvent& evt) {
-  wxString find_str = find_combobox_->GetValue();
-  if (!find_str.IsEmpty()) {
-    AddFindString(find_str);
-
-    wxString replace_str = replace_combobox_->GetValue();
-    if (!replace_str.IsEmpty()) {
-      AddReplaceString(replace_str);
-    }
-
-    PostEvent(kReplaceEvent, find_str, replace_str);
-  }
+  HandleReplace(false);
 }
 
 void FindPanel::OnReplaceAll(wxCommandEvent& evt) {
+  HandleReplace(true);
+}
+
+void FindPanel::OnFindText(wxCommandEvent& evt) {
+  wxString find_str = find_combobox_->GetValue();
+  // Post event even if the find string is empty so that the previous matching
+  // results can be cleared.
+  PostEvent(kFindStringEvent, find_str, wxEmptyString);
+}
+
+void FindPanel::OnFindTextEnter(wxCommandEvent& evt) {
+  HandleFind(false);
+}
+
+void FindPanel::HandleFind(bool all) {
+  wxString find_str = find_combobox_->GetValue();
+  if (!find_str.IsEmpty()) {
+    AddFindString(find_str);
+
+    int event_type = all ? kFindAllEvent : kFindEvent;
+    PostEvent(event_type, find_str, wxEmptyString);
+  }
+}
+
+void FindPanel::HandleReplace(bool all) {
   wxString find_str = find_combobox_->GetValue();
   if (!find_str.IsEmpty()) {
     AddFindString(find_str);
@@ -254,6 +263,7 @@ void FindPanel::OnReplaceAll(wxCommandEvent& evt) {
       AddReplaceString(replace_str);
     }
 
+    int event_type = all ? kReplaceAllEvent : kReplaceEvent;
     PostEvent(kReplaceAllEvent, find_str, replace_str);
   }
 }

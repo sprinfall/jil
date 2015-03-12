@@ -1177,7 +1177,27 @@ void TextBuffer::FindStringAll(const std::wstring& str,
   }
 }
 
+void TextBuffer::ClearFindMatches() {
+  Coord ln = 1;
+  TextLine* line = NULL;
+  TextLines::iterator it = lines_.begin();
+  for (; it != lines_.end(); ++it, ++ln) {
+    line = *it;
+
+    if (!line->find_ranges().empty()) {
+      line->ClearFindRanges();
+      Notify(kLineRefresh, LineRange(ln, ln));  // TODO
+    }
+  }
+}
+
+void TextBuffer::AddFindMatch(Coord ln, const CharRange& find_match) {
+  Line(ln)->AddFindRange(find_match);
+  Notify(kLineRefresh, LineRange(ln, ln));  // TODO
+}
+
 //------------------------------------------------------------------------------
+// Listener
 
 void TextBuffer::AttachListener(BufferListener* listener) {
   listeners_.push_back(listener);

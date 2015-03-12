@@ -1643,6 +1643,46 @@ void BookFrame::OnFindPanelEvent(FindPanelEvent& evt) {
   int type = evt.GetInt();
 
   switch (type) {
+    case FindPanel::kFindStringEvent:
+      FindAndHighlightAllInActivePage();
+      {
+        using namespace editor;
+
+        TextPage* text_page = ActiveTextPage();
+        if (text_page != NULL) {
+          int flags = evt.flags();
+
+          TextBuffer* buffer = text_page->buffer();
+
+          buffer->ClearFindMatches();
+
+          if (evt.find_str().empty()) {
+            return;
+          }
+
+          std::list<TextRange> result_ranges;
+          buffer->FindStringAll(evt.find_str(),
+                                buffer->range(),
+                                GetBit(flags, kFindUseRegex),
+                                GetBit(flags, kFindCaseSensitive),
+                                GetBit(flags, kFindMatchWholeWord),
+                                &result_ranges);
+
+          if (result_ranges.empty()) {
+            return;
+          }
+
+          std::list<TextRange>::iterator it = result_ranges.begin();
+          for (; it != result_ranges.end(); ++it) {
+            LineRange line_range = it->GetLineRange();
+            for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
+              buffer->AddFindMatch(ln, it->GetCharRange(ln));
+            }
+          }
+        }
+      }
+      break;
+
     case FindPanel::kFindEvent:
       FindInActivePage(evt.find_str(), evt.flags());
       break;

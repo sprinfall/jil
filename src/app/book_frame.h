@@ -139,11 +139,16 @@ private:
                          int flags,
                          bool cycle);
 
-  // Find all in the given buffer.
+  // Find all in the given buffer, add the find result to the find result page.
   void FindAll(const std::wstring& str,
                editor::TextBuffer* buffer,
                int flags,
                FindResultPage* fr_page);
+
+  // Find all in the given buffer, save the find result in each line.
+  void FindAll(const std::wstring& str,
+               editor::TextBuffer* buffer,
+               int flags);
 
 protected:
   void OnSize(wxSizeEvent& evt);

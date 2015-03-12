@@ -13,6 +13,7 @@ enum LineChangeType {
   kLineAdded      = 2,
   // NOTE: The line number in the change data will be invalid.
   kLineDeleted    = 4,
+  kLineRefresh    = 8,
 };
 
 enum ChangeType {

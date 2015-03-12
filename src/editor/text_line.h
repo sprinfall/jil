@@ -161,6 +161,20 @@ public:
   const QuoteElem* FirstUnstartedQuoteEnd() const;
   const QuoteElem* LastUnendedQuoteStart() const;
 
+  //----------------------------------------------------------------------------
+
+  void AddFindRange(const CharRange& find_range) {
+    find_ranges_.push_back(find_range);
+  }
+
+  void ClearFindRanges() {
+    find_ranges_.clear();
+  }
+
+  const std::list<CharRange>& find_ranges() const {
+    return find_ranges_;
+  }
+
 private:
   size_t id_;
   std::wstring data_;
@@ -168,6 +182,9 @@ private:
   std::list<LexElem*> lex_elems_;
 
   std::list<QuoteElem> quote_elems_;
+
+  // Find match result.
+  std::list<CharRange> find_ranges_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

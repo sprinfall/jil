@@ -28,8 +28,6 @@ DECLARE_EVENT_TYPE(kFindPanelEvent, 0)
 END_DECLARE_EVENT_TYPES()
 
 class FindPanelEvent : public wxCommandEvent {
-  //DECLARE_CLASS_NO_ASSIGN(FindPanelEvent)
-
 public:
   FindPanelEvent(int id)
       : wxCommandEvent(kFindPanelEvent, id)
@@ -93,7 +91,6 @@ public:
   // Detailed event types of kFindPanelEvent.
   enum EventType {
     kFindStringEvent = 1,
-    kReplaceStringEvent,
     kFindEvent,
     kReplaceEvent,
     kFindAllEvent,
@@ -128,6 +125,11 @@ public:
   virtual ~FindPanel();
 
   virtual bool Destroy() override;
+
+  // Override to accept no focus.
+  virtual bool AcceptsFocus() const override {
+    return false;
+  }
 
   void set_theme(const editor::SharedTheme& theme) {
     theme_ = theme;
@@ -165,6 +167,12 @@ protected:
   void OnFindAll(wxCommandEvent& evt);
   void OnReplace(wxCommandEvent& evt);
   void OnReplaceAll(wxCommandEvent& evt);
+
+  void OnFindText(wxCommandEvent& evt);
+  void OnFindTextEnter(wxCommandEvent& evt);
+
+  void HandleFind(bool all);
+  void HandleReplace(bool all);
 
 private:
   // Add a string to find history and find combobox.

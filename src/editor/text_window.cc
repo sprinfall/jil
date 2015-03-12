@@ -222,6 +222,10 @@ void TextWindow::OnBufferLineChange(LineChangeType type,
     HandleLineDeleted(data);
     break;
 
+  case kLineRefresh:
+    RefreshTextByLineRange(data);
+    break;
+
   default:
     break;
   }
@@ -1354,8 +1358,11 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
     } else {
       renderer.SetStyle(visual_bg, visual_bg, true);
 
-      int x_begin = GetLineWidth(ln, 0, char_range.begin());
-      int x_end = GetLineWidth(ln, 0, char_range.end());
+      TextLine* line = buffer_->Line(ln);
+
+      int x_begin = GetLineWidth(line, 0, char_range.begin());
+      int x_end = GetLineWidth(line, 0, char_range.end());
+
       int w = x_end - x_begin;
       if (ln != selection_.end().y && char_range.end() == kInvalidCoord) {
         w += char_width_;  // Extra char width for EOL.
@@ -1365,6 +1372,25 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
 
       renderer.RestoreStyle();
     }
+  }
+
+  // Highlight the find matches.
+  // TODO
+  TextLine* line = buffer_->Line(ln);
+  const std::list<CharRange>& find_matches = line->find_ranges();
+  if (!find_matches.empty()) {
+    const wxColour& visual_bg = style_->Get(Style::kVisual)->bg();
+    renderer.SetStyle(visual_bg, visual_bg, true);
+
+    CharRange char_range = find_matches.front();
+    int x_begin = GetLineWidth(line, 0, char_range.begin());
+    int x_end = GetLineWidth(line, 0, char_range.end());
+
+    int w = x_end - x_begin;
+
+    renderer.DrawRectangle(x_begin, y, w, line_height_);
+
+    renderer.RestoreStyle();
   }
 
   DrawTextLine(renderer, buffer_->Line(ln), x, y);
