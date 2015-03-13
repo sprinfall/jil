@@ -46,11 +46,16 @@ void Renderer::SetPen(const wxPen& pen, bool backup) {
   dc_->SetPen(pen);
 }
 
+void Renderer::SetStyle(const wxBrush& brush, const wxPen& pen, bool backup) {
+  SetBrush(brush, backup);
+  SetPen(pen, backup);
+}
+
 void Renderer::SetStyle(const wxColour& brush_color,
                         const wxColour& pen_color,
                         bool backup) {
   SetBrush(wxBrush(brush_color), backup);
-  SetPen(wxPen(brush_color), backup);
+  SetPen(wxPen(pen_color), backup);
 }
 
 void Renderer::SetTextBackground(const wxColour& bg) {

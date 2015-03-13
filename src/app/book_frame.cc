@@ -1643,8 +1643,7 @@ void BookFrame::OnFindPanelEvent(FindPanelEvent& evt) {
   int type = evt.GetInt();
 
   switch (type) {
-    case FindPanel::kFindStringEvent:
-      FindAndHighlightAllInActivePage();
+    case FindPanel::kFindTextEvent:
       {
         using namespace editor;
 

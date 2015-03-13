@@ -90,7 +90,7 @@ class FindPanel : public wxPanel {
 public:
   // Detailed event types of kFindPanelEvent.
   enum EventType {
-    kFindStringEvent = 1,
+    kFindTextEvent = 1,
     kFindEvent,
     kReplaceEvent,
     kFindAllEvent,

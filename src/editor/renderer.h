@@ -28,6 +28,8 @@ public:
   const wxPen& GetPen() const;
   void SetPen(const wxPen& pen, bool backup = false);
 
+  void SetStyle(const wxBrush& brush, const wxPen& pen, bool backup);
+
   void SetStyle(const wxColour& brush_color,
                 const wxColour& pen_color,
                 bool backup);

@@ -236,7 +236,7 @@ void FindPanel::OnFindText(wxCommandEvent& evt) {
   wxString find_str = find_combobox_->GetValue();
   // Post event even if the find string is empty so that the previous matching
   // results can be cleared.
-  PostEvent(kFindStringEvent, find_str, wxEmptyString);
+  PostEvent(kFindTextEvent, find_str, wxEmptyString);
 }
 
 void FindPanel::OnFindTextEnter(wxCommandEvent& evt) {

@@ -78,6 +78,7 @@ public:
     comment_add_space = true;
     comment_respect_indent = true;
 
+    line_padding = 3;
     wrap = false;
     show_number = true;
     show_space = false;
@@ -125,6 +126,9 @@ public:
 
   //----------------------------------------------------------------------------
   // View options
+
+  // Spacing at the top and bottom of a line.
+  int line_padding;
 
   // Wrap line.
   bool wrap;

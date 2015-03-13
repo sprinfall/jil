@@ -52,7 +52,6 @@ static const int kTextMarginBottom = 0;
 static const int kLineNrPadding = 15;
 static const int kLineNrPaddingRight = 9;
 static const int kLineNrHlPaddingRight = 3;
-static const int kLinePaddingY = 1;
 static const int kCaretWidth = 1;
 
 // Displayed on the blank lines of line number area.
@@ -1193,12 +1192,9 @@ void TextWindow::HandleTextPaint(Renderer& renderer) {
   renderer.SetTextBackground(wxNullColour);
 
   const Coord line_count = buffer_->LineCount();
-  const int line_padding = (line_height_ - char_height_) / 2;
 
-  int y1 = client_rect.y +
-           line_height_ * (line_range.first() - 1) +
-           line_padding;
-  int y2 = y1;
+  int y1 = client_rect.y + line_height_ * (line_range.first() - 1);
+  int y2 = y1;  // Don't change y1 , it will be used to draw rulers.
 
   Coord ln = line_range.first();
   for (; ln <= line_range.last() && ln <= line_count; ++ln) {
@@ -1274,12 +1270,11 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
 
   const wxRect client_rect = text_area_->GetClientRect();
   int x = client_rect.GetLeft();
-  const int line_padding = (line_height_ - char_height_) / 2;
 
   if (!line_range.IsEmpty()) {
     Coord wrapped_first_ln = wrap_helper()->WrapLineNr(line_range.first());
     int y1 = client_rect.y + line_height_ * (wrapped_first_ln - 1);
-    int y2 = y1 + line_padding;
+    int y2 = y1 + options_.line_padding;
 
     const Coord line_count = buffer_->LineCount();
 
@@ -1292,7 +1287,7 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
     if (!options_.rulers.empty()) {
       renderer.SetPen(wxPen(theme_->GetColor(RULER)), true);
 
-      y2 -= line_padding;
+      y2 -= options_.line_padding;
 
       for (size_t i = 0; i < options_.rulers.size(); ++i) {
         int ruler_x = x + char_width_ * options_.rulers[i];
@@ -1315,7 +1310,7 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
       renderer.SetBrush(wxBrush(blank_bg), true);
 
       int w = text_area_->GetVirtualSize().x;
-      renderer.DrawRectangle(x, y + line_padding, w, h);
+      renderer.DrawRectangle(x, y + options_.line_padding, w, h);
 
       renderer.RestoreBrush();
       renderer.RestorePen();
@@ -1374,26 +1369,27 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
     }
   }
 
-  // Highlight the find matches.
+  // Highlight the find matching results.
   // TODO
-  TextLine* line = buffer_->Line(ln);
-  const std::list<CharRange>& find_matches = line->find_ranges();
-  if (!find_matches.empty()) {
-    const wxColour& visual_bg = style_->Get(Style::kVisual)->bg();
-    renderer.SetStyle(visual_bg, visual_bg, true);
+  //TextLine* line = buffer_->Line(ln);
+  //const std::list<CharRange>& find_matches = line->find_ranges();
+  //if (!find_matches.empty()) {
+  //  // TODO
+  //  renderer.SetStyle(*wxTRANSPARENT_BRUSH, wxPen(*wxWHITE), true);
 
-    CharRange char_range = find_matches.front();
-    int x_begin = GetLineWidth(line, 0, char_range.begin());
-    int x_end = GetLineWidth(line, 0, char_range.end());
+  //  CharRange char_range = find_matches.front();
+  //  int x_begin = GetLineWidth(line, 0, char_range.begin());
+  //  int x_end = GetLineWidth(line, 0, char_range.end());
 
-    int w = x_end - x_begin;
+  //  int w = x_end - x_begin;
 
-    renderer.DrawRectangle(x_begin, y, w, line_height_);
+  //  renderer.DrawRectangle(x_begin, y, w, line_height_);
 
-    renderer.RestoreStyle();
-  }
+  //  renderer.RestoreStyle();
+  //}
 
-  DrawTextLine(renderer, buffer_->Line(ln), x, y);
+  int line_text_y = y + options_.line_padding;
+  DrawTextLine(renderer, buffer_->Line(ln), x, line_text_y);
 
   y += line_height_;
 }
@@ -2606,7 +2602,11 @@ bool TextWindow::HandleTextChange() {
 void TextWindow::UpdateCharSize() {
   int ext_leading = 0;  // Usually 0.
   text_extent_->GetExtent(L"T", &char_width_, &char_height_, &ext_leading);
-  line_height_ = char_height_ + ext_leading + kLinePaddingY;
+
+  line_height_ = char_height_ +
+                 ext_leading +
+                 options_.line_padding +
+                 options_.line_padding;
 }
 
 void TextWindow::UpdateTextSize() {
