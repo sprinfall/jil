@@ -1129,7 +1129,6 @@ void TextWindow::OnTextSize(wxSizeEvent& evt) {
 
         // Caret position might change due to the wrap change.
         UpdateCaretPosition();
-        ScrollToPoint(caret_point_);
       }
     }
   }
@@ -1994,7 +1993,7 @@ bool TextWindow::HandleTextMouseWheel(wxMouseEvent& evt) {
       --point_size;
     }
 
-    const int kMinFontSize = 8;
+    const int kMinFontSize = 8;  // TODO
     if (point_size >= kMinFontSize) {
       font.SetPointSize(point_size);
       SetTextFont(font);
@@ -2560,8 +2559,9 @@ void TextWindow::HandleTextFontChange() {
   UpdateTextSize();
   UpdateVirtualSize();
 
-  // Update caret height.
+  // Update caret size and position.
   text_area_->GetCaret()->SetSize(kCaretWidth, line_height_);
+  UpdateCaretPosition();
 }
 
 void TextWindow::HandleLineNrFontChange() {
