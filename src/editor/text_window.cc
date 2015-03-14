@@ -1274,7 +1274,7 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
   if (!line_range.IsEmpty()) {
     Coord wrapped_first_ln = wrap_helper()->WrapLineNr(line_range.first());
     int y1 = client_rect.y + line_height_ * (wrapped_first_ln - 1);
-    int y2 = y1 + options_.line_padding;
+    int y2 = y1;  // Don't change y1 , it will be used to draw rulers.
 
     const Coord line_count = buffer_->LineCount();
 
@@ -1287,7 +1287,7 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
     if (!options_.rulers.empty()) {
       renderer.SetPen(wxPen(theme_->GetColor(RULER)), true);
 
-      y2 -= options_.line_padding;
+      //y2 -= options_.line_padding;
 
       for (size_t i = 0; i < options_.rulers.size(); ++i) {
         int ruler_x = x + char_width_ * options_.rulers[i];
@@ -1457,7 +1457,7 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
       }
 
       int _x = x;
-      int _y = y;
+      int _y = y + options_.line_padding;
 
       std::list<const LexElem*> lex_elems = line->lex_elems(sub_range);
 
@@ -1521,7 +1521,7 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
       }
 
       int _x = x;
-      int _y = y;
+      int _y = y + options_.line_padding;
 
       // Get the range, [i, j), of the line piece to draw.
       Coord i = sub_range.begin();
@@ -2177,7 +2177,7 @@ void TextWindow::HandleLineNrPaint(wxDC& dc) {
       int y = client_rect.GetTop() + line_height_ * (caret_point_.y - 1);
       int w = client_rect.GetWidth() - kLineNrHlPaddingRight;
 
-      dc.DrawRectangle(x, y, w, char_height_);
+      dc.DrawRectangle(x, y, w, line_height_);
     }
 
     // Draw right aligned line numbers.
@@ -2276,7 +2276,7 @@ void TextWindow::HandleWrappedLineNrPaint(wxDC& dc) {
       Coord first_ln = wrap_helper()->WrapLineNr(caret_point_.y);
       int y = client_rect.GetTop() + line_height_ * (first_ln - 1);
       int w = client_rect.GetWidth() - kLineNrHlPaddingRight;
-      int h = char_height_ * wrap_helper()->WrappedLineCount(caret_point_.y);
+      int h = line_height_ * wrap_helper()->WrappedLineCount(caret_point_.y);
 
       dc.DrawRectangle(x, y, w, h);
     }

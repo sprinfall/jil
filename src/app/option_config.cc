@@ -257,6 +257,8 @@ void ParseEditorOptions(const Setting& setting, editor::Options* options) {
   //----------------------------------------------------------------------------
   // View options
 
+  GetInt(setting_map, LINE_PADDING, &options->line_padding);
+
   GetBool(setting_map, WRAP, &options->wrap);
   GetBool(setting_map, SHOW_NUMBER, &options->show_number);
   GetBool(setting_map, SHOW_SPACE, &options->show_space);

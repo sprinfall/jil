@@ -78,7 +78,7 @@ public:
     comment_add_space = true;
     comment_respect_indent = true;
 
-    line_padding = 3;
+    line_padding = 1;
     wrap = false;
     show_number = true;
     show_space = false;

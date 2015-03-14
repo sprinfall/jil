@@ -27,6 +27,7 @@ const char* const RESTORE_FILES = "restore_files";
 const char* const SHOW_FULL_PATH = "show_full_path";
 
 // Names of editor options.
+const char* const LINE_PADDING = "line_padding";
 const char* const WRAP = "wrap";
 const char* const SHIFT_WIDTH = "shift_width";
 const char* const TAB_STOP = "tab_stop";
