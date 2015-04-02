@@ -1333,32 +1333,50 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
 void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
   assert(!options_.wrap);
 
+  TextLine* line = buffer_->Line(ln);
+
+  // Highlight the find matching results.
+  const std::list<CharRange>& find_matches = line->find_ranges();
+  if (!find_matches.empty()) {
+    const wxColour& bg = theme_->GetColor(MATCHING_BG);
+    const wxColour& border = theme_->GetColor(MATCHING_BORDER);
+    renderer.SetStyle(bg, border, true);
+
+    CharRange char_range = find_matches.front();
+    int x_begin = GetLineWidth(line, 0, char_range.begin());
+    int x_end = GetLineWidth(line, 0, char_range.end());
+    int w = x_end - x_begin;
+
+    wxRect rect(x_begin, y, w, line_height_);
+    renderer.DrawRectangle(rect);
+
+    renderer.RestoreStyle();
+  }
+
   // If in select range, draw the select background.
   if (selection_.HasLine(ln)) {
-    const wxColour& visual_bg = style_->Get(Style::kVisual)->bg();
+    CharRange line_selection = selection_.GetCharRange(ln);
 
-    CharRange char_range = selection_.GetCharRange(ln);
+    const wxColour& bg = style_->Get(Style::kVisual)->bg();
 
-    if (char_range.IsEmpty()) {
+    if (line_selection.IsEmpty()) {
       if (selection_.rect) {
-        renderer.SetStyle(visual_bg, visual_bg, true);
+        renderer.SetStyle(bg, bg, true);
 
         // Draw a vertical line for empty rect selection.
-        int x = GetLineWidth(ln, 0, char_range.begin());
+        int x = GetLineWidth(ln, 0, line_selection.begin());
         renderer.DrawLine(x, y, x, y + line_height_);
 
         renderer.RestoreStyle();
       }
     } else {
-      renderer.SetStyle(visual_bg, visual_bg, true);
+      renderer.SetStyle(bg, bg, true);
 
-      TextLine* line = buffer_->Line(ln);
-
-      int x_begin = GetLineWidth(line, 0, char_range.begin());
-      int x_end = GetLineWidth(line, 0, char_range.end());
+      int x_begin = GetLineWidth(line, 0, line_selection.begin());
+      int x_end = GetLineWidth(line, 0, line_selection.end());
 
       int w = x_end - x_begin;
-      if (ln != selection_.end().y && char_range.end() == kInvalidCoord) {
+      if (ln != selection_.end().y && line_selection.end() == kInvalidCoord) {
         w += char_width_;  // Extra char width for EOL.
       }
 
@@ -1368,27 +1386,8 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
     }
   }
 
-  // Highlight the find matching results.
-  // TODO
-  //TextLine* line = buffer_->Line(ln);
-  //const std::list<CharRange>& find_matches = line->find_ranges();
-  //if (!find_matches.empty()) {
-  //  // TODO
-  //  renderer.SetStyle(*wxTRANSPARENT_BRUSH, wxPen(*wxWHITE), true);
-
-  //  CharRange char_range = find_matches.front();
-  //  int x_begin = GetLineWidth(line, 0, char_range.begin());
-  //  int x_end = GetLineWidth(line, 0, char_range.end());
-
-  //  int w = x_end - x_begin;
-
-  //  renderer.DrawRectangle(x_begin, y, w, line_height_);
-
-  //  renderer.RestoreStyle();
-  //}
-
   int line_text_y = y + options_.line_padding;
-  DrawTextLine(renderer, buffer_->Line(ln), x, line_text_y);
+  DrawTextLine(renderer, line, x, line_text_y);
 
   y += line_height_;
 }
@@ -1400,6 +1399,7 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
   assert(options_.wrap);
 
   const TextLine* line = buffer_->Line(ln);
+  CharRange line_selection;
 
   std::vector<CharRange> sub_ranges = wrap_helper()->SubRanges(ln);
 
@@ -1408,14 +1408,14 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
     const wxColour& visual_bg = style_->Get(Style::kVisual)->bg();
     renderer.SetStyle(visual_bg, visual_bg, true);
 
-    CharRange select_char_range = selection_.GetCharRange(ln);
+    line_selection = selection_.GetCharRange(ln);
     int _y = y;
 
     std::vector<CharRange>::iterator range_it = sub_ranges.begin();
     for (; range_it != sub_ranges.end(); ++range_it) {
       CharRange& sub_range = *range_it;
 
-      CharRange sub_select_char_range = sub_range.Intersect(select_char_range);
+      CharRange sub_select_char_range = sub_range.Intersect(line_selection);
       if (sub_select_char_range.IsEmpty()) {
         _y += line_height_;
         continue;  // No intersection with the select range.
@@ -1508,6 +1508,8 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
       y += line_height_;
     }
   } else {
+    // Lex unavailable.
+
     // For calculating spaces occupied by a tab.
     Coord chars = 0;
 
@@ -1555,7 +1557,7 @@ void TextWindow::DrawTextLine(Renderer& renderer,
 
 #if JIL_TEST_UNDERLINE_LEX_ELEMENT
   renderer.SetPen(*wxRED_PEN);
-#endif
+#endif  // JIL_TEST_UNDERLINE_LEX_ELEMENT
 
   const std::list<LexElem*>& lex_elems = line->lex_elems();
 
@@ -1574,7 +1576,7 @@ void TextWindow::DrawTextLine(Renderer& renderer,
 #if JIL_TEST_UNDERLINE_LEX_ELEMENT
     int ul_x1 = _x + 3;
     int ul_y = _y + char_height_;
-#endif
+#endif  // JIL_TEST_UNDERLINE_LEX_ELEMENT
 
     i = le->off;
     j = i + le->len;
@@ -1583,14 +1585,14 @@ void TextWindow::DrawTextLine(Renderer& renderer,
 #if JIL_TEST_UNDERLINE_LEX_ELEMENT
     int ul_x2 = _x - 3;
     renderer.DrawLine(ul_x1, ul_y, ul_x2, ul_y);
-#endif
+#endif  // JIL_TEST_UNDERLINE_LEX_ELEMENT
 
     i = j;
   }
 
 #if JIL_TEST_UNDERLINE_LEX_ELEMENT
   renderer.RestorePen();
-#endif
+#endif  // JIL_TEST_UNDERLINE_LEX_ELEMENT
 
   // Draw line piece after the last lex element.
   j = line->Length();
@@ -1625,7 +1627,7 @@ void TextWindow::DrawTextLinePiece(Renderer& renderer,
 
     // Render the line piece before this space, tab or operator.
     if (i > p) {
-      DrawTextWord(renderer, line_data, p, i - p, lex, x, y, chars);
+      DrawTextWord(renderer, line_data, p, i - p, x, y, chars);
     }
 
     // Render the space(s) or tab(s).
@@ -1684,7 +1686,7 @@ void TextWindow::DrawTextLinePiece(Renderer& renderer,
 
   // Render the last line piece if any.
   if (p < j) {
-    DrawTextWord(renderer, line_data, p, j - p, lex, x, y, chars);
+    DrawTextWord(renderer, line_data, p, j - p, x, y, chars);
   }
 }
 
@@ -1692,11 +1694,10 @@ void TextWindow::DrawTextWord(Renderer& renderer,
                               const std::wstring& line_data,
                               Coord off,
                               Coord len,
-                              Lex lex,
                               int& x,
                               int y,
                               Coord& chars) {
-  SetRendererStyle(renderer, style_->Get(lex));
+  //SetRendererStyle(renderer, style_->Get(lex));
 
   int piece_w = 0;
   renderer.DrawText(line_data, off, len, x, y, &piece_w);

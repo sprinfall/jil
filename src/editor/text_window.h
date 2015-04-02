@@ -53,6 +53,11 @@ public:
 
   enum ColorId {
     RULER = 0,
+
+    // Find matching results.
+    MATCHING_BG,
+    MATCHING_BORDER,
+
     COLORS
   };
 
@@ -301,16 +306,10 @@ protected:
   void HandleWrappedTextPaint(Renderer& renderer);
 
   void DrawTextLine(Coord ln, Renderer& renderer, int x, int& y);
-  void DrawWrappedTextLine(Coord ln,
-                           Renderer& renderer,
-                           int x,
-                           int& y);
+  void DrawWrappedTextLine(Coord ln, Renderer& renderer, int x, int& y);
 
   // NOTE: Tabs and different text styles are handled here.
-  void DrawTextLine(Renderer& renderer,
-                    const TextLine* line,
-                    int x,
-                    int y);
+  void DrawTextLine(Renderer& renderer, const TextLine* line, int x, int y);
 
   void DrawTextLinePiece(Renderer& renderer,
                          const std::wstring& line_data,
@@ -325,13 +324,11 @@ protected:
                     const std::wstring& line_data,
                     Coord off,
                     Coord len,
-                    Lex lex,
                     int& x,
                     int y,
                     Coord& chars);
 
-  void SetRendererStyle(Renderer& renderer,
-                        const StyleValue* style_value);
+  void SetRendererStyle(Renderer& renderer, const StyleValue* style_value);
 
   void HandleTextLeftDown(wxMouseEvent& evt);
   void HandleTextLeftDown_NoAccel();

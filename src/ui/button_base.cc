@@ -150,12 +150,12 @@ void ButtonBase::OnMouseLeftDown(wxMouseEvent& evt) {
 }
 
 void ButtonBase::OnMouseLeftUp(wxMouseEvent& evt) {
-  if (GetClientRect().Contains(evt.GetPosition())) {
-    PostEvent();
-  }
-
   if (HasCapture()) {
     ReleaseMouse();
+
+    if (GetClientRect().Contains(evt.GetPosition())) {
+      PostEvent();
+    }
   }
 
   pressed_ = false;

@@ -331,7 +331,7 @@ public:
                      bool match_whole_word,
                      std::list<TextRange>* result_ranges) const;
 
-  void ClearFindMatches();
+  void ClearFindResults();
 
   void AddFindMatch(Coord ln, const CharRange& find_match);
 

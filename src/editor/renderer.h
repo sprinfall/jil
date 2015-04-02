@@ -55,9 +55,8 @@ public:
   void DrawLine(int x1, int y1, int x2, int y2);
 
   void DrawRectangle(int x, int y, int h, int w);
-  void DrawRectangle(const wxRect& rect) {
-    DrawRectangle(rect.x, rect.y, rect.width, rect.height);
-  }
+  void DrawRectangle(const wxRect& rect);
+  void DrawRoundedRectangle(const wxRect& rect, double radius);
 
   void DrawWhiteSpaces(int x, int y, Coord count = 1, int* w = NULL);
   void DrawTab(int x, int y, int w, int h);

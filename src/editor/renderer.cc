@@ -54,8 +54,17 @@ void Renderer::SetStyle(const wxBrush& brush, const wxPen& pen, bool backup) {
 void Renderer::SetStyle(const wxColour& brush_color,
                         const wxColour& pen_color,
                         bool backup) {
-  SetBrush(wxBrush(brush_color), backup);
-  SetPen(wxPen(pen_color), backup);
+  if (brush_color.IsOk()) {
+    SetBrush(wxBrush(brush_color), backup);
+  } else {
+    SetBrush(*wxTRANSPARENT_BRUSH, backup);
+  }
+
+  if (pen_color.IsOk()) {
+    SetPen(wxPen(pen_color), backup);
+  } else {
+    SetPen(*wxTRANSPARENT_PEN, backup);
+  }
 }
 
 void Renderer::SetTextBackground(const wxColour& bg) {
@@ -144,6 +153,14 @@ void Renderer::DrawLine(int x1, int y1, int x2, int y2) {
 
 void Renderer::DrawRectangle(int x, int y, int h, int w) {
   dc_->DrawRectangle(x, y, h, w);
+}
+
+void Renderer::DrawRectangle(const wxRect& rect) {
+  dc_->DrawRectangle(rect);
+}
+
+void Renderer::DrawRoundedRectangle(const wxRect& rect, double radius) {
+  dc_->DrawRoundedRectangle(rect, radius);
 }
 
 void Renderer::DrawWhiteSpaces(int x, int y, Coord count, int* w) {

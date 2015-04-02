@@ -166,6 +166,10 @@ bool LoadThemeFile(const wxString& theme_file,
   Setting tp_setting = root.Get("text_page", Setting::kGroup);
   if (tp_setting) {
     tp_theme->SetColor(TextWindow::RULER, tp_setting.GetColor("ruler"));
+    tp_theme->SetColor(TextWindow::MATCHING_BG,
+                       tp_setting.GetColor("matching_bg"));
+    tp_theme->SetColor(TextWindow::MATCHING_BORDER,
+                       tp_setting.GetColor("matching_border"));
   }
   theme->SetTheme(THEME_TEXT_PAGE, tp_theme);
 

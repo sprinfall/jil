@@ -1177,7 +1177,7 @@ void TextBuffer::FindStringAll(const std::wstring& str,
   }
 }
 
-void TextBuffer::ClearFindMatches() {
+void TextBuffer::ClearFindResults() {
   Coord ln = 1;
   TextLine* line = NULL;
   TextLines::iterator it = lines_.begin();

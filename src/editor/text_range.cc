@@ -8,7 +8,7 @@ CharRange::CharRange(Coord begin, Coord end)
     : begin_(begin), end_(end) {
 }
 
-CharRange CharRange::Union(const CharRange& rhs) {
+CharRange CharRange::Union(const CharRange& rhs) const {
   CharRange result;
   result.begin_ = std::min(begin_, rhs.begin_);
   if (end_ == kInvalidCoord) {
@@ -23,7 +23,7 @@ CharRange CharRange::Union(const CharRange& rhs) {
   return result;
 }
 
-CharRange CharRange::Intersect(const CharRange& rhs) {
+CharRange CharRange::Intersect(const CharRange& rhs) const {
   CharRange result;
   result.begin_ = std::max(begin_, rhs.begin_);
   if (end_ == kInvalidCoord) {

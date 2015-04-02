@@ -131,13 +131,13 @@ bool Session::Load(const wxString& file) {
     GetStringArray(fp_setting, kReplaceStrings, &replace_strings_);
 
     find_flags_ = SetBit(find_flags_,
-                         kFindUseRegex,
+                         kFindRegex,
                          fp_setting.GetBool("use_regex"));
     find_flags_ = SetBit(find_flags_,
-                         kFindCaseSensitive,
+                         kFindCase,
                          fp_setting.GetBool("case_sensitive"));
     find_flags_ = SetBit(find_flags_,
-                         kFindMatchWholeWord,
+                         kFindWholeWord,
                          fp_setting.GetBool("match_whole_word"));
   }
 
@@ -192,10 +192,10 @@ bool Session::Save(const wxString& file) {
                  replace_strings_,
                  find_history_limit_);
 
-  fp_setting.SetBool("use_regex", GetBit(find_flags_, kFindUseRegex));
-  fp_setting.SetBool("case_sensitive", GetBit(find_flags_, kFindCaseSensitive));
+  fp_setting.SetBool("use_regex", GetBit(find_flags_, kFindRegex));
+  fp_setting.SetBool("case_sensitive", GetBit(find_flags_, kFindCase));
   fp_setting.SetBool("match_whole_word",
-                     GetBit(find_flags_, kFindMatchWholeWord));
+                     GetBit(find_flags_, kFindWholeWord));
 
   //----------------------------------------------------------------------------
   // Split tree

@@ -231,6 +231,7 @@ protected:
 
   // Handle find panel events.
   void OnFindPanelEvent(FindPanelEvent& evt);
+  void HandleFindTextEvent(FindPanelEvent& evt);
 
   // Get find result page, create it if necessary.
   FindResultPage* GetFindResultPage();

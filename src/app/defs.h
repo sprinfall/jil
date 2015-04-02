@@ -7,10 +7,10 @@
 namespace jil {
 
 enum FindFlag {
-  kFindUseRegex = 1,
-  kFindCaseSensitive = 2,
-  kFindMatchWholeWord = 4,
-  kFindReversely = 8,
+  kFindRegex = 1,
+  kFindCase = 2,
+  kFindWholeWord = 4,
+  kFindReversely = 8,  // TODO: Remove
 };
 
 // Internal file type IDs.

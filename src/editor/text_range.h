@@ -14,7 +14,7 @@ namespace editor {
 // STL style begin/end range: [begin, end).
 class CharRange {
 public:
-  CharRange(Coord begin = 0, Coord end = kInvalidCoord);
+  CharRange(Coord begin = 0, Coord end = 0);
 
   Coord begin() const { return begin_; }
   void set_begin(Coord begin) { begin_ = begin; }
@@ -31,8 +31,8 @@ public:
     return end_ == kInvalidCoord ? kInvalidCoord : (end_ - begin_);
   }
 
-  CharRange Union(const CharRange& rhs);
-  CharRange Intersect(const CharRange& rhs);
+  CharRange Union(const CharRange& rhs) const;
+  CharRange Intersect(const CharRange& rhs) const;
 
   bool IsEmpty() const {
     return end_ != kInvalidCoord && begin_ >= end_;

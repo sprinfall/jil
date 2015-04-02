@@ -88,9 +88,9 @@ bool FindPanel::Create(wxWindow* parent, wxWindowID id) {
   whole_word_toggle_button_->SetToolTip(kTrMatchWholeWord);
 
   // Initialize toggle button states.
-  regex_toggle_button_->set_toggle(GetBit(flags_, kFindUseRegex));
-  case_toggle_button_->set_toggle(GetBit(flags_, kFindCaseSensitive));
-  whole_word_toggle_button_->set_toggle(GetBit(flags_, kFindMatchWholeWord));
+  regex_toggle_button_->set_toggle(GetBit(flags_, kFindRegex));
+  case_toggle_button_->set_toggle(GetBit(flags_, kFindCase));
+  whole_word_toggle_button_->set_toggle(GetBit(flags_, kFindWholeWord));
 
   //------------------------------------
 
@@ -205,15 +205,15 @@ void FindPanel::SetFocus() {
 }
 
 void FindPanel::OnRegexToggle(wxCommandEvent& evt) {
-  flags_ = SetBit(flags_, kFindUseRegex, evt.IsChecked());
+  flags_ = SetBit(flags_, kFindRegex, evt.IsChecked());
 }
 
 void FindPanel::OnCaseToggle(wxCommandEvent& evt) {
-  flags_ = SetBit(flags_, kFindCaseSensitive, evt.IsChecked());
+  flags_ = SetBit(flags_, kFindCase, evt.IsChecked());
 }
 
 void FindPanel::OnWholeWordToggle(wxCommandEvent& evt) {
-  flags_ = SetBit(flags_, kFindMatchWholeWord, evt.IsChecked());
+  flags_ = SetBit(flags_, kFindWholeWord, evt.IsChecked());
 }
 
 void FindPanel::OnFind(wxCommandEvent& evt) {

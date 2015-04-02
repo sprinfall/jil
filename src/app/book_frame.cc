@@ -645,9 +645,9 @@ void BookFrame::ReplaceAllInActivePage(const std::wstring& str,
 
   TextBuffer* buffer = text_page->buffer();
 
-  bool use_regex = GetBit(flags, kFindUseRegex);
-  bool case_sensitive = GetBit(flags, kFindCaseSensitive);
-  bool match_whole_word = GetBit(flags, kFindMatchWholeWord);
+  bool use_regex = GetBit(flags, kFindRegex);
+  bool case_sensitive = GetBit(flags, kFindCase);
+  bool match_whole_word = GetBit(flags, kFindWholeWord);
 
   TextRange source_range = buffer->range();
   TextRange result_range;
@@ -704,9 +704,9 @@ editor::TextRange BookFrame::Find(TextPage* text_page,
 
   TextRange source_range;
 
-  bool use_regex = GetBit(flags, kFindUseRegex);
-  bool case_sensitive = GetBit(flags, kFindCaseSensitive);
-  bool match_whole_word = GetBit(flags, kFindMatchWholeWord);
+  bool use_regex = GetBit(flags, kFindRegex);
+  bool case_sensitive = GetBit(flags, kFindCase);
+  bool match_whole_word = GetBit(flags, kFindWholeWord);
   // Reversely regex find is not supported.
   bool reversely = !use_regex && GetBit(flags, kFindReversely);
 
@@ -777,9 +777,9 @@ void BookFrame::FindAll(const std::wstring& str,
   std::list<TextRange> result_ranges;
   buffer->FindStringAll(str,
                         buffer->range(),
-                        GetBit(flags, kFindUseRegex),
-                        GetBit(flags, kFindCaseSensitive),
-                        GetBit(flags, kFindMatchWholeWord),
+                        GetBit(flags, kFindRegex),
+                        GetBit(flags, kFindCase),
+                        GetBit(flags, kFindWholeWord),
                         &result_ranges);
 
   if (result_ranges.empty()) {
@@ -1644,42 +1644,7 @@ void BookFrame::OnFindPanelEvent(FindPanelEvent& evt) {
 
   switch (type) {
     case FindPanel::kFindTextEvent:
-      {
-        using namespace editor;
 
-        TextPage* text_page = ActiveTextPage();
-        if (text_page != NULL) {
-          int flags = evt.flags();
-
-          TextBuffer* buffer = text_page->buffer();
-
-          buffer->ClearFindMatches();
-
-          if (evt.find_str().empty()) {
-            return;
-          }
-
-          std::list<TextRange> result_ranges;
-          buffer->FindStringAll(evt.find_str(),
-                                buffer->range(),
-                                GetBit(flags, kFindUseRegex),
-                                GetBit(flags, kFindCaseSensitive),
-                                GetBit(flags, kFindMatchWholeWord),
-                                &result_ranges);
-
-          if (result_ranges.empty()) {
-            return;
-          }
-
-          std::list<TextRange>::iterator it = result_ranges.begin();
-          for (; it != result_ranges.end(); ++it) {
-            LineRange line_range = it->GetLineRange();
-            for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
-              buffer->AddFindMatch(ln, it->GetCharRange(ln));
-            }
-          }
-        }
-      }
       break;
 
     case FindPanel::kFindEvent:
@@ -1688,6 +1653,8 @@ void BookFrame::OnFindPanelEvent(FindPanelEvent& evt) {
 
     case FindPanel::kFindAllEvent:
       FindAllInActivePage(evt.find_str(), evt.flags());
+      // Close find panel after find all.
+      CloseFindPanel();
       break;
 
     case FindPanel::kReplaceEvent:
@@ -1697,6 +1664,47 @@ void BookFrame::OnFindPanelEvent(FindPanelEvent& evt) {
     case FindPanel::kReplaceAllEvent:
       ReplaceAllInActivePage(evt.find_str(), evt.replace_str(), evt.flags());
       break;
+  }
+}
+
+void BookFrame::HandleFindTextEvent(FindPanelEvent& evt) {
+  using namespace editor;
+
+  TextPage* text_page = ActiveTextPage();
+  if (text_page == NULL) {
+    return;
+  }
+
+  int flags = evt.flags();
+
+  TextBuffer* buffer = text_page->buffer();
+
+  // Clear previous find results.
+  buffer->ClearFindResults();
+
+  const std::wstring& find_str = evt.find_str();
+  if (find_str.empty()) {
+    return;
+  }
+
+  std::list<TextRange> result_ranges;
+  buffer->FindStringAll(find_str,
+                        buffer->range(),
+    GetBit(flags, kFindRegex),
+    GetBit(flags, kFindCase),
+    GetBit(flags, kFindWholeWord),
+    &result_ranges);
+
+  if (result_ranges.empty()) {
+    return;
+  }
+
+  std::list<TextRange>::iterator it = result_ranges.begin();
+  for (; it != result_ranges.end(); ++it) {
+    LineRange line_range = it->GetLineRange();
+    for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
+      buffer->AddFindMatch(ln, it->GetCharRange(ln));
+    }
   }
 }
 
