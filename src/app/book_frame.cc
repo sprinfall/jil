@@ -39,7 +39,7 @@
 #include "app/config.h"
 #include "app/defs.h"
 #include "app/find_result_page.h"
-#include "app/find_panel.h"
+#include "app/find_window.h"
 #include "app/i18n_strings.h"
 #include "app/navigation_dialog.h"
 #include "app/save.h"
@@ -133,8 +133,6 @@ EVT_MENU_RANGE(ID_MENU_FILE_FORMAT_BEGIN, \
                ID_MENU_FILE_FORMAT_END - 1, \
                BookFrame::OnStatusFileFormatMenu)
 
-EVT_FIND_PANEL(ID_FIND_PANEL, BookFrame::OnFindPanelEvent)
-
 END_EVENT_TABLE()
 
 BookFrame::BookFrame(Options* options, Session* session)
@@ -142,7 +140,6 @@ BookFrame::BookFrame(Options* options, Session* session)
     , session_(session)
     , splitter_(NULL)
     , tool_book_(NULL)
-    , find_panel_(NULL)
     , status_bar_(NULL)
     , style_(NULL)
     , binding_(NULL)
@@ -366,11 +363,11 @@ void BookFrame::SwitchToPrevStackPage() {
 }
 
 void BookFrame::ShowFind() {
-  ShowFindPanel(FindPanel::kFindMode);
+  ShowFindWindow(::jil::FindWindow::kFindMode);
 }
 
 void BookFrame::ShowReplace() {
-  ShowFindPanel(FindPanel::kReplaceMode);
+  ShowFindWindow(::jil::FindWindow::kReplaceMode);
 }
 
 void BookFrame::Wrap() {
@@ -645,9 +642,9 @@ void BookFrame::ReplaceAllInActivePage(const std::wstring& str,
 
   TextBuffer* buffer = text_page->buffer();
 
-  bool use_regex = GetBit(flags, kFindRegex);
-  bool case_sensitive = GetBit(flags, kFindCase);
-  bool match_whole_word = GetBit(flags, kFindWholeWord);
+  bool use_regex = GetBit(flags, kFindUseRegex);
+  bool case_sensitive = GetBit(flags, kFindCaseSensitive);
+  bool match_whole_word = GetBit(flags, kFindMatchWholeWord);
 
   TextRange source_range = buffer->range();
   TextRange result_range;
@@ -704,9 +701,9 @@ editor::TextRange BookFrame::Find(TextPage* text_page,
 
   TextRange source_range;
 
-  bool use_regex = GetBit(flags, kFindRegex);
-  bool case_sensitive = GetBit(flags, kFindCase);
-  bool match_whole_word = GetBit(flags, kFindWholeWord);
+  bool use_regex = GetBit(flags, kFindUseRegex);
+  bool case_sensitive = GetBit(flags, kFindCaseSensitive);
+  bool match_whole_word = GetBit(flags, kFindMatchWholeWord);
   // Reversely regex find is not supported.
   bool reversely = !use_regex && GetBit(flags, kFindReversely);
 
@@ -777,9 +774,9 @@ void BookFrame::FindAll(const std::wstring& str,
   std::list<TextRange> result_ranges;
   buffer->FindStringAll(str,
                         buffer->range(),
-                        GetBit(flags, kFindRegex),
-                        GetBit(flags, kFindCase),
-                        GetBit(flags, kFindWholeWord),
+                        GetBit(flags, kFindUseRegex),
+                        GetBit(flags, kFindCaseSensitive),
+                        GetBit(flags, kFindMatchWholeWord),
                         &result_ranges);
 
   if (result_ranges.empty()) {
@@ -849,26 +846,16 @@ void BookFrame::OnSize(wxSizeEvent& evt) {
 void BookFrame::UpdateLayout() {
   wxRect client_rect = GetClientRect();
 
-  int find_panel_height = 0;
-  if (find_panel_ != NULL) {
-    find_panel_height = find_panel_->GetBestSize().y;
-  }
+  int status_height = status_bar_->GetBestSize().y;
+  int book_area_height = client_rect.GetHeight() - status_height;
 
-  int status_bar_height = status_bar_->GetBestSize().y;
-
-  int book_height = client_rect.height - find_panel_height - status_bar_height;
-
-  splitter_->SetSize(0, 0, client_rect.width, book_height);
+  splitter_->SetSize(0, 0, client_rect.GetWidth(), book_area_height);
   splitter_->Split();
 
-  int y = book_height;
-
-  if (find_panel_ != NULL) {
-    find_panel_->SetSize(0, y, client_rect.width, find_panel_height);
-    y += find_panel_height;
-  }
-
-  status_bar_->SetSize(0, y, client_rect.width, status_bar_height);
+  status_bar_->SetSize(0,
+                       book_area_height,
+                       client_rect.GetWidth(),
+                       status_height);
 }
 
 void BookFrame::RestoreSplitTree(SplitNode* n) {
@@ -941,9 +928,6 @@ bool BookFrame::HandleKeyDownHook(wxKeyEvent& evt) {
       status_bar_->SetFieldValue(editor::StatusBar::kField_KeyStroke,
                                  wxEmptyString,
                                  true);
-      return true;
-    } else if (find_panel_ != NULL) {
-      CloseFindPanel();
       return true;
     }
 
@@ -1166,8 +1150,10 @@ void BookFrame::OnClose(wxCloseEvent& evt) {
     }
   }
 
-  if (find_panel_ != NULL) {
-    session_->set_find_flags(find_panel_->flags());
+  ::jil::FindWindow* find_window = GetFindWindow();
+  if (find_window != NULL) {
+    session_->set_find_window_rect(find_window->GetScreenRect());
+    session_->set_find_flags(find_window->flags());
   }
 
   evt.Skip();
@@ -1192,6 +1178,12 @@ void BookFrame::OnTextBookPageChange(wxCommandEvent& evt) {
     // Transfer focus to tool book if it's shown.
     if (tool_book_->IsShown()) {
       tool_book_->SetFocus();
+    }
+
+    // Close find window.
+    ::jil::FindWindow* find_window = GetFindWindow();
+    if (find_window != NULL) {
+      find_window->Close();
     }
   }
 }
@@ -1583,19 +1575,44 @@ void BookFrame::OnStatusFileFormatMenu(wxCommandEvent& evt) {
   }
 }
 
-void BookFrame::ShowFindPanel(int mode) {
-  Freeze();
-
-  if (find_panel_ == NULL) {
-    find_panel_ = new FindPanel(session_, mode);
-    // Hide to void flicker. (Yes, Hide() can be called before the window is
-    // created.)
-    find_panel_->Hide();
-    find_panel_->set_theme(theme_->GetTheme(THEME_FIND_PANEL));
-    find_panel_->Create(this, ID_FIND_PANEL);
+::jil::FindWindow* BookFrame::GetFindWindow() const {
+  wxWindow* w = FindWindowById(ID_FIND_WINDOW, this);
+  if (w == NULL) {
+    return NULL;
   } else {
-    find_panel_->set_mode(mode);
-    find_panel_->UpdateLayout();
+    return wxDynamicCast(w, ::jil::FindWindow);
+  }
+}
+
+void BookFrame::ShowFindWindow(int find_window_mode) {
+  const int kFindDefaultWidth = 300;
+
+  wxRect rect = session_->find_window_rect();
+  if (rect.IsEmpty()) {
+    // Determine find window rect according to client rect.
+    wxRect client_rect = GetClientRect();
+    client_rect.SetLeftTop(ClientToScreen(client_rect.GetLeftTop()));
+    rect = wxRect(client_rect.GetRight() - kFindDefaultWidth,
+      client_rect.GetTop(),
+      kFindDefaultWidth,
+      -1);
+  } else {
+    rect.SetHeight(-1);
+  }
+
+  ::jil::FindWindow* find_window = GetFindWindow();
+  if (find_window == NULL) {
+    find_window = new ::jil::FindWindow(session_, find_window_mode);
+    find_window->set_theme(theme_->GetTheme(THEME_FIND_WINDOW));
+    find_window->Create(this, ID_FIND_WINDOW);
+  } else {
+    find_window->set_mode(find_window_mode);
+    find_window->UpdateLayout();
+  }
+
+  if (!find_window->IsShown()) {
+    find_window->SetSize(rect);
+    find_window->Show();
   }
 
   // Find the selected text.
@@ -1608,104 +1625,12 @@ void BookFrame::ShowFindPanel(int mode) {
       // inside a single line, it might be what the user wants to find.
       std::wstring find_string;
       text_page->buffer()->GetText(select_range, &find_string);
-      find_panel_->SetFindString(wxString(find_string.c_str()));
+      find_window->SetFindString(wxString(find_string.c_str()));
     }
   }
 
-  UpdateLayout();
-
-  find_panel_->Show();
-
-  Thaw();
-
-  find_panel_->SetFocus();
-}
-
-void BookFrame::CloseFindPanel() {
-  assert(find_panel_ != NULL);
-
-  Freeze();
-
-  // Destroy find panel.
-  find_panel_->Destroy();
-  find_panel_ = NULL;
-
-  UpdateLayout();
-
-  Thaw();
-
-  // Transfer focus to text book.
-  // TODO: The previous focused might be a tool page.
-  text_book_->SetFocus();
-}
-
-void BookFrame::OnFindPanelEvent(FindPanelEvent& evt) {
-  int type = evt.GetInt();
-
-  switch (type) {
-    case FindPanel::kFindTextEvent:
-
-      break;
-
-    case FindPanel::kFindEvent:
-      FindInActivePage(evt.find_str(), evt.flags());
-      break;
-
-    case FindPanel::kFindAllEvent:
-      FindAllInActivePage(evt.find_str(), evt.flags());
-      // Close find panel after find all.
-      CloseFindPanel();
-      break;
-
-    case FindPanel::kReplaceEvent:
-      ReplaceInActivePage(evt.find_str(), evt.replace_str(), evt.flags());
-      break;
-
-    case FindPanel::kReplaceAllEvent:
-      ReplaceAllInActivePage(evt.find_str(), evt.replace_str(), evt.flags());
-      break;
-  }
-}
-
-void BookFrame::HandleFindTextEvent(FindPanelEvent& evt) {
-  using namespace editor;
-
-  TextPage* text_page = ActiveTextPage();
-  if (text_page == NULL) {
-    return;
-  }
-
-  int flags = evt.flags();
-
-  TextBuffer* buffer = text_page->buffer();
-
-  // Clear previous find results.
-  buffer->ClearFindResults();
-
-  const std::wstring& find_str = evt.find_str();
-  if (find_str.empty()) {
-    return;
-  }
-
-  std::list<TextRange> result_ranges;
-  buffer->FindStringAll(find_str,
-                        buffer->range(),
-    GetBit(flags, kFindRegex),
-    GetBit(flags, kFindCase),
-    GetBit(flags, kFindWholeWord),
-    &result_ranges);
-
-  if (result_ranges.empty()) {
-    return;
-  }
-
-  std::list<TextRange>::iterator it = result_ranges.begin();
-  for (; it != result_ranges.end(); ++it) {
-    LineRange line_range = it->GetLineRange();
-    for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
-      buffer->AddFindMatch(ln, it->GetCharRange(ln));
-    }
-  }
+  // Activate it.
+  find_window->Raise();
 }
 
 FindResultPage* BookFrame::GetFindResultPage() {

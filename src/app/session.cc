@@ -10,7 +10,7 @@ namespace jil {
 
 // Setting names.
 const char* const kBookFrame = "book_frame";
-const char* const kFindPanel = "find_panel";
+const char* const kFindWindow = "find_window";
 const char* const kRect = "rect";
 const char* const kMaximized = "maximized";
 const char* const kFindStrings = "find_strings";
@@ -123,22 +123,24 @@ bool Session::Load(const wxString& file) {
   }
 
   //----------------------------------------------------------------------------
-  // Find panel
+  // Find window
 
-  Setting fp_setting = root_setting.Get(kFindPanel, Setting::kGroup);
-  if (fp_setting) {
-    GetStringArray(fp_setting, kFindStrings, &find_strings_);
-    GetStringArray(fp_setting, kReplaceStrings, &replace_strings_);
+  Setting fw_setting = root_setting.Get(kFindWindow, Setting::kGroup);
+  if (fw_setting) {
+    GetRect(fw_setting, kRect, &find_window_rect_);
+
+    GetStringArray(fw_setting, kFindStrings, &find_strings_);
+    GetStringArray(fw_setting, kReplaceStrings, &replace_strings_);
 
     find_flags_ = SetBit(find_flags_,
-                         kFindRegex,
-                         fp_setting.GetBool("use_regex"));
+                         kFindUseRegex,
+                         fw_setting.GetBool("use_regex"));
     find_flags_ = SetBit(find_flags_,
-                         kFindCase,
-                         fp_setting.GetBool("case_sensitive"));
+                         kFindCaseSensitive,
+                         fw_setting.GetBool("case_sensitive"));
     find_flags_ = SetBit(find_flags_,
-                         kFindWholeWord,
-                         fp_setting.GetBool("match_whole_word"));
+                         kFindMatchWholeWord,
+                         fw_setting.GetBool("match_whole_word"));
   }
 
   //----------------------------------------------------------------------------
@@ -178,24 +180,28 @@ bool Session::Save(const wxString& file) {
   bf_setting.SetBool(kMaximized, book_frame_maximized_);
 
   //----------------------------------------------------------------------------
-  // Find panel
+  // Find window
 
-  Setting fp_setting = root_setting.Add(kFindPanel, Setting::kGroup);
+  Setting fw_setting = root_setting.Add(kFindWindow, Setting::kGroup);
 
-  SetStringArray(fp_setting,
+  if (!find_window_rect_.IsEmpty()) {
+    SetRect(fw_setting, kRect, find_window_rect_);
+  }
+
+  SetStringArray(fw_setting,
                  kFindStrings,
                  find_strings_,
                  find_history_limit_);
 
-  SetStringArray(fp_setting,
+  SetStringArray(fw_setting,
                  kReplaceStrings,
                  replace_strings_,
                  find_history_limit_);
 
-  fp_setting.SetBool("use_regex", GetBit(find_flags_, kFindRegex));
-  fp_setting.SetBool("case_sensitive", GetBit(find_flags_, kFindCase));
-  fp_setting.SetBool("match_whole_word",
-                     GetBit(find_flags_, kFindWholeWord));
+  fw_setting.SetBool("use_regex", GetBit(find_flags_, kFindUseRegex));
+  fw_setting.SetBool("case_sensitive", GetBit(find_flags_, kFindCaseSensitive));
+  fw_setting.SetBool("match_whole_word",
+                     GetBit(find_flags_, kFindMatchWholeWord));
 
   //----------------------------------------------------------------------------
   // Split tree

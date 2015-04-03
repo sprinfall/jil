@@ -29,9 +29,8 @@ class TextWindow;
 
 class BookCtrl;
 class BookPage;
-class FindPanel;
-class FindPanelEvent;
 class FindResultPage;
+class FindWindow;
 class Session;
 class Splitter;
 class SplitNode;
@@ -223,15 +222,11 @@ protected:
   void OnStatusEncodingMenu(wxCommandEvent& evt);
   void OnStatusFileFormatMenu(wxCommandEvent& evt);
 
-  // \param mode See FindPanel::Mode
-  void ShowFindPanel(int mode);
+  // Return find window if it's shown.
+  ::jil::FindWindow* GetFindWindow() const;
 
-  // Close find panel, update layout, etc.
-  void CloseFindPanel();
-
-  // Handle find panel events.
-  void OnFindPanelEvent(FindPanelEvent& evt);
-  void HandleFindTextEvent(FindPanelEvent& evt);
+  // \param find_window_mode See FindWindow::ViewMode
+  void ShowFindWindow(int find_window_mode);
 
   // Get find result page, create it if necessary.
   FindResultPage* GetFindResultPage();
@@ -306,8 +301,6 @@ private:
   // Current page type.
   // See BookPage::Page_Type().
   wxString page_type_;
-
-  FindPanel* find_panel_;
 
   editor::StatusBar* status_bar_;
 

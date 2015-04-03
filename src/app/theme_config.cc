@@ -15,7 +15,7 @@
 #include "app/config.h"
 #include "app/book_ctrl.h"
 #include "app/book_frame.h"
-#include "app/find_panel.h"
+#include "app/find_window.h"
 
 namespace jil {
 
@@ -173,23 +173,17 @@ bool LoadThemeFile(const wxString& theme_file,
   }
   theme->SetTheme(THEME_TEXT_PAGE, tp_theme);
 
-  // Find panel
-  SharedTheme fp_theme(new Theme(FindPanel::THEMES, FindPanel::COLORS));
-  Setting fp_setting = root.Get("find_panel", Setting::kGroup);
-  if (fp_setting) {
-    fp_theme->SetColor(FindPanel::BG_TOP, fp_setting.GetColor("bg_top"));
-    fp_theme->SetColor(FindPanel::BG_BOTTOM, fp_setting.GetColor("bg_bottom"));
-    fp_theme->SetColor(FindPanel::BORDER_OUTER,
-                       fp_setting.GetColor("border_outer"));
-    fp_theme->SetColor(FindPanel::BORDER_INNER,
-                       fp_setting.GetColor("border_inner"));
-
-    Setting button_setting = fp_setting.Get("button", Setting::kGroup);
+  // Find window
+  SharedTheme fw_theme(new Theme(::jil::FindWindow::THEMES, 0));
+  Setting fw_setting = root.Get("find_window", Setting::kGroup);
+  if (fw_setting) {
+    Setting button_setting = fw_setting.Get("button", Setting::kGroup);
     if (button_setting) {
-      fp_theme->SetTheme(FindPanel::BUTTON, GetButtonTheme(button_setting));
+      fw_theme->SetTheme(::jil::FindWindow::BUTTON,
+                         GetButtonTheme(button_setting));
     }
   }
-  theme->SetTheme(THEME_FIND_PANEL, fp_theme);
+  theme->SetTheme(THEME_FIND_WINDOW, fw_theme);
 
   // Status bar
   SharedTheme sb_theme(new Theme(0, StatusBar::COLORS));

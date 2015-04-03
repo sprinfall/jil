@@ -7,9 +7,9 @@
 namespace jil {
 
 enum FindFlag {
-  kFindRegex = 1,
-  kFindCase = 2,
-  kFindWholeWord = 4,
+  kFindUseRegex = 1,
+  kFindCaseSensitive = 2,
+  kFindMatchWholeWord = 4,
   kFindReversely = 8,  // TODO: Remove
 };
 
@@ -22,7 +22,7 @@ enum ThemeId {
   THEME_BOOK_FRAME = 0,
   THEME_TEXT_BOOK,
   THEME_TEXT_PAGE,
-  THEME_FIND_PANEL,
+  THEME_FIND_WINDOW,
   THEME_STATUS_BAR,
   THEME_NAVIGATION_DIALOG,
   THEME_COUNT,
