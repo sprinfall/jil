@@ -442,7 +442,7 @@ void BookFrame::FindInActivePage(const std::wstring& str, int flags) {
 
   TextPoint point = text_page->caret_point();
 
-  if (GetBit(flags, kFindReversely)) {
+  if (GetBit(flags, kFind_Reversely)) {
     // If there's any selected text, it might be the last find result. We don't
     // check it (for simplicity). But the find start point has to be adjusted,
     // otherwise the find result will always be this selected text.
@@ -642,9 +642,9 @@ void BookFrame::ReplaceAllInActivePage(const std::wstring& str,
 
   TextBuffer* buffer = text_page->buffer();
 
-  bool use_regex = GetBit(flags, kFindUseRegex);
-  bool case_sensitive = GetBit(flags, kFindCaseSensitive);
-  bool match_whole_word = GetBit(flags, kFindMatchWholeWord);
+  bool use_regex = GetBit(flags, kFind_UseRegex);
+  bool case_sensitive = GetBit(flags, kFind_CaseSensitive);
+  bool match_whole_word = GetBit(flags, kFind_MatchWholeWord);
 
   TextRange source_range = buffer->range();
   TextRange result_range;
@@ -701,11 +701,11 @@ editor::TextRange BookFrame::Find(TextPage* text_page,
 
   TextRange source_range;
 
-  bool use_regex = GetBit(flags, kFindUseRegex);
-  bool case_sensitive = GetBit(flags, kFindCaseSensitive);
-  bool match_whole_word = GetBit(flags, kFindMatchWholeWord);
+  bool use_regex = GetBit(flags, kFind_UseRegex);
+  bool case_sensitive = GetBit(flags, kFind_CaseSensitive);
+  bool match_whole_word = GetBit(flags, kFind_MatchWholeWord);
   // Reversely regex find is not supported.
-  bool reversely = !use_regex && GetBit(flags, kFindReversely);
+  bool reversely = !use_regex && GetBit(flags, kFind_Reversely);
 
   if (reversely) {
     source_range.Set(buffer->point_begin(), point);
@@ -774,9 +774,9 @@ void BookFrame::FindAll(const std::wstring& str,
   std::list<TextRange> result_ranges;
   buffer->FindStringAll(str,
                         buffer->range(),
-                        GetBit(flags, kFindUseRegex),
-                        GetBit(flags, kFindCaseSensitive),
-                        GetBit(flags, kFindMatchWholeWord),
+                        GetBit(flags, kFind_UseRegex),
+                        GetBit(flags, kFind_CaseSensitive),
+                        GetBit(flags, kFind_MatchWholeWord),
                         &result_ranges);
 
   if (result_ranges.empty()) {
@@ -1603,7 +1603,6 @@ void BookFrame::ShowFindWindow(int find_window_mode) {
   ::jil::FindWindow* find_window = GetFindWindow();
   if (find_window == NULL) {
     find_window = new ::jil::FindWindow(session_, find_window_mode);
-    find_window->set_theme(theme_->GetTheme(THEME_FIND_WINDOW));
     find_window->Create(this, ID_FIND_WINDOW);
   } else {
     find_window->set_mode(find_window_mode);

@@ -7,10 +7,10 @@
 namespace jil {
 
 enum FindFlag {
-  kFindUseRegex = 1,
-  kFindCaseSensitive = 2,
-  kFindMatchWholeWord = 4,
-  kFindReversely = 8,  // TODO: Remove
+  kFind_UseRegex = 1,
+  kFind_CaseSensitive = 2,
+  kFind_MatchWholeWord = 4,
+  kFind_Reversely = 8,  // TODO: Remove
 };
 
 // Internal file type IDs.
@@ -22,7 +22,6 @@ enum ThemeId {
   THEME_BOOK_FRAME = 0,
   THEME_TEXT_BOOK,
   THEME_TEXT_PAGE,
-  THEME_FIND_WINDOW,
   THEME_STATUS_BAR,
   THEME_NAVIGATION_DIALOG,
   THEME_COUNT,

@@ -5,7 +5,6 @@
 #include "wx/log.h"
 #include "wx/filename.h"
 #include "ui/color.h"
-#include "ui/text_button.h"
 #include "editor/lex.h"
 #include "editor/style.h"
 #include "editor/text_window.h"
@@ -15,7 +14,6 @@
 #include "app/config.h"
 #include "app/book_ctrl.h"
 #include "app/book_frame.h"
-#include "app/find_window.h"
 
 namespace jil {
 
@@ -75,32 +73,6 @@ static void ReadStyle(Setting parent,
   if (setting) {
     ReadStyle(setting, style_value);
   }
-}
-
-static SharedTheme GetButtonTheme(Setting button_setting) {
-  assert(button_setting);
-
-  const char* kButtonParts[] = {
-    "fg", "bg1", "bg2", "bg3", "border_outer", "border_inner"
-  };
-  const char* kButtonStates[] = {
-    "normal", "hover", "pressed", "pressed_hover", "disabled"
-  };
-
-  SharedTheme button_theme(new Theme(ui::ButtonStyle::PARTS));
-
-  for (int part = 0; part < ui::ButtonStyle::PARTS; ++part) {
-    Setting fg_setting = button_setting.Get(kButtonParts[part], Setting::kGroup);
-    if (fg_setting) {
-      SharedTheme part_theme(new Theme(0, ui::ButtonStyle::STATES));
-      for (int state = 0; state < ui::ButtonStyle::STATES; ++state) {
-        part_theme->SetColor(state, fg_setting.GetColor(kButtonStates[state]));
-      }
-      button_theme->SetTheme(part, part_theme);
-    }
-  }
-
-  return button_theme;
 }
 
 // TODO: Error handling
@@ -172,18 +144,6 @@ bool LoadThemeFile(const wxString& theme_file,
                        tp_setting.GetColor("matching_border"));
   }
   theme->SetTheme(THEME_TEXT_PAGE, tp_theme);
-
-  // Find window
-  SharedTheme fw_theme(new Theme(::jil::FindWindow::THEMES, 0));
-  Setting fw_setting = root.Get("find_window", Setting::kGroup);
-  if (fw_setting) {
-    Setting button_setting = fw_setting.Get("button", Setting::kGroup);
-    if (button_setting) {
-      fw_theme->SetTheme(::jil::FindWindow::BUTTON,
-                         GetButtonTheme(button_setting));
-    }
-  }
-  theme->SetTheme(THEME_FIND_WINDOW, fw_theme);
 
   // Status bar
   SharedTheme sb_theme(new Theme(0, StatusBar::COLORS));

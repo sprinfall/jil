@@ -51,7 +51,7 @@ EVT_CLOSE(FindWindow::OnClose)
 EVT_CHAR_HOOK(FindWindow::OnKeyDownHook)
 EVT_TOGGLEBUTTON(ID_REGEX_TOGGLE_BUTTON, FindWindow::OnUseRegexToggle)
 EVT_TOGGLEBUTTON(ID_CASE_TOGGLE_BUTTON, FindWindow::OnCaseSensitiveToggle)
-EVT_TOGGLEBUTTON(ID_WHOLE_WORD_TOGGLE_BUTTON, FindWindow::OnMatchWholeWordToggle)
+EVT_TOGGLEBUTTON(ID_WORD_TOGGLE_BUTTON, FindWindow::OnMatchWholeWordToggle)
 //EVT_TOGGLEBUTTON(kSearchReverselyToggleId, FindWindow::OnSearchReverselyToggle)
 EVT_TOGGLEBUTTON(ID_FIND_MODE_TOGGLE_BUTTON, FindWindow::OnModeToggle)
 EVT_BUTTON(ID_FIND_BUTTON, FindWindow::OnFind)
@@ -69,7 +69,6 @@ FindWindow::FindWindow(Session* session, int mode)
 }
 
 bool FindWindow::Create(BookFrame* book_frame, wxWindowID id) {
-  assert(theme_);
   assert(session_ != NULL);
 
   // Restore find options from session.
@@ -89,45 +88,31 @@ bool FindWindow::Create(BookFrame* book_frame, wxWindowID id) {
 
   // Panel has style wxTAB_TRAVERSAL by default.
   panel_ = new wxPanel(this);
-  panel_->SetBackgroundColour(*wxWHITE);  // TODO
-
-  // Create controls.
-
-  InitButtonStyle();
+  //panel_->SetBackgroundColour(*wxWHITE);  // TODO
 
   //----------------------------------------------------------------------------
 
-  use_regex_toggle_ = NewToggleButton(ID_REGEX_TOGGLE_BUTTON, wxT("find_regex"));
-  use_regex_toggle_->SetToolTip(kTrUseRegex);
+  regex_toggle_button_ = NewToggleButton(ID_REGEX_TOGGLE_BUTTON,
+                                         wxT("fw_regex"),
+                                         kTrUseRegex);
 
-  case_sensitive_toggle_ = NewToggleButton(ID_CASE_TOGGLE_BUTTON, wxT("find_case"));
-  case_sensitive_toggle_->SetToolTip(kTrCaseSensitive);
+  case_toggle_button_ = NewToggleButton(ID_CASE_TOGGLE_BUTTON,
+                                        wxT("fw_case"),
+                                        kTrCaseSensitive);
 
-  match_whole_word_toggle_ = NewToggleButton(ID_WHOLE_WORD_TOGGLE_BUTTON, wxT("find_whole_word"));
-  match_whole_word_toggle_->SetToolTip(kTrMatchWholeWord);
+  word_toggle_button_ = NewToggleButton(ID_WORD_TOGGLE_BUTTON,
+                                        wxT("fw_word"),
+                                        kTrMatchWholeWord);
 
-  //search_reversely_toggle_ = new BitmapToggleButton(panel_,
-  //                                                  kSearchReverselyToggleId);
-  //search_reversely_toggle_->SetBitmaps(
-  //    skin::GetIcon(wxT("fw_reversely")),
-  //    skin::GetIcon(wxT("fw_reversely_toggle")),
-  //    skin::GetIcon(wxT("fw_reversely_disabled")),
-  //    skin::GetIcon(wxT("fw_reversely_toggle_disabled")));
-  //search_reversely_toggle_->SetToolTip(kTrSearchReversely);
-
-  // Initialize the toggle states.
-  use_regex_toggle_->set_toggle(GetBit(flags_, kFindUseRegex));
-  case_sensitive_toggle_->set_toggle(GetBit(flags_, kFindCaseSensitive));
-  match_whole_word_toggle_->set_toggle(GetBit(flags_, kFindMatchWholeWord));
-  //search_reversely_toggle_->set_toggle(GetBit(flags_, kFindReversely));
-  //if (GetBit(flags_, kFindUseRegex)) {
-  //  search_reversely_toggle_->Enable(false);
-  //}
+  regex_toggle_button_->set_toggle(GetBit(flags_, kFind_UseRegex));
+  case_toggle_button_->set_toggle(GetBit(flags_, kFind_CaseSensitive));
+  word_toggle_button_->set_toggle(GetBit(flags_, kFind_MatchWholeWord));
 
   //----------------------------------------------------------------------------
 
-  //mode_toggle_ = NewToggleButton(ID_FIND_MODE_TOGGLE_BUTTON, wxT("find_mode"));
-  //mode_toggle_->SetToolTip(kTrSwitchMode);
+  mode_toggle_button_ = NewToggleButton(ID_FIND_MODE_TOGGLE_BUTTON,
+                                        wxT("fw_mode"),
+                                        kTrSwitchMode);
 
   //----------------------------------------------------------------------------
 
@@ -165,10 +150,15 @@ bool FindWindow::Create(BookFrame* book_frame, wxWindowID id) {
 
   //----------------------------------------------------------------------------
 
-  find_button_ = NewTextButton(ID_FIND_BUTTON, kTrFind);
-  find_all_button_ = NewTextButton(ID_FIND_ALL_BUTTON, kTrFindAll);
-  replace_button_ = NewTextButton(ID_REPLACE_BUTTON, kTrReplace);
-  replace_all_button_ = NewTextButton(ID_REPLACE_ALL_BUTTON, kTrReplaceAll);
+  find_button_ = NewButton(ID_FIND_BUTTON, wxT("fw_find"), kTrFind);
+  find_all_button_ = NewButton(ID_FIND_ALL_BUTTON,
+                               wxT("fw_find_all"),
+                               kTrFindAll);
+
+  replace_button_ = NewButton(ID_REPLACE_BUTTON, wxT("fw_replace"), kTrReplace);
+  replace_all_button_ = NewButton(ID_REPLACE_ALL_BUTTON,
+                                  wxT("fw_replace_all"),
+                                  kTrReplaceAll);
 
   find_button_->SetDefault();  // Set default for ENTER key.
 
@@ -177,12 +167,11 @@ bool FindWindow::Create(BookFrame* book_frame, wxWindowID id) {
   wxSizer* vsizer = new wxBoxSizer(wxVERTICAL);
 
   wxSizer* option_hsizer = new wxBoxSizer(wxHORIZONTAL);
-  option_hsizer->Add(use_regex_toggle_, 0, 0, 0);
-  option_hsizer->Add(case_sensitive_toggle_, 0, wxLEFT, kPadding);
-  option_hsizer->Add(match_whole_word_toggle_, 0, wxLEFT, kPadding);
-  //option_hsizer->Add(search_reversely_toggle_, 0, wxLEFT, kPadding);
+  option_hsizer->Add(regex_toggle_button_, 0, 0, 0);
+  option_hsizer->Add(case_toggle_button_, 0, wxLEFT, kPadding);
+  option_hsizer->Add(word_toggle_button_, 0, wxLEFT, kPadding);
   option_hsizer->AddStretchSpacer();
-  //option_hsizer->Add(mode_toggle_, 0, 0);
+  option_hsizer->Add(mode_toggle_button_, 0, 0);
   vsizer->Add(option_hsizer, 0, wxEXPAND | wxALL, kPadding);
 
   wxSizer* find_hsizer = new wxBoxSizer(wxHORIZONTAL);
@@ -212,10 +201,10 @@ bool FindWindow::Create(BookFrame* book_frame, wxWindowID id) {
   panel_->SetSizer(vsizer);
 
   if (mode_ == kFindMode) {
-    //mode_toggle_->set_toggle(false);
+    mode_toggle_button_->set_toggle(false);
     LayoutAsFind();
   } else {
-    //mode_toggle_->set_toggle(true);
+    mode_toggle_button_->set_toggle(true);
     LayoutAsReplace();
   }
 
@@ -227,10 +216,10 @@ FindWindow::~FindWindow() {
 
 void FindWindow::UpdateLayout() {
   if (mode_ == kFindMode) {
-    //mode_toggle_->set_toggle(false);
+    mode_toggle_button_->set_toggle(false);
     LayoutAsFind();
   } else {
-    //mode_toggle_->set_toggle(true);
+    mode_toggle_button_->set_toggle(true);
     LayoutAsReplace();
   }
 }
@@ -263,21 +252,19 @@ void FindWindow::OnKeyDownHook(wxKeyEvent& evt) {
 }
 
 void FindWindow::OnUseRegexToggle(wxCommandEvent& evt) {
-  flags_ = SetBit(flags_, kFindUseRegex, evt.IsChecked());
-  // Not supported yet.
-  //search_reversely_toggle_->Enable(!evt.IsChecked());
+  flags_ = SetBit(flags_, kFind_UseRegex, evt.IsChecked());
 }
 
 void FindWindow::OnCaseSensitiveToggle(wxCommandEvent& evt) {
-  flags_ = SetBit(flags_, kFindCaseSensitive, evt.IsChecked());
+  flags_ = SetBit(flags_, kFind_CaseSensitive, evt.IsChecked());
 }
 
 void FindWindow::OnMatchWholeWordToggle(wxCommandEvent& evt) {
-  flags_ = SetBit(flags_, kFindMatchWholeWord, evt.IsChecked());
+  flags_ = SetBit(flags_, kFind_MatchWholeWord, evt.IsChecked());
 }
 
 void FindWindow::OnSearchReverselyToggle(wxCommandEvent& evt) {
-  flags_ = SetBit(flags_, kFindReversely, evt.IsChecked());
+  flags_ = SetBit(flags_, kFind_Reversely, evt.IsChecked());
 }
 
 void FindWindow::OnModeToggle(wxCommandEvent& evt) {
@@ -405,37 +392,23 @@ void FindWindow::LayoutAsReplace() {
   SetTitle(kTrReplace);
 }
 
-void FindWindow::InitButtonStyle() {
-  button_style_.reset(new ui::ButtonStyle);
-
-  editor::SharedTheme button_theme = theme_->GetTheme(BUTTON);
-  if (button_theme.get() == NULL) {
-    return;
-  }
-
-  for (int part = 0; part < ui::ButtonStyle::PARTS; ++part) {
-    editor::SharedTheme part_theme = button_theme->GetTheme(part);
-    if (part_theme) {
-      for (int state = 0; state < ui::ButtonStyle::STATES; ++state) {
-        button_style_->SetColor(part, state, part_theme->GetColor(state));
-      }
-    }
-  }
-
-  button_style_->Fix();
-}
-
-ui::BitmapToggleButton* FindWindow::NewToggleButton(int id, const wxString& bitmap) {
-  ui::BitmapToggleButton* button = new ui::BitmapToggleButton(button_style_);
-  button->Create(panel_, id);
-  button->SetBitmap(skin::GetIcon(bitmap));
-  button->set_user_best_size(wxSize(24, 24));
+ui::BitmapToggleButton* FindWindow::NewToggleButton(wxWindowID id,
+                                                    const wxString& bitmap,
+                                                    const wxString& tooltip) {
+  ui::BitmapToggleButton* button = new ui::BitmapToggleButton(panel_, id);
+  button->SetBitmaps(skin::GetIcon(bitmap),
+                     skin::GetIcon(bitmap + wxT("_toggle")));
+  button->SetToolTip(tooltip);
   return button;
 }
 
-wxButton* FindWindow::NewTextButton(int id, const wxString& label) {
-  wxButton* button = new wxButton(panel_, id, label);
-  button->SetMinSize(wxSize(80, -1));
+wxBitmapButton* FindWindow::NewButton(int id,
+                                      const wxString& bitmap,
+                                      const wxString& tooltip) {
+  wxBitmapButton* button = new wxBitmapButton(panel_,
+                                              id,
+                                              skin::GetIcon(bitmap));
+  button->SetToolTip(tooltip);
   return button;
 }
 

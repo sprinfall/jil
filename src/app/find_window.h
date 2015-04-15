@@ -6,18 +6,17 @@
 
 #include "wx/minifram.h"
 #include "wx/panel.h"
-#include "ui/button_style.h"
-#include "editor/theme.h"
 #include "app/defs.h"
 
+class wxBitmapButton;
 class wxComboBox;
-class wxButton;
 
 namespace jil {
 
 namespace ui {
 class BitmapToggleButton;
 }  // namespace ui
+
 class Session;
 
 class BookFrame;
@@ -27,11 +26,6 @@ class FindWindow : public wxMiniFrame {
   DECLARE_EVENT_TABLE()
 
 public:
-  enum ThemeId {
-    BUTTON = 0,
-    THEMES
-  };
-
   enum Mode {
     kFindMode = 0,
     kReplaceMode
@@ -44,10 +38,6 @@ public:
   bool Create(BookFrame* book_frame, wxWindowID id);
 
   virtual ~FindWindow();
-
-  void set_theme(const editor::SharedTheme& theme) {
-    theme_ = theme;
-  }
 
   void set_session(Session* session) {
     session_ = session;
@@ -98,18 +88,18 @@ public:
 
   void InitButtonStyle();
 
-  ui::BitmapToggleButton* NewToggleButton(int id, const wxString& bitmap);
+  ui::BitmapToggleButton* NewToggleButton(wxWindowID id,
+                                          const wxString& bitmap,
+                                          const wxString& tooltip);
 
-  wxButton* NewTextButton(wxWindowID id, const wxString& label);
+  wxBitmapButton* NewButton(wxWindowID id,
+                            const wxString& bitmap,
+                            const wxString& tooltip);
 
  private:
   Session* session_;
 
   BookFrame* book_frame_;
-
-  editor::SharedTheme theme_;
-
-  ui::SharedButtonStyle button_style_;
 
   int mode_;  // enum Mode
 
@@ -119,19 +109,18 @@ public:
   // For tab traversal.
   wxPanel* panel_;
 
-  ui::BitmapToggleButton* use_regex_toggle_;
-  ui::BitmapToggleButton* case_sensitive_toggle_;
-  ui::BitmapToggleButton* match_whole_word_toggle_;
-  //ui::BitmapToggleButton* search_reversely_toggle_;
-  ui::BitmapToggleButton* mode_toggle_;
+  ui::BitmapToggleButton* regex_toggle_button_;
+  ui::BitmapToggleButton* case_toggle_button_;
+  ui::BitmapToggleButton* word_toggle_button_;
+  ui::BitmapToggleButton* mode_toggle_button_;
 
   wxComboBox* find_combobox_;
   wxComboBox* replace_combobox_;
 
-  wxButton* find_button_;
-  wxButton* find_all_button_;
-  wxButton* replace_button_;
-  wxButton* replace_all_button_;
+  wxBitmapButton* find_button_;
+  wxBitmapButton* find_all_button_;
+  wxBitmapButton* replace_button_;
+  wxBitmapButton* replace_all_button_;
 };
 
 }  // namespace jil

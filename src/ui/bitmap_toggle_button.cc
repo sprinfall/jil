@@ -4,58 +4,67 @@
 namespace jil {
 namespace ui {
 
-IMPLEMENT_CLASS(BitmapToggleButton, ButtonBase);
+BEGIN_EVENT_TABLE(BitmapToggleButton, wxControl)
+EVT_PAINT(BitmapToggleButton::OnPaint)
+EVT_LEFT_DOWN(BitmapToggleButton::OnLeftDown)
+EVT_LEFT_UP(BitmapToggleButton::OnLeftUp)
+END_EVENT_TABLE();
 
-BitmapToggleButton::BitmapToggleButton(SharedButtonStyle style)
-    : ButtonBase(style), toggle_(false) {
+BitmapToggleButton::BitmapToggleButton(wxWindow* parent, wxWindowID id)
+    : wxControl(parent, id, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
+    , accept_focus_(true)
+    , toggle_(false) {
+  SetBackgroundStyle(wxBG_STYLE_PAINT);
 }
 
 BitmapToggleButton::~BitmapToggleButton() {
 }
 
-bool BitmapToggleButton::Create(wxWindow* parent, wxWindowID id) {
-  if (!ButtonBase::Create(parent, id, wxEmptyString)) {
-    return false;
+bool BitmapToggleButton::Enable(bool enable) {
+  if (wxControl::Enable(enable)) {
+    Refresh();
+    return true;
   }
-
-  return true;
+  return false;
 }
 
 wxSize BitmapToggleButton::DoGetBestSize() const {
-  if (user_best_size_ != wxDefaultSize) {
-    return user_best_size_;
+  if (!bitmap_.IsOk()) {
+    return wxDefaultSize;
   }
-
-  if (bitmap_.IsOk()) {
-    return wxSize(bitmap_.GetWidth(), bitmap_.GetHeight());
-  }
-
-  return wxDefaultSize;
+  return wxSize(bitmap_.GetWidth(), bitmap_.GetHeight());
 }
 
-ButtonStyle::State BitmapToggleButton::GetState() {
-  if (!IsEnabled()) {
-    return ButtonStyle::DISABLED;
-  }
+void BitmapToggleButton::OnPaint(wxPaintEvent& evt) {
+  wxPaintDC dc(this);
+  dc.SetBackground(GetBackgroundColour());
+  dc.Clear();
 
-  if (toggle_ || pressed_) {
-    return hover_ ? ButtonStyle::PRESSED_HOVER : ButtonStyle::PRESSED;
+  wxBitmap bitmap;
+  if (IsEnabled()) {
+    bitmap = toggle_ ? toggle_bitmap_ : bitmap_;
   } else {
-    return hover_ ? ButtonStyle::NORMAL_HOVER : ButtonStyle::NORMAL;
+    bitmap = toggle_ ? disabled_toggle_bitmap_ : disabled_bitmap_;
+  }
+
+  if (bitmap.IsOk()) {
+    dc.DrawBitmap(bitmap, 0, 0, true);
   }
 }
 
-void BitmapToggleButton::DrawForeground(wxDC& dc, ButtonStyle::State state) {
-  if (bitmap_.IsOk()) {
-    wxRect rect = GetClientRect();
-    int x = (rect.GetWidth() - bitmap_.GetWidth()) / 2;
-    int y = (rect.GetHeight() - bitmap_.GetHeight()) / 2;
-    dc.DrawBitmap(bitmap_, x, y, true);
+void BitmapToggleButton::OnLeftDown(wxMouseEvent& evt) {
+  if (!HasCapture()) {
+    CaptureMouse();
   }
 }
 
-void BitmapToggleButton::PostEvent() {
+void BitmapToggleButton::OnLeftUp(wxMouseEvent& evt) {
+  if (HasCapture()) {
+    ReleaseMouse();
+  }
+
   toggle_ = !toggle_;
+  Refresh();
 
   wxCommandEvent toggle_evt(wxEVT_TOGGLEBUTTON, GetId());
   toggle_evt.SetEventObject(this);
