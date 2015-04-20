@@ -20,8 +20,7 @@ protected:
     ft_plugin_->options().tab_stop = 4;
     ft_plugin_->options().shift_width = 4;
 
-    ft_plugin_->options().operators = L"!@#%^&*()+-=\\|/?[]{}<>,.;:'\"`~";
-    ft_plugin_->options().delimiters = L"!@#%^&*()+-=\\|/?[]{}<>,.;:'\"`~ \t";
+    ft_plugin_->options().delimiters = L"!@#%^$&*()+-=\\|/?[]{}<>,.;:'\"`~";
 
     Quote* quote1 = new Quote(Lex(kLexComment), L"/*", L"*/", kQuoteMultiLine);
     ft_plugin_->AddQuote(quote1);

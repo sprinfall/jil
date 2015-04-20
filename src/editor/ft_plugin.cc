@@ -46,10 +46,6 @@ FtPlugin::~FtPlugin() {
 
 //------------------------------------------------------------------------------
 
-bool FtPlugin::IsOperator(wchar_t c) const {
-  return options_.operators.find(c) != std::wstring::npos;
-}
-
 bool FtPlugin::IsDelimiter(wchar_t c) const {
   return options_.delimiters.find(c) != std::wstring::npos;
 }

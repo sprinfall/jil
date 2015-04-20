@@ -1,7 +1,6 @@
 #include "app/font_util.h"
 #include <set>
 #include "wx/gdicmn.h"
-#include "wx/fontenum.h"
 #include "wx/settings.h"
 
 namespace jil {
@@ -20,16 +19,6 @@ const wxFont& GetGlobalFont(int point_size,
   assert(font != NULL);
   return *font;
 }
-
-class FontEnumerator : public wxFontEnumerator {
-public:
-  virtual bool OnFacename(const wxString& facename) override {
-    facenames.insert(facename);
-    return true;
-  }
-
-  std::set<wxString> facenames;
-};
 
 // Some preferred fixed-width fonts.
 static const wxString kBestFonts[] = {

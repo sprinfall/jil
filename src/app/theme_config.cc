@@ -194,8 +194,8 @@ bool LoadThemeFile(const wxString& theme_file,
   ReadStyle(root, "space", &style_value);
   style->Set(Style::kSpace, style_value);
 
-  ReadStyle(root, "operator", &style_value);
-  style->Set(Style::kOperator, style_value);
+  ReadStyle(root, "delimiter", &style_value);
+  style->Set(Style::kDelimiter, style_value);
 
   ReadStyle(root, "error", &style_value);
   style->Set(Style::kError, style_value);

@@ -2453,12 +2453,13 @@ Coord TextBuffer::WordBegin(const TextPoint& point, bool include_space) {
       x = WordBegin(TextPoint(x - 1, point.y), include_space);
     }
   } else {
-    if (ft_plugin_->IsOperator(c)) {
-      // Skip operators before.
-      for (; x > 0 && ft_plugin_->IsOperator(line->Char(x - 1)); --x) {}
+    if (ft_plugin_->IsDelimiter(c)) {
+      // Skip delimiters before.
+      for (; x > 0 && ft_plugin_->IsDelimiter(line->Char(x - 1)); --x) {}
     } else {
       for (; x > 0; --x) {
-        if (ft_plugin_->IsDelimiter(line->Char(x - 1))) {
+        wchar_t c = line->Char(x - 1);
+        if (ft_plugin_->IsDelimiter(c) || IsSpace(c)) {
           break;
         }
       }
@@ -2480,12 +2481,12 @@ Coord TextBuffer::WordEnd(const TextPoint& point, bool include_space) {
     // Skip spaces.
     for (++x; x < length && IsSpace(line->Char(x)); ++x) {
     }
-  } else if (ft_plugin_->IsOperator(c)) {  // This word will be operator(s).
-    // Skip operators.
-    for (++x; x < length && ft_plugin_->IsOperator(line->Char(x)); ++x) {
+  } else if (ft_plugin_->IsDelimiter(c)) {  // This word will be delimiter(s).
+    // Skip delimiters.
+    for (++x; x < length && ft_plugin_->IsDelimiter(line->Char(x)); ++x) {
     }
     if (include_space) {
-      // Skip the spaces after this operator.
+      // Skip the spaces after this delimiter.
       for (; x < length && IsSpace(line->Char(x)); ++x) {
       }
     }
@@ -2519,19 +2520,19 @@ void TextBuffer::SplitWords(const std::wstring& line_data,
       while (i < line_data.size() && IsSpace(line_data[i])) {
         ++i;
       }
-    } else if (ft_plugin_->IsOperator(line_data[i])) {
-      // This word will be operator(s).
-      while (i < line_data.size() && ft_plugin_->IsOperator(line_data[i])) {
+    } else if (ft_plugin_->IsDelimiter(line_data[i])) {
+      // This word will be delimiter(s).
+      while (i < line_data.size() && ft_plugin_->IsDelimiter(line_data[i])) {
         ++i;
       }
       if (include_space) {
-        // Skip the white spaces after this operator.
+        // Skip the white spaces after this delimiter.
         while (i < line_data.size() && IsSpace(line_data[i])) {
           ++i;
         }
       }
     } else {
-      // Find a space or operator indicating the end of this word.
+      // Find a space or delimiter indicating the end of this word.
       for (++i; i < line_data.size(); ++i) {
         if (IsSpace(line_data[i])) {
           if (include_space) {
@@ -2758,10 +2759,10 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
           continue;
         }
 
-        if (ft_plugin_->IsOperator(line_data[i])) {
+        if (ft_plugin_->IsDelimiter(line_data[i])) {
           if (prev_le.len > 0 && prev_le.lex.IsEmpty()) {
             // Look back to check the lex of previous word.
-            // FIXME: Currently, only a single operator can be suffix.
+            // FIXME: Currently, only a single delimiter can be suffix.
             if (ft_plugin_->MatchSuffix(line_data, i, 1, &prev_le.lex)) {
               line->AddLexElem(prev_le);
             }

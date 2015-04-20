@@ -229,7 +229,6 @@ void ParseEditorOptions(const Setting& setting, editor::Options* options) {
   GetInt(setting_map, TAB_STOP, &options->tab_stop);
   GetBool(setting_map, EXPAND_TAB, &options->expand_tab);
 
-  GetWString(setting_map, OPERATORS, &options->operators);
   GetWString(setting_map, DELIMITERS, &options->delimiters);
 
   // Indent keys

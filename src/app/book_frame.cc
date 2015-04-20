@@ -1053,6 +1053,7 @@ void BookFrame::OnMenuTools(wxCommandEvent& evt) {
   int menu_id = evt.GetId();
 
   if (menu_id == ID_MENU_TOOLS_OPTIONS) {
+    wxGetApp().ShowPreferencesEditor(this);
   }
 }
 

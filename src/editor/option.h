@@ -97,17 +97,8 @@ public:
   // Insert spaces for tab.
   bool expand_tab;
 
-  // Operator symbols.
-  // E.g., !@#%^&*()+-=\|/?[]{}<>,.;:'"`~
-  std::wstring operators;
-
-  // Delimiters determine when a word should end.
-  // Normally, an operator is also a delimiter. But delimiters also include
-  // space and tab.
-  // The difference between operator and delimiter:
-  // Take C++ as example, '#' is not an operator, but it's a delimiter.
-  // '_' is not an operator, and it is or is not a delimiter.
-  // ' ' and '\t' is delimiters, but they are not operators.
+  // Word delimiters (exluding ' ' and '\t').
+  // E.g., !@#%^$&*()+-=\|/?[]{}<>,.;:'"`~
   std::wstring delimiters;
 
   // A list of keys that, when typed, cause reindenting of the current line.

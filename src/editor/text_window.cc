@@ -1620,7 +1620,7 @@ void TextWindow::DrawTextLinePiece(Renderer& renderer,
   for (; i < j; ++i) {
     if (line_data[i] != kSpaceChar &&
         line_data[i] != kTabChar &&
-        !ft_plugin()->IsOperator(line_data[i])) {
+        !ft_plugin()->IsDelimiter(line_data[i])) {
       ++chars;
       continue;
     }
@@ -1654,23 +1654,23 @@ void TextWindow::DrawTextLinePiece(Renderer& renderer,
       x += tab_w;
 
       p = i + 1;
-    } else {  // Operator
-      // Count operators.
-      Coord operators = 1;
+    } else {  // Delimiter
+      // Count delimiters.
+      Coord delimiters = 1;
       for (Coord k = i + 1;
-           k < j && ft_plugin()->IsOperator(line_data[k]);
+           k < j && ft_plugin()->IsDelimiter(line_data[k]);
            ++k) {
-        ++operators;
+        ++delimiters;
       }
 
       if (lex.major() == kLexNone) {
-        SetRendererStyle(renderer, style_->Get(Style::kOperator));
+        SetRendererStyle(renderer, style_->Get(Style::kDelimiter));
       } else {
         SetRendererStyle(renderer, lex_style_value);
       }
 
       int piece_w = 0;
-      renderer.DrawText(line_data, i, operators, x, y, &piece_w);
+      renderer.DrawText(line_data, i, delimiters, x, y, &piece_w);
       x += piece_w;
 
       if (lex.major() == kLexNone) {
@@ -1678,8 +1678,8 @@ void TextWindow::DrawTextLinePiece(Renderer& renderer,
         SetRendererStyle(renderer, lex_style_value);
       }
 
-      chars += operators;
-      i += operators - 1;
+      chars += delimiters;
+      i += delimiters - 1;
       p = i + 1;
     }
   }

@@ -9,16 +9,17 @@
 #pragma comment(lib, "vld")
 #endif  // __WXMSW__
 
-#include "wx/image.h"
-#include "wx/intl.h"
-#include "wx/sysopt.h"
-#include "wx/stdpaths.h"
-#include "wx/filename.h"
 #include "wx/cmdline.h"
 #include "wx/dir.h"
-#include "wx/snglinst.h"
+#include "wx/filename.h"
+#include "wx/image.h"
+#include "wx/intl.h"
 #include "wx/log.h"
 #include "wx/msgdlg.h"
+#include "wx/preferences.h"
+#include "wx/snglinst.h"
+#include "wx/stdpaths.h"
+#include "wx/sysopt.h"
 
 #include "base/string_util.h"
 
@@ -40,6 +41,7 @@
 #include "app/i18n_strings.h"
 #include "app/lex_config.h"
 #include "app/option_config.h"
+#include "app/preference_pages.h"
 #include "app/status_fields_config.h"
 #include "app/theme_config.h"
 #include "app/util.h"
@@ -443,6 +445,23 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
 
   ft_plugins_.push_back(ft_plugin);
   return ft_plugin;
+}
+
+void App::ShowPreferencesEditor(wxWindow* parent) {
+  if (!pref_editor_) {
+    pref_editor_.reset(new wxPreferencesEditor);
+    pref_editor_->AddPage(new pref::GeneralPage());
+    pref_editor_->AddPage(new pref::ThemePage());
+    pref_editor_->AddPage(new pref::EditorPage());
+  }
+
+  pref_editor_->Show(parent);
+}
+
+void App::DismissPreferencesEditor() {
+  if (pref_editor_) {
+    pref_editor_->Dismiss();
+  }
 }
 
 // Command line parsing.

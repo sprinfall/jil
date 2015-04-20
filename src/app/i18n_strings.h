@@ -15,6 +15,8 @@
 #define kTrOpenFile           _("Open File")
 #define kTrFailedToOpenFile   _("Failed to open file! (%s)")
 
+#define kTrOptions            _("Options")
+
 #define kTrLine               _("Line")
 #define kTrColumn             _("Column")
 

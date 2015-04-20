@@ -57,7 +57,7 @@ public:
     kCaretLine,
     kSpace,       // Space and Tab
     kBlank,       // Blank area (similar to Vim NonText)
-    kOperator,    // !@#$%^&*()+-=~, etc.
+    kDelimiter,   // !@#$%^&*()+-=~, etc.
     kError,       // E.g., Lexical error
     kItemCount,
   };

@@ -30,6 +30,8 @@ set(SRCS
     option.h
     option_config.cc
     option_config.h
+    preference_pages.cc
+    preference_pages.h
     save.cc
     save.h
     separator.h

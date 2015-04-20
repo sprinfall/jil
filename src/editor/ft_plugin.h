@@ -50,7 +50,6 @@ public:
     return options_;
   }
 
-  bool IsOperator(wchar_t c) const;
   bool IsDelimiter(wchar_t c) const;
 
   //----------------------------------------------------------------------------
