@@ -8,7 +8,7 @@
 #include "wx/panel.h"
 #include "app/defs.h"
 
-class wxBitmapButton;
+class wxButton;
 class wxComboBox;
 
 namespace jil {
@@ -92,9 +92,7 @@ public:
                                           const wxString& bitmap,
                                           const wxString& tooltip);
 
-  wxBitmapButton* NewButton(wxWindowID id,
-                            const wxString& bitmap,
-                            const wxString& tooltip);
+  wxButton* NewButton(wxWindowID id, const wxString& label);
 
  private:
   Session* session_;
@@ -114,13 +112,13 @@ public:
   ui::BitmapToggleButton* word_toggle_button_;
   ui::BitmapToggleButton* mode_toggle_button_;
 
-  wxComboBox* find_combobox_;
-  wxComboBox* replace_combobox_;
+  wxComboBox* find_combo_box_;
+  wxComboBox* replace_combo_box_;
 
-  wxBitmapButton* find_button_;
-  wxBitmapButton* find_all_button_;
-  wxBitmapButton* replace_button_;
-  wxBitmapButton* replace_all_button_;
+  wxButton* find_button_;
+  wxButton* find_all_button_;
+  wxButton* replace_button_;
+  wxButton* replace_all_button_;
 };
 
 }  // namespace jil

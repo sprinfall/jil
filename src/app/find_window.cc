@@ -41,7 +41,10 @@ const long kFindWindowStyle = wxCLOSE_BOX |\
 
 const int kPadding = 5;
 
-const int kReplaceSizerIndex = 2;
+#define wxLR (wxLEFT|wxRIGHT)
+#define wxLTR (wxLEFT|wxTOP|wxRIGHT)
+#define wxALIGN_CV wxALIGN_CENTER_VERTICAL
+#define wxALIGN_CH wxALIGN_CENTER_HORIZONTAL
 
 IMPLEMENT_DYNAMIC_CLASS(FindWindow, wxMiniFrame);
 
@@ -116,88 +119,50 @@ bool FindWindow::Create(BookFrame* book_frame, wxWindowID id) {
 
   //----------------------------------------------------------------------------
 
-  find_combobox_ = new wxComboBox(panel_, ID_FIND_COMBOBOX);
+  find_combo_box_ = new wxComboBox(panel_, ID_FIND_COMBOBOX);
 
   // Initialize find combobox with find history.
   const std::list<wxString>& find_strings = session_->find_strings();
   {
     std::list<wxString>::const_iterator it = find_strings.begin();
     for (; it != find_strings.end(); ++it) {
-      find_combobox_->Append(*it);
+      find_combo_box_->Append(*it);
     }
   }
 
-  if (!find_combobox_->IsListEmpty()) {
-    find_combobox_->Select(0);
+  if (!find_combo_box_->IsListEmpty()) {
+    find_combo_box_->Select(0);
   }
 
   //----------------------------------------------------------------------------
 
-  replace_combobox_ = new wxComboBox(panel_, ID_REPLACE_COMBOBOX);
+  replace_combo_box_ = new wxComboBox(panel_, ID_REPLACE_COMBOBOX);
 
   // Initialize replace combobox with replace history.
   const std::list<wxString>& replace_strings = session_->replace_strings();
   {
     std::list<wxString>::const_iterator it = replace_strings.begin();
     for (; it != replace_strings.end(); ++it) {
-      replace_combobox_->Append(*it);
+      replace_combo_box_->Append(*it);
     }
   }
 
-  if (!replace_combobox_->IsListEmpty()) {
-    replace_combobox_->Select(0);
+  if (!replace_combo_box_->IsListEmpty()) {
+    replace_combo_box_->Select(0);
   }
 
   //----------------------------------------------------------------------------
 
-  find_button_ = NewButton(ID_FIND_BUTTON, wxT("fw_find"), kTrFind);
-  find_all_button_ = NewButton(ID_FIND_ALL_BUTTON,
-                               wxT("fw_find_all"),
-                               kTrFindAll);
-
-  replace_button_ = NewButton(ID_REPLACE_BUTTON, wxT("fw_replace"), kTrReplace);
-  replace_all_button_ = NewButton(ID_REPLACE_ALL_BUTTON,
-                                  wxT("fw_replace_all"),
-                                  kTrReplaceAll);
-
+  find_button_ = NewButton(ID_FIND_BUTTON, kTrFind);
+  find_all_button_ = NewButton(ID_FIND_ALL_BUTTON, kTrFindAll);
+  replace_button_ = NewButton(ID_REPLACE_BUTTON, kTrReplace);
+  replace_all_button_ = NewButton(ID_REPLACE_ALL_BUTTON, kTrReplaceAll);
   find_button_->SetDefault();  // Set default for ENTER key.
 
-  // Layout controls.
+  //----------------------------------------------------------------------------
+  // Layout
 
   wxSizer* vsizer = new wxBoxSizer(wxVERTICAL);
-
-  wxSizer* option_hsizer = new wxBoxSizer(wxHORIZONTAL);
-  option_hsizer->Add(regex_toggle_button_, 0, 0, 0);
-  option_hsizer->Add(case_toggle_button_, 0, wxLEFT, kPadding);
-  option_hsizer->Add(word_toggle_button_, 0, wxLEFT, kPadding);
-  option_hsizer->AddStretchSpacer();
-  option_hsizer->Add(mode_toggle_button_, 0, 0);
-  vsizer->Add(option_hsizer, 0, wxEXPAND | wxALL, kPadding);
-
-  wxSizer* find_hsizer = new wxBoxSizer(wxHORIZONTAL);
-  find_hsizer->Add(find_combobox_, 1, wxALIGN_CENTER_VERTICAL);
-  find_hsizer->Add(find_button_,
-                   0,
-                   wxALIGN_CENTER_VERTICAL | wxLEFT,
-                   kPadding);
-  find_hsizer->Add(find_all_button_,
-                   0,
-                   wxALIGN_CENTER_VERTICAL | wxLEFT,
-                   kPadding);
-  vsizer->Add(find_hsizer, 0, wxEXPAND | wxALL, kPadding);
-
-  wxSizer* replace_hsizer = new wxBoxSizer(wxHORIZONTAL);
-  replace_hsizer->Add(replace_combobox_, 1, wxALIGN_CENTER_VERTICAL);
-  replace_hsizer->Add(replace_button_,
-                      0,
-                      wxALIGN_CENTER_VERTICAL | wxLEFT,
-                      kPadding);
-  replace_hsizer->Add(replace_all_button_,
-                      0,
-                      wxALIGN_CENTER_VERTICAL | wxLEFT,
-                      kPadding);
-  vsizer->Add(replace_hsizer, 0, wxEXPAND | wxALL, kPadding);
-
   panel_->SetSizer(vsizer);
 
   if (mode_ == kFindMode) {
@@ -225,15 +190,15 @@ void FindWindow::UpdateLayout() {
 }
 
 void FindWindow::SetFindString(const wxString& find_string) {
-  find_combobox_->SetValue(find_string);
+  find_combo_box_->SetValue(find_string);
   AddFindString(find_string);
 }
 
 // Update control values on activate.
 void FindWindow::OnActivate(wxActivateEvent& evt) {
   // Focus and select the text so the user can change it directly.
-  find_combobox_->SetFocus();
-  find_combobox_->SelectAll();
+  find_combo_box_->SetFocus();
+  find_combo_box_->SelectAll();
 }
 
 void FindWindow::OnClose(wxCloseEvent& evt) {
@@ -278,7 +243,7 @@ void FindWindow::OnModeToggle(wxCommandEvent& evt) {
 }
 
 void FindWindow::OnFind(wxCommandEvent& evt) {
-  wxString str = find_combobox_->GetValue();
+  wxString str = find_combo_box_->GetValue();
   if (str.IsEmpty()) {
     return;
   }
@@ -289,7 +254,7 @@ void FindWindow::OnFind(wxCommandEvent& evt) {
 }
 
 void FindWindow::OnFindAll(wxCommandEvent& evt) {
-  wxString str = find_combobox_->GetValue();
+  wxString str = find_combo_box_->GetValue();
   if (str.IsEmpty()) {
     return;
   }
@@ -300,14 +265,14 @@ void FindWindow::OnFindAll(wxCommandEvent& evt) {
 }
 
 void FindWindow::OnReplace(wxCommandEvent& evt) {
-  wxString str = find_combobox_->GetValue();
+  wxString str = find_combo_box_->GetValue();
   if (str.IsEmpty()) {
     return;
   }
 
   AddFindString(str);
 
-  wxString replace_str = replace_combobox_->GetValue();
+  wxString replace_str = replace_combo_box_->GetValue();
 
   if (!replace_str.IsEmpty()) {
     AddReplaceString(replace_str);
@@ -319,14 +284,14 @@ void FindWindow::OnReplace(wxCommandEvent& evt) {
 }
 
 void FindWindow::OnReplaceAll(wxCommandEvent& evt) {
-  wxString str = find_combobox_->GetValue();
+  wxString str = find_combo_box_->GetValue();
   if (str.IsEmpty()) {
     return;
   }
 
   AddFindString(str);
 
-  wxString replace_str = replace_combobox_->GetValue();
+  wxString replace_str = replace_combo_box_->GetValue();
 
   if (!replace_str.IsEmpty()) {
     AddReplaceString(replace_str);
@@ -340,30 +305,30 @@ void FindWindow::OnReplaceAll(wxCommandEvent& evt) {
 void FindWindow::AddFindString(const wxString& string) {
   if (session_->AddFindString(string)) {
     // The find string is new. Simply push to find combobox at front.
-    find_combobox_->Insert(string, 0);
+    find_combo_box_->Insert(string, 0);
   } else {
     // Move the find string to front in the find combobox.
-    int old_index = find_combobox_->FindString(string, true);
+    int old_index = find_combo_box_->FindString(string, true);
     if (old_index != wxNOT_FOUND) {
-      find_combobox_->Delete(old_index);
+      find_combo_box_->Delete(old_index);
     }
-    find_combobox_->Insert(string, 0);
-    find_combobox_->Select(0);
+    find_combo_box_->Insert(string, 0);
+    find_combo_box_->Select(0);
   }
 }
 
 void FindWindow::AddReplaceString(const wxString& string) {
   if (session_->AddReplaceString(string)) {
     // The replace string is new. Simply push to replace combobox at front.
-    replace_combobox_->Insert(string, 0);
+    replace_combo_box_->Insert(string, 0);
   } else {
     // Move the find string to front in the replace combobox.
-    int old_index = replace_combobox_->FindString(string, true);
+    int old_index = replace_combo_box_->FindString(string, true);
     if (old_index != wxNOT_FOUND) {
-      replace_combobox_->Delete(old_index);
+      replace_combo_box_->Delete(old_index);
     }
-    replace_combobox_->Insert(string, 0);
-    replace_combobox_->Select(0);
+    replace_combo_box_->Insert(string, 0);
+    replace_combo_box_->Select(0);
   }
 }
 
@@ -381,14 +346,73 @@ void FindWindow::UpdateSizes() {
 }
 
 void FindWindow::LayoutAsFind() {
-  panel_->GetSizer()->Show(kReplaceSizerIndex, false);
+  replace_combo_box_->Hide();
+  replace_button_->Hide();
+  replace_all_button_->Hide();
+
+  wxSizer* vsizer = panel_->GetSizer();
+  vsizer->Clear(false);
+
+  wxSizer* option_hsizer = new wxBoxSizer(wxHORIZONTAL);
+  option_hsizer->Add(regex_toggle_button_, 0, 0, 0);
+  option_hsizer->Add(case_toggle_button_, 0, wxLEFT, kPadding);
+  option_hsizer->Add(word_toggle_button_, 0, wxLEFT, kPadding);
+  option_hsizer->AddStretchSpacer();
+  option_hsizer->Add(mode_toggle_button_, 0, 0);
+  vsizer->Add(option_hsizer, 0, wxEXPAND | wxALL, kPadding);
+
+  vsizer->Add(find_combo_box_, wxSizerFlags().Expand().Border(wxLTR));
+
+  {
+    wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+    hsizer->Add(find_button_);
+    hsizer->Add(find_all_button_, wxSizerFlags().Border(wxLEFT));
+    vsizer->Add(hsizer, wxSizerFlags().Align(wxALIGN_RIGHT).Border(wxALL));
+  }
+
+  vsizer->Layout();
+
   UpdateSizes();
+
   SetTitle(kTrFind);
 }
 
 void FindWindow::LayoutAsReplace() {
-  panel_->GetSizer()->Show(kReplaceSizerIndex, true);
+  replace_combo_box_->Show();
+  replace_button_->Show();
+  replace_all_button_->Show();
+
+  wxSizer* vsizer = panel_->GetSizer();
+  vsizer->Clear(false);
+
+  wxSizer* option_hsizer = new wxBoxSizer(wxHORIZONTAL);
+  option_hsizer->Add(regex_toggle_button_, 0, 0, 0);
+  option_hsizer->Add(case_toggle_button_, 0, wxLEFT, kPadding);
+  option_hsizer->Add(word_toggle_button_, 0, wxLEFT, kPadding);
+  option_hsizer->AddStretchSpacer();
+  option_hsizer->Add(mode_toggle_button_, 0, 0);
+  vsizer->Add(option_hsizer, 0, wxEXPAND | wxALL, kPadding);
+
+  vsizer->Add(find_combo_box_, wxSizerFlags().Expand().Border(wxLTR));
+  vsizer->Add(replace_combo_box_, wxSizerFlags().Expand().Border(wxLTR));
+
+  {
+    wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+    hsizer->Add(find_button_);
+    hsizer->Add(find_all_button_, wxSizerFlags().Border(wxLEFT));
+    vsizer->Add(hsizer, wxSizerFlags().Align(wxALIGN_RIGHT).Border(wxLTR));
+  }
+  {
+    wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+    hsizer->Add(replace_button_);
+    hsizer->Add(replace_all_button_, wxSizerFlags().Border(wxLEFT));
+    vsizer->Add(hsizer, wxSizerFlags().Align(wxALIGN_RIGHT).Border(wxALL));
+  }
+
+  vsizer->Layout();
+
   UpdateSizes();
+
   SetTitle(kTrReplace);
 }
 
@@ -402,13 +426,8 @@ ui::BitmapToggleButton* FindWindow::NewToggleButton(wxWindowID id,
   return button;
 }
 
-wxBitmapButton* FindWindow::NewButton(int id,
-                                      const wxString& bitmap,
-                                      const wxString& tooltip) {
-  wxBitmapButton* button = new wxBitmapButton(panel_,
-                                              id,
-                                              skin::GetIcon(bitmap));
-  button->SetToolTip(tooltip);
+wxButton* FindWindow::NewButton(int id, const wxString& label) {
+  wxButton* button = new wxButton(panel_, id, label);
   return button;
 }
 
