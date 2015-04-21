@@ -5,7 +5,6 @@
 #include "boost/regex.hpp"
 #include "editor/indent.h"
 #include "editor/lex.h"
-#include "editor/util.h"
 
 namespace jil {
 namespace editor {
@@ -42,12 +41,6 @@ FtPlugin::FtPlugin(const FileType& file_type)
 FtPlugin::~FtPlugin() {
   ClearContainer(&quotes_);
   ClearContainer(&regexs_);
-}
-
-//------------------------------------------------------------------------------
-
-bool FtPlugin::IsDelimiter(wchar_t c) const {
-  return options_.delimiters.find(c) != std::wstring::npos;
 }
 
 //------------------------------------------------------------------------------

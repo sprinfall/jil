@@ -2184,15 +2184,15 @@ Coord TextBuffer::StringFind(const std::wstring& str,
         return i;
       }
 
-      if (!ft_plugin_->IsDelimiter(sub[0])) {
-        if (i > 0 && !ft_plugin_->IsDelimiter(str[i - 1])) {
+      if (!ft_plugin_->IsSpaceOrDelimiter(sub[0])) {
+        if (i > 0 && !ft_plugin_->IsSpaceOrDelimiter(str[i - 1])) {
           continue;
         }
       }
 
-      if (!ft_plugin_->IsDelimiter(sub[sub.size() - 1])) {
+      if (!ft_plugin_->IsSpaceOrDelimiter(sub[sub.size() - 1])) {
         Coord k = i + sub_size;
-        if (k < CoordCast(str.size()) && !ft_plugin_->IsDelimiter(str[k])) {
+        if (k < CoordCast(str.size()) && !ft_plugin_->IsSpaceOrDelimiter(str[k])) {
           continue;
         }
       }
@@ -2221,15 +2221,15 @@ Coord TextBuffer::StringFindReversely(const std::wstring& str,
         return i;
       }
 
-      if (!ft_plugin_->IsDelimiter(sub[0])) {
-        if (i > 0 && !ft_plugin_->IsDelimiter(str[i - 1])) {
+      if (!ft_plugin_->IsSpaceOrDelimiter(sub[0])) {
+        if (i > 0 && !ft_plugin_->IsSpaceOrDelimiter(str[i - 1])) {
           continue;
         }
       }
 
-      if (!ft_plugin_->IsDelimiter(sub[sub.size() - 1])) {
+      if (!ft_plugin_->IsSpaceOrDelimiter(sub[sub.size() - 1])) {
         Coord k = i + sub_size;
-        if (k < CoordCast(str.size()) && !ft_plugin_->IsDelimiter(str[k])) {
+        if (k < CoordCast(str.size()) && !ft_plugin_->IsSpaceOrDelimiter(str[k])) {
           continue;
         }
       }
@@ -2458,8 +2458,7 @@ Coord TextBuffer::WordBegin(const TextPoint& point, bool include_space) {
       for (; x > 0 && ft_plugin_->IsDelimiter(line->Char(x - 1)); --x) {}
     } else {
       for (; x > 0; --x) {
-        wchar_t c = line->Char(x - 1);
-        if (ft_plugin_->IsDelimiter(c) || IsSpace(c)) {
+        if (ft_plugin_->IsSpaceOrDelimiter(line->Char(x - 1))) {
           break;
         }
       }
@@ -2493,13 +2492,15 @@ Coord TextBuffer::WordEnd(const TextPoint& point, bool include_space) {
   } else {
     // Find the end of this word.
     for (++x; x < length; ++x) {
-      if (IsSpace(line->Char(x))) {
+      c = line->Char(x);
+
+      if (IsSpace(c)) {
         if (include_space) {
           for (++x; x < length && IsSpace(line->Char(x)); ++x) {
           }
         }
         break;
-      } else if (ft_plugin_->IsDelimiter(line->Char(x))) {
+      } else if (ft_plugin_->IsDelimiter(c)) {
         break;
       }
     }
@@ -2512,36 +2513,39 @@ void TextBuffer::SplitWords(const std::wstring& line_data,
                             bool include_space,
                             std::vector<std::wstring>* words) {
   size_t p = 0;
+  size_t length = line_data.size();
+  wchar_t c;
 
-  for (size_t i = 0; i < line_data.size();) {
+  for (size_t i = 0; i < length; ) {
     p = i;
+    c = line_data[i];
 
-    if (IsSpace(line_data[i])) {  // This word will be spaces.
-      while (i < line_data.size() && IsSpace(line_data[i])) {
-        ++i;
+    if (IsSpace(c)) {  // This word will be spaces.
+      for (++i; i < length && IsSpace(line_data[i]); ++i) {
       }
-    } else if (ft_plugin_->IsDelimiter(line_data[i])) {
+    } else if (ft_plugin_->IsDelimiter(c)) {
       // This word will be delimiter(s).
-      while (i < line_data.size() && ft_plugin_->IsDelimiter(line_data[i])) {
-        ++i;
+      for (++i; i < length && ft_plugin_->IsDelimiter(line_data[i]); ++i) {
       }
+
       if (include_space) {
         // Skip the white spaces after this delimiter.
-        while (i < line_data.size() && IsSpace(line_data[i])) {
+        while (i < length && IsSpace(line_data[i])) {
           ++i;
         }
       }
     } else {
       // Find a space or delimiter indicating the end of this word.
-      for (++i; i < line_data.size(); ++i) {
-        if (IsSpace(line_data[i])) {
+      for (++i; i < length; ++i) {
+        c = line_data[i];
+
+        if (IsSpace(c)) {
           if (include_space) {
-            while (i < line_data.size() && IsSpace(line_data[i])) {
-              ++i;
+            for (++i; i < length && IsSpace(line_data[i]); ++i) {
             }
           }
           break;
-        } else if (ft_plugin_->IsDelimiter(line_data[i])) {
+        } else if (ft_plugin_->IsDelimiter(c)) {
           break;
         }
       }
@@ -2780,7 +2784,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
 
         // Get the word.
         for (++i; i < line_data.size(); ++i) {
-          if (ft_plugin_->IsDelimiter(line_data[i])) {
+          if (ft_plugin_->IsSpaceOrDelimiter(line_data[i])) {
             break;
           }
         }

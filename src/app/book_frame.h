@@ -31,6 +31,7 @@ class BookCtrl;
 class BookPage;
 class FindResultPage;
 class FindWindow;
+class FindWindowEvent;
 class Session;
 class Splitter;
 class SplitNode;
@@ -227,6 +228,9 @@ protected:
 
   // \param find_window_mode See FindWindow::ViewMode
   void ShowFindWindow(int find_window_mode);
+
+  // Handle find window events.
+  void OnFindWindowEvent(FindWindowEvent& evt);
 
   // Get find result page, create it if necessary.
   FindResultPage* GetFindResultPage();

@@ -19,7 +19,68 @@ class BitmapToggleButton;
 
 class Session;
 
-class BookFrame;
+////////////////////////////////////////////////////////////////////////////////
+
+BEGIN_DECLARE_EVENT_TYPES()
+// Check GetInt(), which returns FindWindow::EventType, for the details.
+DECLARE_EVENT_TYPE(kFindWindowEvent, 0)
+END_DECLARE_EVENT_TYPES()
+
+class FindWindowEvent : public wxCommandEvent {
+public:
+  FindWindowEvent(int id)
+      : wxCommandEvent(kFindWindowEvent, id)
+      , flags_(0) {
+  }
+
+  FindWindowEvent(const FindWindowEvent& rhs)
+      : wxCommandEvent(rhs)
+      , flags_(rhs.flags_)
+      , find_str_(rhs.find_str_)
+      , replace_str_(rhs.replace_str_) {
+  }
+
+  virtual wxEvent* Clone() const {
+    return new FindWindowEvent(*this);
+  }
+
+  int flags() const {
+    return flags_;
+  }
+  void set_flags(int flags) {
+    flags_ = flags;
+  }
+
+  const std::wstring& find_str() const {
+    return find_str_;
+  }
+  void set_find_str(const std::wstring& find_str) {
+    find_str_ = find_str;
+  }
+
+  const std::wstring& replace_str() const {
+    return replace_str_;
+  }
+  void set_replace_str(const std::wstring& replace_str) {
+    replace_str_ = replace_str;
+  }
+
+private:
+  int flags_;
+  std::wstring find_str_;
+  std::wstring replace_str_;
+};
+
+typedef void (wxEvtHandler::*FindWindowEventFunction)(FindWindowEvent&);
+
+#define FindWindowEventHandler(func)\
+  (wxObjectEventFunction)(wxEventFunction)wxStaticCastEvent(jil::FindWindowEventFunction, &func)
+
+#define EVT_FIND_WINDOW(id, func)\
+  DECLARE_EVENT_TABLE_ENTRY(jil::kFindWindowEvent, id, -1,\
+  FindWindowEventHandler(func), (wxObject*)NULL),
+
+////////////////////////////////////////////////////////////////////////////////
 
 class FindWindow : public wxMiniFrame {
   DECLARE_DYNAMIC_CLASS(FindWindow)
@@ -31,11 +92,21 @@ public:
     kReplaceMode
   };
 
+  // Detailed event types of kFindWindowEvent.
+  enum EventType {
+    kFindStringEvent = 1,
+    kReplaceStringEvent,
+    kFindEvent,
+    kReplaceEvent,
+    kFindAllEvent,
+    kReplaceAllEvent,
+  };
+
 public:
   FindWindow();
   FindWindow(Session* session, int mode);
 
-  bool Create(BookFrame* book_frame, wxWindowID id);
+  bool Create(wxWindow* parent, wxWindowID id);
 
   virtual ~FindWindow();
 
@@ -86,18 +157,19 @@ public:
   void LayoutAsFind();
   void LayoutAsReplace();
 
-  void InitButtonStyle();
-
   ui::BitmapToggleButton* NewToggleButton(wxWindowID id,
                                           const wxString& bitmap,
                                           const wxString& tooltip);
 
   wxButton* NewButton(wxWindowID id, const wxString& label);
+  
+  // \param event_type See enum EventType.
+  void PostEvent(int event_type,
+                 const wxString& find_str,
+                 const wxString& replace_str);
 
  private:
   Session* session_;
-
-  BookFrame* book_frame_;
 
   int mode_;  // enum Mode
 

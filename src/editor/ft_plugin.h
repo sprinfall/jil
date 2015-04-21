@@ -22,6 +22,7 @@
 #include "editor/indent.h"
 #include "editor/lex.h"
 #include "editor/option.h"
+#include "editor/util.h"
 
 namespace jil {
 namespace editor {
@@ -50,7 +51,13 @@ public:
     return options_;
   }
 
-  bool IsDelimiter(wchar_t c) const;
+  inline bool IsDelimiter(wchar_t c) const {
+    return options_.delimiters.find(c) != std::wstring::npos;
+  }
+
+  bool IsSpaceOrDelimiter(wchar_t c) const {
+    return IsSpace(c) || IsDelimiter(c);
+  }
 
   //----------------------------------------------------------------------------
   // Lex

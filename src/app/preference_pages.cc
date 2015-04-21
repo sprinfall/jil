@@ -14,11 +14,6 @@
 #include "app/app.h"
 #include "app/font_util.h"
 
-#define wxLR (wxLEFT|wxRIGHT)
-#define wxLTR (wxLEFT|wxTOP|wxRIGHT)
-#define wxALIGN_CV wxALIGN_CENTER_VERTICAL
-#define wxALIGN_CH wxALIGN_CENTER_HORIZONTAL
-
 namespace jil {
 
 static const wxSize kMinComboBoxSize(120, -1);

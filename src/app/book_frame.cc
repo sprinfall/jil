@@ -133,6 +133,8 @@ EVT_MENU_RANGE(ID_MENU_FILE_FORMAT_BEGIN, \
                ID_MENU_FILE_FORMAT_END - 1, \
                BookFrame::OnStatusFileFormatMenu)
 
+EVT_FIND_WINDOW(ID_FIND_WINDOW, BookFrame::OnFindWindowEvent)
+
 END_EVENT_TABLE()
 
 BookFrame::BookFrame(Options* options, Session* session)
@@ -1631,6 +1633,28 @@ void BookFrame::ShowFindWindow(int find_window_mode) {
 
   // Activate it.
   find_window->Raise();
+}
+
+void BookFrame::OnFindWindowEvent(FindWindowEvent& evt) {
+  int type = evt.GetInt();
+
+  switch (type) {
+    case FindWindow::kFindEvent:
+      FindInActivePage(evt.find_str(), evt.flags());
+      break;
+
+    case FindWindow::kFindAllEvent:
+      FindAllInActivePage(evt.find_str(), evt.flags());
+      break;
+
+    case FindWindow::kReplaceEvent:
+      ReplaceInActivePage(evt.find_str(), evt.replace_str(), evt.flags());
+      break;
+
+    case FindWindow::kReplaceAllEvent:
+      ReplaceAllInActivePage(evt.find_str(), evt.replace_str(), evt.flags());
+      break;
+  }
 }
 
 FindResultPage* BookFrame::GetFindResultPage() {
