@@ -25,6 +25,7 @@ public:
 
   void Init() {
     cjk_filters = 0;
+    line_padding = 1;
     switch_cwd = false;
     restore_files = true;
     show_full_path = true;
@@ -40,6 +41,9 @@ public:
 
   // Theme name.
   wxString theme;
+
+  // Spacing at the top and bottom of a line.
+  int line_padding;
 
   // Switch Current Working Dir when switch text page.
   bool switch_cwd;

@@ -207,6 +207,8 @@ void ParseAppOptions(const Setting& setting, Options* options) {
     options->fonts[kFont_Text] = font;
   }
 
+  GetInt(setting_map, LINE_PADDING, &options->line_padding);
+
   GetBool(setting_map, SWITCH_CWD, &options->switch_cwd);
 
   GetWxString(setting_map, THEME, &options->theme);
@@ -255,8 +257,6 @@ void ParseEditorOptions(const Setting& setting, editor::Options* options) {
 
   //----------------------------------------------------------------------------
   // View options
-
-  GetInt(setting_map, LINE_PADDING, &options->view.line_padding);
 
   GetBool(setting_map, WRAP, &options->view.wrap);
   GetBool(setting_map, SHOW_NUMBER, &options->view.show_number);

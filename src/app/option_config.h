@@ -22,12 +22,12 @@ const char* const CJK = "cjk";
 const char* const FILE_ENCODING = "file_encoding";
 const char* const THEME = "theme";
 const char* const FONTS = "fonts";
+const char* const LINE_PADDING = "line_padding";
 const char* const SWITCH_CWD = "switch_cwd";
 const char* const RESTORE_FILES = "restore_files";
 const char* const SHOW_FULL_PATH = "show_full_path";
 
 // Names of editor options.
-const char* const LINE_PADDING = "line_padding";
 const char* const WRAP = "wrap";
 const char* const SHIFT_WIDTH = "shift_width";
 const char* const TAB_STOP = "tab_stop";

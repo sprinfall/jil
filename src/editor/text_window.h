@@ -100,9 +100,12 @@ public:
   virtual void SetFocus() override;
 
   //----------------------------------------------------------------------------
-  // Font
 
   void SetTextFont(const wxFont& font);
+
+  void set_line_padding(int line_padding) {
+    line_padding_ = line_padding;
+  }
 
   //----------------------------------------------------------------------------
 
@@ -511,13 +514,16 @@ protected:
   // Some text window cannot be changed, e.g., find result.
   bool allow_text_change_;
 
-  // View options copied from text buffer.
-  ViewOptions view_options_;
-
   // Some text options constantly used.
   // Copied from text buffer.
   int tab_stop_;
   bool expand_tab_;
+
+  // View options copied from text buffer.
+  ViewOptions view_options_;
+
+  // Spacing at the top and bottom of a line.
+  int line_padding_;
 
   Style* style_;
   SharedTheme theme_;

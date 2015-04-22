@@ -71,6 +71,7 @@ END_EVENT_TABLE()
 
 TextWindow::TextWindow(TextBuffer* buffer)
     : buffer_(buffer)
+    , line_padding_(1)
     , allow_text_change_(true)
     , view_options_(buffer->view_options())
     , style_(NULL)
@@ -1294,7 +1295,7 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
     if (!view_options_.rulers.empty()) {
       renderer.SetPen(wxPen(theme_->GetColor(RULER)), true);
 
-      //y2 -= view_options_.line_padding;
+      //y2 -= line_padding_;
 
       for (size_t i = 0; i < view_options_.rulers.size(); ++i) {
         int ruler_x = x + char_width_ * view_options_.rulers[i];
@@ -1317,7 +1318,7 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
       renderer.SetBrush(wxBrush(blank_bg), true);
 
       int w = text_area_->GetVirtualSize().x;
-      renderer.DrawRectangle(x, y + view_options_.line_padding, w, h);
+      renderer.DrawRectangle(x, y + line_padding_, w, h);
 
       renderer.RestoreBrush();
       renderer.RestorePen();
@@ -1394,7 +1395,7 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
     }
   }
 
-  int line_text_y = y + view_options_.line_padding;
+  int line_text_y = y + line_padding_;
   DrawTextLine(renderer, line, x, line_text_y);
 
   y += line_height_;
@@ -1464,7 +1465,7 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
       }
 
       int _x = x;
-      int _y = y + view_options_.line_padding;
+      int _y = y + line_padding_;
 
       std::list<const LexElem*> lex_elems = line->lex_elems(sub_range);
 
@@ -1530,7 +1531,7 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
       }
 
       int _x = x;
-      int _y = y + view_options_.line_padding;
+      int _y = y + line_padding_;
 
       // Get the range, [i, j), of the line piece to draw.
       Coord i = sub_range.begin();
@@ -2612,10 +2613,7 @@ void TextWindow::UpdateCharSize() {
   int ext_leading = 0;  // Usually 0.
   text_extent_->GetExtent(L"T", &char_width_, &char_height_, &ext_leading);
 
-  line_height_ = char_height_ +
-                 ext_leading +
-                 view_options_.line_padding +
-                 view_options_.line_padding;
+  line_height_ = char_height_ + ext_leading + line_padding_ + line_padding_;
 }
 
 void TextWindow::UpdateTextSize() {

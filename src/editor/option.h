@@ -113,15 +113,11 @@ public:
   }
 
   void Init() {
-    line_padding = 1;
     wrap = false;
     show_number = true;
     show_space = false;
     show_hscrollbar = false;
   }
-
-  // Spacing at the top and bottom of a line.
-  int line_padding;
 
   // Wrap line.
   bool wrap;

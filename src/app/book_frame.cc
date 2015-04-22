@@ -1682,7 +1682,7 @@ FindResultPage* BookFrame::GetFindResultPage() {
   fr_page->set_theme(theme_->GetTheme(THEME_TEXT_PAGE));
   fr_page->set_binding(binding_);
   fr_page->set_leader_key(&leader_key_);
-
+  fr_page->set_line_padding(options_->line_padding);
   fr_page->Create(tool_book_->PageParent(), ID_FIND_RESULT_PAGE, true);
 
   fr_page->SetTextFont(options_->fonts[kFont_Text]);
@@ -1959,16 +1959,14 @@ void BookFrame::UpdateRecentFilesMenu() {
   }
 }
 
-TextPage* BookFrame::CreateTextPage(editor::TextBuffer* buffer,
-                                    wxWindow* parent,
-                                    wxWindowID id) {
+TextPage* BookFrame::CreateTextPage(editor::TextBuffer* buffer, wxWindow* parent, wxWindowID id) {
   TextPage* page = new TextPage(buffer);
 
   page->set_style(style_);
   page->set_theme(theme_->GetTheme(THEME_TEXT_PAGE));
   page->set_binding(binding_);
   page->set_leader_key(&leader_key_);
-
+  page->set_line_padding(options_->line_padding);
   page->Create(parent, id, true);
 
   page->SetTextFont(options_->fonts[kFont_Text]);
