@@ -431,10 +431,11 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
   LoadLexFile(ftplugin_dir + kLexFile, ft_plugin);
 
   // Options
-  editor::Options& ft_editor_options = ft_plugin->options();
-  // Copy global options, then overwrite.
-  ft_editor_options = editor_options_;
 
+  // Copy global options.
+  editor::Options ft_editor_options = editor_options_;
+
+  // Overwrite with the file type specific values.
   Config config;
   if (config.Load(ftplugin_dir + kOptionsFile)) {
     Setting editor_setting = config.Root().Get("editor");
@@ -442,6 +443,8 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
       ParseEditorOptions(editor_setting, &ft_editor_options);
     }
   }
+
+  ft_plugin->set_options(ft_editor_options);
 
   ft_plugins_.push_back(ft_plugin);
   return ft_plugin;

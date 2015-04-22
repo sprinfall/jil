@@ -63,10 +63,9 @@ typedef std::vector<std::pair<std::string, OptionValue> > OptionTable;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// For fast option access (No key-value map).
-class Options {
+class TextOptions {
 public:
-  Options() {
+  TextOptions() {
     Init();
   }
 
@@ -77,16 +76,7 @@ public:
 
     comment_add_space = true;
     comment_respect_indent = true;
-
-    line_padding = 1;
-    wrap = false;
-    show_number = true;
-    show_space = false;
-    show_hscrollbar = false;
   }
-
-  //----------------------------------------------------------------------------
-  // Text options
 
   // The number of spaces to increase indent.
   int shift_width;
@@ -114,9 +104,21 @@ public:
   // Comment options.
   bool comment_add_space;
   bool comment_respect_indent;
+};
 
-  //----------------------------------------------------------------------------
-  // View options
+class ViewOptions {
+public:
+  ViewOptions() {
+    Init();
+  }
+
+  void Init() {
+    line_padding = 1;
+    wrap = false;
+    show_number = true;
+    show_space = false;
+    show_hscrollbar = false;
+  }
 
   // Spacing at the top and bottom of a line.
   int line_padding;
@@ -135,6 +137,12 @@ public:
 
   // Display vertical lines at the given columns.
   std::vector<int> rulers;
+};
+
+class Options {
+public:
+  TextOptions text;
+  ViewOptions view;
 };
 
 }  // namespace editor

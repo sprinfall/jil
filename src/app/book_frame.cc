@@ -375,7 +375,7 @@ void BookFrame::ShowReplace() {
 void BookFrame::Wrap() {
   TextPage* text_page = ActiveTextPage();
   if (text_page != NULL) {
-    bool wrap = !text_page->options().wrap;
+    bool wrap = !text_page->view_options().wrap;
     text_page->Wrap(wrap);
   }
 }
@@ -383,7 +383,7 @@ void BookFrame::Wrap() {
 void BookFrame::ShowNumber() {
   TextPage* text_page = ActiveTextPage();
   if (text_page != NULL) {
-    bool show_number = !text_page->options().show_number;
+    bool show_number = !text_page->view_options().show_number;
     text_page->ShowNumber(show_number);
   }
 }
@@ -391,7 +391,7 @@ void BookFrame::ShowNumber() {
 void BookFrame::ShowSpace() {
   TextPage* text_page = ActiveTextPage();
   if (text_page != NULL) {
-    bool show_space = !text_page->options().show_space;
+    bool show_space = !text_page->view_options().show_space;
     text_page->ShowSpace(show_space);
   }
 }
@@ -1915,15 +1915,15 @@ bool BookFrame::GetViewMenuState(int menu_id, bool* check) {
   if (state && check != NULL) {
     switch (menu_id) {
       case ID_MENU_VIEW_WRAP:
-        *check = text_page->options().wrap;
+        *check = text_page->view_options().wrap;
         break;
 
       case ID_MENU_VIEW_SHOW_NUMBER:
-        *check = text_page->options().show_number;
+        *check = text_page->view_options().show_number;
         break;
 
       case ID_MENU_VIEW_SHOW_SPACE:
-        *check = text_page->options().show_space;
+        *check = text_page->view_options().show_space;
         break;
     }
   }

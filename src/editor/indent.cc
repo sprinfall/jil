@@ -66,8 +66,8 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
   bool indent_namespace = false;
   bool indent_case = false;
 
-  Coord tab_stop = buffer->options().tab_stop;
-  Coord shift_width = buffer->options().shift_width;
+  Coord tab_stop = buffer->text_options().tab_stop;
+  Coord shift_width = buffer->text_options().shift_width;
 
   Coord x = kInvalidCoord;
 
@@ -309,8 +309,8 @@ Coord IndentGo(const TextBuffer* buffer, Coord ln) {
     return 0;
   }
 
-  Coord tab_stop = buffer->options().tab_stop;
-  Coord shift_width = buffer->options().shift_width;
+  Coord tab_stop = buffer->text_options().tab_stop;
+  Coord shift_width = buffer->text_options().shift_width;
 
   const TextLine* prev_line = buffer->Line(prev_ln);
   const TextLine* line = buffer->Line(ln);

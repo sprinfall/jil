@@ -47,12 +47,20 @@ public:
   //----------------------------------------------------------------------------
   // Options
 
-  Options& options() {
+  const Options& options() const {
     return options_;
   }
 
+  void set_options(const Options& options) {
+    options_ = options;
+  }
+
+  void set_text_options(const TextOptions& text_options) {
+    options_.text = text_options;
+  }
+
   inline bool IsDelimiter(wchar_t c) const {
-    return options_.delimiters.find(c) != std::wstring::npos;
+    return options_.text.delimiters.find(c) != std::wstring::npos;
   }
 
   bool IsSpaceOrDelimiter(wchar_t c) const {
@@ -126,7 +134,7 @@ private:
 
   FileType file_type_;
 
-  // File type specific options.
+  // Options specific to this file type.
   Options options_;
 
   // Some file types ignore case for keywords, e.g., VB.

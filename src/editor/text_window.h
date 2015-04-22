@@ -22,18 +22,18 @@ class wxTimerEvent;
 namespace jil {
 namespace editor {
 
-class LineNrArea;
-class TextArea;
-class TextBuffer;
+class Action;
 class FtPlugin;
-class TextLine;
-class TextExtent;
-class WrapHelper;
+class LineNrArea;
 class Renderer;
 class Style;
 class StyleValue;
-class Options;
-class Action;
+class TextArea;
+class TextBuffer;
+class TextExtent;
+class TextLine;
+class ViewOptions;
+class WrapHelper;
 
 class TextWindow : public wxScrolledWindow, public BufferListener {
   DECLARE_CLASS(TextWindow)
@@ -121,9 +121,11 @@ public:
   //----------------------------------------------------------------------------
   // Options
 
-  const Options& options() const {
-    return options_;
+  const ViewOptions& view_options() const {
+    return view_options_;
   }
+
+  const TextOptions& text_options() const;
 
   // Wrap or unwrap lines.
   void Wrap(bool wrap);
@@ -509,9 +511,13 @@ protected:
   // Some text window cannot be changed, e.g., find result.
   bool allow_text_change_;
 
-  // Options initially copied from text buffer.
-  // TODO: Only copy view options (wrap, show_number, etc.).
-  Options options_;
+  // View options copied from text buffer.
+  ViewOptions view_options_;
+
+  // Some text options constantly used.
+  // Copied from text buffer.
+  int tab_stop_;
+  bool expand_tab_;
 
   Style* style_;
   SharedTheme theme_;

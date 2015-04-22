@@ -16,11 +16,13 @@ class IndentCppTest : public testing::Test {
 protected:
   virtual void SetUp() {
     ft_plugin_ = new FtPlugin(FileType(wxT("cpp"), wxT("C++")));
-    ft_plugin_->options().expand_tab = true;
-    ft_plugin_->options().tab_stop = 4;
-    ft_plugin_->options().shift_width = 4;
 
-    ft_plugin_->options().delimiters = L"!@#%^$&*()+-=\\|/?[]{}<>,.;:'\"`~";
+    TextOptions text_options;
+    text_options.expand_tab = true;
+    text_options.tab_stop = 4;
+    text_options.shift_width = 4;
+    text_options.delimiters = L"!@#%^$&*()+-=\\|/?[]{}<>,.;:'\"`~";
+    ft_plugin_->set_text_options(text_options);
 
     Quote* quote1 = new Quote(Lex(kLexComment), L"/*", L"*/", kQuoteMultiLine);
     ft_plugin_->AddQuote(quote1);

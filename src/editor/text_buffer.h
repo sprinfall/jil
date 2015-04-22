@@ -193,6 +193,14 @@ public:
     return options_;
   }
 
+  const TextOptions& text_options() const {
+    return options_.text;
+  }
+
+  const ViewOptions& view_options() const {
+    return options_.view;
+  }
+
   // Get extra indent option.
   OptionValue GetIndentOption(const std::string& key) const;
 
@@ -671,7 +679,7 @@ private:
   // Shared file type specific data.
   FtPlugin* ft_plugin_;
 
-  // Options specific this buffer.
+  // Options specific to this buffer.
   // There might be some difference from the ones in the ft plugin.
   Options options_;
 

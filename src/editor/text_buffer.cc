@@ -599,9 +599,9 @@ wxString TextBuffer::file_path(int flags, wxPathFormat format) const {
 //------------------------------------------------------------------------------
 
 OptionValue TextBuffer::GetIndentOption(const std::string& key) const {
-  for (size_t i = 0; i < options_.indent_options.size(); ++i) {
-    if (key == options_.indent_options[i].first) {
-      options_.indent_options[i].second;
+  for (size_t i = 0; i < options_.text.indent_options.size(); ++i) {
+    if (key == options_.text.indent_options[i].first) {
+      options_.text.indent_options[i].second;
     }
   }
   return OptionValue();
@@ -1241,7 +1241,7 @@ void TextBuffer::ThawNotify() {
 //------------------------------------------------------------------------------
 
 Coord TextBuffer::GetIndent(Coord ln) const {
-  return Line(ln)->GetIndent(options_.tab_stop);
+  return Line(ln)->GetIndent(options_.text.tab_stop);
 }
 
 std::wstring TextBuffer::GetIndentStr(Coord ln) const {
@@ -2712,8 +2712,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
 
     if (quote != NULL) {  // Check quote end.
       size_t quote_i = i;
-      if (!quote->end().empty() &&
-          SubStringEquals(line_data, i, quote->end())) {
+      if (!quote->end().empty() && SubStringEquals(line_data, i, quote->end())) {
         quote_i += quote->end().length();
 
         if (i == 0 || !IsUnescapedBackSlash(line_data, i - 1)) {  // Quote ends.
@@ -2803,10 +2802,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
           // Look back to check if the previous word is a lex prefix.
           // FIXME: If the previous word is operators, only one single
           // operator is supported.
-          if (ft_plugin_->MatchPrefix(line_data,
-                                      prev_le.off,
-                                      prev_le.len,
-                                      &le.lex)) {
+          if (ft_plugin_->MatchPrefix(line_data, prev_le.off, prev_le.len, &le.lex)) {
             line->AddLexElem(le);
             prev_le = le;
             continue;
@@ -2839,24 +2835,17 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
   }
 
   // Single line quote.
-  line->AddQuoteElem(quote,
-                     quote_off,
-                     line_data.size() - quote_off,
-                     kQuoteBody);
+  line->AddQuoteElem(quote, quote_off, line_data.size() - quote_off, kQuoteBody);
 
   if (quote->end().empty()) {  // Quote ends with EOL.
-    if (!quote->escape_eol() ||
-        !(!line_data.empty() &&
-          IsUnescapedBackSlash(line_data, line_data.size() - 1))) {
+    if (!quote->escape_eol() || !(!line_data.empty() && IsUnescapedBackSlash(line_data, line_data.size() - 1))) {
       // Quote ends.
       line->AddQuoteElem(quote, line_data.size(), 0, kQuoteEnd);
       quote = NULL;
     }  // else: EOL is escaped, quote continues.
 
   } else {  // Quote has an end marker.
-    if (line_data.empty() ||
-        !quote->escape_eol() ||
-        !IsUnescapedBackSlash(line_data, line_data.size() - 1)) {
+    if (line_data.empty() || !quote->escape_eol() || !IsUnescapedBackSlash(line_data, line_data.size() - 1)) {
       // Quote is invalid with no end marker found. Just end it.
       line->AddQuoteElem(quote, line_data.size(), 0, kQuoteEnd);
       quote = NULL;
@@ -2914,8 +2903,7 @@ Coord TextBuffer::ScanLexTillQuoteEnd(Coord start_ln, Quote* quote) {
 }
 
 void TextBuffer::ScanLexOnLineUpdated(const LineRange& line_range) {
-  wxLogDebug(wxT("TextBuffer::ScanLexOnLineUpdated(%s)"),
-             line_range.ToString().c_str());
+  wxLogDebug(wxT("TextBuffer::ScanLexOnLineUpdated(%s)"), line_range.ToString().c_str());
 
   // Check previous unended quote.
   Quote* quote = NULL;
@@ -2923,9 +2911,7 @@ void TextBuffer::ScanLexOnLineUpdated(const LineRange& line_range) {
     quote = Line(line_range.first() - 1)->UnendedQuote(true);
   }
 
-  wxLogDebug("  - Scan lex from line %d to %d",
-             line_range.first(),
-             line_range.last());
+  wxLogDebug("  - Scan lex from line %d to %d", line_range.first(), line_range.last());
 
   for (Coord ln = line_range.first(); ln < line_range.last(); ++ln) {
     ScanLex(Line(ln), quote);
@@ -2958,15 +2944,12 @@ void TextBuffer::ScanLexOnLineUpdated(const LineRange& line_range) {
       ScanLex(stop_ln + 1, quote);
     }
 
-    wxLogDebug("  - Scan lex from line %d to %d",
-               line_range.last() + 1,
-               stop_ln);
+    wxLogDebug("  - Scan lex from line %d to %d", line_range.last() + 1, stop_ln);
   }
 }
 
 void TextBuffer::ScanLexOnLineAdded(const LineRange& line_range) {
-  wxLogDebug(wxT("TextBuffer::ScanLexOnLineAdded(%s)"),
-             line_range.ToString().c_str());
+  wxLogDebug(wxT("TextBuffer::ScanLexOnLineAdded(%s)"), line_range.ToString().c_str());
 
   // Check previous unended quote.
   Quote* quote = NULL;
@@ -2976,9 +2959,7 @@ void TextBuffer::ScanLexOnLineAdded(const LineRange& line_range) {
     quote_before = quote;
   }
 
-  wxLogDebug("  - Scan lex from line %d to %d",
-             line_range.first(),
-             line_range.last());
+  wxLogDebug("  - Scan lex from line %d to %d", line_range.first(), line_range.last());
 
   for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
     ScanLex(Line(ln), quote);
@@ -2989,15 +2970,12 @@ void TextBuffer::ScanLexOnLineAdded(const LineRange& line_range) {
     wxLogDebug("  - Last line quote changes: %d", line_range.last());
     Coord stop_ln = ScanLexTillQuoteEnd(line_range.last() + 1, quote);
 
-    wxLogDebug("  - Scan lex from line %d to %d",
-               line_range.last() + 1,
-               stop_ln);
+    wxLogDebug("  - Scan lex from line %d to %d", line_range.last() + 1, stop_ln);
   }
 }
 
 void TextBuffer::ScanLexOnLineDeleted(const LineRange& line_range) {
-  wxLogDebug(wxT("TextBuffer::ScanLexOnLineDeleted(%s)"),
-             line_range.ToString().c_str());
+  wxLogDebug(wxT("TextBuffer::ScanLexOnLineDeleted(%s)"), line_range.ToString().c_str());
 
   Quote* quote = NULL;
   if (line_range.first() > 1) {
@@ -3017,9 +2995,7 @@ void TextBuffer::ScanLexOnLineDeleted(const LineRange& line_range) {
 
     if (next_quote != quote) {
       Coord stop_ln = ScanLexTillQuoteEnd(line_range.first(), quote);
-      wxLogDebug("  - Scan lex from line %d to %d",
-                 line_range.first(),
-                 stop_ln);
+      wxLogDebug("  - Scan lex from line %d to %d", line_range.first(), stop_ln);
     }
   }
 }

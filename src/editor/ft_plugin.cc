@@ -259,7 +259,7 @@ bool FtPlugin::MatchSuffix(const std::wstring& str,
 bool FtPlugin::MatchIndentKey(const std::wstring& str,
                               size_t off,
                               size_t len) const {
-  const std::vector<std::wstring>& indent_keys = options_.indent_keys;
+  const std::vector<std::wstring>& indent_keys = options_.text.indent_keys;
   for (size_t i = 0; i < indent_keys.size(); ++i) {
     if (indent_keys[i].size() == len) {
       if (wcsncmp_(&str[off], indent_keys[i].c_str(), len) == 0) {

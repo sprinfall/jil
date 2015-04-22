@@ -225,49 +225,49 @@ void ParseEditorOptions(const Setting& setting, editor::Options* options) {
   //----------------------------------------------------------------------------
   // Text options
 
-  GetInt(setting_map, SHIFT_WIDTH, &options->shift_width);
-  GetInt(setting_map, TAB_STOP, &options->tab_stop);
-  GetBool(setting_map, EXPAND_TAB, &options->expand_tab);
+  GetInt(setting_map, SHIFT_WIDTH, &options->text.shift_width);
+  GetInt(setting_map, TAB_STOP, &options->text.tab_stop);
+  GetBool(setting_map, EXPAND_TAB, &options->text.expand_tab);
 
-  GetWString(setting_map, DELIMITERS, &options->delimiters);
+  GetWString(setting_map, DELIMITERS, &options->text.delimiters);
 
   // Indent keys
   Setting ik_setting = GetSetting(setting_map, INDENT_KEYS, Setting::kArray);
   if (ik_setting) {
-    options->indent_keys.clear();  // Clear global setting.
+    options->text.indent_keys.clear();  // Clear global setting.
 
     for (int i = 0; i < ik_setting.size(); ++i) {
       const char* str = ik_setting[i].GetString();
       // Assume that the string is pure ascii.
-      options->indent_keys.push_back(std::wstring(str, str + strlen(str)));
+      options->text.indent_keys.push_back(std::wstring(str, str + strlen(str)));
     }
   }
 
   // Extra indent options
-  GetOptionTable(setting_map["indent"], &options->indent_options);
+  GetOptionTable(setting_map["indent"], &options->text.indent_options);
 
   // Comment options
   Setting comment_setting = setting_map["comment"];
   if (comment_setting) {
-    options->comment_add_space = comment_setting.GetBool("add_space");
-    options->comment_respect_indent = comment_setting.GetBool("respect_indent");
+    options->text.comment_add_space = comment_setting.GetBool("add_space");
+    options->text.comment_respect_indent = comment_setting.GetBool("respect_indent");
   }
 
   //----------------------------------------------------------------------------
   // View options
 
-  GetInt(setting_map, LINE_PADDING, &options->line_padding);
+  GetInt(setting_map, LINE_PADDING, &options->view.line_padding);
 
-  GetBool(setting_map, WRAP, &options->wrap);
-  GetBool(setting_map, SHOW_NUMBER, &options->show_number);
-  GetBool(setting_map, SHOW_SPACE, &options->show_space);
-  GetBool(setting_map, SHOW_HSCROLLBAR, &options->show_hscrollbar);
+  GetBool(setting_map, WRAP, &options->view.wrap);
+  GetBool(setting_map, SHOW_NUMBER, &options->view.show_number);
+  GetBool(setting_map, SHOW_SPACE, &options->view.show_space);
+  GetBool(setting_map, SHOW_HSCROLLBAR, &options->view.show_hscrollbar);
 
   Setting rulers_setting = GetSetting(setting_map, RULERS, Setting::kArray);
   if (rulers_setting) {
-    options->rulers.clear();  // Clear global setting.
+    options->view.rulers.clear();  // Clear global setting.
     for (int i = 0; i < rulers_setting.size(); ++i) {
-      options->rulers.push_back(rulers_setting[i].GetInt());
+      options->view.rulers.push_back(rulers_setting[i].GetInt());
     }
   }
 }

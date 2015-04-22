@@ -288,7 +288,7 @@ IncreaseIndentAction::~IncreaseIndentAction() {
 }
 
 void IncreaseIndentAction::Exec() {
-  const Options& options = buffer_->ft_plugin()->options();
+  const TextOptions& options = buffer_->text_options();
 
   if (options.expand_tab) {
     spaces_ = std::wstring(options.tab_stop, kSpaceChar);
@@ -339,7 +339,7 @@ TextRange IncreaseIndentAction::SelectionAfterExec() const {
     return range_;
   }
 
-  const Options& options = buffer_->ft_plugin()->options();
+  const TextOptions& options = buffer_->text_options();
   Coord spaces = options.expand_tab ? options.tab_stop : 1;
 
   TextPoint point_begin(range_.point_begin());
@@ -454,7 +454,7 @@ bool DecreaseIndentAction::DecreaseIndentLine(Coord ln) {
     return false;  // No indent to decrease.
   }
 
-  const Options& options = buffer_->ft_plugin()->options();
+  const TextOptions& options = buffer_->text_options();
 
   // Delete from the front of line.
   Coord count = 0;
@@ -529,7 +529,7 @@ void AutoIndentLineAction::Exec() {
 
   // Insert new indent.
   if (expected_indent > 0) {
-    const Options& options = buffer_->ft_plugin()->options();
+    const TextOptions& options = buffer_->text_options();
     std::wstring indent_str = ComposeIndentString(expected_indent,
                                                   options.expand_tab,
                                                   options.tab_stop);
@@ -573,8 +573,7 @@ TextPoint AutoIndentLineAction::CaretPointAfterExec() const {
 
   // TODO
   if (buffer_->IsLineEmpty(ln_, true)) {
-    const Options& options = buffer_->ft_plugin()->options();
-    return caret_point_ + TextPoint(options.shift_width, 0);
+    return caret_point_ + TextPoint(buffer_->text_options().shift_width, 0);
   }
 
   Coord delta = CoordCast(new_indent_str_.size()) -
@@ -718,7 +717,7 @@ bool AutoIndentAction::AutoIndentLine(Coord ln) {
 
   // Insert new indent.
   if (expected_indent > 0) {
-    const Options& options = buffer_->ft_plugin()->options();
+    const TextOptions& options = buffer_->text_options();
     std::wstring indent_str = ComposeIndentString(expected_indent,
                                                   options.expand_tab,
                                                   options.tab_stop);
@@ -753,7 +752,7 @@ void CommentAction::Exec() {
   effective_ = true;
 
   // Comment options.
-  bool add_space = buffer_->options().comment_add_space;
+  bool add_space = buffer_->text_options().comment_add_space;
 
   if (range_.IsEmpty()) {
     CommentLines(range_.GetLineRange());
@@ -833,12 +832,12 @@ void CommentAction::CommentLines(const LineRange& line_range) {
     CommentBlock(TextRange(point_begin, point_end));
   } else {
     TextPoint p(0, 1);
-    if (buffer_->options().comment_respect_indent) {
+    if (buffer_->text_options().comment_respect_indent) {
       p.x = GetMinIndent(line_range);
     }
 
     std::wstring comment_start = sline_comment.start;
-    if (buffer_->options().comment_add_space) {
+    if (buffer_->text_options().comment_add_space) {
       comment_start.append(1, kSpaceChar);
     }
 
@@ -855,7 +854,7 @@ void CommentAction::CommentBlock(const TextRange& range) {
   std::wstring comment_start = block_comment.start;
   std::wstring comment_end = block_comment.end;
 
-  if (buffer_->options().comment_add_space) {
+  if (buffer_->text_options().comment_add_space) {
     comment_start.append(1, kSpaceChar);
     comment_end.insert(comment_end.begin(), 1, kSpaceChar);
   }
