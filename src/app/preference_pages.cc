@@ -76,9 +76,9 @@ void GeneralPagePanel::CreateControls() {
       FillFileEncodingComboBox(combo_box);
 
       wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-      hsizer->Add(label, wxSizerFlags().Align(wxALIGN_CV));
+      hsizer->Add(label, wxSizerFlags().Center());
       hsizer->AddStretchSpacer(1);
-      hsizer->Add(combo_box, wxSizerFlags().Align(wxALIGN_CV).Border(wxLEFT));
+      hsizer->Add(combo_box, wxSizerFlags().Center().Border(wxLEFT));
 
       box_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
     }
@@ -111,8 +111,8 @@ void GeneralPagePanel::CreateControls() {
     wxTextCtrl* text_ctrl = new wxTextCtrl(this, wxID_ANY, wxEmptyString);
 
     wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-    hsizer->Add(label, wxSizerFlags().Align(wxALIGN_CV));
-    hsizer->Add(text_ctrl, wxSizerFlags().Align(wxALIGN_CV).Border(wxLEFT));
+    hsizer->Add(label, wxSizerFlags().Center());
+    hsizer->Add(text_ctrl, wxSizerFlags().Center().Border(wxLEFT));
 
     top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
   }
@@ -191,8 +191,8 @@ void ThemePagePanel::CreateControls() {
 
       wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
       hsizer->AddStretchSpacer();
-      hsizer->Add(label, wxSizerFlags().Align(wxALIGN_CV));
-      hsizer->Add(combo_box, wxSizerFlags().Align(wxALIGN_CV).Border(wxLEFT));
+      hsizer->Add(label, wxSizerFlags().Center());
+      hsizer->Add(combo_box, wxSizerFlags().Center().Border(wxLEFT));
 
       box_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
     }
@@ -287,8 +287,8 @@ void EditorPagePanel::CreateControls() {
 
     wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
     hsizer->AddStretchSpacer();
-    hsizer->Add(label, wxSizerFlags().Align(wxALIGN_CV));
-    hsizer->Add(combo_box, wxSizerFlags().Align(wxALIGN_CV).Border(wxLEFT));
+    hsizer->Add(label, wxSizerFlags().Center());
+    hsizer->Add(combo_box, wxSizerFlags().Center().Border(wxLEFT));
 
     top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
   }
@@ -326,9 +326,9 @@ void EditorPagePanel::CreateControls() {
       wxTextCtrl* text_ctrl = new wxTextCtrl(box, wxID_ANY, wxEmptyString);
 
       wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-      hsizer->Add(label, wxSizerFlags().Align(wxALIGN_CV));
+      hsizer->Add(label, wxSizerFlags().Center());
       hsizer->AddStretchSpacer(1);
-      hsizer->Add(text_ctrl, wxSizerFlags().Align(wxALIGN_CV).Border(wxLEFT));
+      hsizer->Add(text_ctrl, wxSizerFlags().Center().Border(wxLEFT));
 
       box_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
     }
@@ -353,11 +353,11 @@ void EditorPagePanel::CreateControls() {
       wxTextCtrl* sw_text_ctrl = new wxTextCtrl(box, wxID_ANY, wxEmptyString, wxDefaultPosition, kTextCtrlSize);
 
       wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-      hsizer->Add(ts_label, wxSizerFlags().Align(wxALIGN_CV));
-      hsizer->Add(ts_text_ctrl, wxSizerFlags().Align(wxALIGN_CV).Border(wxLEFT));
+      hsizer->Add(ts_label, wxSizerFlags().Center());
+      hsizer->Add(ts_text_ctrl, wxSizerFlags().Center().Border(wxLEFT));
       hsizer->AddStretchSpacer(1);
-      hsizer->Add(sw_label, wxSizerFlags().Align(wxALIGN_CV).Border(wxLEFT));
-      hsizer->Add(sw_text_ctrl, wxSizerFlags().Align(wxALIGN_CV).Border(wxLEFT));
+      hsizer->Add(sw_label, wxSizerFlags().Center().Border(wxLEFT));
+      hsizer->Add(sw_text_ctrl, wxSizerFlags().Center().Border(wxLEFT));
       box_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
     }
 
@@ -376,8 +376,8 @@ void EditorPagePanel::CreateControls() {
     wxTextCtrl* text_ctrl = new wxTextCtrl(this, wxID_ANY, wxEmptyString);
 
     wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-    hsizer->Add(label, wxSizerFlags().Align(wxALIGN_CV));
-    hsizer->Add(text_ctrl, wxSizerFlags(1).Align(wxALIGN_CV).Border(wxLEFT));
+    hsizer->Add(label, wxSizerFlags().Center());
+    hsizer->Add(text_ctrl, wxSizerFlags(1).Center().Border(wxLEFT));
     top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
   }
 

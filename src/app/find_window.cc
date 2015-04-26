@@ -1,11 +1,12 @@
 #include "app/find_window.h"
 
 #include "wx/button.h"
-#include "wx/bmpbuttn.h"
 #include "wx/textctrl.h"
 #include "wx/combobox.h"
 #include "wx/checkbox.h"
 #include "wx/sizer.h"
+#include "wx/statline.h"
+#include "wx/stattext.h"
 #include "wx/frame.h"  // wxFRAME_TOOL_WINDOW
 #include "wx/log.h"
 
@@ -19,51 +20,47 @@
 #include "app/text_page.h"
 #include "app/util.h"
 
-#define kTrUseRegex _("Use regular expression")
-#define kTrCaseSensitive _("Case sensitive")
-#define kTrMatchWholeWord _("Match whole word")
-#define kTrSearchReversely _("Search reversely")
-#define kTrSwitchMode _("Switch between find and replace modes")
+#define kTitle _("Find & Replace")
 
-#define kTrFind _("Find")
-#define kTrReplace _("Replace")
-#define kTrFindAll _("Find All")
-#define kTrReplaceAll _("Replace All")
+#define kTrUseRegex _("Use regular &expression")
+#define kTrCaseSensitive _("&Case sensitive")
+#define kTrMatchWord _("Match whole &word")
+//#define kTrSearchReversely _("Search reversely")
+//#define kTrSwitchMode _("Switch between find and replace modes")
 
 namespace jil {
-
-const long kFindWindowStyle = wxCLOSE_BOX |\
-                              wxCAPTION |\
-                              wxCLIP_CHILDREN |\
-                              wxRESIZE_BORDER |\
-                              wxFRAME_TOOL_WINDOW |\
-                              wxWANTS_CHARS;  // EVT_CHAR_HOOK needs this.
 
 DEFINE_EVENT_TYPE(kFindWindowEvent)
 
 IMPLEMENT_DYNAMIC_CLASS(FindWindow, wxMiniFrame);
 
 BEGIN_EVENT_TABLE(FindWindow, wxMiniFrame)
-EVT_ACTIVATE(FindWindow::OnActivate)
-EVT_CLOSE(FindWindow::OnClose)
-EVT_CHAR_HOOK(FindWindow::OnKeyDownHook)
-EVT_TOGGLEBUTTON(ID_REGEX_TOGGLE_BUTTON, FindWindow::OnUseRegexToggle)
-EVT_TOGGLEBUTTON(ID_CASE_TOGGLE_BUTTON, FindWindow::OnCaseSensitiveToggle)
-EVT_TOGGLEBUTTON(ID_WORD_TOGGLE_BUTTON, FindWindow::OnMatchWholeWordToggle)
-//EVT_TOGGLEBUTTON(kSearchReverselyToggleId, FindWindow::OnSearchReverselyToggle)
-EVT_TOGGLEBUTTON(ID_FIND_MODE_TOGGLE_BUTTON, FindWindow::OnModeToggle)
-EVT_BUTTON(ID_FIND_BUTTON, FindWindow::OnFind)
-EVT_BUTTON(ID_FIND_ALL_BUTTON, FindWindow::OnFindAll)
-EVT_BUTTON(ID_REPLACE_BUTTON, FindWindow::OnReplace)
-EVT_BUTTON(ID_REPLACE_ALL_BUTTON, FindWindow::OnReplaceAll)
-END_EVENT_TABLE();
+EVT_ACTIVATE    (FindWindow::OnActivate)
+EVT_CLOSE       (FindWindow::OnClose)
+EVT_CHAR_HOOK   (FindWindow::OnKeyDownHook)
+
+//EVT_TOGGLEBUTTON(ID_FIND_MODE_TOGGLE_BUTTON, FindWindow::OnModeToggle)
+
+EVT_COMBOBOX(ID_LOCATION_COMBOBOX, FindWindow::OnLocationComboBox)
+
+EVT_TOGGLEBUTTON(ID_SHOW_OPTIONS_BUTTON, FindWindow::OnShowOptionsToggleButton)
+
+EVT_CHECKBOX(ID_USE_REGEX_CHECKBOX,         FindWindow::OnUseRegexCheckBox)
+EVT_CHECKBOX(ID_CASE_SENSITIVE_CHECKBOX,    FindWindow::OnCaseSensitiveCheckBox)
+EVT_CHECKBOX(ID_MATCH_WORD_CHECKBOX,        FindWindow::OnMatchWordCheckBox)
+
+EVT_BUTTON(ID_FIND_BUTTON,          FindWindow::OnFind)
+EVT_BUTTON(ID_FIND_ALL_BUTTON,      FindWindow::OnFindAll)
+EVT_BUTTON(ID_REPLACE_BUTTON,       FindWindow::OnReplace)
+EVT_BUTTON(ID_REPLACE_ALL_BUTTON,   FindWindow::OnReplaceAll)
+END_EVENT_TABLE()
 
 FindWindow::FindWindow()
-    : session_(NULL), mode_(kFindMode) {
+    : session_(NULL), mode_(kFindMode), flags_(0), location_(kCurrentPage) {
 }
 
 FindWindow::FindWindow(Session* session, int mode)
-    : session_(session), mode_(mode) {
+    : session_(session), mode_(mode), flags_(0), location_(kCurrentPage) {
 }
 
 bool FindWindow::Create(wxWindow* parent, wxWindowID id) {
@@ -71,46 +68,20 @@ bool FindWindow::Create(wxWindow* parent, wxWindowID id) {
 
   // Restore find options from session.
   flags_ = session_->find_flags();
+  location_ = session_->find_location();
 
-  // Note: Window title will be set later according to the mode.
-  if (!wxMiniFrame::Create(parent,
-                           id,
-                           wxEmptyString,
-                           wxDefaultPosition,
-                           wxDefaultSize,
-                           kFindWindowStyle)) {
+  long style = wxCLOSE_BOX|wxCAPTION|wxCLIP_CHILDREN|wxRESIZE_BORDER|wxFRAME_TOOL_WINDOW|wxWANTS_CHARS;
+  if (!wxMiniFrame::Create(parent, id, kTitle, wxDefaultPosition, wxDefaultSize, style)) {
     return false;
   }
 
   // Panel has style wxTAB_TRAVERSAL by default.
   panel_ = new wxPanel(this);
-  //panel_->SetBackgroundColour(*wxWHITE);  // TODO
+  panel_->SetBackgroundColour(*wxWHITE);  // TODO
 
   //----------------------------------------------------------------------------
 
-  regex_toggle_button_ = NewToggleButton(ID_REGEX_TOGGLE_BUTTON,
-                                         wxT("fw_regex"),
-                                         kTrUseRegex);
-
-  case_toggle_button_ = NewToggleButton(ID_CASE_TOGGLE_BUTTON,
-                                        wxT("fw_case"),
-                                        kTrCaseSensitive);
-
-  word_toggle_button_ = NewToggleButton(ID_WORD_TOGGLE_BUTTON,
-                                        wxT("fw_word"),
-                                        kTrMatchWholeWord);
-
-  regex_toggle_button_->set_toggle(GetBit(flags_, kFind_UseRegex));
-  case_toggle_button_->set_toggle(GetBit(flags_, kFind_CaseSensitive));
-  word_toggle_button_->set_toggle(GetBit(flags_, kFind_MatchWholeWord));
-
-  //----------------------------------------------------------------------------
-
-  mode_toggle_button_ = NewToggleButton(ID_FIND_MODE_TOGGLE_BUTTON,
-                                        wxT("fw_mode"),
-                                        kTrSwitchMode);
-
-  //----------------------------------------------------------------------------
+  find_label_ = new wxStaticText(panel_, wxID_ANY, _("Find"));
 
   find_combo_box_ = new wxComboBox(panel_, ID_FIND_COMBOBOX);
 
@@ -129,6 +100,8 @@ bool FindWindow::Create(wxWindow* parent, wxWindowID id) {
 
   //----------------------------------------------------------------------------
 
+  replace_label_ = new wxStaticText(panel_, wxID_ANY, _("Replace with"));
+
   replace_combo_box_ = new wxComboBox(panel_, ID_REPLACE_COMBOBOX);
 
   // Initialize replace combobox with replace history.
@@ -146,10 +119,39 @@ bool FindWindow::Create(wxWindow* parent, wxWindowID id) {
 
   //----------------------------------------------------------------------------
 
-  find_button_ = NewButton(ID_FIND_BUTTON, kTrFind);
-  find_all_button_ = NewButton(ID_FIND_ALL_BUTTON, kTrFindAll);
-  replace_button_ = NewButton(ID_REPLACE_BUTTON, kTrReplace);
-  replace_all_button_ = NewButton(ID_REPLACE_ALL_BUTTON, kTrReplaceAll);
+  location_label_ = new wxStaticText(panel_, wxID_ANY, _("In"));
+
+  location_combo_box_ = new wxComboBox(panel_, ID_LOCATION_COMBOBOX);
+  location_combo_box_->Append(_("Current Page"));
+  location_combo_box_->Append(_("All Pages"));
+  location_combo_box_->Append(_("Selection"));
+
+  location_combo_box_->Select(location_);
+
+  //----------------------------------------------------------------------------
+  
+  show_options_tbutton_ = NewToggleButton(ID_SHOW_OPTIONS_BUTTON, wxT("fw_show_options"), wxEmptyString);
+  show_options_tbutton_->set_toggle(session_->show_options());
+
+  options_label_ = new wxStaticText(panel_, wxID_ANY, _("Options"));
+  options_line_ = new wxStaticLine(panel_);
+
+  use_regex_check_box_ = new wxCheckBox(panel_, ID_USE_REGEX_CHECKBOX, kTrUseRegex);
+  case_sensitive_check_box_ = new wxCheckBox(panel_, ID_CASE_SENSITIVE_CHECKBOX, kTrCaseSensitive);
+  match_word_check_box_ = new wxCheckBox(panel_, ID_MATCH_WORD_CHECKBOX, kTrMatchWord);
+
+  use_regex_check_box_->SetValue(GetBit(flags_, kFind_UseRegex));
+  case_sensitive_check_box_->SetValue(GetBit(flags_, kFind_CaseSensitive));
+  match_word_check_box_->SetValue(GetBit(flags_, kFind_MatchWord));
+
+  //----------------------------------------------------------------------------
+
+  find_button_ = NewButton(ID_FIND_BUTTON, _("&Find"));
+  find_all_button_ = NewButton(ID_FIND_ALL_BUTTON, _("Find All"));
+
+  replace_button_ = NewButton(ID_REPLACE_BUTTON, _("&Replace"));
+  replace_all_button_ = NewButton(ID_REPLACE_ALL_BUTTON, _("Replace All"));
+
   find_button_->SetDefault();  // Set default for ENTER key.
 
   //----------------------------------------------------------------------------
@@ -158,13 +160,9 @@ bool FindWindow::Create(wxWindow* parent, wxWindowID id) {
   wxSizer* vsizer = new wxBoxSizer(wxVERTICAL);
   panel_->SetSizer(vsizer);
 
-  if (mode_ == kFindMode) {
-    mode_toggle_button_->set_toggle(false);
-    LayoutAsFind();
-  } else {
-    mode_toggle_button_->set_toggle(true);
-    LayoutAsReplace();
-  }
+  ShowOptions(session_->show_options());
+
+  UpdateLayout();
 
   return true;
 }
@@ -173,13 +171,59 @@ FindWindow::~FindWindow() {
 }
 
 void FindWindow::UpdateLayout() {
-  if (mode_ == kFindMode) {
-    mode_toggle_button_->set_toggle(false);
-    LayoutAsFind();
-  } else {
-    mode_toggle_button_->set_toggle(true);
-    LayoutAsReplace();
+  bool show_replace = mode_ == kReplaceMode;
+
+  replace_label_->Show(show_replace);
+  replace_combo_box_->Show(show_replace);
+  replace_button_->Show(show_replace);
+  replace_all_button_->Show(show_replace);
+
+  wxSizer* top_vsizer = panel_->GetSizer();
+  top_vsizer->Clear(false);
+
+  top_vsizer->Add(find_label_, wxSizerFlags().Border(wxLTR));
+  top_vsizer->Add(find_combo_box_, wxSizerFlags().Expand().Border(wxLR));
+
+  if (show_replace) {
+    top_vsizer->Add(replace_label_, wxSizerFlags().Border(wxLTR));
+    top_vsizer->Add(replace_combo_box_, wxSizerFlags().Expand().Border(wxLR));
   }
+
+  top_vsizer->Add(location_label_, wxSizerFlags().Border(wxLTR));
+  top_vsizer->Add(location_combo_box_, wxSizerFlags().Expand().Border(wxLRB));
+
+  {
+    wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+    hsizer->Add(options_label_, wxSizerFlags().Center());
+    hsizer->Add(options_line_, wxSizerFlags(1).Center().Border(wxLEFT));
+    hsizer->Add(show_options_tbutton_, wxSizerFlags().Center().Border(wxLEFT));
+    top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
+  }
+
+  {
+    wxSizer* vsizer = new wxBoxSizer(wxVERTICAL);
+    vsizer->Add(use_regex_check_box_, wxSizerFlags());
+    vsizer->Add(case_sensitive_check_box_, wxSizerFlags().Border(wxTOP));
+    vsizer->Add(match_word_check_box_, wxSizerFlags().Border(wxTOP));
+    top_vsizer->Add(vsizer, wxSizerFlags().Expand().Border(wxALL));
+  }
+
+  {
+    wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+    hsizer->Add(find_button_);
+    hsizer->Add(find_all_button_, wxSizerFlags().Border(wxLEFT));
+    top_vsizer->Add(hsizer, wxSizerFlags().Right().Border(show_replace ? wxLTR : wxALL));
+  }
+
+  if (show_replace) {
+    wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+    hsizer->Add(replace_button_);
+    hsizer->Add(replace_all_button_, wxSizerFlags().Border(wxLEFT));
+    top_vsizer->Add(hsizer, wxSizerFlags().Right().Border(wxALL));
+  }
+
+  top_vsizer->Layout();
+  UpdateSizes();
 }
 
 void FindWindow::SetFindString(const wxString& find_string) {
@@ -197,6 +241,8 @@ void FindWindow::OnActivate(wxActivateEvent& evt) {
 void FindWindow::OnClose(wxCloseEvent& evt) {
   session_->set_find_window_rect(GetScreenRect());
   session_->set_find_flags(flags_);
+  session_->set_find_location(location_);
+  session_->set_show_options(show_options_tbutton_->toggle());
 
   evt.Skip();
 }
@@ -209,30 +255,43 @@ void FindWindow::OnKeyDownHook(wxKeyEvent& evt) {
   }
 }
 
-void FindWindow::OnUseRegexToggle(wxCommandEvent& evt) {
+void FindWindow::OnModeToggle(wxCommandEvent& evt) {
+  if (evt.IsChecked()) {
+    mode_ = kReplaceMode;
+  } else {
+    mode_ = kFindMode;
+  }
+
+  UpdateLayout();
+}
+
+void FindWindow::OnLocationComboBox(wxCommandEvent& evt) {
+  location_ = static_cast<FindLocation>(evt.GetSelection());
+}
+
+void FindWindow::OnShowOptionsToggleButton(wxCommandEvent& evt) {
+  ShowOptions(evt.IsChecked());
+}
+
+void FindWindow::ShowOptions(bool show) {
+  use_regex_check_box_->Show(show);
+  case_sensitive_check_box_->Show(show);
+  match_word_check_box_->Show(show);
+
+  Layout();
+  UpdateSizes();
+}
+
+void FindWindow::OnUseRegexCheckBox(wxCommandEvent& evt) {
   flags_ = SetBit(flags_, kFind_UseRegex, evt.IsChecked());
 }
 
-void FindWindow::OnCaseSensitiveToggle(wxCommandEvent& evt) {
+void FindWindow::OnCaseSensitiveCheckBox(wxCommandEvent& evt) {
   flags_ = SetBit(flags_, kFind_CaseSensitive, evt.IsChecked());
 }
 
-void FindWindow::OnMatchWholeWordToggle(wxCommandEvent& evt) {
-  flags_ = SetBit(flags_, kFind_MatchWholeWord, evt.IsChecked());
-}
-
-void FindWindow::OnSearchReverselyToggle(wxCommandEvent& evt) {
-  flags_ = SetBit(flags_, kFind_Reversely, evt.IsChecked());
-}
-
-void FindWindow::OnModeToggle(wxCommandEvent& evt) {
-  if (evt.IsChecked()) {
-    LayoutAsReplace();
-    mode_ = kReplaceMode;
-  } else {
-    LayoutAsFind();
-    mode_ = kFindMode;
-  }
+void FindWindow::OnMatchWordCheckBox(wxCommandEvent& evt) {
+  flags_ = SetBit(flags_, kFind_MatchWord, evt.IsChecked());
 }
 
 void FindWindow::OnFind(wxCommandEvent& evt) {
@@ -322,83 +381,9 @@ void FindWindow::UpdateSizes() {
   vsizer->Layout();
 }
 
-void FindWindow::LayoutAsFind() {
-  replace_combo_box_->Hide();
-  replace_button_->Hide();
-  replace_all_button_->Hide();
-
-  wxSizer* vsizer = panel_->GetSizer();
-  vsizer->Clear(false);
-
-  wxSizer* option_hsizer = new wxBoxSizer(wxHORIZONTAL);
-  option_hsizer->Add(regex_toggle_button_);
-  option_hsizer->Add(case_toggle_button_, wxSizerFlags().Border(wxLEFT));
-  option_hsizer->Add(word_toggle_button_, wxSizerFlags().Border(wxLEFT));
-  option_hsizer->AddStretchSpacer();
-  option_hsizer->Add(mode_toggle_button_);
-  vsizer->Add(option_hsizer, wxSizerFlags().Expand().Border(wxALL));
-
-  vsizer->Add(find_combo_box_, wxSizerFlags().Expand().Border(wxLR));
-
-  {
-    wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-    hsizer->Add(find_button_);
-    hsizer->Add(find_all_button_, wxSizerFlags().Border(wxLEFT));
-    vsizer->Add(hsizer, wxSizerFlags().Align(wxALIGN_RIGHT).Border(wxALL));
-  }
-
-  vsizer->Layout();
-
-  UpdateSizes();
-
-  SetTitle(kTrFind);
-}
-
-void FindWindow::LayoutAsReplace() {
-  replace_combo_box_->Show();
-  replace_button_->Show();
-  replace_all_button_->Show();
-
-  wxSizer* vsizer = panel_->GetSizer();
-  vsizer->Clear(false);
-
-  wxSizer* option_hsizer = new wxBoxSizer(wxHORIZONTAL);
-  option_hsizer->Add(regex_toggle_button_);
-  option_hsizer->Add(case_toggle_button_, wxSizerFlags().Border(wxLEFT));
-  option_hsizer->Add(word_toggle_button_, wxSizerFlags().Border(wxLEFT));
-  option_hsizer->AddStretchSpacer();
-  option_hsizer->Add(mode_toggle_button_);
-  vsizer->Add(option_hsizer, wxSizerFlags().Expand().Border(wxALL));
-
-  vsizer->Add(find_combo_box_, wxSizerFlags().Expand().Border(wxLR));
-  vsizer->Add(replace_combo_box_, wxSizerFlags().Expand().Border(wxLTR));
-
-  {
-    wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-    hsizer->Add(find_button_);
-    hsizer->Add(find_all_button_, wxSizerFlags().Border(wxLEFT));
-    vsizer->Add(hsizer, wxSizerFlags().Align(wxALIGN_RIGHT).Border(wxLTR));
-  }
-  {
-    wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-    hsizer->Add(replace_button_);
-    hsizer->Add(replace_all_button_, wxSizerFlags().Border(wxLEFT));
-    vsizer->Add(hsizer, wxSizerFlags().Align(wxALIGN_RIGHT).Border(wxALL));
-  }
-
-  vsizer->Layout();
-
-  UpdateSizes();
-
-  SetTitle(kTrReplace);
-}
-
-ui::BitmapToggleButton* FindWindow::NewToggleButton(wxWindowID id,
-                                                    const wxString& bitmap,
-                                                    const wxString& tooltip) {
+ui::BitmapToggleButton* FindWindow::NewToggleButton(wxWindowID id, const wxString& bitmap, const wxString& tooltip) {
   ui::BitmapToggleButton* button = new ui::BitmapToggleButton(panel_, id);
-  button->SetBitmaps(skin::GetIcon(bitmap),
-                     skin::GetIcon(bitmap + wxT("_toggle")));
+  button->SetBitmaps(skin::GetIcon(bitmap), skin::GetIcon(bitmap + wxT("_toggle")));
   button->SetToolTip(tooltip);
   return button;
 }
@@ -408,13 +393,12 @@ wxButton* FindWindow::NewButton(int id, const wxString& label) {
   return button;
 }
 
-void FindWindow::PostEvent(int event_type,
-                           const wxString& find_str,
-                           const wxString& replace_str) {
+void FindWindow::PostEvent(int event_type, const wxString& find_str, const wxString& replace_str) {
   FindWindowEvent evt(GetId());
   evt.SetEventObject(this);
   evt.SetInt(event_type);
   evt.set_flags(flags_);
+  evt.set_location(location_);
   evt.set_find_str(find_str.ToStdWstring());
   evt.set_replace_str(replace_str.ToStdWstring());
   GetParent()->GetEventHandler()->AddPendingEvent(evt);

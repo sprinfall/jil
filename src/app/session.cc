@@ -45,9 +45,7 @@ void SetRect(Setting parent, const char* name, const wxRect& rect) {
   rect_setting.Add(NULL, Setting::kInt).SetInt(rect.height);
 }
 
-bool GetStringArray(Setting parent,
-                    const char* name,
-                    std::list<wxString>* strings) {
+bool GetStringArray(Setting parent, const char* name, std::list<wxString>* strings) {
   Setting setting = parent.Get(name, Setting::kArray);
   if (!setting) {
     return false;
@@ -59,9 +57,7 @@ bool GetStringArray(Setting parent,
   return true;
 }
 
-void SetStringArray(Setting parent,
-                    const char* name,
-                    const std::list<wxString>& strings) {
+void SetStringArray(Setting parent, const char* name, const std::list<wxString>& strings) {
   parent.Remove(name);
 
   Setting setting = parent.Add(name, Setting::kArray);
@@ -72,10 +68,7 @@ void SetStringArray(Setting parent,
   }
 }
 
-void SetStringArray(Setting parent,
-                    const char* name,
-                    const std::list<wxString>& strings,
-                    size_t limit) {
+void SetStringArray(Setting parent, const char* name, const std::list<wxString>& strings, size_t limit) {
   parent.Remove(name);
 
   Setting setting = parent.Add(name, Setting::kArray);
@@ -96,6 +89,8 @@ Session::Session()
     : book_frame_maximized_(false)
     , find_history_limit_(10)
     , find_flags_(0)
+    , find_location_(kCurrentPage)
+    , show_options_(false)
     , split_root_(NULL) {
 }
 
@@ -132,15 +127,16 @@ bool Session::Load(const wxString& file) {
     GetStringArray(fw_setting, kFindStrings, &find_strings_);
     GetStringArray(fw_setting, kReplaceStrings, &replace_strings_);
 
-    find_flags_ = SetBit(find_flags_,
-                         kFind_UseRegex,
-                         fw_setting.GetBool("use_regex"));
-    find_flags_ = SetBit(find_flags_,
-                         kFind_CaseSensitive,
-                         fw_setting.GetBool("case_sensitive"));
-    find_flags_ = SetBit(find_flags_,
-                         kFind_MatchWholeWord,
-                         fw_setting.GetBool("match_whole_word"));
+    find_flags_ = SetBit(find_flags_, kFind_UseRegex, fw_setting.GetBool("use_regex"));
+    find_flags_ = SetBit(find_flags_, kFind_CaseSensitive, fw_setting.GetBool("case_sensitive"));
+    find_flags_ = SetBit(find_flags_, kFind_MatchWord, fw_setting.GetBool("match_word"));
+
+    int location = fw_setting.GetInt("location");
+    if (location >= 0 && location < kLocationCount) {
+      find_location_ = static_cast<FindLocation>(location);
+    }
+
+    show_options_ = fw_setting.GetBool("show_options");
   }
 
   //----------------------------------------------------------------------------
@@ -188,20 +184,15 @@ bool Session::Save(const wxString& file) {
     SetRect(fw_setting, kRect, find_window_rect_);
   }
 
-  SetStringArray(fw_setting,
-                 kFindStrings,
-                 find_strings_,
-                 find_history_limit_);
+  SetStringArray(fw_setting, kFindStrings, find_strings_, find_history_limit_);
+  SetStringArray(fw_setting, kReplaceStrings, replace_strings_, find_history_limit_);
 
-  SetStringArray(fw_setting,
-                 kReplaceStrings,
-                 replace_strings_,
-                 find_history_limit_);
+  fw_setting.SetInt("location", find_location_);
 
+  fw_setting.SetBool("show_options", show_options_);
   fw_setting.SetBool("use_regex", GetBit(find_flags_, kFind_UseRegex));
   fw_setting.SetBool("case_sensitive", GetBit(find_flags_, kFind_CaseSensitive));
-  fw_setting.SetBool("match_whole_word",
-                     GetBit(find_flags_, kFind_MatchWholeWord));
+  fw_setting.SetBool("match_word", GetBit(find_flags_, kFind_MatchWord));
 
   //----------------------------------------------------------------------------
   // Split tree
@@ -222,10 +213,8 @@ bool Session::Save(const wxString& file) {
   return config.Save(file);
 }
 
-bool Session::AddHistoryString(const wxString& s,
-                               std::list<wxString>* strings) {
-  std::list<wxString>::iterator it =
-      std::find(strings->begin(), strings->end(), s);
+bool Session::AddHistoryString(const wxString& s, std::list<wxString>* strings) {
+  std::list<wxString>::iterator it = std::find(strings->begin(), strings->end(), s);
   if (it == strings->end()) {
     // Doesn't exist.
     strings->push_front(s);

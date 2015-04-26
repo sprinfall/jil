@@ -30,10 +30,16 @@ public:
   //----------------------------------------------------------------------------
   // Book frame
 
-  wxRect book_frame_rect() const { return book_frame_rect_; }
-  void set_book_frame_rect(const wxRect& rect) { book_frame_rect_ = rect; }
+  wxRect book_frame_rect() const {
+    return book_frame_rect_;
+  }
+  void set_book_frame_rect(const wxRect& rect) {
+    book_frame_rect_ = rect;
+  }
 
-  bool book_frame_maximized() const { return book_frame_maximized_; }
+  bool book_frame_maximized() const {
+    return book_frame_maximized_;
+  }
   void set_book_frame_maximized(bool maximized) {
     book_frame_maximized_ = maximized;
   }
@@ -52,13 +58,18 @@ public:
     find_history_limit_ = find_history_limit;
   }
 
+  const std::list<wxString>& find_strings() const {
+    return find_strings_;
+  }
+
   // Add a string to find history.
   // Return true if the find string is new (it didn't exist).
   bool AddFindString(const wxString& find_string) {
     return AddHistoryString(find_string, &find_strings_);
   }
-  const std::list<wxString>& find_strings() const {
-    return find_strings_;
+
+  const std::list<wxString>& replace_strings() const {
+    return replace_strings_;
   }
 
   // Add a string to replace history.
@@ -66,15 +77,26 @@ public:
   bool AddReplaceString(const wxString& replace_string) {
     return AddHistoryString(replace_string, &replace_strings_);
   }
-  const std::list<wxString>& replace_strings() const {
-    return replace_strings_;
-  }
 
+  int find_flags() const {
+    return find_flags_;
+  }
   void set_find_flags(int find_flags) {
     find_flags_ = find_flags;
   }
-  int find_flags() const {
-    return find_flags_;
+
+  FindLocation find_location() const {
+    return find_location_;
+  }
+  void set_find_location(FindLocation find_location) {
+    find_location_ = find_location;
+  }
+
+  bool show_options() const {
+    return show_options_;
+  }
+  void set_show_options(bool show_options) {
+    show_options_ = show_options;
   }
 
   //----------------------------------------------------------------------------
@@ -126,6 +148,10 @@ private:
   // Find flags.
   // See enum FindFlag.
   int find_flags_;
+
+  FindLocation find_location_;
+
+  bool show_options_;
 
   SplitNode* split_root_;
 

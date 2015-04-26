@@ -646,7 +646,7 @@ void BookFrame::ReplaceAllInActivePage(const std::wstring& str,
 
   bool use_regex = GetBit(flags, kFind_UseRegex);
   bool case_sensitive = GetBit(flags, kFind_CaseSensitive);
-  bool match_whole_word = GetBit(flags, kFind_MatchWholeWord);
+  bool match_whole_word = GetBit(flags, kFind_MatchWord);
 
   TextRange source_range = buffer->range();
   TextRange result_range;
@@ -705,7 +705,7 @@ editor::TextRange BookFrame::Find(TextPage* text_page,
 
   bool use_regex = GetBit(flags, kFind_UseRegex);
   bool case_sensitive = GetBit(flags, kFind_CaseSensitive);
-  bool match_whole_word = GetBit(flags, kFind_MatchWholeWord);
+  bool match_whole_word = GetBit(flags, kFind_MatchWord);
   // Reversely regex find is not supported.
   bool reversely = !use_regex && GetBit(flags, kFind_Reversely);
 
@@ -778,7 +778,7 @@ void BookFrame::FindAll(const std::wstring& str,
                         buffer->range(),
                         GetBit(flags, kFind_UseRegex),
                         GetBit(flags, kFind_CaseSensitive),
-                        GetBit(flags, kFind_MatchWholeWord),
+                        GetBit(flags, kFind_MatchWord),
                         &result_ranges);
 
   if (result_ranges.empty()) {

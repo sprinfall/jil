@@ -14,6 +14,7 @@ BitmapToggleButton::BitmapToggleButton(wxWindow* parent, wxWindowID id)
     : wxControl(parent, id, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
     , accept_focus_(true)
     , toggle_(false) {
+  SetBackgroundColour(parent->GetBackgroundColour());
   SetBackgroundStyle(wxBG_STYLE_PAINT);
 }
 

@@ -6,17 +6,24 @@
 
 #define wxLR (wxLEFT|wxRIGHT)
 #define wxLTR (wxLEFT|wxTOP|wxRIGHT)
-#define wxALIGN_CV wxALIGN_CENTER_VERTICAL
-#define wxALIGN_CH wxALIGN_CENTER_HORIZONTAL
+#define wxLRB (wxLEFT|wxRIGHT|wxBOTTOM)
 
 namespace jil {
 
 enum FindFlag {
   kFind_UseRegex = 1,
   kFind_CaseSensitive = 2,
-  kFind_MatchWholeWord = 4,
+  kFind_MatchWord = 4,
   kFind_Reversely = 8,  // TODO: Remove
 };
+
+enum FindLocation {
+  kCurrentPage = 0,
+  kAllPages,
+  kSelection,
+  kLocationCount,
+};
+
 
 // Internal file type IDs.
 // Format: "jil-xxx_yyy_zzz"
