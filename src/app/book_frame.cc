@@ -769,7 +769,7 @@ void BookFrame::OnTextBookPageChange(wxCommandEvent& evt) {
   if (text_book_->PageCount() == 0) {
     UpdateStatusFields();
 
-    if (options_->show_full_path) {
+    if (options_->show_path) {
       UpdateTitle();
     }
 
@@ -789,7 +789,7 @@ void BookFrame::OnTextBookPageChange(wxCommandEvent& evt) {
 void BookFrame::OnTextBookPageSwitch(wxCommandEvent& evt) {
   UpdateStatusFields();
 
-  if (options_->show_full_path) {
+  if (options_->show_path) {
     UpdateTitle();
   }
 }
@@ -1488,9 +1488,7 @@ void BookFrame::ReplaceInActivePage(const std::wstring& str,
   // If the find result is not the current selection, select it.
   // TODO: Rect selection.
   if (result_range != selection.range) {
-    text_page->SetSelection(result_range, kForward, false);
-    text_page->UpdateCaretPoint(result_range.point_end(), false, false, false);
-    text_page->Goto(result_range.line_first());
+    SelectFindResult(text_page, result_range);
     return;
   }
 
@@ -1507,9 +1505,7 @@ void BookFrame::ReplaceInActivePage(const std::wstring& str,
   point = text_page->caret_point();
   result_range = Find(text_page, str, point, flags, true);
   if (!result_range.IsEmpty()) {
-    text_page->SetSelection(result_range, kForward, false);
-    text_page->UpdateCaretPoint(result_range.point_end(), false, false, false);
-    text_page->Goto(result_range.line_first());
+    SelectFindResult(text_page, result_range);
   }
 }
 
@@ -1527,7 +1523,7 @@ void BookFrame::ReplaceAllInActivePage(const std::wstring& str,
 
   bool use_regex = GetBit(flags, kFind_UseRegex);
   bool case_sensitive = GetBit(flags, kFind_CaseSensitive);
-  bool match_whole_word = GetBit(flags, kFind_MatchWord);
+  bool match_word = GetBit(flags, kFind_MatchWord);
 
   TextRange source_range = buffer->range();
   TextRange result_range;
@@ -1539,7 +1535,7 @@ void BookFrame::ReplaceAllInActivePage(const std::wstring& str,
                                       source_range,
                                       use_regex,
                                       case_sensitive,
-                                      match_whole_word,
+                                      match_word,
                                       false);
 
     if (result_range.IsEmpty()) {
@@ -1554,10 +1550,7 @@ void BookFrame::ReplaceAllInActivePage(const std::wstring& str,
 
     text_page->DeleteRange(result_range, kForward, false, false, false, false);
     if (!replace_str.empty()) {
-      text_page->InsertString(result_range.point_begin(),
-                              replace_str,
-                              false,
-                              false);
+      text_page->InsertString(result_range.point_begin(), replace_str, false, false);
     }
 
     // Update source range and find next.
@@ -1586,7 +1579,7 @@ editor::TextRange BookFrame::Find(TextPage* text_page,
 
   bool use_regex = GetBit(flags, kFind_UseRegex);
   bool case_sensitive = GetBit(flags, kFind_CaseSensitive);
-  bool match_whole_word = GetBit(flags, kFind_MatchWord);
+  bool match_word = GetBit(flags, kFind_MatchWord);
   // Reversely regex find is not supported.
   bool reversely = !use_regex && GetBit(flags, kFind_Reversely);
 
@@ -1600,7 +1593,7 @@ editor::TextRange BookFrame::Find(TextPage* text_page,
                                               source_range,
                                               use_regex,
                                               case_sensitive,
-                                              match_whole_word,
+                                              match_word,
                                               reversely);
 
   if (result_range.IsEmpty() && cycle) {
@@ -1609,8 +1602,7 @@ editor::TextRange BookFrame::Find(TextPage* text_page,
     if (reversely) {
       // Re-find from the end.
       Coord last_line_len = buffer->LineLength(buffer->LineCount());
-      if (point.y < buffer->LineCount() ||
-          point.x + CoordCast(str.length()) <= last_line_len) {
+      if (point.y < buffer->LineCount() || point.x + CoordCast(str.length()) <= last_line_len) {
         source_range.Set(point, buffer->point_end());
         refind = true;
       }
@@ -1623,12 +1615,8 @@ editor::TextRange BookFrame::Find(TextPage* text_page,
     }
 
     if (refind) {
-      result_range = buffer->FindString(str,
-                                        source_range,
-                                        use_regex,
-                                        case_sensitive,
-                                        match_whole_word,
-                                        reversely);
+      result_range = buffer->FindString(str, source_range, use_regex,
+        case_sensitive, match_word, reversely);
     }
   }
 
@@ -1636,15 +1624,13 @@ editor::TextRange BookFrame::Find(TextPage* text_page,
 }
 
 // Example: "%6d", *max_ln_size = 6
-static std::wstring CreateLineNrStrFormat(const TextRangeList& result_ranges,
-                                          size_t* max_ln_size) {
+static std::wstring CreateLineNrStrFormat(const TextRangeList& result_ranges, size_t* max_ln_size) {
   editor::Coord max_ln = result_ranges.back().point_end().y;
 
   std::string max_ln_str = base::LexicalCast<std::string>(max_ln);
   *max_ln_size = max_ln_str.size();
 
-  std::wstring max_ln_size_str = base::LexicalCast<std::wstring>(
-      max_ln_str.size());
+  std::wstring max_ln_size_str = base::LexicalCast<std::wstring>(max_ln_str.size());
   return (L"%" + max_ln_size_str + L"d");
 }
 
@@ -1799,23 +1785,12 @@ void BookFrame::LoadMenus() {
   wxMenu* view_menu = new wxMenu;
 
   AppendMenuItem(view_menu, ID_MENU_VIEW_WRAP, kTrViewWrap, wxITEM_CHECK);
-
-  AppendMenuItem(view_menu,
-                 ID_MENU_VIEW_SHOW_NUMBER,
-                 kTrViewShowNumber,
-                 wxITEM_CHECK);
-
-  AppendMenuItem(view_menu,
-                 ID_MENU_VIEW_SHOW_SPACE,
-                 kTrViewShowSpace,
-                 wxITEM_CHECK);
+  AppendMenuItem(view_menu, ID_MENU_VIEW_SHOW_NUMBER, kTrViewShowNumber, wxITEM_CHECK);
+  AppendMenuItem(view_menu, ID_MENU_VIEW_SHOW_SPACE, kTrViewShowSpace, wxITEM_CHECK);
 
   view_menu->AppendSeparator();
 
-  AppendMenuItem(view_menu,
-                 ID_MENU_VIEW_FULL_SCREEN,
-                 kTrViewFullScreen,
-                 wxITEM_CHECK);
+  AppendMenuItem(view_menu, ID_MENU_VIEW_FULL_SCREEN, kTrViewFullScreen, wxITEM_CHECK);
 
   menu_bar->Append(view_menu, kTrMenuView);
 

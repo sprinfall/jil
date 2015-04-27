@@ -13,6 +13,7 @@
 
 #include "app/app.h"
 #include "app/font_util.h"
+#include "app/option.h"
 
 namespace jil {
 
@@ -22,15 +23,40 @@ static const wxSize kMinComboBoxSize(120, -1);
 
 class GeneralPagePanel : public wxPanel {
 public:
-  GeneralPagePanel(wxWindow* parent, wxWindowID id = wxID_ANY)
-      : wxPanel(parent, id) {
-    CreateControls();
+  GeneralPagePanel(Options* options)
+      : options_(options) {
   }
+
+  bool Create(wxWindow* parent, wxWindowID id = wxID_ANY) {
+    if (!wxPanel::Create(parent, id)) {
+      return false;
+    }
+
+    CreateControls();
+    return true;
+  }
+
+  virtual bool TransferDataToWindow() override;
+  virtual bool TransferDataFromWindow() override;
 
 private:
   void CreateControls();
 
   void FillFileEncodingComboBox(wxComboBox* fenc_combo);
+
+private:
+  Options* options_;
+
+  // CJK
+  wxCheckBox* c_check_box_;
+  wxCheckBox* j_check_box_;
+  wxCheckBox* k_check_box_;
+
+  wxComboBox* fenc_combo_box_;
+
+  wxCheckBox* switch_cwd_check_box_;
+  wxCheckBox* restore_files_check_box_;
+  wxCheckBox* show_path_check_box_;
 };
 
 void GeneralPagePanel::CreateControls() {
@@ -49,14 +75,14 @@ void GeneralPagePanel::CreateControls() {
     {
       wxStaticText* cjk_label = new wxStaticText(box, wxID_ANY, _("Detect CJK encodings:"));
 
-      wxCheckBox* c_check = new wxCheckBox(box, wxID_ANY, _("Chinese"));
-      wxCheckBox* j_check = new wxCheckBox(box, wxID_ANY, _("Japanese"));
-      wxCheckBox* k_check = new wxCheckBox(box, wxID_ANY, _("Korean"));
+      c_check_box_ = new wxCheckBox(box, wxID_ANY, _("Chinese"));
+      j_check_box_ = new wxCheckBox(box, wxID_ANY, _("Japanese"));
+      k_check_box_ = new wxCheckBox(box, wxID_ANY, _("Korean"));
 
       wxBoxSizer* cjk_check_hsizer = new wxBoxSizer(wxHORIZONTAL);
-      cjk_check_hsizer->Add(c_check);
-      cjk_check_hsizer->Add(j_check, wxSizerFlags().Border(wxLEFT));
-      cjk_check_hsizer->Add(k_check, wxSizerFlags().Border(wxLEFT));
+      cjk_check_hsizer->Add(c_check_box_);
+      cjk_check_hsizer->Add(j_check_box_, wxSizerFlags().Border(wxLEFT));
+      cjk_check_hsizer->Add(k_check_box_, wxSizerFlags().Border(wxLEFT));
 
       wxBoxSizer* cjk_vsizer = new wxBoxSizer(wxVERTICAL);
       cjk_vsizer->Add(cjk_label);
@@ -71,14 +97,14 @@ void GeneralPagePanel::CreateControls() {
     {
       wxStaticText* label = new wxStaticText(box, wxID_ANY, _("Default file encoding:"));
 
-      wxComboBox* combo_box = new wxComboBox(box, wxID_ANY, wxEmptyString);
-      combo_box->SetMinSize(kMinComboBoxSize);
-      FillFileEncodingComboBox(combo_box);
+      fenc_combo_box_ = new wxComboBox(box, wxID_ANY, wxEmptyString);
+      fenc_combo_box_->SetMinSize(kMinComboBoxSize);
+      FillFileEncodingComboBox(fenc_combo_box_);
 
       wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
       hsizer->Add(label, wxSizerFlags().Center());
       hsizer->AddStretchSpacer(1);
-      hsizer->Add(combo_box, wxSizerFlags().Center().Border(wxLEFT));
+      hsizer->Add(fenc_combo_box_, wxSizerFlags().Center().Border(wxLEFT));
 
       box_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
     }
@@ -89,18 +115,18 @@ void GeneralPagePanel::CreateControls() {
   //----------------------------------------------------------------------------
 
   {
-    wxCheckBox* check = new wxCheckBox(this, wxID_ANY, _("Switch current working directory"));
-    top_vsizer->Add(check, wxSizerFlags().Border(wxLTR));
+    switch_cwd_check_box_ = new wxCheckBox(this, wxID_ANY, _("Switch current working directory"));
+    top_vsizer->Add(switch_cwd_check_box_, wxSizerFlags().Border(wxLTR));
   }
 
   {
-    wxCheckBox* check = new wxCheckBox(this, wxID_ANY, _("Remember last open files"));
-    top_vsizer->Add(check, wxSizerFlags().Border(wxLTR));
+    restore_files_check_box_ = new wxCheckBox(this, wxID_ANY, _("Remember last open files"));
+    top_vsizer->Add(restore_files_check_box_, wxSizerFlags().Border(wxLTR));
   }
-
+  
   {
-    wxCheckBox* check = new wxCheckBox(this, wxID_ANY, _("Show file full path in the title bar"));
-    top_vsizer->Add(check, wxSizerFlags().Border(wxALL));
+    show_path_check_box_ = new wxCheckBox(this, wxID_ANY, _("Show file full path in the title bar"));
+    top_vsizer->Add(show_path_check_box_, wxSizerFlags().Border(wxALL));
   }
 
   //----------------------------------------------------------------------------
@@ -122,14 +148,29 @@ void GeneralPagePanel::CreateControls() {
   SetSizerAndFit(top_vsizer);
 }
 
-void GeneralPagePanel::FillFileEncodingComboBox(wxComboBox* fenc_combo) {
-  fenc_combo->Append(ENCODING_DISPLAY_NAME_ISO_8859_1);
-  fenc_combo->Append(ENCODING_DISPLAY_NAME_UTF8);
-  fenc_combo->Append(ENCODING_DISPLAY_NAME_UTF8_BOM);
-  fenc_combo->Append(ENCODING_DISPLAY_NAME_UTF16_BE);
-  fenc_combo->Append(ENCODING_DISPLAY_NAME_UTF16_LE);
-  fenc_combo->Append(ENCODING_DISPLAY_NAME_GB18030);
-  fenc_combo->Append(ENCODING_DISPLAY_NAME_BIG5);
+bool GeneralPagePanel::TransferDataToWindow() {
+  switch_cwd_check_box_->SetValue(options_->switch_cwd);
+  restore_files_check_box_->SetValue(options_->restore_files);
+  show_path_check_box_->SetValue(options_->show_path);
+
+  return true;
+}
+
+bool GeneralPagePanel::TransferDataFromWindow() {
+  //wxCommandEvent dummy;
+  //ChangedUseMarkdown(dummy);
+  //ChangedSpellcheck(dummy);
+  return true;
+}
+
+void GeneralPagePanel::FillFileEncodingComboBox(wxComboBox* combo_box) {
+  combo_box->Append(ENCODING_DISPLAY_NAME_ISO_8859_1);
+  combo_box->Append(ENCODING_DISPLAY_NAME_UTF8);
+  combo_box->Append(ENCODING_DISPLAY_NAME_UTF8_BOM);
+  combo_box->Append(ENCODING_DISPLAY_NAME_UTF16_BE);
+  combo_box->Append(ENCODING_DISPLAY_NAME_UTF16_LE);
+  combo_box->Append(ENCODING_DISPLAY_NAME_GB18030);
+  combo_box->Append(ENCODING_DISPLAY_NAME_BIG5);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -391,7 +432,9 @@ void EditorPagePanel::CreateControls() {
 namespace pref {
 
 wxWindow* GeneralPage::CreateWindow(wxWindow *parent) {
-  return new GeneralPagePanel(parent);
+  GeneralPagePanel* panel = new GeneralPagePanel(options_);
+  panel->Create(parent);
+  return panel;
 }
 
 wxWindow* ThemePage::CreateWindow(wxWindow *parent) {

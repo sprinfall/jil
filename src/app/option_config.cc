@@ -214,7 +214,7 @@ void ParseAppOptions(const Setting& setting, Options* options) {
   GetWxString(setting_map, THEME, &options->theme);
 
   GetBool(setting_map, RESTORE_FILES, &options->restore_files);
-  GetBool(setting_map, SHOW_FULL_PATH, &options->show_full_path);
+  GetBool(setting_map, SHOW_PATH, &options->show_path);
 }
 
 // NOTE: If a setting is not provided, don't set the related option.

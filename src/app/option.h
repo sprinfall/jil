@@ -28,7 +28,7 @@ public:
     line_padding = 1;
     switch_cwd = false;
     restore_files = true;
-    show_full_path = true;
+    show_path = true;
   }
 
   int cjk_filters;
@@ -51,8 +51,8 @@ public:
   // Remember last open files.
   bool restore_files;
 
-  // Show file full path in the title bar.
-  bool show_full_path;
+  // Show file path in the title bar.
+  bool show_path;
 };
 
 }  // namespace jil

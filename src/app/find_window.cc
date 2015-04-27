@@ -79,7 +79,6 @@ bool FindWindow::Create(wxWindow* parent, wxWindowID id) {
 
   // Panel has style wxTAB_TRAVERSAL by default.
   panel_ = new wxPanel(this);
-  panel_->SetBackgroundColour(*wxWHITE);  // TODO
 
   //----------------------------------------------------------------------------
 

@@ -25,7 +25,7 @@ const char* const FONTS = "fonts";
 const char* const LINE_PADDING = "line_padding";
 const char* const SWITCH_CWD = "switch_cwd";
 const char* const RESTORE_FILES = "restore_files";
-const char* const SHOW_FULL_PATH = "show_full_path";
+const char* const SHOW_PATH = "show_path";
 
 // Names of editor options.
 const char* const WRAP = "wrap";

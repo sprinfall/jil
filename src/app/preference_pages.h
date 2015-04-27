@@ -8,15 +8,21 @@
 
 namespace jil {
 
+class Options;
+
 namespace pref {
 
 class GeneralPage : public wxStockPreferencesPage {
 public:
-  GeneralPage()
-      : wxStockPreferencesPage(Kind_General) {
+  explicit GeneralPage(Options* options)
+      : wxStockPreferencesPage(Kind_General)
+      , options_(options) {
   }
 
   virtual wxWindow* CreateWindow(wxWindow* parent) override;
+
+private:
+  Options* options_;
 };
 
 class ThemePage : public wxPreferencesPage {
