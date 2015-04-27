@@ -76,6 +76,7 @@ public:
 
   // File menu operations.
   void FileNew();
+
 #if JIL_MULTIPLE_WINDOW
   void FileNewWindow();
 #endif  // JIL_MULTIPLE_WINDOW
@@ -112,43 +113,6 @@ public:
 
   TextPage* ActiveTextPage() const;
   editor::TextBuffer* ActiveBuffer() const;
-
-  void FindInActivePage(const std::wstring& str, int flags);
-#if 0
-  void FindInAllPages(const std::wstring& str, int flags);
-#endif  // 0
-
-  void FindAllInActivePage(const std::wstring& str, int flags);
-#if 0
-  void FindAllInAllPages(const std::wstring& str, int flags);
-#endif  // 0
-
-  void ReplaceInActivePage(const std::wstring& str,
-                           const std::wstring& replace_str,
-                           int flags);
-
-  void ReplaceAllInActivePage(const std::wstring& str,
-                              const std::wstring& replace_str,
-                              int flags);
-
-private:
-  // Return the matched result range.
-  editor::TextRange Find(TextPage* text_page,
-                         const std::wstring& str,
-                         const editor::TextPoint& point,
-                         int flags,
-                         bool cycle);
-
-  // Find all in the given buffer, add the find result to the find result page.
-  void FindAll(const std::wstring& str,
-               editor::TextBuffer* buffer,
-               int flags,
-               FindResultPage* fr_page);
-
-  // Find all in the given buffer, save the find result in each line.
-  void FindAll(const std::wstring& str,
-               editor::TextBuffer* buffer,
-               int flags);
 
 protected:
   void OnSize(wxSizeEvent& evt);
@@ -247,6 +211,47 @@ protected:
   BookPage* GetCurrentPage();
 
 private:
+  //----------------------------------------------------------------------------
+  // Find & Replace
+
+  void FindInActivePage(const std::wstring& str, int flags);
+
+  void FindInAllPages(const std::wstring& str, int flags);
+
+  void FindAllInActivePage(const std::wstring& str, int flags);
+
+  void FindAllInAllPages(const std::wstring& str, int flags);
+
+  void ReplaceInActivePage(const std::wstring& str,
+                           const std::wstring& replace_str,
+                           int flags);
+
+  void ReplaceAllInActivePage(const std::wstring& str,
+                              const std::wstring& replace_str,
+                              int flags);
+
+  // Return the matched result range.
+  editor::TextRange Find(TextPage* text_page,
+                         const std::wstring& str,
+                         const editor::TextPoint& point,
+                         int flags,
+                         bool cycle);
+
+  // Find all in the given buffer, add the find result to the find result page.
+  void FindAll(const std::wstring& str,
+               editor::TextBuffer* buffer,
+               int flags,
+               FindResultPage* fr_page);
+
+  // Find all in the given buffer, save the find result in each line.
+  void FindAll(const std::wstring& str, editor::TextBuffer* buffer, int flags);
+
+  // Select the result text range, update caret point and scroll to it if necessary.
+  void SelectFindResult(TextPage* text_page, const editor::TextRange& result_range);
+
+  //----------------------------------------------------------------------------
+  // Menu
+
   // TODO: TextWindow also has AppendMenuItem, remove one of them.
   wxMenuItem* AppendMenuItem(wxMenu* menu,
                              int id,
@@ -263,10 +268,11 @@ private:
   // Clear and recreate the items for Recent Files menu.
   void UpdateRecentFilesMenu();
 
+  //----------------------------------------------------------------------------
+  // Text Page
+
   // Create text page with the given buffer.
-  TextPage* CreateTextPage(editor::TextBuffer* buffer,
-                           wxWindow* parent,
-                           wxWindowID id = wxID_ANY);
+  TextPage* CreateTextPage(editor::TextBuffer* buffer, wxWindow* parent, wxWindowID id);
 
   TextPage* TextPageByFileName(const wxFileName& fn_object) const;
 
@@ -274,6 +280,9 @@ private:
   void RemoveAllPages(const TextPage* except_page = NULL);
 
   void SwitchStackPage(bool forward);
+
+  //----------------------------------------------------------------------------
+  // File - Open, Save
 
   TextPage* DoOpenFile(const wxString& file_name,
                        bool active,
@@ -289,6 +298,8 @@ private:
                        bool* new_opened = NULL);
 
   void DoSaveBuffer(editor::TextBuffer* buffer);
+
+  //----------------------------------------------------------------------------
 
   void AddRecentFile(const wxString& recent_file);
 

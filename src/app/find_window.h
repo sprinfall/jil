@@ -147,11 +147,12 @@ protected:
   void OnClose(wxCloseEvent& evt);
   void OnKeyDownHook(wxKeyEvent& evt);
 
-  void OnModeToggle(wxCommandEvent& evt);
+  void OnModeToggleButton(wxCommandEvent& evt);
 
+  void OnFindComboBoxText(wxCommandEvent& evt);
   void OnLocationComboBox(wxCommandEvent& evt);
 
-  void OnShowOptionsToggleButton(wxCommandEvent& evt);
+  void OnOptionsToggleButton(wxCommandEvent& evt);
 
   void ShowOptions(bool show);
 
@@ -172,10 +173,12 @@ private:
 
   void UpdateSizes();
 
+  void UpdateButtonState();
+
   ui::BitmapToggleButton* NewToggleButton(wxWindowID id, const wxString& bitmap, const wxString& tooltip);
 
   wxButton* NewButton(wxWindowID id, const wxString& label);
-  
+
   // \param event_type See enum EventType.
   void PostEvent(int event_type, const wxString& find_str, const wxString& replace_str);
 
@@ -192,6 +195,8 @@ private:
   // For tab traversal.
   wxPanel* panel_;
 
+  ui::BitmapToggleButton* mode_toggle_button_;
+
   wxStaticText* find_label_;
   wxComboBox* find_combo_box_;
 
@@ -203,7 +208,7 @@ private:
 
   wxStaticText* options_label_;
   wxStaticLine* options_line_;
-  ui::BitmapToggleButton* show_options_tbutton_;
+  ui::BitmapToggleButton* options_toggle_button_;
   wxCheckBox* use_regex_check_box_;
   wxCheckBox* case_sensitive_check_box_;
   wxCheckBox* match_word_check_box_;
