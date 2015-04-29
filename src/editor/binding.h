@@ -65,9 +65,7 @@ public:
   void AddVoidCmd(const std::string& name, VoidFunc* func, int menu);
 
   // Bind the keys to the command with the given name.
-  bool BindKeys(const std::string& name,
-                const std::vector<Key>& keys,
-                int modes);
+  bool BindKeys(const std::string& name, const std::vector<Key>& keys, int modes);
 
   // Build the map from menu to (function, key) pair.
   void BindMenus();
@@ -94,7 +92,9 @@ public:
   // Used when create menu item.
   Key GetKeyByMenu(int menu) const;
 
+#if JIL_ENABLE_LEADER_KEY
   bool IsLeaderKey(Key key) const;
+#endif  // JIL_ENABLE_LEADER_KEY
 
 private:
   TextCmd* GetTextCmdByName(const std::string& name);
@@ -129,8 +129,10 @@ private:
   typedef std::map<int, std::pair<VoidFunc*, Key> > VoidMenuMap;
   VoidMenuMap void_menus_;
 
+#if JIL_ENABLE_LEADER_KEY
   // Store leader keys separately for fast checking.
   std::vector<Key> leader_keys_;
+#endif  // JIL_ENABLE_LEADER_KEY
 };
 
 }  // namespace editor

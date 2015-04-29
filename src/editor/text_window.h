@@ -47,7 +47,9 @@ public:
     kFileNameEvent,
     kModifiedEvent,
     kCaretEvent,
+#if JIL_ENABLE_LEADER_KEY
     kLeaderKeyEvent,
+#endif
     kGetFocusEvent,  // Text area gets focus
   };
 
@@ -146,7 +148,9 @@ public:
 
   const TextPoint& caret_point() const { return caret_point_; }
 
+#if JIL_ENABLE_LEADER_KEY
   void set_leader_key(Key* key);
+#endif  // JIL_ENABLE_LEADER_KEY
 
   const Selection& selection() const { return selection_; }
 
@@ -575,10 +579,12 @@ protected:
   // ********|********************
   Coord max_caret_x_;
 
+#if JIL_ENABLE_LEADER_KEY
   // A reference to an external Key object.
   // It would be better to keep a local copy. But currently, it's difficult to
   // update it (the copy) correctly.
   Key* leader_key_;
+#endif  // JIL_ENABLE_LEADER_KEY
 
   // Last text area mouse down point.
   TextPoint down_point_;

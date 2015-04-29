@@ -14,7 +14,9 @@ editor::StatusBar::FieldId ParseFieldId(const std::string& field_id_str) {
     "file_format",
     "file_type",
     "caret",
+#if JIL_ENABLE_LEADER_KEY
     "key_stroke",
+#endif
     "space",
   };
 

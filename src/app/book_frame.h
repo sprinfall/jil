@@ -7,6 +7,7 @@
 #include "wx/frame.h"
 #include "wx/arrstr.h"
 #include "wx/filename.h"
+#include "editor/compile_config.h"
 #include "editor/theme.h"
 #include "editor/binding.h"
 #include "app/defs.h"
@@ -127,9 +128,12 @@ protected:
   void OnActivate(wxActivateEvent& evt);
 #endif  // JIL_MULTIPLE_WINDOW
 
+#if JIL_ENABLE_LEADER_KEY
   void OnKeyDownHook(wxKeyEvent& evt);
+
   // Return true if the event is handled.
   bool HandleKeyDownHook(wxKeyEvent& evt);
+#endif  // JIL_ENABLE_LEADER_KEY
 
   void OnMenuFile(wxCommandEvent& evt);
   void OnMenuFileRecentFile(wxCommandEvent& evt);
@@ -323,7 +327,10 @@ private:
   editor::SharedTheme theme_;
 
   editor::Binding* binding_;
+
+#if JIL_ENABLE_LEADER_KEY
   editor::Key leader_key_;
+#endif  // JIL_ENABLE_LEADER_KEY
 
   // File menu -> Recent Files
   std::list<wxString> recent_files_;

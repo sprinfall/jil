@@ -313,11 +313,13 @@ void TextWindow::ShowSpace(bool show_space) {
   }
 }
 
+#if JIL_ENABLE_LEADER_KEY
 void TextWindow::set_leader_key(Key* key) {
   if (leader_key_ != key) {
     leader_key_ = key;
   }
 }
+#endif  // JIL_ENABLE_LEADER_KEY
 
 Mode TextWindow::mode() const {
   if (selection_.IsEmpty()) {
@@ -2062,7 +2064,11 @@ bool TextWindow::OnTextKeyDown(wxKeyEvent& evt) {
     return false;
   }
 
+#if JIL_ENABLE_LEADER_KEY
   if (code == WXK_TAB && modifiers == 0 && leader_key_->IsEmpty()) {
+#else
+  if (code == WXK_TAB && modifiers == 0) {
+#endif  // JIL_ENABLE_LEADER_KEY
     if (allow_text_change_) {
       // Input tab (expand or not).
       if (expand_tab_) {
@@ -2077,34 +2083,42 @@ bool TextWindow::OnTextKeyDown(wxKeyEvent& evt) {
   }
 
   // Avoid matching for single character key.
+#if JIL_ENABLE_LEADER_KEY
   if (leader_key_->IsEmpty()) {
+#endif  // JIL_ENABLE_LEADER_KEY
     if (modifiers == 0) {
       // Standard ASCII characters || ASCII extended characters.
       if (code >= 33 && code <= 126 || code >= 128 && code <= 255) {
         return false;
       }
     } else if (modifiers == wxMOD_SHIFT && code < 127) {
-      if (editor::kNonShiftChars.find(static_cast<char>(code))
-          != std::string::npos) {
+      if (editor::kNonShiftChars.find(static_cast<char>(code)) != std::string::npos) {
         // ~!@#$%^&*()_+<>?:"{}|
         return false;
       }
     }
+#if JIL_ENABLE_LEADER_KEY
   }
+#endif  // JIL_ENABLE_LEADER_KEY
 
   editor::Key key(code, modifiers);
+
+#if JIL_ENABLE_LEADER_KEY
   if (!leader_key_->IsEmpty()) {
     key.set_leader(*leader_key_);
   }
+#endif  // JIL_ENABLE_LEADER_KEY
 
   // Get text function by key.
   TextFunc* text_func = binding_->GetTextFuncByKey(key, mode());
 
+#if JIL_ENABLE_LEADER_KEY
   // Reset leader key no matter if the text function is found or not.
   if (!leader_key_->IsEmpty()) {
     leader_key_->Reset();
     PostEvent(TextWindow::kLeaderKeyEvent);
   }
+#endif  // JIL_ENABLE_LEADER_KEY
 
   if (text_func != NULL) {
     if (allow_text_change_ || !text_func->change_text()) {

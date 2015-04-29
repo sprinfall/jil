@@ -22,13 +22,16 @@ public:
     COLORS,
   };
 
+  // TODO: Remove prefix Field_
   enum FieldId {
     kField_Cwd = 0,
     kField_Encoding,
     kField_FileFormat,
     kField_FileType,
     kField_Caret,
+#if JIL_ENABLE_LEADER_KEY
     kField_KeyStroke,
+#endif
     kField_Space,
 
     kField_Count,

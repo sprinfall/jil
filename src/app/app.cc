@@ -46,10 +46,6 @@
 #include "app/theme_config.h"
 #include "app/util.h"
 
-#if wxUSE_ACCEL
-#error "In order to support compound shortcut keys (e.g., \"Ctrl+K,Ctrl+N\"), ACCEL should be disabled!"  // NOLINT
-#endif  // wxUSE_ACCEL
-
 #define kTxt wxT("txt")
 #define kCfgExt wxT(".cfg")
 
@@ -299,8 +295,7 @@ bool App::OnInit() {
     // Connect to it and send it any file name before exiting.
     Client* client = new Client;
 
-    wxConnectionBase* connection =
-        client->MakeConnection(wxT("localhost"), kIpcService, kIpcTopic);
+    wxConnectionBase* connection = client->MakeConnection(wxT("localhost"), kIpcService, kIpcTopic);
     if (connection != NULL) {
       // Ask the other instance to open a file or raise itself.
       connection->Execute(wxJoin(cmdline_files_, wxT(';')));

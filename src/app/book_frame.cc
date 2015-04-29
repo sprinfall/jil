@@ -83,12 +83,13 @@ EVT_SIZE(BookFrame::OnSize)
 #if JIL_MULTIPLE_WINDOW
 EVT_ACTIVATE(BookFrame::OnActivate)
 #endif  // JIL_MULTIPLE_WINDOW
+
+#if JIL_ENABLE_LEADER_KEY
 EVT_KEYDOWN_HOOK(BookFrame::OnKeyDownHook)
+#endif  // JIL_ENABLE_LEADER_KEY
 
 EVT_MENU_RANGE(ID_MENU_FILE_BEGIN, ID_MENU_FILE_END - 1, BookFrame::OnMenuFile)
-EVT_MENU_RANGE(ID_MENU_FILE_RECENT_FILE0, \
-               ID_MENU_FILE_RECENT_FILE9, \
-               BookFrame::OnMenuFileRecentFile)
+EVT_MENU_RANGE(ID_MENU_FILE_RECENT_FILE0, ID_MENU_FILE_RECENT_FILE9, BookFrame::OnMenuFileRecentFile)
 
 EVT_MENU(wxID_EXIT, BookFrame::OnQuit)
 
@@ -96,23 +97,15 @@ EVT_MENU_RANGE(ID_MENU_EDIT_BEGIN, ID_MENU_EDIT_END - 1, BookFrame::OnMenuEdit)
 
 EVT_MENU_RANGE(ID_MENU_VIEW_BEGIN, ID_MENU_VIEW_END - 1, BookFrame::OnMenuView)
 
-EVT_MENU_RANGE(ID_MENU_TOOLS_BEGIN, \
-               ID_MENU_TOOLS_END - 1, \
-               BookFrame::OnMenuTools)
+EVT_MENU_RANGE(ID_MENU_TOOLS_BEGIN, ID_MENU_TOOLS_END - 1, BookFrame::OnMenuTools)
 EVT_MENU_RANGE(ID_MENU_HELP_BEGIN, ID_MENU_HELP_END - 1, BookFrame::OnMenuHelp)
 
 // Update UI
-EVT_UPDATE_UI_RANGE(ID_MENU_FILE_BEGIN, \
-                    ID_MENU_FILE_END - 1, \
-                    BookFrame::OnFileUpdateUI)
+EVT_UPDATE_UI_RANGE(ID_MENU_FILE_BEGIN, ID_MENU_FILE_END - 1, BookFrame::OnFileUpdateUI)
 
-EVT_UPDATE_UI_RANGE(ID_MENU_EDIT_BEGIN, \
-                    ID_MENU_EDIT_END - 1, \
-                    BookFrame::OnEditUpdateUI)
+EVT_UPDATE_UI_RANGE(ID_MENU_EDIT_BEGIN, ID_MENU_EDIT_END - 1, BookFrame::OnEditUpdateUI)
 
-EVT_UPDATE_UI_RANGE(ID_MENU_VIEW_BEGIN, \
-                    ID_MENU_VIEW_END - 1, \
-                    BookFrame::OnViewUpdateUI)
+EVT_UPDATE_UI_RANGE(ID_MENU_VIEW_BEGIN, ID_MENU_VIEW_END - 1, BookFrame::OnViewUpdateUI)
 
 EVT_CLOSE(BookFrame::OnClose)
 
@@ -126,12 +119,8 @@ EVT_TEXT_WINDOW(wxID_ANY, BookFrame::OnTextWindowEvent)
 // Status bar.
 EVT_STATUS_FIELD_CLICK(ID_STATUS_BAR, BookFrame::OnStatusFieldClick)
 // Encoding menu event from status bar.
-EVT_MENU_RANGE(ID_MENU_ENCODING_BEGIN, \
-               ID_MENU_ENCODING_END - 1, \
-               BookFrame::OnStatusEncodingMenu)
-EVT_MENU_RANGE(ID_MENU_FILE_FORMAT_BEGIN, \
-               ID_MENU_FILE_FORMAT_END - 1, \
-               BookFrame::OnStatusFileFormatMenu)
+EVT_MENU_RANGE(ID_MENU_ENCODING_BEGIN, ID_MENU_ENCODING_END - 1, BookFrame::OnStatusEncodingMenu)
+EVT_MENU_RANGE(ID_MENU_FILE_FORMAT_BEGIN, ID_MENU_FILE_FORMAT_END - 1, BookFrame::OnStatusFileFormatMenu)
 
 EVT_FIND_WINDOW(ID_FIND_WINDOW, BookFrame::OnFindWindowEvent)
 
@@ -171,20 +160,14 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
   text_book_->set_tab_font(options_->fonts[kFont_Tab]);
   text_book_->Create(splitter_, wxID_ANY);
 
-  Connect(text_book_->GetId(),
-          kEvtBookPageChange,
-          wxCommandEventHandler(BookFrame::OnTextBookPageChange));
-  Connect(text_book_->GetId(),
-          kEvtBookPageSwitch,
-          wxCommandEventHandler(BookFrame::OnTextBookPageSwitch));
+  Connect(text_book_->GetId(), kEvtBookPageChange, wxCommandEventHandler(BookFrame::OnTextBookPageChange));
+  Connect(text_book_->GetId(), kEvtBookPageSwitch, wxCommandEventHandler(BookFrame::OnTextBookPageSwitch));
 
   // Create tool book.
   tool_book_ = new ToolBook(theme_->GetTheme(THEME_TEXT_BOOK));
   tool_book_->Create(splitter_, wxID_ANY);
   tool_book_->Hide();
-  Connect(tool_book_->GetId(),
-          kEvtBookPageChange,
-          wxCommandEventHandler(BookFrame::OnToolBookPageChange));
+  Connect(tool_book_->GetId(), kEvtBookPageChange, wxCommandEventHandler(BookFrame::OnToolBookPageChange));
 
   // Restore split tree from session or create it.
   SplitNode* split_root = session_->split_root();
@@ -232,9 +215,7 @@ bool BookFrame::Show(bool show) {
   return wxFrame::Show(show);
 }
 
-TextPage* BookFrame::OpenFile(const wxString& file_name,
-                              bool active,
-                              bool silent) {
+TextPage* BookFrame::OpenFile(const wxString& file_name, bool active, bool silent) {
   return DoOpenFile(file_name, active, silent, true, true);
 }
 
@@ -498,6 +479,8 @@ void BookFrame::OnActivate(wxActivateEvent& evt) {
 }
 #endif  // JIL_MULTIPLE_WINDOW
 
+#if JIL_ENABLE_LEADER_KEY
+
 void BookFrame::OnKeyDownHook(wxKeyEvent& evt) {
   if (!HandleKeyDownHook(evt)) {
     // Skip for child windows, e.g., TextWindow.
@@ -523,9 +506,7 @@ bool BookFrame::HandleKeyDownHook(wxKeyEvent& evt) {
     if (!leader_key_.IsEmpty()) {
       // Clear leader key in the status bar.
       leader_key_.Reset();
-      status_bar_->SetFieldValue(editor::StatusBar::kField_KeyStroke,
-                                 wxEmptyString,
-                                 true);
+      status_bar_->SetFieldValue(editor::StatusBar::kField_KeyStroke, wxEmptyString, true);
       return true;
     }
 
@@ -577,9 +558,7 @@ bool BookFrame::HandleKeyDownHook(wxKeyEvent& evt) {
     // Clear leader key before execute the function.
     if (!leader_key_.IsEmpty()) {
       leader_key_.Reset();
-      status_bar_->SetFieldValue(editor::StatusBar::kField_KeyStroke,
-                                 wxEmptyString,
-                                 true);
+      status_bar_->SetFieldValue(editor::StatusBar::kField_KeyStroke, wxEmptyString, true);
     }
 
     // If the command has a menu, execute it only when it's enabled.
@@ -601,6 +580,8 @@ bool BookFrame::HandleKeyDownHook(wxKeyEvent& evt) {
 
   return false;
 }
+
+#endif  // JIL_ENABLE_LEADER_KEY
 
 void BookFrame::OnMenuFile(wxCommandEvent& evt) {
   // Find menu has no menu items mapping to text function.
@@ -882,13 +863,13 @@ void BookFrame::OnTextWindowEvent(wxCommandEvent& evt) {
                                  FormatCaretString(text_page),
                                  true);
     }
+#if JIL_ENABLE_LEADER_KEY
   } else if (type == TextWindow::kLeaderKeyEvent) {
     // Leader key is reset by the text window.
     if (leader_key_.IsEmpty()) {  // Must be empty but just check it.
-      status_bar_->SetFieldValue(StatusBar::kField_KeyStroke,
-                                 wxEmptyString,
-                                 true);
+      status_bar_->SetFieldValue(StatusBar::kField_KeyStroke, wxEmptyString, true);
     }
+#endif  // JIL_ENABLE_LEADER_KEY
   } else if (type == TextWindow::kFileFormatEvent) {
     TextPage* text_page = ActiveTextPage();
     if (text_page != NULL) {
@@ -1281,7 +1262,11 @@ FindResultPage* BookFrame::GetFindResultPage() {
   fr_page->set_style(style_);
   fr_page->set_theme(theme_->GetTheme(THEME_TEXT_PAGE));
   fr_page->set_binding(binding_);
+
+#if JIL_ENABLE_LEADER_KEY
   fr_page->set_leader_key(&leader_key_);
+#endif
+
   fr_page->set_line_padding(options_->line_padding);
   fr_page->Create(tool_book_->PageParent(), ID_FIND_RESULT_PAGE, true);
 
@@ -1933,7 +1918,11 @@ TextPage* BookFrame::CreateTextPage(editor::TextBuffer* buffer, wxWindow* parent
   page->set_style(style_);
   page->set_theme(theme_->GetTheme(THEME_TEXT_PAGE));
   page->set_binding(binding_);
+
+#if JIL_ENABLE_LEADER_KEY
   page->set_leader_key(&leader_key_);
+#endif
+
   page->set_line_padding(options_->line_padding);
   page->Create(parent, id, true);
 

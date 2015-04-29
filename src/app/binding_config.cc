@@ -11,7 +11,7 @@
 
 namespace jil {
 
-using namespace editor;  // NOLINT
+using namespace editor;
 
 namespace {
 
@@ -155,8 +155,7 @@ int ParseKeycode(const std::string& keycode_str, int* modifiers) {
 //  - ctrl+;;ctrl+i
 // For the second example, the first simicolon is the keycode while the second
 // semicolon is the key delimiter. That's why we don't use a general tokenizer.
-void SplitKeys(const std::string& keys_str,
-               std::vector<std::string>* splited_keys_str) {
+void SplitKeys(const std::string& keys_str, std::vector<std::string>* splited_keys_str) {
   size_t p = 0;
   size_t i = 0;
   for (; i < keys_str.size(); ++i) {
@@ -180,8 +179,7 @@ bool ParseKeyStroke(const std::string& key_str, int* code, int* modifiers) {
   while (true) {
     size_t plus = key_str.find_first_of('+', offset);
     if (plus != std::string::npos) {
-      *modifiers = *modifiers |
-                   ParseModifier(key_str.substr(offset, plus - offset));
+      *modifiers = *modifiers | ParseModifier(key_str.substr(offset, plus - offset));
     } else {
       *code = ParseKeycode(key_str.substr(offset), modifiers);
       if (*code == 0) {
@@ -195,11 +193,15 @@ bool ParseKeyStroke(const std::string& key_str, int* code, int* modifiers) {
 }
 
 bool ParseKey(const std::string& key_str, Key* key) {
-  int code = 0;
+#if JIL_ENABLE_LEADER_KEY
   int leader_code = 0;
-  int modifiers = 0;
   int leader_modifiers = 0;
+#endif  // JIL_ENABLE_LEADER_KEY
 
+  int code = 0;
+  int modifiers = 0;
+
+#if JIL_ENABLE_LEADER_KEY
   // Check leader key.
   size_t comma = key_str.find_first_of(',');
   if (comma != std::string::npos) {
@@ -209,21 +211,27 @@ bool ParseKey(const std::string& key_str, Key* key) {
   }
 
   if (comma != std::string::npos) {
-    if (!ParseKeyStroke(key_str.substr(0, comma),
-                        &leader_code,
-                        &leader_modifiers)) {
+    if (!ParseKeyStroke(key_str.substr(0, comma), &leader_code, &leader_modifiers)) {
       return false;
     }
     if (!ParseKeyStroke(key_str.substr(comma + 1), &code, &modifiers)) {
       return false;
     }
   } else {  // No leader key.
+#endif  // JIL_ENABLE_LEADER_KEY
     if (!ParseKeyStroke(key_str, &code, &modifiers)) {
       return false;
     }
+#if JIL_ENABLE_LEADER_KEY
   }
+#endif  // JIL_ENABLE_LEADER_KEY
 
+#if JIL_ENABLE_LEADER_KEY
   key->Set(leader_code, leader_modifiers, code, modifiers);
+#else
+  key->Set(code, modifiers);
+#endif  // JIL_ENABLE_LEADER_KEY
+
   return true;
 }
 
@@ -275,7 +283,8 @@ bool BindingConfig::Load(const wxString& file) {
   }
 
   Setting root_setting = config.Root();
-  const int binding_list_num = root_setting.size();
+  int binding_list_num = root_setting.size();
+
   for (int i = 0; i < binding_list_num; ++i) {
     Setting list_setting = root_setting.Get(i);
 
@@ -284,7 +293,7 @@ bool BindingConfig::Load(const wxString& file) {
       continue;
     }
 
-    const int nr_of_binding = list_setting.size();
+    int nr_of_binding = list_setting.size();
     for (int j = 0; j < nr_of_binding; ++j) {
       ParseBindingItem(list_setting.Get(j));
     }
@@ -293,9 +302,7 @@ bool BindingConfig::Load(const wxString& file) {
   return true;
 }
 
-bool BindingConfig::ParseBinding(const std::string& cmd,
-                                 const std::string& key,
-                                 int modes) {
+bool BindingConfig::ParseBinding(const std::string& cmd, const std::string& key, int modes) {
   std::vector<Key> keys = ParseKeys(key);
   if (keys.empty()) {
     return false;

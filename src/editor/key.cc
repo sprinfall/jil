@@ -72,9 +72,7 @@ wxString KeyCodeName(int key_code) {
   }
 }
 
-static wxString& AddKeyPart(wxString& str,
-                            const wxString& part,
-                            const wxString& sep = wxT("+")) {
+static wxString& AddKeyPart(wxString& str, const wxString& part, const wxString& sep = wxT("+")) {
   if (!str.empty()) {
     str += sep;
   }
@@ -139,6 +137,7 @@ static wxString SingleKeyName(int key_data) {
 }
 
 wxString Key::ToString() const {
+#if JIL_ENABLE_LEADER_KEY
   wxString leader_key_str = SingleKeyName(data_ >> 16);
   wxString key_str = SingleKeyName(data_ & 0xffff);
   if (leader_key_str.IsEmpty()) {
@@ -146,6 +145,9 @@ wxString Key::ToString() const {
   } else {
     return leader_key_str + wxT(", ") + key_str;
   }
+#else
+  return SingleKeyName(data_ & 0xffff);
+#endif  // JIL_ENABLE_LEADER_KEY
 }
 
 }  // namespace editor

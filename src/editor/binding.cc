@@ -34,9 +34,8 @@ void Binding::AddVoidCmd(const std::string& name, VoidFunc* func, int menu) {
   void_cmds_.push_back(void_cmd);
 }
 
-bool Binding::BindKeys(const std::string& name,
-                       const std::vector<Key>& keys,
-                       int modes) {
+bool Binding::BindKeys(const std::string& name, const std::vector<Key>& keys, int modes) {
+#if JIL_ENABLE_LEADER_KEY
   // Save leader key.
   for (size_t i = 0; i < keys.size(); ++i) {
     Key leader_key = keys[i].leader();
@@ -44,6 +43,7 @@ bool Binding::BindKeys(const std::string& name,
       leader_keys_.push_back(leader_key);
     }
   }
+#endif  // JIL_ENABLE_LEADER_KEY
 
   // Match text command.
   TextCmd* text_cmd = GetTextCmdByName(name);
@@ -52,13 +52,11 @@ bool Binding::BindKeys(const std::string& name,
 
     for (size_t i = 0; i < keys.size(); ++i) {
       if ((modes & kNormalMode) != 0) {
-        normal_text_keys_[keys[i]] = std::make_pair(text_cmd->func,
-                                                    text_cmd->menu);
+        normal_text_keys_[keys[i]] = std::make_pair(text_cmd->func, text_cmd->menu);
       }
 
       if ((modes & kVisualMode) != 0) {
-        visual_text_keys_[keys[i]] = std::make_pair(text_cmd->func,
-                                                    text_cmd->menu);
+        visual_text_keys_[keys[i]] = std::make_pair(text_cmd->func, text_cmd->menu);
       }
     }
 
@@ -125,8 +123,7 @@ VoidFunc* Binding::GetVoidFuncByMenu(int menu) const {
 }
 
 TextFunc* Binding::GetTextFuncByKey(Key key, Mode mode, int* menu) const {
-  const TextKeyMap& text_keys =
-      mode == kNormalMode ? normal_text_keys_ : visual_text_keys_;
+  const TextKeyMap& text_keys = mode == kNormalMode ? normal_text_keys_ : visual_text_keys_;
 
   TextKeyMap::const_iterator it = text_keys.find(key);
   if (it == text_keys.end()) {
@@ -169,10 +166,11 @@ Key Binding::GetKeyByMenu(int menu) const {
   return Key();
 }
 
+#if JIL_ENABLE_LEADER_KEY
 bool Binding::IsLeaderKey(Key key) const {
-  return std::find(leader_keys_.begin(), leader_keys_.end(), key) !=
-         leader_keys_.end();
+  return std::find(leader_keys_.begin(), leader_keys_.end(), key) != leader_keys_.end();
 }
+#endif  // JIL_ENABLE_LEADER_KEY
 
 TextCmd* Binding::GetTextCmdByName(const std::string& name) {
   for (size_t i = 0; i < text_cmds_.size(); ++i) {
