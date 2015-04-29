@@ -48,7 +48,7 @@ public:
   // Switch Current Working Dir when switch text page.
   bool switch_cwd;
 
-  // Remember last open files.
+  // Restore last open files.
   bool restore_files;
 
   // Show file path in the title bar.

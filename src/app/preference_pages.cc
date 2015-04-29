@@ -4,6 +4,7 @@
 #include "wx/bookctrl.h"
 #include "wx/checkbox.h"
 #include "wx/combobox.h"
+#include "wx/msgdlg.h"  // TEST
 #include "wx/sizer.h"
 #include "wx/statbox.h"
 #include "wx/statline.h"
@@ -18,6 +19,8 @@
 namespace jil {
 
 static const wxSize kMinComboBoxSize(120, -1);
+static const wxSize kNumTextSize(60, -1);
+static const wxSize kStrTextSize(180, -1);
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -42,7 +45,7 @@ public:
 private:
   void CreateControls();
 
-  void FillFileEncodingComboBox(wxComboBox* fenc_combo);
+  void InitFileEncodingComboBox(wxComboBox* combo_box);
 
 private:
   Options* options_;
@@ -99,7 +102,7 @@ void GeneralPagePanel::CreateControls() {
 
       fenc_combo_box_ = new wxComboBox(box, wxID_ANY, wxEmptyString);
       fenc_combo_box_->SetMinSize(kMinComboBoxSize);
-      FillFileEncodingComboBox(fenc_combo_box_);
+      InitFileEncodingComboBox(fenc_combo_box_);
 
       wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
       hsizer->Add(label, wxSizerFlags().Center());
@@ -120,12 +123,12 @@ void GeneralPagePanel::CreateControls() {
   }
 
   {
-    restore_files_check_box_ = new wxCheckBox(this, wxID_ANY, _("Remember last open files"));
+    restore_files_check_box_ = new wxCheckBox(this, wxID_ANY, _("Restore last open files"));
     top_vsizer->Add(restore_files_check_box_, wxSizerFlags().Border(wxLTR));
   }
-  
+
   {
-    show_path_check_box_ = new wxCheckBox(this, wxID_ANY, _("Show file full path in the title bar"));
+    show_path_check_box_ = new wxCheckBox(this, wxID_ANY, _("Show file path in title bar"));
     top_vsizer->Add(show_path_check_box_, wxSizerFlags().Border(wxALL));
   }
 
@@ -163,7 +166,7 @@ bool GeneralPagePanel::TransferDataFromWindow() {
   return true;
 }
 
-void GeneralPagePanel::FillFileEncodingComboBox(wxComboBox* combo_box) {
+void GeneralPagePanel::InitFileEncodingComboBox(wxComboBox* combo_box) {
   combo_box->Append(ENCODING_DISPLAY_NAME_ISO_8859_1);
   combo_box->Append(ENCODING_DISPLAY_NAME_UTF8);
   combo_box->Append(ENCODING_DISPLAY_NAME_UTF8_BOM);
@@ -185,10 +188,10 @@ public:
 private:
   void CreateControls();
 
-  void FillThemeComboBox(wxComboBox* combo_box);
+  void InitThemeComboBox(wxComboBox* combo_box);
 
-  void FillFontNameComboBox(wxComboBox* combo_box, bool fixed_width_only);
-  void FillFontSizeComboBox(wxComboBox* combo_box);
+  void InitFontNameComboBox(wxComboBox* combo_box, bool fixed_width_only);
+  void InitFontSizeComboBox(wxComboBox* combo_box);
 };
 
 void ThemePagePanel::CreateControls() {
@@ -203,7 +206,7 @@ void ThemePagePanel::CreateControls() {
 
     {
       wxComboBox* combo_box = new wxComboBox(box, wxID_ANY, wxEmptyString);
-      FillThemeComboBox(combo_box);
+      InitThemeComboBox(combo_box);
       combo_box->SetMinSize(kMinComboBoxSize);
 
       box_vsizer->Add(combo_box, wxSizerFlags().Border(wxALL));
@@ -211,7 +214,7 @@ void ThemePagePanel::CreateControls() {
 
     top_vsizer->Add(box_vsizer, wxSizerFlags().Expand().Border(wxALL));
   }
- 
+
   //----------------------------------------------------------------------------
   // Font
 
@@ -244,11 +247,11 @@ void ThemePagePanel::CreateControls() {
     {
       wxStaticText* name_label = new wxStaticText(box, wxID_ANY, _("Font:"));
       wxComboBox* name_combo_box = new wxComboBox(box, wxID_ANY, wxEmptyString);
-      FillFontNameComboBox(name_combo_box, false);
+      InitFontNameComboBox(name_combo_box, false);
 
       wxStaticText* size_label = new wxStaticText(box, wxID_ANY, _("Size:"));
       wxComboBox* size_combo_box = new wxComboBox(box, wxID_ANY, wxEmptyString);
-      FillFontSizeComboBox(size_combo_box);
+      InitFontSizeComboBox(size_combo_box);
 
       wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -274,30 +277,98 @@ void ThemePagePanel::CreateControls() {
   SetSizerAndFit(top_vsizer);
 }
 
-void ThemePagePanel::FillThemeComboBox(wxComboBox* theme_combo) {
+void ThemePagePanel::InitThemeComboBox(wxComboBox* combo_box) {
   const std::list<wxString>& theme_names = wxGetApp().theme_names();
   std::list<wxString>::const_iterator it = theme_names.begin();
   for (; it != theme_names.end(); ++it) {
-    theme_combo->Append(*it);
+    combo_box->Append(*it);
   }
 }
 
-void ThemePagePanel::FillFontNameComboBox(wxComboBox* font_combo_box, bool fixed_width_only) {
+void ThemePagePanel::InitFontNameComboBox(wxComboBox* combo_box, bool fixed_width_only) {
   FontEnumerator fe;
   fe.EnumerateFacenames(wxFONTENCODING_SYSTEM, fixed_width_only);
   std::set<wxString>::iterator it = fe.facenames.begin();
   for (; it != fe.facenames.end(); ++it) {
-    font_combo_box->Append(*it);
+    combo_box->Append(*it);
   }
 }
 
-void ThemePagePanel::FillFontSizeComboBox(wxComboBox* font_size_combo) {
+void ThemePagePanel::InitFontSizeComboBox(wxComboBox* combo_box) {
   for (int i = kMinFontSize; i <= kMaxFontSize; ++i) {
-    font_size_combo->Append(wxString::Format(wxT("%d"), i));
+    combo_box->Append(wxString::Format(wxT("%d"), i));
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+class AdvancedEditorOptionsDialog : public wxDialog {
+public:
+  AdvancedEditorOptionsDialog(wxWindow* parent)
+      : wxDialog(parent, wxID_ANY, _("Editor Options")) {
+    CreateControls();
+  }
+
+protected:
+  void CreateControls() {
+    wxSizer* top_vsizer = new wxBoxSizer(wxVERTICAL);
+
+    //------------------------------------
+    // Comment
+
+    {
+      wxStaticBox* box = new wxStaticBox(this, wxID_ANY, _("Comment"));
+      wxSizer* box_hsizer = new wxStaticBoxSizer(box, wxHORIZONTAL);
+
+      add_space_check_box_ = new wxCheckBox(box, wxID_ANY, _("Add space"));
+      respect_indent_check_box_ = new wxCheckBox(box, wxID_ANY, _("Respect indent"));
+
+      box_hsizer->Add(add_space_check_box_, wxSizerFlags().Border(wxALL));
+      box_hsizer->Add(respect_indent_check_box_, wxSizerFlags().Border(wxALL));
+
+      top_vsizer->Add(box_hsizer, wxSizerFlags().Expand().Border(wxTB));
+    }
+
+    //------------------------------------
+    // Indent
+
+    {
+      wxStaticBox* box = new wxStaticBox(this, wxID_ANY, _("Indent"));
+      wxSizer* box_vsizer = new wxStaticBoxSizer(box, wxVERTICAL);
+
+      wxStaticText* sw_label = new wxStaticText(box, wxID_ANY, _("Shift width:"));
+      sw_text_ctrl_ = new wxTextCtrl(box, wxID_ANY, wxEmptyString, wxDefaultPosition, kNumTextSize);
+
+      {
+        wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+        hsizer->Add(sw_label, wxSizerFlags().Center());
+        hsizer->Add(sw_text_ctrl_, wxSizerFlags().Center().Border(wxLEFT));
+        box_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
+      }
+
+      wxStaticText* indent_keys_label = new wxStaticText(box, wxID_ANY, _("Indent keys:"));
+      indent_keys_text_ctrl_ = new wxTextCtrl(box, wxID_ANY, wxEmptyString, wxDefaultPosition, kStrTextSize);
+
+      {
+        wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+        hsizer->Add(indent_keys_label, wxSizerFlags().Center());
+        hsizer->Add(indent_keys_text_ctrl_, wxSizerFlags().Center().Border(wxLEFT));
+        box_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
+      }
+
+      top_vsizer->Add(box_vsizer, wxSizerFlags().Expand().Border(wxTB));
+    }
+
+    SetSizerAndFit(top_vsizer);
+  }
+
+private:
+  wxCheckBox* add_space_check_box_;
+  wxCheckBox* respect_indent_check_box_;
+
+  wxTextCtrl* sw_text_ctrl_;
+  wxTextCtrl* indent_keys_text_ctrl_;
+};
 
 class EditorPagePanel : public wxPanel {
 public:
@@ -306,125 +377,140 @@ public:
     CreateControls();
   }
 
-private:
+protected:
   void CreateControls();
+
+  void InitFtComboBox(wxComboBox* combo_box);
+
+  void OnFtComboBox(wxCommandEvent& evt);
+
+  void OnMoreButtonClick(wxCommandEvent& evt);
+
+private:
+  wxComboBox* ft_combo_box_;
+
+  wxCheckBox* show_hscrollbar_check_box_;
+  wxCheckBox* show_number_check_box_;
+  wxCheckBox* show_space_check_box_;
+  wxCheckBox* wrap_check_box_;
+
+  wxTextCtrl* rulers_text_ctrl_;
+
+  wxTextCtrl* delimiters_text_ctrl_;
+
+  wxTextCtrl* ts_text_ctrl_;
+  wxCheckBox* expand_tab_check_box_;
 };
 
 void EditorPagePanel::CreateControls() {
   wxSizer* top_vsizer = new wxBoxSizer(wxVERTICAL);
 
-  //--------------------------------------------------------------------------
+  //------------------------------------
   // File type
 
-  {
-    wxStaticText* label = new wxStaticText(this, wxID_ANY, _("File type:"));
+  wxStaticText* ft_label = new wxStaticText(this, wxID_ANY, _("File type:"));
 
-    // TODO
-    wxComboBox* combo_box = new wxComboBox(this, wxID_ANY, wxEmptyString);
-    combo_box->Append(_T("C++"));
-    combo_box->Append(_T("Java"));
-    combo_box->Append(_T("Python"));
-    combo_box->Select(0);
+  ft_combo_box_ = new wxComboBox(this, wxID_ANY, wxEmptyString);
+  InitFtComboBox(ft_combo_box_);
 
-    wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-    hsizer->AddStretchSpacer();
-    hsizer->Add(label, wxSizerFlags().Center());
-    hsizer->Add(combo_box, wxSizerFlags().Center().Border(wxLEFT));
+  wxBoxSizer* ft_hsizer = new wxBoxSizer(wxHORIZONTAL);
+  ft_hsizer->AddStretchSpacer();
+  ft_hsizer->Add(ft_label, wxSizerFlags().Center());
+  ft_hsizer->Add(ft_combo_box_, wxSizerFlags().Center().Border(wxLEFT));
+  top_vsizer->Add(ft_hsizer, wxSizerFlags().Expand().Border(wxALL));
 
-    top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
-  }
-
-  //--------------------------------------------------------------------------
+  //------------------------------------
   // Display
 
   {
     wxStaticBox* box = new wxStaticBox(this, wxID_ANY, _("Display"));
     wxSizer* box_vsizer = new wxStaticBoxSizer(box, wxVERTICAL);
 
-    {
-      wxCheckBox* check_box = new wxCheckBox(box, wxID_ANY, _("Show horizontal scrollbar"));
-      box_vsizer->Add(check_box, wxSizerFlags().Border(wxLTR));
-    }
+    show_hscrollbar_check_box_ = new wxCheckBox(box, wxID_ANY, _("Show horizontal scrollbar"));
+    box_vsizer->Add(show_hscrollbar_check_box_, wxSizerFlags().Border(wxLTR));
 
-    {
-      wxCheckBox* check_box = new wxCheckBox(box, wxID_ANY, _("Show line numbers"));
-      box_vsizer->Add(check_box, wxSizerFlags().Border(wxLTR));
-    }
+    show_number_check_box_ = new wxCheckBox(box, wxID_ANY, _("Show line numbers"));
+    box_vsizer->Add(show_number_check_box_, wxSizerFlags().Border(wxLTR));
 
-    {
-      wxCheckBox* check_box = new wxCheckBox(box, wxID_ANY, _("Show white spaces"));
-      box_vsizer->Add(check_box, wxSizerFlags().Border(wxLTR));
-    }
+    show_space_check_box_ = new wxCheckBox(box, wxID_ANY, _("Show white spaces"));
+    box_vsizer->Add(show_space_check_box_, wxSizerFlags().Border(wxLTR));
 
-    {
-      wxCheckBox* check_box = new wxCheckBox(box, wxID_ANY, _("Wrap line"));
-      box_vsizer->Add(check_box, wxSizerFlags().Border(wxLTR));
-    }
+    wrap_check_box_ = new wxCheckBox(box, wxID_ANY, _("Wrap line"));
+    box_vsizer->Add(wrap_check_box_, wxSizerFlags().Border(wxALL));
 
-    // Rulers
-    {
-      wxStaticText* label = new wxStaticText(box, wxID_ANY, _("Rulers:"));
-      wxTextCtrl* text_ctrl = new wxTextCtrl(box, wxID_ANY, wxEmptyString);
-
-      wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-      hsizer->Add(label, wxSizerFlags().Center());
-      hsizer->AddStretchSpacer(1);
-      hsizer->Add(text_ctrl, wxSizerFlags().Center().Border(wxLEFT));
-
-      box_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
-    }
-
-    top_vsizer->Add(box_vsizer, wxSizerFlags().Expand().Border(wxALL));
+    top_vsizer->Add(box_vsizer, wxSizerFlags().Expand().Border(wxLR));
   }
 
-//--------------------------------------------------------------------------
-// Tab
+  //------------------------------------
+  // Rulers
+
+  wxStaticText* rulers_label = new wxStaticText(this, wxID_ANY, _("Rulers:"));
+  rulers_text_ctrl_ = new wxTextCtrl(this, wxID_ANY, wxEmptyString);
+
+  wxSizer* rulers_hsizer = new wxBoxSizer(wxHORIZONTAL);
+  rulers_hsizer->Add(rulers_label, wxSizerFlags().Center());
+  rulers_hsizer->AddStretchSpacer(1);
+  rulers_hsizer->Add(rulers_text_ctrl_, wxSizerFlags().Center().Border(wxLEFT));
+  top_vsizer->Add(rulers_hsizer, wxSizerFlags().Expand().Border(wxALL));
+
+  //------------------------------------
+  // Delimiters
+
+  wxStaticText* delimiters_label = new wxStaticText(this, wxID_ANY, _("Delimiters:"));
+  wxTextCtrl* delimiters_text_ctrl_ = new wxTextCtrl(this, wxID_ANY, wxEmptyString);
+  {
+    wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+    hsizer->Add(delimiters_label, wxSizerFlags().Center());
+    hsizer->Add(delimiters_text_ctrl_, wxSizerFlags(1).Center().Border(wxLEFT));
+    top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
+  }
+
+  //------------------------------------
+  // Tab
 
   {
     wxStaticBox* box = new wxStaticBox(this, wxID_ANY, _("Tab"));
     wxSizer* box_vsizer = new wxStaticBoxSizer(box, wxVERTICAL);
 
     {
-      const wxSize kTextCtrlSize(60, -1);
-
       wxStaticText* ts_label = new wxStaticText(box, wxID_ANY, _("Tab stop:"));
-      wxTextCtrl* ts_text_ctrl = new wxTextCtrl(box, wxID_ANY, wxEmptyString, wxDefaultPosition, kTextCtrlSize);
+      ts_text_ctrl_ = new wxTextCtrl(box, wxID_ANY, wxEmptyString, wxDefaultPosition, kNumTextSize);
 
-      wxStaticText* sw_label = new wxStaticText(box, wxID_ANY, _("Shift width:"));
-      wxTextCtrl* sw_text_ctrl = new wxTextCtrl(box, wxID_ANY, wxEmptyString, wxDefaultPosition, kTextCtrlSize);
+      expand_tab_check_box_ = new wxCheckBox(box, wxID_ANY, _("Expand tabs"));
 
       wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
       hsizer->Add(ts_label, wxSizerFlags().Center());
-      hsizer->Add(ts_text_ctrl, wxSizerFlags().Center().Border(wxLEFT));
+      hsizer->Add(ts_text_ctrl_, wxSizerFlags().Center().Border(wxLEFT));
       hsizer->AddStretchSpacer(1);
-      hsizer->Add(sw_label, wxSizerFlags().Center().Border(wxLEFT));
-      hsizer->Add(sw_text_ctrl, wxSizerFlags().Center().Border(wxLEFT));
+      hsizer->Add(expand_tab_check_box_, wxSizerFlags().Center().Border(wxLEFT));
       box_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
-    }
-
-    {
-      wxCheckBox* check_box = new wxCheckBox(box, wxID_ANY, _("Expand tabs"));
-      box_vsizer->Add(check_box, wxSizerFlags().Border(wxALL));
     }
 
     top_vsizer->Add(box_vsizer, wxSizerFlags().Expand().Border(wxALL));
   }
 
-  //--------------------------------------------------------------------------
-
-  {
-    wxStaticText* label = new wxStaticText(this, wxID_ANY, _("Word delimiters:"));
-    wxTextCtrl* text_ctrl = new wxTextCtrl(this, wxID_ANY, wxEmptyString);
-
-    wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-    hsizer->Add(label, wxSizerFlags().Center());
-    hsizer->Add(text_ctrl, wxSizerFlags(1).Center().Border(wxLEFT));
-    top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
-  }
-
-  //--------------------------------------------------------------------------
+  wxButton* more_button = new wxButton(this, wxID_ANY, _("More..."));
+  top_vsizer->Add(more_button, wxSizerFlags().Right().Border(wxALL));
+  Connect(more_button->GetId(), wxEVT_BUTTON, wxCommandEventHandler(EditorPagePanel::OnMoreButtonClick));
 
   SetSizerAndFit(top_vsizer);
+}
+
+// TODO
+void EditorPagePanel::InitFtComboBox(wxComboBox* combo_box) {
+  combo_box->Append(_T("C++"));
+  combo_box->Append(_T("Java"));
+  combo_box->Append(_T("Python"));
+  combo_box->Select(0);
+}
+
+void EditorPagePanel::OnFtComboBox(wxCommandEvent& evt) {
+  wxMessageBox(wxString::Format(wxT("selection: %d"), evt.GetSelection()));
+}
+
+void EditorPagePanel::OnMoreButtonClick(wxCommandEvent& evt) {
+  AdvancedEditorOptionsDialog* more_dialog = new AdvancedEditorOptionsDialog(this);
+  more_dialog->ShowModal();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -15,7 +15,11 @@
 #define kTrOpenFile           _("Open File")
 #define kTrFailedToOpenFile   _("Failed to open file! (%s)")
 
+#if defined (__WXMSW__)
 #define kTrOptions            _("Options")
+#else
+#define kTrOptions            _("Preferences")
+#endif  // __WXMSW__
 
 #define kTrLine               _("Line")
 #define kTrColumn             _("Column")
@@ -74,6 +78,7 @@
 #define kTrEditClearAll       _("C&lear All")
 #define kTrEditGoToLocation   _("&Go To Location")
 
+// TODO: OSX
 #define kTrToolsOptions       _("&Options...")
 
 #define kTrHelpViewOnline     _("&View Online Help")

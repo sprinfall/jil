@@ -5,6 +5,7 @@
 #include "wx/defs.h"
 
 #define wxLR (wxLEFT|wxRIGHT)
+#define wxTB (wxTOP|wxBOTTOM)
 #define wxLTR (wxLEFT|wxTOP|wxRIGHT)
 #define wxLRB (wxLEFT|wxRIGHT|wxBOTTOM)
 

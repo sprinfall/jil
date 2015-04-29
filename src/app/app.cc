@@ -452,7 +452,7 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
 
 void App::ShowPreferencesEditor(wxWindow* parent) {
   if (!pref_editor_) {
-    pref_editor_.reset(new wxPreferencesEditor);
+    pref_editor_.reset(new wxPreferencesEditor(kTrOptions));
     pref_editor_->AddPage(new pref::GeneralPage(&options_));
     pref_editor_->AddPage(new pref::ThemePage());
     pref_editor_->AddPage(new pref::EditorPage());
