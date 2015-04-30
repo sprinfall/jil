@@ -1608,17 +1608,6 @@ editor::TextRange BookFrame::Find(TextPage* text_page,
   return result_range;
 }
 
-// Example: "%6d", *max_ln_size = 6
-static std::wstring CreateLineNrStrFormat(const TextRangeList& result_ranges, size_t* max_ln_size) {
-  editor::Coord max_ln = result_ranges.back().point_end().y;
-
-  std::string max_ln_str = base::LexicalCast<std::string>(max_ln);
-  *max_ln_size = max_ln_str.size();
-
-  std::wstring max_ln_size_str = base::LexicalCast<std::wstring>(max_ln_str.size());
-  return (L"%" + max_ln_size_str + L"d");
-}
-
 void BookFrame::FindAll(const std::wstring& str,
                         editor::TextBuffer* buffer,
                         int flags,
@@ -1645,21 +1634,24 @@ void BookFrame::FindAll(const std::wstring& str,
   fr_line = fr_page->buffer()->AppendLine(file_path_name);
   fr_line->set_id(kNpos);  // Clear line ID.
 
-  size_t ln_size = 1;
-  std::wstring ln_str_format = CreateLineNrStrFormat(result_ranges, &ln_size);
-  std::wstring ln_str_buf;
-  ln_str_buf.resize(ln_size);
+  // Get max line number's string size.
+  Coord max_ln = result_ranges.back().point_end().y;
+  size_t max_ln_size = base::LexicalCast<std::string>(max_ln).size();
 
   std::list<TextRange>::iterator range_it = result_ranges.begin();
   for (; range_it != result_ranges.end(); ++range_it) {
     const TextRange& range = *range_it;
 
     Coord ln = range.point_begin().y;
-    swprintf(&ln_str_buf[0], ln_str_format.c_str(), ln);
+    std::wstring ln_str = base::LexicalCast<std::wstring>(ln);
+    if (ln_str.size() < max_ln_size) {
+      // Right align the line number.
+      ln_str.insert(ln_str.begin(), max_ln_size - ln_str.size(), kSpaceChar);
+    }
 
     TextLine* line = buffer->Line(ln);
 
-    std::wstring line_data = ln_str_buf + L" " + line->data();
+    std::wstring line_data = ln_str + L" " + line->data();
     fr_line = fr_page->buffer()->AppendLine(line_data);
 
     // Reuse the ID of the source line.
@@ -1668,11 +1660,11 @@ void BookFrame::FindAll(const std::wstring& str,
     fr_line->set_id(line->id());
 
     // Add lex element for the prefix line number.
-    fr_line->AddLexElem(0, ln_str_buf.size(), Lex(kLexConstant, kLexConstantNumber));
+    fr_line->AddLexElem(0, max_ln_size, Lex(kLexConstant, kLexConstantNumber));
 
     // Add lex element for the matched string.
     // TODO: Multiple line match when using regex.
-    size_t off = range.point_begin().x + ln_str_buf.size() + 1;
+    size_t off = range.point_begin().x + max_ln_size + 1;
     size_t len = range.point_end().x - range.point_begin().x;
     fr_line->AddLexElem(off, len, Lex(kLexIdentifier));
   }
