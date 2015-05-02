@@ -39,15 +39,16 @@ RegexQuote::RegexQuote(Lex lex,
     start_.insert(start_.begin(), L'^');
   }
 
-  int flag = 0;
+  std::regex::flag_type re_flags = std::regex::ECMAScript;
   if (ignore_case_) {
-    flag = boost::regex_constants::icase;
+    re_flags |= std::regex::icase;
   }
 
   if (start_re_ == NULL) {
-    start_re_ = new boost::wregex(start_, flag);
+    start_re_ = new std::wregex(start_, re_flags);
   } else {
-    start_re_->set_expression(start_, flag);
+    // TODO
+    //start_re_->set_expression(start_, flag);
   }
 }
 
@@ -63,16 +64,11 @@ size_t RegexQuote::MatchStart(const std::wstring& str,
                               size_t off,
                               std::wstring* concrete_end) const {
   // NOTE(20140718): Using member variable doesn't improve performance.
-  boost::match_results<std::wstring::const_iterator> m;
+  std::match_results<std::wstring::const_iterator> m;
 
-  boost::regex_constants::match_flags flags =
-      boost::regex_constants::match_default;
+  std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
 
-  bool result = boost::regex_search(str.begin() + off,
-                                    str.end(),
-                                    m,
-                                    *start_re_,
-                                    flags);
+  bool result = std::regex_search(str.begin() + off, str.end(), m, *start_re_, flags);
   if (result) {
     CreateConcreteEnd(str, m, concrete_end);
     return off + (m[0].second - m[0].first);
@@ -131,15 +127,16 @@ void Regex::set_pattern(const std::wstring& pattern, bool ignore_case) {
     pattern_.insert(pattern_.begin(), L'^');
   }
 
-  int flag = 0;
+  std::regex::flag_type re_flags = std::regex::ECMAScript;
   if (ignore_case) {
-    flag = boost::regex_constants::icase;
+    re_flags |= std::regex::icase;
   }
 
   if (re_ == NULL) {
-    re_ = new boost::wregex(pattern_, flag);
+    re_ = new std::wregex(pattern_, re_flags);
   } else {
-    re_->set_expression(pattern_, flag);
+    // TODO
+    //re_->set_expression(pattern_, flag);
   }
 }
 
@@ -150,16 +147,10 @@ size_t Regex::Match(const std::wstring& str, size_t off) const {
 
   assert(off < str.length());
 
-  boost::match_results<std::wstring::const_iterator> m;
+  std::match_results<std::wstring::const_iterator> m;
+  std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
 
-  boost::regex_constants::match_flags flags =
-      boost::regex_constants::match_default;
-
-  bool result = boost::regex_search(str.begin() + off,
-                                    str.end(),
-                                    m,
-                                    *re_,
-                                    flags);
+  bool result = std::regex_search(str.begin() + off, str.end(), m, *re_, flags);
   if (!result) {
     return off;
   }

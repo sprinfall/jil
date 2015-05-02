@@ -2,9 +2,9 @@
 #define JIL_EDITOR_LEX_H_
 #pragma once
 
+#include <regex>
 #include <string>
 #include <vector>
-#include "boost/regex.hpp"  // For boost::match_results
 #include "editor/compile_config.h"
 #include "editor/defs.h"
 
@@ -221,7 +221,7 @@ public:
 // The end of regex quote only supports back reference "\1".
 class RegexQuote : public Quote {
 public:
-  typedef boost::match_results<std::wstring::const_iterator> MatchResult;
+  typedef std::match_results<std::wstring::const_iterator> MatchResult;
 
   RegexQuote(Lex lex,
              const std::wstring& start,
@@ -247,7 +247,7 @@ private:
                          std::wstring* concrete_end) const;
 
 private:
-  boost::wregex* start_re_;
+  std::wregex* start_re_;
 
   // Concrete quotes created from this regex quote.
   mutable std::vector<Quote*> quotes_;
@@ -279,7 +279,7 @@ public:
 private:
   Lex lex_;
   std::wstring pattern_;
-  boost::wregex* re_;
+  std::wregex* re_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
