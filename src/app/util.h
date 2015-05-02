@@ -4,6 +4,7 @@
 
 #include <string>
 #include "wx/filefn.h"
+#include "wx/string.h"
 
 class wxMenu;
 class wxWindow;

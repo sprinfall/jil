@@ -2,7 +2,6 @@
 #if !JIL_MATCH_WORD_WITH_HASH
 #include <algorithm>
 #endif
-#include "boost/regex.hpp"
 #include "editor/indent.h"
 #include "editor/lex.h"
 

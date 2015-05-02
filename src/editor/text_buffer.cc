@@ -2,7 +2,6 @@
 #include <cassert>
 #include <utility>
 #include "boost/algorithm/string.hpp"
-#include "boost/regex.hpp"
 #include "uchardet/nscore.h"
 #include "uchardet/nsUniversalDetector.h"
 #include "wx/log.h"
@@ -1827,30 +1826,30 @@ void TextBuffer::SetText(const std::wstring& text) {
 //------------------------------------------------------------------------------
 // Find
 
-static void SetFindRegex(const std::wstring& str,
-                         bool case_sensitive,
-                         bool match_whole_word,
-                         boost::wregex* e) {
-  int flag = case_sensitive ? 0 : boost::regex_constants::icase;
-
-  if (match_whole_word) {
-    const std::wstring kBoundary = L"\\b";
-
-    std::wstring adjusted_str = str;
-
-    if (!boost::starts_with(str, kBoundary)) {
-      adjusted_str = kBoundary + adjusted_str;
-    }
-
-    if (!boost::ends_with(str, kBoundary)) {
-      adjusted_str += kBoundary;
-    }
-
-    e->set_expression(adjusted_str, flag);
-  } else {
-    e->set_expression(str, flag);
-  }
-}
+//static void SetFindRegex(const std::wstring& str,
+//                         bool case_sensitive,
+//                         bool match_whole_word,
+//                         boost::wregex* e) {
+//  int flag = case_sensitive ? 0 : boost::regex_constants::icase;
+//
+//  if (match_whole_word) {
+//    const std::wstring kBoundary = L"\\b";
+//
+//    std::wstring adjusted_str = str;
+//
+//    if (!boost::starts_with(str, kBoundary)) {
+//      adjusted_str = kBoundary + adjusted_str;
+//    }
+//
+//    if (!boost::ends_with(str, kBoundary)) {
+//      adjusted_str += kBoundary;
+//    }
+//
+//    e->set_expression(adjusted_str, flag);
+//  } else {
+//    e->set_expression(str, flag);
+//  }
+//}
 
 TextRange TextBuffer::FindPlainString(const std::wstring& str,
                                       const TextRange& range,
@@ -1983,23 +1982,23 @@ TextRange TextBuffer::FindRegexString(const std::wstring& str,
                                       const TextRange& range,
                                       bool case_sensitive,
                                       bool match_whole_word) const {
-  boost::wregex e;
-  SetFindRegex(str, case_sensitive, match_whole_word, &e);
+  //std::wregex e;
+  //SetFindRegex(str, case_sensitive, match_whole_word, &e);
 
-  boost::match_results<CharIterator> m;
-  boost::match_flag_type flags = boost::match_default | boost::match_partial;
+  //std::match_results<CharIterator> m;
+  //std::match_flag_type flags = std::regex_constants::match_default | std::regex_constants::match_partial;
 
-  CharIterator c_begin(CharIteratorFromPoint(range.point_begin()));
-  CharIterator c_end(CharEnd());
+  //CharIterator c_begin(CharIteratorFromPoint(range.point_begin()));
+  //CharIterator c_end(CharEnd());
 
-  try {
-    if (boost::regex_search(c_begin, c_end, m, e, flags)) {
-      return TextRange(PointFromCharIterator(m[0].first),
-                       PointFromCharIterator(m[0].second));
-    }
-  } catch (std::exception&) {  // Don't use boost::regex_error!
-    // Invalid regular expression!
-  }
+  //try {
+  //  if (std::regex_search(c_begin, c_end, m, e, flags)) {
+  //    return TextRange(PointFromCharIterator(m[0].first),
+  //                     PointFromCharIterator(m[0].second));
+  //  }
+  //} catch (std::exception&) {  // Don't use boost::regex_error!
+  //  // Invalid regular expression!
+  //}
 
   return TextRange();
 }
@@ -2062,31 +2061,31 @@ void TextBuffer::FindRegexStringAll(const std::wstring& str,
                                     bool case_sensitive,
                                     bool match_whole_word,
                                     std::list<TextRange>* result_ranges) const {
-  boost::wregex e;
-  SetFindRegex(str, case_sensitive, match_whole_word, &e);
+  //boost::wregex e;
+  //SetFindRegex(str, case_sensitive, match_whole_word, &e);
 
-  boost::match_results<CharIterator> m;
-  boost::match_flag_type flags = boost::match_default | boost::match_partial;
+  //boost::match_results<CharIterator> m;
+  //boost::match_flag_type flags = boost::match_default | boost::match_partial;
 
-  CharIterator c_begin = CharIteratorFromPoint(range.point_begin());
-  CharIterator c_end = CharEnd();
+  //CharIterator c_begin = CharIteratorFromPoint(range.point_begin());
+  //CharIterator c_end = CharEnd();
 
-  try {
-    while (true) {
-      if (!boost::regex_search(c_begin, c_end, m, e, flags)) {
-        break;
-      }
+  //try {
+  //  while (true) {
+  //    if (!boost::regex_search(c_begin, c_end, m, e, flags)) {
+  //      break;
+  //    }
 
-      TextPoint point_begin = PointFromCharIterator(m[0].first);
-      TextPoint point_end = PointFromCharIterator(m[0].second);
+  //    TextPoint point_begin = PointFromCharIterator(m[0].first);
+  //    TextPoint point_end = PointFromCharIterator(m[0].second);
 
-      result_ranges->push_back(TextRange(point_begin, point_end));
+  //    result_ranges->push_back(TextRange(point_begin, point_end));
 
-      c_begin = m[0].second;
-    }
-  } catch (std::exception&) {  // Don't use boost::regex_error!
-    // Invalid regular expression!
-  }
+  //    c_begin = m[0].second;
+  //  }
+  //} catch (std::exception&) {  // Don't use boost::regex_error!
+  //  // Invalid regular expression!
+  //}
 }
 
 bool TextBuffer::FindLineString(TextLines::const_iterator line_it,

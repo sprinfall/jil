@@ -24,12 +24,9 @@ endif()
 include(${wxWidgets_USE_FILE})
 
 set(Boost_USE_STATIC_LIBS ON)
-# Boost.regex of version 1.49 has memory leak. The latest version 1.55 doesn't
-# have this issue. Remember to test it every time boost is upgraded.
-find_package(Boost REQUIRED COMPONENTS regex)
+find_package(Boost)
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
-    link_directories(${Boost_LIBRARY_DIRS})
 endif()
 
 if(JIL_ENABLE_UT)
