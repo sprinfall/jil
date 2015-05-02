@@ -201,7 +201,7 @@ void NavigationDialog::AdjustSize() {
     column_width_ = column_width_ << 1;
   }
 
-  wxFont& font = GetFont();
+  wxFont font = GetFont();
   const wxString str = wxT("T");
 
   wxClientDC dc(this);
