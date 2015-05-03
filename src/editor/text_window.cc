@@ -131,15 +131,17 @@ bool TextWindow::Create(wxWindow* parent, wxWindowID id, bool hide) {
   text_area_->SetBackgroundColour(style_->Get(Style::kNormal)->bg());
   text_area_->SetCursor(wxCURSOR_IBEAM);
 
-  // Set caret for text area.
-  wxCaret* caret = new wxCaret(text_area_, kCaretWidth, -1);
-  text_area_->SetCaret(caret);
-  caret->Show();
   SetTargetWindow(text_area_);
 
   UpdateLineNrWidth();
   // Update what are determined by text font (char width, line height, etc.).
   HandleTextFontChange();
+
+  // Set caret for text area.
+  // NOTE: Can't set height to -1 under GTK or there will be bitmap create assert failure.
+  wxCaret* caret = new wxCaret(text_area_, kCaretWidth, line_height_);
+  text_area_->SetCaret(caret);
+  caret->Show();
 
   // Attach buffer listener when text window is actually created.
   buffer_->AttachListener(this);
