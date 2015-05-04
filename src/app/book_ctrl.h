@@ -233,7 +233,7 @@ protected:
 
   void OnTabSize(wxSizeEvent& evt);
 
-  void OnTabPaint(wxAutoBufferedPaintDC& dc, wxPaintEvent& evt);
+  void OnTabPaint(wxDC& dc, wxPaintEvent& evt);
 
   void OnTabMouse(wxMouseEvent& evt);
 

@@ -29,7 +29,7 @@ BookTabArea::BookTabArea(BookCtrl* book_ctrl, wxWindowID id)
     : wxPanel(book_ctrl, id)
     , book_ctrl_(book_ctrl)
     , tip_handler_(NULL) {
-  SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+  SetBackgroundStyle(wxBG_STYLE_PAINT);
   SetCursor(wxCursor(wxCURSOR_ARROW));
 }
 
@@ -133,12 +133,12 @@ bool BookCtrl::HasFocus() const {
 
 void BookCtrl::StartBatch() {
   batch_ = true;
-  Freeze();
+  tab_area_->Freeze();
 }
 
 void BookCtrl::EndBatch() {
   batch_ = false;
-  Thaw();
+  tab_area_->Thaw();
 
   if (need_resize_tabs_) {
     ResizeTabs();
@@ -524,7 +524,7 @@ void BookCtrl::OnTabSize(wxSizeEvent& evt) {
 }
 
 // Paint tab items.
-void BookCtrl::OnTabPaint(wxAutoBufferedPaintDC& dc, wxPaintEvent& evt) {
+void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
   wxRect rect = tab_area_->GetClientRect();
   int bottom = rect.GetBottom();
 
@@ -779,7 +779,9 @@ void BookCtrl::ActivatePage(TabList::iterator it) {
     return;  // Already active
   }
 
-  page_area_->Freeze();
+  // NOTE: If freeze the page area, tab area and status bar can't be painted in GTK+.
+  // Don't know the reason. (2015-05-04)
+  //page_area_->Freeze();
 
   // Deactivate previous active page.
   TabList::iterator active_it = ActiveTab();
@@ -804,7 +806,7 @@ void BookCtrl::ActivatePage(TabList::iterator it) {
   stack_tabs_.push_front(tab);
 
   page_area_->Layout();
-  page_area_->Thaw();
+  //page_area_->Thaw();
 
   tab_area_->Refresh();
 
@@ -828,7 +830,7 @@ bool BookCtrl::RemovePage(TabList::iterator it) {
     rclicked_tab_ = NULL;
   }
 
-  page_area_->Freeze();
+  //page_area_->Freeze();
 
   tabs_.erase(it);
   stack_tabs_.remove(tab);
@@ -851,7 +853,7 @@ bool BookCtrl::RemovePage(TabList::iterator it) {
   delete tab;
 
   page_area_->Layout();
-  page_area_->Thaw();
+  //page_area_->Thaw();
 
   // Resize tabs since more space is available.
   ResizeTabs();
