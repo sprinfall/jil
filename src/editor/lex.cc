@@ -6,10 +6,7 @@ namespace editor {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Quote::Quote(Lex lex,
-             const std::wstring& start,
-             const std::wstring& end,
-             int flags)
+Quote::Quote(Lex lex, const std::wstring& start, const std::wstring& end, int flags)
     : lex_(lex), start_(start), end_(end), flags_(flags)
     , ignore_case_(false) {
 }
@@ -27,10 +24,7 @@ size_t Quote::MatchStart(const std::wstring& str, size_t off) const {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-RegexQuote::RegexQuote(Lex lex,
-                       const std::wstring& start,
-                       const std::wstring& end,
-                       int flags)
+RegexQuote::RegexQuote(Lex lex, const std::wstring& start, const std::wstring& end, int flags)
     : Quote(lex, start, end, flags)
     , start_re_(NULL) {
   assert(!start_.empty());
@@ -39,17 +33,12 @@ RegexQuote::RegexQuote(Lex lex,
     start_.insert(start_.begin(), L'^');
   }
 
-  std::regex::flag_type re_flags = std::regex::ECMAScript;
+  std::wregex::flag_type re_flags = std::wregex::ECMAScript;
   if (ignore_case_) {
-    re_flags |= std::regex::icase;
+    re_flags |= std::wregex::icase;
   }
 
-  if (start_re_ == NULL) {
-    start_re_ = new std::wregex(start_, re_flags);
-  } else {
-    // TODO
-    //start_re_->set_expression(start_, flag);
-  }
+  start_re_ = new std::wregex(start_, re_flags);
 }
 
 RegexQuote::~RegexQuote() {
@@ -60,9 +49,7 @@ RegexQuote::~RegexQuote() {
   ClearContainer(&quotes_);
 }
 
-size_t RegexQuote::MatchStart(const std::wstring& str,
-                              size_t off,
-                              std::wstring* concrete_end) const {
+size_t RegexQuote::MatchStart(const std::wstring& str, size_t off, std::wstring* concrete_end) const {
   // NOTE(20140718): Using member variable doesn't improve performance.
   std::match_results<std::wstring::const_iterator> m;
 
@@ -110,16 +97,7 @@ bool RegexQuote::CreateConcreteEnd(const std::wstring& str,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Regex::Regex() : re_(NULL) {
-}
-
-Regex::~Regex() {
-  if (re_ != NULL) {
-    delete re_;
-  }
-}
-
-void Regex::set_pattern(const std::wstring& pattern, bool ignore_case) {
+Regex::Regex(const std::wstring& pattern, bool ignore_case) : re_(NULL) {
   assert(!pattern.empty());
 
   pattern_ = pattern;
@@ -127,16 +105,17 @@ void Regex::set_pattern(const std::wstring& pattern, bool ignore_case) {
     pattern_.insert(pattern_.begin(), L'^');
   }
 
-  std::regex::flag_type re_flags = std::regex::ECMAScript;
+  std::wregex::flag_type re_flags = std::wregex::ECMAScript;
   if (ignore_case) {
-    re_flags |= std::regex::icase;
+    re_flags |= std::wregex::icase;
   }
 
-  if (re_ == NULL) {
-    re_ = new std::wregex(pattern_, re_flags);
-  } else {
-    // TODO
-    //re_->set_expression(pattern_, flag);
+  re_ = new std::wregex(pattern_, re_flags);
+}
+
+Regex::~Regex() {
+  if (re_ != NULL) {
+    delete re_;
   }
 }
 

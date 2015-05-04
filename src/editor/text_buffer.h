@@ -329,14 +329,14 @@ public:
                        const TextRange& range,
                        bool use_regex,
                        bool case_sensitive,
-                       bool match_whole_word,
+                       bool match_word,
                        bool reversely) const;
 
   void FindStringAll(const std::wstring& str,
                      const TextRange& range,
                      bool use_regex,
                      bool case_sensitive,
-                     bool match_whole_word,
+                     bool match_word,
                      std::list<TextRange>* result_ranges) const;
 
   void ClearFindResults();
@@ -516,30 +516,30 @@ private:
   TextRange FindPlainString(const std::wstring& str,
                             const TextRange& range,
                             bool case_sensitive,
-                            bool match_whole_word) const;
+                            bool match_word) const;
 
   TextRange FindPlainStringReversely(const std::wstring& str,
                                      const TextRange& range,
                                      bool case_sensitive,
-                                     bool match_whole_word) const;
+                                     bool match_word) const;
 
   // Find a regex string in the given range.
   TextRange FindRegexString(const std::wstring& str,
                             const TextRange& range,
                             bool case_sensitive,
-                            bool match_whole_word) const;
+                            bool match_word) const;
 
   // Find all occurrences of a plain string in the given range.
   void FindPlainStringAll(const std::wstring& str,
                           const TextRange& range,
                           bool case_sensitive,
-                          bool match_whole_word,
+                          bool match_word,
                           std::list<TextRange>* result_ranges) const;
 
   void FindRegexStringAll(const std::wstring& str,
                           const TextRange& range,
                           bool case_sensitive,
-                          bool match_whole_word,
+                          bool match_word,
                           std::list<TextRange>* result_ranges) const;
 
   // Find a plain string inside the given line.
@@ -549,7 +549,7 @@ private:
                       const std::wstring& str,
                       bool case_sensitive,
                       bool reversely,
-                      bool match_whole_word,
+                      bool match_word,
                       TextRange* result_range) const;
 
   // Find all occurrences of a plain string inside the given line.
@@ -558,7 +558,7 @@ private:
                          Coord x_end,
                          const std::wstring& str,
                          bool case_sensitive,
-                         bool match_whole_word,
+                         bool match_word,
                          std::list<TextRange>* result_ranges) const;
 
   typedef int (*CmpFunc)(const wchar_t*, const wchar_t*, size_t);
@@ -570,7 +570,7 @@ private:
                    Coord begin,
                    Coord end,
                    const std::wstring& sub,
-                   bool match_whole_word,
+                   bool match_word,
                    CmpFunc cmp) const;
 
   // Find the sub reversely in the range [begin, end) of str.
@@ -579,7 +579,7 @@ private:
                             Coord begin,
                             Coord end,
                             const std::wstring& sub,
-                            bool match_whole_word,
+                            bool match_word,
                             CmpFunc cmp) const;
 
   //----------------------------------------------------------------------------

@@ -75,18 +75,29 @@ public:
     Set(major, minor);
   }
 
-  int data() const { return data_; }
+  int data() const {
+    return data_;
+  }
 
-  int major() const { return (data_ & 0xffff0000) >> 16; }
-  int minor() const { return data_ & 0xffff; }
+  int major() const {
+    return (data_ & 0xffff0000) >> 16;
+  }
+
+  int minor() const {
+    return data_ & 0xffff;
+  }
 
   void Set(int major, int minor = 0) {
     data_ = Make(major, minor);
   }
 
-  void Reset() { data_ = 0; }
+  void Reset() {
+    data_ = 0;
+  }
 
-  bool IsEmpty() const { return data_ == 0; }
+  bool IsEmpty() const {
+    return data_ == 0;
+  }
 
 private:
   int Make(int major, int minor) {
@@ -160,10 +171,7 @@ enum QuoteFlag {
 
 class Quote {
 public:
-  Quote(Lex lex,
-        const std::wstring& start,
-        const std::wstring& end,
-        int flags);
+  Quote(Lex lex, const std::wstring& start, const std::wstring& end, int flags);
 
   virtual ~Quote();
 
@@ -223,16 +231,11 @@ class RegexQuote : public Quote {
 public:
   typedef std::match_results<std::wstring::const_iterator> MatchResult;
 
-  RegexQuote(Lex lex,
-             const std::wstring& start,
-             const std::wstring& end,
-             int flags);
+  RegexQuote(Lex lex, const std::wstring& start, const std::wstring& end, int flags);
 
   virtual ~RegexQuote();
 
-  size_t MatchStart(const std::wstring& str,
-                    size_t off,
-                    std::wstring* concrete_end) const;
+  size_t MatchStart(const std::wstring& str, size_t off, std::wstring* concrete_end) const;
 
   // Add a concrete quote.
   void AddQuote(Quote* quote) const {
@@ -242,9 +245,7 @@ public:
 private:
   void CreateRegex();
 
-  bool CreateConcreteEnd(const std::wstring& str,
-                         MatchResult& m,
-                         std::wstring* concrete_end) const;
+  bool CreateConcreteEnd(const std::wstring& str, MatchResult& m, std::wstring* concrete_end) const;
 
 private:
   std::wregex* start_re_;
@@ -257,7 +258,7 @@ private:
 
 class Regex {
 public:
-  Regex();
+  Regex(const std::wstring& pattern, bool ignore_case);
   virtual ~Regex();
 
   void set_lex(Lex lex) {
@@ -270,9 +271,6 @@ public:
   Lex lex() const {
     return lex_;
   }
-
-  // Put ignore_case here because regex_constants::icase
-  void set_pattern(const std::wstring& pattern, bool ignore_case);
 
   size_t Match(const std::wstring& str, size_t off) const;
 

@@ -133,13 +133,12 @@ bool TextWindow::Create(wxWindow* parent, wxWindowID id, bool hide) {
 
   SetTargetWindow(text_area_);
 
-  UpdateLineNrWidth();
-  // Update what are determined by text font (char width, line height, etc.).
-  HandleTextFontChange();
+  // Font, char size, line height, caret size, scrollbar, ... will be set in
+  // SetTextFont() which shall be called after Create().
 
-  // Set caret for text area.
+  // Caret
   // NOTE: Can't set height to -1 under GTK or there will be bitmap create assert failure.
-  wxCaret* caret = new wxCaret(text_area_, kCaretWidth, line_height_);
+  wxCaret* caret = new wxCaret(text_area_, 1, 1);
   text_area_->SetCaret(caret);
   caret->Show();
 
@@ -188,11 +187,34 @@ void TextWindow::SetFocus() {
 //------------------------------------------------------------------------------
 
 void TextWindow::SetTextFont(const wxFont& font) {
+  // Text area
+
   text_area_->SetOwnFont(font);
+
+  // Update the font of text extent.
+  text_extent_->SetFont(text_area_->GetFont());
+
+  UpdateCharSize();
+  SetScrollbars(char_width_, line_height_, 1, 1);
+
+  UpdateTextSize();
+  UpdateVirtualSize();
+
+  // Update caret size and position.
+  text_area_->GetCaret()->SetSize(kCaretWidth, line_height_);
+  UpdateCaretPosition();
+
+  // Line number area
+
   line_nr_area_->SetOwnFont(font);
 
-  HandleTextFontChange();
-  HandleLineNrFontChange();
+  int old_line_nr_width = line_nr_width_;
+  UpdateLineNrWidth();
+
+  // If the line number width changes, layout the areas.
+  if (old_line_nr_width != line_nr_width_) {
+    LayoutAreas();
+  }
 
   text_area_->Refresh();
   line_nr_area_->Refresh();
@@ -2574,31 +2596,6 @@ void TextWindow::RefreshLineNrByLineRange(const LineRange& line_range,
 }
 
 //------------------------------------------------------------------------------
-
-void TextWindow::HandleTextFontChange() {
-  // Update the font of text extent.
-  text_extent_->SetFont(text_area_->GetFont());
-
-  UpdateCharSize();
-  SetScrollbars(char_width_, line_height_, 1, 1);
-
-  UpdateTextSize();
-  UpdateVirtualSize();
-
-  // Update caret size and position.
-  text_area_->GetCaret()->SetSize(kCaretWidth, line_height_);
-  UpdateCaretPosition();
-}
-
-void TextWindow::HandleLineNrFontChange() {
-  int old_line_nr_width = line_nr_width_;
-  UpdateLineNrWidth();
-
-  // If the line number width changes, layout the areas.
-  if (old_line_nr_width != line_nr_width_) {
-    LayoutAreas();
-  }
-}
 
 bool TextWindow::HandleTextChange() {
   UpdateTextSize();

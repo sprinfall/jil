@@ -432,9 +432,6 @@ protected:
 
   //----------------------------------------------------------------------------
 
-  void HandleTextFontChange();
-  void HandleLineNrFontChange();
-
   // Return true if areas are resized.
   bool HandleTextChange();
 

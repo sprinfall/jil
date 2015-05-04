@@ -116,9 +116,8 @@ void FtPlugin::AddRegexQuote(RegexQuote* regex_quote) {
 }
 
 void FtPlugin::AddRegex(Lex lex, const std::wstring& pattern) {
-  Regex* regex = new Regex;
+  Regex* regex = new Regex(pattern, ignore_case_);
   regex->set_lex(lex);
-  regex->set_pattern(pattern, ignore_case_);
   regexs_.push_back(regex);
 }
 
