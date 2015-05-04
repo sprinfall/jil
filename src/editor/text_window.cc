@@ -115,6 +115,11 @@ bool TextWindow::Create(wxWindow* parent, wxWindowID id, bool hide) {
     ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_ALWAYS);
   }
 
+  const wxColour& normal_bg = style_->Get(Style::kNormal)->bg();
+
+  // Use the normal text background for text window itself.
+  SetBackgroundColour(normal_bg);
+
   // Create line number area.
   line_nr_area_ = new LineNrArea(this);
   if (!line_nr_area_->Create(this, wxID_ANY)) {
@@ -128,7 +133,7 @@ bool TextWindow::Create(wxWindow* parent, wxWindowID id, bool hide) {
   if (!text_area_->Create(this, wxID_ANY)) {
     return false;
   }
-  text_area_->SetBackgroundColour(style_->Get(Style::kNormal)->bg());
+  text_area_->SetBackgroundColour(normal_bg);
   text_area_->SetCursor(wxCURSOR_IBEAM);
 
   SetTargetWindow(text_area_);
