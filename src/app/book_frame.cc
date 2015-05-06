@@ -1778,6 +1778,19 @@ void BookFrame::LoadMenus() {
   tools_menu->Append(ID_MENU_TOOLS_OPTIONS, kTrToolsOptions);
   menu_bar->Append(tools_menu, kTrMenuTools);
 
+  // Theme
+  wxMenu* theme_menu_ = new wxMenu;
+  tools_menu->AppendSubMenu(theme_menu_, kTrToolsTheme);
+
+  int id = ID_MENU_TOOLS_THEME_1;
+  const std::list<wxString>& theme_names = wxGetApp().theme_names();
+  for (const wxString& theme_name : theme_names) {
+    AppendMenuItem(theme_menu_, id++, theme_name);
+    if (id > ID_MENU_TOOLS_THEME_LAST) {
+      break;
+    }
+  }
+
   //------------------------------------
   // Help
 

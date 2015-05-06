@@ -87,6 +87,11 @@ enum {
   // Tools menu
   ID_MENU_TOOLS_BEGIN,
   ID_MENU_TOOLS_OPTIONS,
+
+  // 32 themes at most.
+  ID_MENU_TOOLS_THEME_1,
+  ID_MENU_TOOLS_THEME_LAST = ID_MENU_TOOLS_THEME_1 + 31,
+
   ID_MENU_TOOLS_END,
 
   // Help menu

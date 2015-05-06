@@ -69,11 +69,7 @@ void StatusBar::UpdateFieldSizes() {
 
     switch (field_info.size_type) {
       case kFit:
-        GetTextExtent(GetFieldValue(field_info.id),
-                      &field_info.size,
-                      NULL,
-                      NULL,
-                      NULL);
+        GetTextExtent(GetFieldValue(field_info.id), &field_info.size, NULL);
         field_info.size += field_info.size_value;
         field_info.size += padding_.x + padding_.x;
         break;

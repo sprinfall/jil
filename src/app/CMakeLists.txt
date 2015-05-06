@@ -34,8 +34,19 @@ set(SRCS
     option.h
     option_config.cc
     option_config.h
-    preference_pages.cc
-    preference_pages.h
+    pref/advanced_editor_config_dialog.cc
+    pref/advanced_editor_config_dialog.h
+    pref/defs.h
+    pref/editor_config_panel.cc
+    pref/editor_config_panel.h
+    pref/editor_page.cc
+    pref/editor_page.h
+    pref/font_config_dialog.cc
+    pref/font_config_dialog.h
+    pref/general_config_panel.cc
+    pref/general_config_panel.h
+    pref/general_page.cc
+    pref/general_page.h
     save.cc
     save.h
     separator.h

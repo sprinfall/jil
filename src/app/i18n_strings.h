@@ -80,6 +80,7 @@
 
 // TODO: OSX
 #define kTrToolsOptions       _("&Options...")
+#define kTrToolsTheme         _("&Theme")
 
 #define kTrHelpViewOnline     _("&View Online Help")
 #define kTrHelpAbout          _("&About Jil")

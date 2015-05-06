@@ -76,9 +76,7 @@ static void ReadStyle(Setting parent,
 }
 
 // TODO: Error handling
-bool LoadThemeFile(const wxString& theme_file,
-                   SharedTheme& theme,
-                   Style* style) {
+bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style) {
   if (!wxFileName::FileExists(theme_file)) {
     wxLogError(wxT("Theme file doesn't exist: %s!"), theme_file.c_str());
     return false;

@@ -25,7 +25,6 @@ enum FindLocation {
   kLocationCount,
 };
 
-
 // Internal file type IDs.
 // Format: "jil-xxx_yyy_zzz"
 const char* const kFtId_FindResult = "jil-find_result";

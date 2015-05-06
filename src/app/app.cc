@@ -41,36 +41,41 @@
 #include "app/i18n_strings.h"
 #include "app/lex_config.h"
 #include "app/option_config.h"
-#include "app/preference_pages.h"
+#include "app/pref/editor_page.h"
+#include "app/pref/general_page.h"
 #include "app/status_fields_config.h"
 #include "app/theme_config.h"
 #include "app/util.h"
-
-#define kTxt wxT("txt")
-#define kCfgExt wxT(".cfg")
-
-#define kFtPluginDir wxT("ftplugin")
-#define kThemeDir wxT("theme")
-
-#define kLexFile wxT("lex.cfg")
-#define kOptionsFile wxT("options.cfg")
-#define kIndentFile wxT("indent.lua")
-#define kStatusFieldsFile wxT("status_fields.cfg")
-#define kSessionFile wxT("session.cfg")
-#define kBindingFile wxT("binding.cfg")
-#define kFileTypesFile wxT("file_types.cfg")
-
-#define kSpaceStr wxT(" ")
-
-// For Unix, this name is used to create the domain socket.
-#define kIpcService wxT("jil_ipc_service")
-#define kIpcTopic wxT("jil_ipc_topic")
 
 #define kTrPlainText _("Plain Text")
 
 IMPLEMENT_WXWIN_MAIN
 
 namespace jil {
+
+////////////////////////////////////////////////////////////////////////////////
+ 
+static const wxChar kDotChar = wxT('.');
+
+static const wxString kTxt = wxT("txt");
+static const wxString kCfgExt = wxT(".cfg");
+
+static const wxString kFtPluginDir = wxT("ftplugin");
+static const wxString kThemeDir = wxT("theme");
+
+static const wxString kLexFile = wxT("lex.cfg");
+static const wxString kOptionsFile = wxT("options.cfg");
+static const wxString kIndentFile = wxT("indent.lua");
+static const wxString kStatusFieldsFile = wxT("status_fields.cfg");
+static const wxString kSessionFile = wxT("session.cfg");
+static const wxString kBindingFile = wxT("binding.cfg");
+static const wxString kFileTypesFile = wxT("file_types.cfg");
+
+static const wxString kSpaceStr = wxT(" ");
+
+// For Unix, this name is used to create the domain socket.
+static const wxString kIpcService = wxT("jil_ipc_service");
+static const wxString kIpcTopic = wxT("jil_ipc_topic");
 
 ////////////////////////////////////////////////////////////////////////////////
 // Text functions.
@@ -449,7 +454,6 @@ void App::ShowPreferencesEditor(wxWindow* parent) {
   if (!pref_editor_) {
     pref_editor_.reset(new wxPreferencesEditor(kTrOptions));
     pref_editor_->AddPage(new pref::GeneralPage(&options_));
-    pref_editor_->AddPage(new pref::ThemePage());
     pref_editor_->AddPage(new pref::EditorPage());
   }
 
@@ -588,7 +592,7 @@ bool App::LoadTheme() {
     wxString theme_name;
     bool cont = theme_dir.GetFirst(&theme_name, wxT("*.cfg"));
     while (cont) {
-      theme_names_.push_back(theme_name.BeforeLast(wxT('.')));
+      theme_names_.push_back(theme_name.BeforeLast(kDotChar));
       cont = theme_dir.GetNext(&theme_name);
     }
   }
@@ -601,9 +605,9 @@ bool App::LoadTheme() {
   theme_.reset(new editor::Theme(THEME_COUNT));
 
   wxString theme_name = options_.theme;
-  if (theme_name.empty() ||
-      std::find(theme_names_.begin(), theme_names_.end(), theme_name) ==
-          theme_names_.end()) {
+  if (theme_name.empty()) {
+    theme_name = theme_names_.front();
+  } else if (std::find(theme_names_.begin(), theme_names_.end(), theme_name) == theme_names_.end()) {
     theme_name = theme_names_.front();
   }
 

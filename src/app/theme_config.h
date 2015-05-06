@@ -14,9 +14,7 @@ namespace editor {
 class Style;
 }
 
-bool LoadThemeFile(const wxString& theme_file,
-                   editor::SharedTheme& theme,
-                   editor::Style* style);
+bool LoadThemeFile(const wxString& theme_file, editor::SharedTheme& theme, editor::Style* style);
 
 }  // namespace jil
 
