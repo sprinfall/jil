@@ -465,7 +465,7 @@ void TextLine::AddQuoteElem(Quote* quote,
                             size_t off,
                             size_t len,
                             QuotePart part) {
-  QuoteElem qe = { quote, off, len, part };
+  QuoteElem qe = { quote, CoordCast(off), CoordCast(len), part };
   quote_elems_.push_back(qe);
 }
 

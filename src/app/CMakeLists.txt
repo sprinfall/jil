@@ -2,6 +2,18 @@ if(UNIX)
     add_definitions(-D_GLIBCXX_USE_WCHAR_T -std=c++11)
 endif()
 
+# NOTE:
+# You have to build libconfig and install to home directory (~/include and ~/lib).
+# I don't add a cmake project for Mac because I don't know how to do it.
+# 
+if(APPLE)
+    set(LIBCONFIG_INCLUDE_DIR $ENV{HOME}/include)
+    set(LIBCONFIG_LIBRARY_DIR $ENV{HOME}/lib)
+
+    include_directories(${LIBCONFIG_INCLUDE_DIR})
+    link_directories(${LIBCONFIG_LIBRARY_DIR})
+endif()
+
 set(SRCS
     app.cc
     app.h
@@ -72,6 +84,8 @@ set(SRCS
 
 set(TARGET_NAME app)
 
+set(TARGET_OUTPUT_NAME Jil)
+
 # Resource files
 if(WIN32)
     set(JIL_RC ${CMAKE_CURRENT_SOURCE_DIR}/app.rc)
@@ -86,31 +100,57 @@ set(EXTRA_LIBS
     base
     ui
     editor
-    libconfig
     pugixml
     uchardet
     )
 
+if(APPLE)
+    # The static lib of libconfig on Mac is named as "libconfig.a".
+    # the prefix "lib" doesn't have to be specified in the link option.
+    set(EXTRA_LIBS ${EXTRA_LIBS} config)
+else()
+    set(EXTRA_LIBS ${EXTRA_LIBS} libconfig)
+endif()
+
 # NOTE: Put ${wxWidgets_LIBRARIES} after others, or there will be link errors in Linux/GTK+.
 target_link_libraries(${TARGET_NAME} ${EXTRA_LIBS} ${wxWidgets_LIBRARIES})
 
-set_target_properties(${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_NAME jil)
+set_target_properties(${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_NAME ${TARGET_OUTPUT_NAME})
 if(MSVC)
     set_target_properties(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "/wd4290")
 endif()
 
-# Install
-install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/options.cfg DESTINATION .)
-install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/binding.cfg DESTINATION .)
-install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/file_types.cfg DESTINATION .)
-install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/status_fields.cfg DESTINATION .)
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/jilfiles/theme DESTINATION .)
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/jilfiles/ftplugin DESTINATION .)
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/src/app/icon DESTINATION .)
+# Installation
+
 if(WIN32)
+    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/options.cfg DESTINATION .)
+    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/binding.cfg DESTINATION .)
+    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/file_types.cfg DESTINATION .)
+    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/status_fields.cfg DESTINATION .)
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/jilfiles/theme DESTINATION .)
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/jilfiles/ftplugin DESTINATION .)
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/src/app/icon DESTINATION .)
+
     if(JIL_ENABLE_VLD)
         install(FILES ${PROJECT_SOURCE_DIR}/third_party/win32/bin/dbghelp.dll DESTINATION .)
         install(FILES ${PROJECT_SOURCE_DIR}/third_party/win32/bin/Microsoft.DTfW.DHL.manifest DESTINATION .)
         install(FILES ${PROJECT_SOURCE_DIR}/third_party/win32/bin/vld_x86.dll DESTINATION .)
     endif()
+elseif(APPLE)
+    set(MAC_INSTALL_BIN_DIR ${CMAKE_INSTALL_PREFIX}/${TARGET_OUTPUT_NAME}.app/Contents/MacOS)
+    set(MAC_INSTALL_RES_DIR ${CMAKE_INSTALL_PREFIX}/${TARGET_OUTPUT_NAME}.app/Contents/Resources)
+
+    message(STATUS "Mac install bin dir: " ${MAC_INSTALL_BIN_DIR})
+    message(STATUS "Mac install res dir: " ${MAC_INSTALL_RES_DIR})
+
+    # TODO: Is there any variable for the target output dir?
+    #install(FILES ${CMAKE_INSTALL_PREFIX}/liblibconfig.dylib DESTINATION ${MAC_INSTALL_BIN_DIR})
+
+    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/options.cfg DESTINATION ${MAC_INSTALL_RES_DIR})
+    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/binding.cfg DESTINATION ${MAC_INSTALL_RES_DIR})
+    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/file_types.cfg DESTINATION ${MAC_INSTALL_RES_DIR})
+    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/status_fields.cfg DESTINATION ${MAC_INSTALL_RES_DIR})
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/jilfiles/theme DESTINATION ${MAC_INSTALL_RES_DIR})
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/jilfiles/ftplugin DESTINATION ${MAC_INSTALL_RES_DIR})
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/src/app/icon DESTINATION ${MAC_INSTALL_RES_DIR})
 endif()

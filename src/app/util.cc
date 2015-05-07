@@ -1,8 +1,5 @@
 #include "app/util.h"
 
-#if defined (__WXMAC__)
-#include <Cocoa/Cocoa.h>
-#endif
 
 #include "wx/filename.h"
 #include "wx/menu.h"
@@ -10,6 +7,10 @@
 #include "wx/stdpaths.h"
 
 #include "app/i18n_strings.h"
+
+//#if defined (__WXMAC__)
+//#include <Cocoa/Cocoa.h>
+//#endif
 
 namespace jil {
 
@@ -23,7 +24,7 @@ wxString ExeDir() {
 
 wxString ResourceDir() {
 #if defined (__WXMAC__)
-  return wxStandardPaths::Get().GetResourcesDir();
+  return wxStandardPaths::Get().GetResourcesDir() + wxFILE_SEP_PATH;
 #else
   return ExeDir();
 #endif // __WXMAC__
@@ -43,9 +44,9 @@ void ExploreFile(const wxString& file_path) {
   wxExecute(cmd);
 
 #elif defined (__WXMAC__)
-  NSString* nsstr = [[NSString alloc] initWithUTF8String: file_path.ToUTF8().data()];
-  [[NSWorkspace sharedWorkspace] selectFile:(NSString*)nsstr inFileViewerRootedAtPath:nil];
-  [nsstr release];
+//  NSString* nsstr = [[NSString alloc] initWithUTF8String: file_path.ToUTF8().data()];
+//  [[NSWorkspace sharedWorkspace] selectFile:(NSString*)nsstr inFileViewerRootedAtPath:nil];
+//  [nsstr release];
 #endif
 }
 

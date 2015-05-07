@@ -146,7 +146,7 @@ wxString Key::ToString() const {
     return leader_key_str + wxT(", ") + key_str;
   }
 #else
-  return SingleKeyName(data_ & 0xffff);
+  return SingleKeyName(data_);
 #endif  // JIL_ENABLE_LEADER_KEY
 }
 
