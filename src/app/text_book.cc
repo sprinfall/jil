@@ -10,9 +10,7 @@
 namespace jil {
 
 BEGIN_EVENT_TABLE(TextBook, BookCtrl)
-EVT_MENU_RANGE(ID_MENU_BOOK_RCLICK_BEGIN, \
-               ID_MENU_BOOK_RCLICK_END - 1, \
-               TextBook::OnRClickMenu)
+EVT_MENU_RANGE(ID_MENU_BOOK_RCLICK_BEGIN, ID_MENU_BOOK_RCLICK_END - 1,  TextBook::OnRClickMenu)
 END_EVENT_TABLE()
 
 TextBook::TextBook(const editor::SharedTheme& theme)
@@ -116,8 +114,7 @@ void TextBook::HandleTabMouseRightUp(wxMouseEvent& evt) {
 
     if (PageCount() > 1) {
       menu.Append(ID_MENU_BOOK_RCLICK_CLOSE_ALL, kTrRClickCloseAll);
-      menu.Append(ID_MENU_BOOK_RCLICK_CLOSE_ALL_BUT_THIS,
-                  kTrRClickCloseAllButThis);
+      menu.Append(ID_MENU_BOOK_RCLICK_CLOSE_ALL_BUT_THIS, kTrRClickCloseAllButThis);
     }
 
     TextPage* text_page = AsTextPage(page);
@@ -135,8 +132,7 @@ void TextBook::HandleTabMouseRightUp(wxMouseEvent& evt) {
 void TextBook::HandleTabMouseLeftDClick(wxMouseEvent& evt) {
   TabList::iterator it = TabByPos(evt.GetPosition().x);
   if (it == tabs_.end()) {
-    wxCommandEvent cmd_evt(wxEVT_COMMAND_MENU_SELECTED,
-                           ID_MENU_BOOK_RCLICK_NEW_FILE);
+    wxCommandEvent cmd_evt(wxEVT_COMMAND_MENU_SELECTED, ID_MENU_BOOK_RCLICK_NEW_FILE);
     // NOTE: Post the event to text book itself instead of its parent.
     GetEventHandler()->AddPendingEvent(cmd_evt);
   }
@@ -166,8 +162,7 @@ void TextBook::OnRClickMenu(wxCommandEvent& evt) {
   case ID_MENU_BOOK_RCLICK_COPY_PATH:
     if (text_page != NULL) {
       if (wxTheClipboard->Open()) {
-        wxTheClipboard->SetData(
-            new wxTextDataObject(text_page->buffer()->file_path_name()));
+        wxTheClipboard->SetData(new wxTextDataObject(text_page->buffer()->file_path_name()));
         wxTheClipboard->Close();
       }
     }

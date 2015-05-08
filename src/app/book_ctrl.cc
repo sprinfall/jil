@@ -60,10 +60,10 @@ void BookTabArea::OnSize(wxSizeEvent& evt) {
 void BookTabArea::OnPaint(wxPaintEvent& evt) {
   wxAutoBufferedPaintDC dc(this);
 
-#if !wxALWAYS_NATIVE_DOUBLE_BUFFER
+//#if !wxALWAYS_NATIVE_DOUBLE_BUFFER (20150508: Set background even when double bufferred (on Mac).
   dc.SetBackground(GetBackgroundColour());
   dc.Clear();
-#endif
+//#endif
 
   book_ctrl_->OnTabPaint(dc, evt);
 }
