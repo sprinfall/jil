@@ -26,10 +26,7 @@ static int ParseCjk(const std::string& cjk) {
   int cjk_filters = 0;
 
   std::vector<std::string> cjk_values;
-  boost::split(cjk_values,
-               cjk,
-               boost::is_any_of(", "),
-               boost::token_compress_on);
+  boost::split(cjk_values, cjk, boost::is_any_of(", "), boost::token_compress_on);
 
   for (size_t i = 0; i < cjk_values.size(); ++i) {
     if (cjk_values[i] == "cs") {
@@ -37,8 +34,7 @@ static int ParseCjk(const std::string& cjk) {
     } else if (cjk_values[i] == "ct") {
       cjk_filters |= NS_FILTER_CHINESE_TRADITIONAL;
     } else if (cjk_values[i] == "c") {
-      cjk_filters |= (NS_FILTER_CHINESE_SIMPLIFIED |
-                      NS_FILTER_CHINESE_TRADITIONAL);
+      cjk_filters |= (NS_FILTER_CHINESE_SIMPLIFIED | NS_FILTER_CHINESE_TRADITIONAL);
     } else if (cjk_values[i] == "j") {
       cjk_filters |= NS_FILTER_JAPANESE;
     } else if (cjk_values[i] == "k") {
@@ -82,9 +78,7 @@ static int AdjustCjkByLocale(int cjk_filters) {
   return cjk_filters;
 }
 
-static Setting GetSetting(const SettingMap& settings,
-                          const char* key,
-                          Setting::Type type) {
+static Setting GetSetting(const SettingMap& settings, const char* key, Setting::Type type) {
   SettingMap::const_iterator it = settings.find(key);
   if (it != settings.end() && it->second.type() == type) {
     return it->second;
@@ -92,9 +86,7 @@ static Setting GetSetting(const SettingMap& settings,
   return Setting();
 }
 
-static bool GetString(const SettingMap& settings,
-                      const char* key,
-                      std::string* value) {
+static bool GetString(const SettingMap& settings, const char* key, std::string* value) {
   Setting setting = GetSetting(settings, key, Setting::kString);
   if (setting) {
     *value = setting.GetString();
@@ -103,9 +95,7 @@ static bool GetString(const SettingMap& settings,
   return false;
 }
 
-static bool GetWString(const SettingMap& settings,
-                       const char* key,
-                       std::wstring* value) {
+static bool GetWString(const SettingMap& settings, const char* key, std::wstring* value) {
   Setting setting = GetSetting(settings, key, Setting::kString);
   if (setting) {
     const char* str = setting.GetString();
@@ -116,9 +106,7 @@ static bool GetWString(const SettingMap& settings,
   return false;
 }
 
-static bool GetWxString(const SettingMap& settings,
-                        const char* key,
-                        wxString* value) {
+static bool GetWxString(const SettingMap& settings, const char* key, wxString* value) {
   Setting setting = GetSetting(settings, key, Setting::kString);
   if (setting) {
     *value = wxString::FromUTF8(setting.GetString());
@@ -203,7 +191,7 @@ void ParseAppOptions(const Setting& setting, Options* options) {
   }
 
   if (!options->fonts[kFont_Text].IsOk()) {
-    wxFont font = GetGlobalFont(kDefaultFontSize, GetDefaultFontName());
+    wxFont font = GetGlobalFont(GetDefaultFontSize(), GetDefaultFontName());
     options->fonts[kFont_Text] = font;
   }
 

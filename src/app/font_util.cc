@@ -5,10 +5,7 @@
 
 namespace jil {
 
-const wxFont& GetGlobalFont(int point_size,
-                            const wxString& facename,
-                            bool bold,
-                            bool italic) {
+const wxFont& GetGlobalFont(int point_size, const wxString& facename, bool bold, bool italic) {
   wxFont* font = wxTheFontList->FindOrCreateFont(
       point_size,
       wxFONTFAMILY_DEFAULT,
@@ -22,6 +19,9 @@ const wxFont& GetGlobalFont(int point_size,
 
 // Some preferred fixed-width fonts.
 static const wxString kBestFonts[] = {
+#if defined (__WXOSX__)
+  wxT("Menlo"),  // Xcode default font
+#endif
   wxT("DejaVu Sans Mono"),
   wxT("Bitstream Vera Sans Mono"),
   wxT("Consolas"),
@@ -49,6 +49,11 @@ static wxString DoGetDefaultFontName() {
 wxString GetDefaultFontName() {
   static wxString font = DoGetDefaultFontName();
   return font;
+}
+
+int GetDefaultFontSize() {
+  static const int font_size = wxSystemSettings::GetFont(wxSYS_SYSTEM_FONT).GetPointSize();
+  return font_size;
 }
 
 }  // namespace jil

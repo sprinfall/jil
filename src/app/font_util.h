@@ -10,18 +10,16 @@
 namespace jil {
 
 // Get or create the font via wxTheFontList.
-const wxFont& GetGlobalFont(int point_size,
-                            const wxString& facename,
-                            bool bold = false,
-                            bool italic = false);
+const wxFont& GetGlobalFont(int point_size, const wxString& facename, bool bold = false, bool italic = false);
 
-// Default and minimal point size of the font.
-const int kDefaultFontSize = 10;
+// Min and max font point sizes.
 const int kMinFontSize = 8;
 const int kMaxFontSize = 24;
 
 // Get a default preferred font.
 wxString GetDefaultFontName();
+
+int GetDefaultFontSize();
 
 // Usage:
 // FontEnumerator fe;
