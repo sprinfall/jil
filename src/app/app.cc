@@ -797,19 +797,6 @@ bool App::LoadBinding() {
   return true;
 }
 
-// TODO: Add member function to FieldInfo.
-static void SetFieldInfo(editor::StatusBar::FieldInfo& field_info,
-                         editor::StatusBar::FieldId field_id,
-                         wxAlignment align,
-                         editor::StatusBar::SizeType size_type,
-                         int size_value) {
-  field_info.id = field_id;
-  field_info.align = align;
-  field_info.size_type = size_type;
-  field_info.size_value = size_value;
-  field_info.size = 0;
-}
-
 bool App::LoadFileTypes() {
   using namespace editor;
 

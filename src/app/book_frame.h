@@ -135,9 +135,15 @@ protected:
   bool HandleKeyDownHook(wxKeyEvent& evt);
 #endif  // JIL_ENABLE_LEADER_KEY
 
+  void OnAbout(wxCommandEvent& evt);
+  void ShowAboutWindow();
+
+  void OnPreferences(wxCommandEvent& evt);
+
+  void OnQuit(wxCommandEvent& evt);
+
   void OnMenuFile(wxCommandEvent& evt);
   void OnMenuFileRecentFile(wxCommandEvent& evt);
-  void OnQuit(wxCommandEvent& evt);
 
   void OnMenuEdit(wxCommandEvent& evt);
   void OnMenuView(wxCommandEvent& evt);
@@ -257,10 +263,7 @@ private:
   // Menu
 
   // TODO: TextWindow also has AppendMenuItem, remove one of them.
-  wxMenuItem* AppendMenuItem(wxMenu* menu,
-                             int id,
-                             const wxString& label,
-                             wxItemKind kind = wxITEM_NORMAL);
+  wxMenuItem* AppendMenuItem(wxMenu* menu, int id, const wxString& label, wxItemKind kind = wxITEM_NORMAL);
 
   void LoadMenus();
 
@@ -268,6 +271,9 @@ private:
   bool GetEditMenuState(int menu_id);
   bool GetViewMenuState(int menu_id, bool* check = NULL);
   bool GetMenuEnableState(int menu_id);
+
+  // Add installed themes to the theme menu.
+  void InitThemeMenu(wxMenu* theme_menu);
 
   // Clear and recreate the items for Recent Files menu.
   void UpdateRecentFilesMenu();

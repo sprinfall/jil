@@ -35,6 +35,10 @@ enum {
   ID_REPLACE_BUTTON,
   ID_REPLACE_ALL_BUTTON,
 
+  // 32 themes at most.
+  ID_MENU_THEME_1,
+  ID_MENU_THEME_LAST = ID_MENU_THEME_1 + 31,
+
   // File menu
   ID_MENU_FILE_BEGIN,
   ID_MENU_FILE_NEW = ID_MENU_FILE_BEGIN,
@@ -86,18 +90,11 @@ enum {
 
   // Tools menu
   ID_MENU_TOOLS_BEGIN,
-  ID_MENU_TOOLS_OPTIONS,
-
-  // 32 themes at most.
-  ID_MENU_TOOLS_THEME_1,
-  ID_MENU_TOOLS_THEME_LAST = ID_MENU_TOOLS_THEME_1 + 31,
-
   ID_MENU_TOOLS_END,
 
   // Help menu
   ID_MENU_HELP_BEGIN,
   ID_MENU_HELP_VIEW_ONLINE,
-  ID_MENU_HELP_ABOUT,
   ID_MENU_HELP_END,
 
   // Right click menu on the book tab.

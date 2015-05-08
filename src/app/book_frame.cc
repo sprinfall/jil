@@ -91,6 +91,8 @@ EVT_KEYDOWN_HOOK(BookFrame::OnKeyDownHook)
 EVT_MENU_RANGE(ID_MENU_FILE_BEGIN, ID_MENU_FILE_END - 1, BookFrame::OnMenuFile)
 EVT_MENU_RANGE(ID_MENU_FILE_RECENT_FILE0, ID_MENU_FILE_RECENT_FILE9, BookFrame::OnMenuFileRecentFile)
 
+EVT_MENU(wxID_ABOUT, BookFrame::OnAbout)
+EVT_MENU(wxID_PREFERENCES, BookFrame::OnPreferences)
 EVT_MENU(wxID_EXIT, BookFrame::OnQuit)
 
 EVT_MENU_RANGE(ID_MENU_EDIT_BEGIN, ID_MENU_EDIT_END - 1, BookFrame::OnMenuEdit)
@@ -603,6 +605,18 @@ void BookFrame::OnMenuFileRecentFile(wxCommandEvent& evt) {
   }
 }
 
+void BookFrame::OnAbout(wxCommandEvent& WXUNUSED(evt)) {
+  ShowAboutWindow();
+}
+
+void BookFrame::ShowAboutWindow() {
+  wxMessageBox(kTrComingSoon);
+}
+
+void BookFrame::OnPreferences(wxCommandEvent& WXUNUSED(evt)) {
+  wxGetApp().ShowPreferencesEditor(this);
+}
+
 void BookFrame::OnQuit(wxCommandEvent& WXUNUSED(evt)) {
   Close(true);  // Go to OnClose().
 }
@@ -628,11 +642,6 @@ void BookFrame::OnMenuView(wxCommandEvent& evt) {
 //------------------------------------------------------------------------------
 
 void BookFrame::OnMenuTools(wxCommandEvent& evt) {
-  int menu_id = evt.GetId();
-
-  if (menu_id == ID_MENU_TOOLS_OPTIONS) {
-    wxGetApp().ShowPreferencesEditor(this);
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -640,10 +649,6 @@ void BookFrame::OnMenuTools(wxCommandEvent& evt) {
 void BookFrame::OnMenuHelp(wxCommandEvent& evt) {
   switch (evt.GetId()) {
     case ID_MENU_HELP_VIEW_ONLINE:
-      wxMessageBox(kTrComingSoon);
-      break;
-
-    case ID_MENU_HELP_ABOUT:
       wxMessageBox(kTrComingSoon);
       break;
   }
@@ -1031,13 +1036,9 @@ void BookFrame::PopupEncodingMenu() {
 
   wxMenu* sub_menu = new wxMenu;
 
-  sub_menu->Append(ID_MENU_ENCODING_ISO_8859_1,
-                   ENCODING_DISPLAY_NAME_ISO_8859_1);
-
-  sub_menu->Append(ID_MENU_ENCODING_WINDOWS_1250,
-                   ENCODING_DISPLAY_NAME_WINDOWS_1250);
-  sub_menu->Append(ID_MENU_ENCODING_ISO_8859_2,
-                   ENCODING_DISPLAY_NAME_ISO_8859_2);
+  sub_menu->Append(ID_MENU_ENCODING_ISO_8859_1, ENCODING_DISPLAY_NAME_ISO_8859_1);
+  sub_menu->Append(ID_MENU_ENCODING_WINDOWS_1250, ENCODING_DISPLAY_NAME_WINDOWS_1250);
+  sub_menu->Append(ID_MENU_ENCODING_ISO_8859_2, ENCODING_DISPLAY_NAME_ISO_8859_2);
 
   if (lang != wxLANGUAGE_CHINESE_SIMPLIFIED) {
     sub_menu->Append(ID_MENU_ENCODING_GB18030, ENCODING_DISPLAY_NAME_GB18030);
@@ -1047,25 +1048,19 @@ void BookFrame::PopupEncodingMenu() {
   }
 
   if (lang != wxLANGUAGE_JAPANESE) {
-    sub_menu->Append(ID_MENU_ENCODING_SHIFT_JIS,
-                     ENCODING_DISPLAY_NAME_SHIFT_JIS);
+    sub_menu->Append(ID_MENU_ENCODING_SHIFT_JIS, ENCODING_DISPLAY_NAME_SHIFT_JIS);
     sub_menu->Append(ID_MENU_ENCODING_EUC_JP, ENCODING_DISPLAY_NAME_EUC_JP);
   }
 
   sub_menu->Append(ID_MENU_ENCODING_TIS_620, ENCODING_DISPLAY_NAME_TIS_620);
 
-  sub_menu->Append(ID_MENU_ENCODING_ISO_8859_5,
-                   ENCODING_DISPLAY_NAME_ISO_8859_5);
+  sub_menu->Append(ID_MENU_ENCODING_ISO_8859_5, ENCODING_DISPLAY_NAME_ISO_8859_5);
   sub_menu->Append(ID_MENU_ENCODING_KOI8_R, ENCODING_DISPLAY_NAME_KOI8_R);
-  sub_menu->Append(ID_MENU_ENCODING_MAC_CYRILLIC,
-                   ENCODING_DISPLAY_NAME_X_MAC_CYRILLIC);
-  sub_menu->Append(ID_MENU_ENCODING_WINDOWS_1251,
-                   ENCODING_DISPLAY_NAME_WINDOWS_1251);
+  sub_menu->Append(ID_MENU_ENCODING_MAC_CYRILLIC, ENCODING_DISPLAY_NAME_X_MAC_CYRILLIC);
+  sub_menu->Append(ID_MENU_ENCODING_WINDOWS_1251, ENCODING_DISPLAY_NAME_WINDOWS_1251);
 
-  sub_menu->Append(ID_MENU_ENCODING_ISO_8859_7,
-                   ENCODING_DISPLAY_NAME_ISO_8859_7);
-  sub_menu->Append(ID_MENU_ENCODING_WINDOWS_1253,
-                   ENCODING_DISPLAY_NAME_WINDOWS_1253);
+  sub_menu->Append(ID_MENU_ENCODING_ISO_8859_7, ENCODING_DISPLAY_NAME_ISO_8859_7);
+  sub_menu->Append(ID_MENU_ENCODING_WINDOWS_1253, ENCODING_DISPLAY_NAME_WINDOWS_1253);
 
   menu.AppendSubMenu(sub_menu, kTrOthers);
 
@@ -1693,10 +1688,7 @@ void BookFrame::SelectFindResult(TextPage* text_page, const editor::TextRange& r
 //------------------------------------------------------------------------------
 // Menu
 
-wxMenuItem* BookFrame::AppendMenuItem(wxMenu* menu,
-                                      int id,
-                                      const wxString& label,
-                                      wxItemKind kind) {
+wxMenuItem* BookFrame::AppendMenuItem(wxMenu* menu, int id, const wxString& label, wxItemKind kind) {
   wxString _label = label;
 
   // Append accelerator.
@@ -1713,6 +1705,35 @@ wxMenuItem* BookFrame::AppendMenuItem(wxMenu* menu,
 
 void BookFrame::LoadMenus() {
   wxMenuBar* menu_bar = new wxMenuBar;
+
+  //------------------------------------
+  // OSX Apple menu
+
+#if defined (__WXOSX__)
+  // NOTE: The position to insert menu items here is a little confusing.
+  // It seems that wxWidgets (or OSX) does something in the background.
+  // Anyway, the final menu items are ordered as:
+  //   About Jil Text
+  //   ----
+  //   Preferences...
+  //   Theme >
+
+  wxMenu* osx_apple_menu = menu_bar->OSXGetAppleMenu();
+
+  // About
+  // NOTE: wxWidgets (or OSX) will display the label correctly as "About Jil Text".
+  osx_apple_menu->Insert(0, wxID_ABOUT, wxEmptyString, wxEmptyString, false);
+
+  // Preferences
+  // NOTE: wxWidgets (or OSX) will display the label correctly as "Preferences...".
+  osx_apple_menu->Insert(0, wxID_PREFERENCES, wxEmptyString, wxEmptyString, false);
+
+  // Theme
+  wxMenu* theme_menu = new wxMenu;
+  InitThemeMenu(theme_menu);
+  osx_apple_menu->Insert(5, wxID_ANY, kTrToolsTheme, theme_menu);
+
+#endif  // defined (__WXOSX__)
 
   //------------------------------------
   // File
@@ -1741,9 +1762,13 @@ void BookFrame::LoadMenus() {
   recent_files_menu_ = new wxMenu;
   file_menu->AppendSubMenu(recent_files_menu_, kTrFileRecentFiles);
   UpdateRecentFilesMenu();
+
+  // OSX has quit menu item by default in the apple menu.
+#if !defined (__WXOSX__)
   file_menu->AppendSeparator();
   // - Exit
-  AppendMenuItem(file_menu, wxID_EXIT, kTrFileExit);
+  AppendMenuItem(file_menu, ID_MENU_EXIT, kTrFileExit);
+#endif  // !defined (__WXOSX__)
 
   menu_bar->Append(file_menu, kTrMenuFile);
 
@@ -1775,29 +1800,35 @@ void BookFrame::LoadMenus() {
   // Tools
 
   wxMenu* tools_menu = new wxMenu;
-  tools_menu->Append(ID_MENU_TOOLS_OPTIONS, kTrToolsOptions);
+
+#if !defined (__WXOSX__)
+
+  // Preferences
+  tools_menu->Append(wxID_PREFERENCES, kTrToolsOptions);
   menu_bar->Append(tools_menu, kTrMenuTools);
 
   // Theme
-  wxMenu* theme_menu_ = new wxMenu;
-  tools_menu->AppendSubMenu(theme_menu_, kTrToolsTheme);
+  wxMenu* theme_menu = new wxMenu;
+  tools_menu->AppendSubMenu(theme_menu, kTrToolsTheme);
+  InitThemeMenu(theme_menu);
 
-  int id = ID_MENU_TOOLS_THEME_1;
-  const std::list<wxString>& theme_names = wxGetApp().theme_names();
-  for (const wxString& theme_name : theme_names) {
-    AppendMenuItem(theme_menu_, id++, theme_name);
-    if (id > ID_MENU_TOOLS_THEME_LAST) {
-      break;
-    }
-  }
+#endif  // !defined (__WXOSX__)
+
+  menu_bar->Append(tools_menu, kTrMenuTools);
 
   //------------------------------------
   // Help
 
   wxMenu* help_menu = new wxMenu;
   help_menu->Append(ID_MENU_HELP_VIEW_ONLINE, kTrHelpViewOnline);
-  help_menu->Append(ID_MENU_HELP_ABOUT, kTrHelpAbout);
+
+#if !defined (__WXOSX__)
+  help_menu->Append(wxID_ABOUT, kTrMenuAbout);
+#endif
+
   menu_bar->Append(help_menu, kTrMenuHelp);
+
+  //------------------------------------
 
   SetMenuBar(menu_bar);
 }
@@ -1896,6 +1927,17 @@ bool BookFrame::GetMenuEnableState(int menu_id) {
   }
 
   return true;
+}
+
+void BookFrame::InitThemeMenu(wxMenu* theme_menu) {
+  int id = ID_MENU_THEME_1;
+  const std::list<wxString>& theme_names = wxGetApp().theme_names();
+  for (const wxString& theme_name : theme_names) {
+    AppendMenuItem(theme_menu, id++, theme_name);
+    if (id > ID_MENU_THEME_LAST) {
+      break;
+    }
+  }
 }
 
 void BookFrame::UpdateRecentFilesMenu() {

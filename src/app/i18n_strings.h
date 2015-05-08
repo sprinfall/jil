@@ -32,6 +32,11 @@
 
 // Menu labels.
 
+#if !defined (__WXOSX__)
+// About menu will be placed in App menu on Mac while in Help menu on other platforms.
+#  define kTrMenuAbout          _("&About Jil Text")
+#endif  // !defined (__WXOSX__)
+
 #define kTrMenuFile           _("&File")
 #define kTrMenuEdit           _("&Edit")
 #define kTrMenuView           _("&View")
@@ -40,7 +45,7 @@
 
 #define kTrFileNew            _("&New")
 #if JIL_MULTIPLE_WINDOW
-#define kTrFileNewFrame       _("New &Window")
+#  define kTrFileNewFrame       _("New &Window")
 #endif  // JIL_MULTIPLE_WINDOW
 #define kTrFileOpen           _("&Open")
 #define kTrFileClose          _("&Close")
@@ -52,7 +57,10 @@
 #define kTrFileSaveAsFormat   _("Save %s &As...")
 #define kTrFileSaveAll        _("Save A&ll")
 #define kTrFileRecentFiles    _("Recent &Files")
-#define kTrFileExit           _("E&xit")
+
+#if !defined (__WXOSX__)
+#  define kTrFileExit         _("E&xit")
+#endif  // !defined (__WXOSX__)
 
 #define kTrEditUndo           _("&Undo")
 #define kTrEditRedo           _("&Redo")
@@ -78,12 +86,13 @@
 #define kTrEditClearAll       _("C&lear All")
 #define kTrEditGoToLocation   _("&Go To Location")
 
-// TODO: OSX
-#define kTrToolsOptions       _("&Options...")
+#if !defined (__WXOSX__)
+#  define kTrToolsOptions     _("&Options...")
+#endif  // !defined (__WXOSX__)
+
 #define kTrToolsTheme         _("&Theme")
 
 #define kTrHelpViewOnline     _("&View Online Help")
-#define kTrHelpAbout          _("&About Jil")
 
 // Right click floating menu labels.
 
