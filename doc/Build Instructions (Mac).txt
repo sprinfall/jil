@@ -1,0 +1,61 @@
+Build Instructions (Mac)
+
+OSX Version: 10.10
+
+
+- Install Boost
+
+./bootstrap.sh --prefix=$HOME
+Boost will be installed to $HOME instead of /usr/local
+
+- Install wxWidgets
+
+../configure --with-cocoa --with-macosx-version-min=10.7 --with-macosx-sdk=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk  CXXFLAGS="-stdlib=libc++ -std=c++11" OBJCXXFLAGS="-stdlib=libc++ -std=c++11" CPPFLAGS="-stdlib=libc++" LDFLAGS="-stdlib=libc++" CXX=clang++ CXXCPP="clang++ -E" CC=clang CPP="clang -E" --enable-debug -disable-shared
+
+The key point here is to enable Clang.
+
+- Install libconfig
+
+$./configure --prefix=$HOME
+Or (?)
+$ ./configure --prefix=$HOME CC=clang CXX=clang++ CPP="clang -E" CXXPP="clang++ -E"
+
+$ make
+$ make install
+
+~/include/
+  - libconfig.h
+  - libconfig.h++
+
+~/lib/
+  - libconfig.a
+  - libconfig.dylib (lnk -> libconfig.9.dylib)
+  - libconfig.la
+  - libconfig++.a
+  - libconfig++.dylib (lnk -> libconfig++.9.dylib)
+  
+
+- CMake
+
+Where is the source code: /Users/csi/Project/jil
+Where to build the binaries: /Users/csi/Project/jil/build
+
+Because Boost is installed at HOME (~/include, ~/lib), CMake can't find it
+because CMAKE_INSTALL_PREFIX is "/usr/local".
+
+Add HOME to it:
+
+CMAKE_INSTALL_PREFIX = ~;/usr/local
+
+Configure again and CMake finds Boost.
+
+Now change CMAKE_INSTALL_PREFIX the build dir so that install commands will
+package dynamic libs and resources correctly:
+
+CMAKE_INSTALL_PREFIX = /Users/csi/Project/jil/build/src/app/Debug
+
+Configure again. Then Generate.
+
+Now open jil.xcodeproj in the build dir.
+Set the active scheme to "install" in Xcode. Build.
+The generated Jil.app will be ready to run.
