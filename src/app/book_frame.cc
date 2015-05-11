@@ -1767,7 +1767,7 @@ void BookFrame::LoadMenus() {
 #if !defined (__WXOSX__)
   file_menu->AppendSeparator();
   // - Exit
-  AppendMenuItem(file_menu, ID_MENU_EXIT, kTrFileExit);
+  AppendMenuItem(file_menu, wxID_EXIT, kTrFileExit);
 #endif  // !defined (__WXOSX__)
 
   menu_bar->Append(file_menu, kTrMenuFile);
@@ -1803,14 +1803,13 @@ void BookFrame::LoadMenus() {
 
 #if !defined (__WXOSX__)
 
-  // Preferences
-  tools_menu->Append(wxID_PREFERENCES, kTrToolsOptions);
-  menu_bar->Append(tools_menu, kTrMenuTools);
-
   // Theme
   wxMenu* theme_menu = new wxMenu;
   tools_menu->AppendSubMenu(theme_menu, kTrToolsTheme);
   InitThemeMenu(theme_menu);
+
+  // Preferences
+  tools_menu->Append(wxID_PREFERENCES, kTrToolsOptions);
 
 #endif  // !defined (__WXOSX__)
 

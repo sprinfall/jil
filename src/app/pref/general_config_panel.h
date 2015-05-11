@@ -4,6 +4,7 @@
 
 #include "wx/panel.h"
 
+class wxButton;
 class wxCheckBox;
 class wxComboBox;
 
@@ -31,7 +32,6 @@ private:
 private:
   Options* options_;
 
-  // CJK
   wxCheckBox* c_check_box_;
   wxCheckBox* j_check_box_;
   wxCheckBox* k_check_box_;
@@ -41,6 +41,8 @@ private:
   wxCheckBox* switch_cwd_check_box_;
   wxCheckBox* restore_files_check_box_;
   wxCheckBox* show_path_check_box_;
+
+  wxButton* fonts_button_;
 };
 
 }  // namespace pref

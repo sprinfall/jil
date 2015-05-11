@@ -49,18 +49,20 @@ void GeneralConfigPanel::CreateControls() {
     {
       wxStaticText* cjk_label = new wxStaticText(box, wxID_ANY, _("Detect CJK encodings:"));
 
+      // NOTE:
+      // Don't separate Chinese to Simplified and Traditional. Keep it simple.
       c_check_box_ = new wxCheckBox(box, wxID_ANY, _("Chinese"));
       j_check_box_ = new wxCheckBox(box, wxID_ANY, _("Japanese"));
       k_check_box_ = new wxCheckBox(box, wxID_ANY, _("Korean"));
 
-      wxBoxSizer* cjk_check_hsizer = new wxBoxSizer(wxHORIZONTAL);
-      cjk_check_hsizer->Add(c_check_box_);
-      cjk_check_hsizer->Add(j_check_box_, wxSizerFlags().Border(wxLEFT));
-      cjk_check_hsizer->Add(k_check_box_, wxSizerFlags().Border(wxLEFT));
-
       wxBoxSizer* cjk_vsizer = new wxBoxSizer(wxVERTICAL);
       cjk_vsizer->Add(cjk_label);
-      cjk_vsizer->Add(cjk_check_hsizer, wxSizerFlags().Expand().Border(wxTOP));
+
+      wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+      hsizer->Add(c_check_box_);
+      hsizer->Add(j_check_box_, wxSizerFlags().Border(wxLEFT));
+      hsizer->Add(k_check_box_, wxSizerFlags().Border(wxLEFT));
+      cjk_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxTOP));
 
       box_vsizer->Add(cjk_vsizer, wxSizerFlags().Expand().Border(wxALL));
     }
@@ -116,6 +118,12 @@ void GeneralConfigPanel::CreateControls() {
 
     top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
   }
+
+  //----------------------------------------------------------------------------
+
+  fonts_button_ = new wxButton(this, wxID_ANY, _("&Fonts..."));
+
+  top_vsizer->Add(fonts_button_, wxSizerFlags().Align(wxALIGN_RIGHT).Border(wxALL));
 
   //----------------------------------------------------------------------------
 
