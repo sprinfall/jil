@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "wx/any.h"
+
 #include "editor/compile_config.h"
 #include "editor/text_point.h"
 #include "editor/text_range.h"
@@ -36,6 +38,14 @@ public:
 
   const std::wstring& data() const {
     return data_;
+  }
+
+  const wxAny& extra_data() const {
+    return extra_data_;
+  }
+
+  void set_extra_data(const wxAny& extra_data) {
+    extra_data_ = extra_data;
   }
 
   Coord Length() const {
@@ -77,15 +87,10 @@ public:
   bool StartWith(wchar_t c, bool ignore_spaces, Coord* off = NULL) const;
 
   // NOTE: ignore_spaces will be ignored if str[0] is an empty space.
-  bool StartWith(const std::wstring& str,
-                 bool ignore_spaces,
-                 Coord* off = NULL) const;
+  bool StartWith(const std::wstring& str, bool ignore_spaces, Coord* off = NULL) const;
 
   // NOTE: ignore_spaces will be ignored if c is an empty space.
-  bool EndWith(wchar_t c,
-               bool ignore_comments,
-               bool ignore_spaces,
-               Coord* off = NULL) const;
+  bool EndWith(wchar_t c, bool ignore_comments, bool ignore_spaces, Coord* off = NULL) const;
 
   // NOTE: ignore_spaces will be ignored if str[str.size()-1] is an empty space.
   bool EndWith(const std::wstring& str,
@@ -154,26 +159,10 @@ public:
     return quote_elems_;
   }
 
-  bool GetQuoteElem(Coord off,
-                    const QuoteElem** start,
-                    const QuoteElem** end) const;
+  bool GetQuoteElem(Coord off, const QuoteElem** start, const QuoteElem** end) const;
 
   const QuoteElem* FirstUnstartedQuoteEnd() const;
   const QuoteElem* LastUnendedQuoteStart() const;
-
-  //----------------------------------------------------------------------------
-
-  void AddFindRange(const CharRange& find_range) {
-    find_ranges_.push_back(find_range);
-  }
-
-  void ClearFindRanges() {
-    find_ranges_.clear();
-  }
-
-  const std::list<CharRange>& find_ranges() const {
-    return find_ranges_;
-  }
 
 private:
   size_t id_;
@@ -183,8 +172,7 @@ private:
 
   std::list<QuoteElem> quote_elems_;
 
-  // Find match result.
-  std::list<CharRange> find_ranges_;
+  wxAny extra_data_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -205,9 +193,7 @@ public:
     strs_.push_back(str2);
   }
 
-  LineStartWith(const std::wstring& str1,
-                const std::wstring& str2,
-                const std::wstring& str3) {
+  LineStartWith(const std::wstring& str1, const std::wstring& str2, const std::wstring& str3) {
     strs_.push_back(str1);
     strs_.push_back(str2);
     strs_.push_back(str3);

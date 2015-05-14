@@ -331,9 +331,10 @@ TextBuffer::~TextBuffer() {
 //------------------------------------------------------------------------------
 
 // static
-TextBuffer* TextBuffer::Create(FtPlugin* ft_plugin,
+TextBuffer* TextBuffer::Create(size_t id,
+                               FtPlugin* ft_plugin,
                                const Encoding& file_encoding) {
-  TextBuffer* buffer = new TextBuffer(ft_plugin);
+  TextBuffer* buffer = new TextBuffer(id, ft_plugin);
 
   buffer->set_file_encoding(file_encoding);
 
@@ -390,10 +391,7 @@ static FileError ReadFile(const wxString& file_path,
   }
 
   // Get the size in wchar_t.
-  size_t wlen = conv->ToWChar(NULL,
-                              0,
-                              bytes.c_str() + bom_size,
-                              bytes.size() - bom_size);
+  size_t wlen = conv->ToWChar(NULL, 0, bytes.c_str() + bom_size, bytes.size() - bom_size);
 
   if (wlen == wxCONV_FAILED) {
     if (conv_need_delete) {
@@ -405,10 +403,7 @@ static FileError ReadFile(const wxString& file_path,
 
   if (wlen > 0) {
     text->resize(wlen);
-    conv->ToWChar(&(*text)[0],
-                  wlen,
-                  bytes.c_str() + bom_size,
-                  bytes.size() - bom_size);
+    conv->ToWChar(&(*text)[0], wlen, bytes.c_str() + bom_size, bytes.size() - bom_size);
     if ((*text)[wlen - 1] == L'\0') {
       text->erase(wlen - 1);
     }
@@ -423,21 +418,19 @@ static FileError ReadFile(const wxString& file_path,
 }
 
 // static
-TextBuffer* TextBuffer::Create(const wxFileName& file_name_object,
+TextBuffer* TextBuffer::Create(size_t id,
+                               const wxFileName& file_name_object,
                                FtPlugin* ft_plugin,
                                int cjk_filters,
                                const Encoding& file_encoding) {
   std::wstring text;
   Encoding encoding;
 
-  int error = ReadFile(file_name_object.GetFullPath(),
-                       cjk_filters,
-                       &text,
-                       &encoding);
+  int error = ReadFile(file_name_object.GetFullPath(), cjk_filters, &text, &encoding);
 
   if (error == kEmptyError) {
     // The file is empty.
-    TextBuffer* buffer = Create(ft_plugin, file_encoding);
+    TextBuffer* buffer = Create(id, ft_plugin, file_encoding);
     buffer->set_file_name_object(file_name_object);
     return buffer;
   }
@@ -450,9 +443,9 @@ TextBuffer* TextBuffer::Create(const wxFileName& file_name_object,
 
   if (text.empty()) {
     // The file has only BOM bytes.
-    buffer = Create(ft_plugin, encoding);
+    buffer = Create(id, ft_plugin, encoding);
   } else {
-    buffer = new TextBuffer(ft_plugin);
+    buffer = new TextBuffer(id, ft_plugin);
     buffer->set_file_encoding(encoding);
     buffer->SetText(text);
   }
@@ -463,15 +456,16 @@ TextBuffer* TextBuffer::Create(const wxFileName& file_name_object,
 }
 
 // static
-TextBuffer* TextBuffer::Create(const std::wstring& text,
+TextBuffer* TextBuffer::Create(size_t id,
+                               const std::wstring& text,
                                FtPlugin* ft_plugin,
                                const Encoding& file_encoding) {
   TextBuffer* buffer = NULL;
   if (text.empty()) {
     // The file is empty with only BOM bytes?
-    buffer = Create(ft_plugin, file_encoding);
+    buffer = Create(id, ft_plugin, file_encoding);
   } else {
-    buffer = new TextBuffer(ft_plugin);
+    buffer = new TextBuffer(id, ft_plugin);
     buffer->set_file_encoding(file_encoding);
     buffer->SetText(text);
   }
@@ -699,11 +693,11 @@ Coord TextBuffer::PrevNonEmptyLine(Coord ln, bool skip_comment) const {
   return ln;
 }
 
-Coord TextBuffer::PrevLine(Coord ln, const LinePred& line_pred) const {
+Coord TextBuffer::PrevLine(Coord ln, const LinePred& pred) const {
   assert(ln > 0);
 
   for (--ln; ln > 0; --ln) {
-    if (line_pred.Check(Line(ln))) {
+    if (pred.Check(Line(ln))) {
       break;
     }
   }
@@ -711,16 +705,14 @@ Coord TextBuffer::PrevLine(Coord ln, const LinePred& line_pred) const {
   return ln;
 }
 
-Coord TextBuffer::PrevLine(Coord ln,
-                           const LinePred& line_pred1,
-                           const LinePred& line_pred2) const {
+Coord TextBuffer::PrevLine(Coord ln, const LinePred& pred1, const LinePred& pred2) const {
   assert(ln > 0);
 
   const TextLine* line = NULL;
 
   for (--ln; ln > 0; --ln) {
     line = Line(ln);
-    if (line_pred1.Check(line) && line_pred2.Check(line)) {
+    if (pred1.Check(line) && pred2.Check(line)) {
       break;
     }
   }
@@ -749,8 +741,7 @@ bool TextBuffer::IsLineEmpty(Coord ln, bool ignore_spaces) const {
   return Line(ln)->IsEmpty(ignore_spaces);
 }
 
-bool TextBuffer::AreLinesAllEmpty(const LineRange& line_range,
-                                  bool ignore_spaces) const {
+bool TextBuffer::AreLinesAllEmpty(const LineRange& line_range, bool ignore_spaces) const {
   for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
     if (!IsLineEmpty(ln, ignore_spaces)) {
       return false;
@@ -779,8 +770,7 @@ void TextBuffer::GetText(const TextRange& range, std::wstring* text) const {
   const TextPoint& point_end = range.point_end();
 
   if (point_begin.y == point_end.y) {
-    *text = Line(point_begin.y)->Sub(point_begin.x,
-                                     point_end.x - point_begin.x);
+    *text = Line(point_begin.y)->Sub(point_begin.x, point_end.x - point_begin.x);
     return;
   }
 
@@ -905,8 +895,7 @@ void TextBuffer::DeleteChar(const TextPoint& point, wchar_t* c) {
   }
 }
 
-TextPoint TextBuffer::InsertString(const TextPoint& point,
-                                   const std::wstring& str) {
+TextPoint TextBuffer::InsertString(const TextPoint& point, const std::wstring& str) {
   TextLine* line = Line(point.y);
 
   RemoveLineLength(line);
@@ -920,9 +909,7 @@ TextPoint TextBuffer::InsertString(const TextPoint& point,
   return TextPoint(point.x + str.size(), point.y);
 }
 
-void TextBuffer::DeleteString(const TextPoint& point,
-                              Coord count,
-                              std::wstring* str) {
+void TextBuffer::DeleteString(const TextPoint& point, Coord count, std::wstring* str) {
   TextLine* line = Line(point.y);
 
   RemoveLineLength(line);
@@ -989,8 +976,7 @@ void TextBuffer::DeleteLine(Coord ln, std::wstring* line_data) {
   }
 }
 
-TextPoint TextBuffer::InsertText(const TextPoint& point,
-                                 const std::wstring& text) {
+TextPoint TextBuffer::InsertText(const TextPoint& point, const std::wstring& text) {
   // Avoid to notify on every change, notify at last as few as possible.
   FreezeNotify();
 
@@ -1023,8 +1009,7 @@ TextPoint TextBuffer::InsertText(const TextPoint& point,
   return insert_point;
 }
 
-TextPoint TextBuffer::InsertRectText(const TextPoint& point,
-                                     const std::wstring& text) {
+TextPoint TextBuffer::InsertRectText(const TextPoint& point, const std::wstring& text) {
   FreezeNotify();
 
   size_t line_count = 0;
@@ -1056,9 +1041,7 @@ TextPoint TextBuffer::InsertRectText(const TextPoint& point,
 
 void TextBuffer::DeleteText(const TextRange& range, std::wstring* text) {
   if (range.point_begin().y == range.point_end().y) {
-    DeleteString(range.point_begin(),
-                 range.point_end().x - range.point_begin().x,
-                 text);
+    DeleteString(range.point_begin(), range.point_end().x - range.point_begin().x, text);
     return;
   }
 
@@ -1085,27 +1068,22 @@ void TextBuffer::DeleteText(const TextRange& range, std::wstring* text) {
   if (range.point_end().x > 0) {
     if (text != NULL) {
       std::wstring str;
-      DeleteString(TextPoint(0, range.point_begin().y + 1),
-                   range.point_end().x,
-                   &str);
+      DeleteString(TextPoint(0, range.point_begin().y + 1), range.point_end().x, &str);
       *text += str;
     } else {
-      DeleteString(TextPoint(0, range.point_begin().y + 1),
-                   range.point_end().x);
+      DeleteString(TextPoint(0, range.point_begin().y + 1), range.point_end().x);
     }
   }
 
   // Delete the line ending of first line.
-  DeleteChar(TextPoint(LineLength(range.point_begin().y),
-                       range.point_begin().y));
+  DeleteChar(TextPoint(LineLength(range.point_begin().y), range.point_begin().y));
 
   ThawNotify();
 
   // Avoid to notify on every single change.
   // NOTE (2013-04-20): Notify LineDeleted first so that wrap infos can be
   // updated before LineUpdated.
-  Notify(kLineDeleted,
-         LineChangeData(range.point_begin().y + 1, range.point_end().y));
+  Notify(kLineDeleted, LineChangeData(range.point_begin().y + 1, range.point_end().y));
   Notify(kLineUpdated, LineChangeData(range.point_begin().y));
 }
 
@@ -1176,37 +1154,10 @@ void TextBuffer::FindStringAll(const std::wstring& str,
   assert(range.point_begin().y <= LineCount());
 
   if (!use_regex) {
-    FindPlainStringAll(str,
-                       range,
-                       case_sensitive,
-                       match_word,
-                       result_ranges);
+    FindPlainStringAll(str, range, case_sensitive, match_word, result_ranges);
   } else {
-    FindRegexStringAll(str,
-                       range,
-                       case_sensitive,
-                       match_word,
-                       result_ranges);
+    FindRegexStringAll(str, range, case_sensitive, match_word, result_ranges);
   }
-}
-
-void TextBuffer::ClearFindResults() {
-  Coord ln = 1;
-  TextLine* line = NULL;
-  TextLines::iterator it = lines_.begin();
-  for (; it != lines_.end(); ++it, ++ln) {
-    line = *it;
-
-    if (!line->find_ranges().empty()) {
-      line->ClearFindRanges();
-      Notify(kLineRefresh, LineRange(ln, ln));  // TODO
-    }
-  }
-}
-
-void TextBuffer::AddFindMatch(Coord ln, const CharRange& find_match) {
-  Line(ln)->AddFindRange(find_match);
-  Notify(kLineRefresh, LineRange(ln, ln));  // TODO
 }
 
 //------------------------------------------------------------------------------
@@ -1731,8 +1682,9 @@ Coord TextBuffer::GetMaxLineLength() const {
 
 //------------------------------------------------------------------------------
 
-TextBuffer::TextBuffer(FtPlugin* ft_plugin)
-    : ft_plugin_(ft_plugin)
+TextBuffer::TextBuffer(size_t id, FtPlugin* ft_plugin)
+    : id_(id)
+    , ft_plugin_(ft_plugin)
     , options_(ft_plugin->options())
     , file_format_(FF_DEFAULT)
     , read_only_(false)

@@ -60,9 +60,7 @@ public:
   //----------------------------------------------------------------------------
   // CharIterator - Iterate text buffer char by char.
 
-  typedef std::iterator<std::bidirectional_iterator_tag,
-                        wchar_t,
-                        ptrdiff_t> CharIteratorBase;
+  typedef std::iterator<std::bidirectional_iterator_tag, wchar_t, ptrdiff_t> CharIteratorBase;
 
   class CharIterator : public CharIteratorBase {
  private:
@@ -113,17 +111,20 @@ public:
   // Create
 
   // Create an empty text buffer.
-  static TextBuffer* Create(FtPlugin* ft_plugin,
+  static TextBuffer* Create(size_t id,
+                            FtPlugin* ft_plugin,
                             const Encoding& file_encoding);
 
   // Create a text buffer for the given file.
-  static TextBuffer* Create(const wxFileName& file_name_object,
+  static TextBuffer* Create(size_t id,
+                            const wxFileName& file_name_object,
                             FtPlugin* ft_plugin,
                             int cjk_filters,
                             const Encoding& file_encoding);
 
   // Create a text buffer with the given text.
-  static TextBuffer* Create(const std::wstring& text,
+  static TextBuffer* Create(size_t id,
+                            const std::wstring& text,
                             FtPlugin* ft_plugin,
                             const Encoding& file_encoding);
 
@@ -141,6 +142,10 @@ public:
   const CharIterator CharEnd() const;
 
   //----------------------------------------------------------------------------
+
+  size_t id() const {
+    return id_;
+  }
 
   // Example: "E:\doc\example.txt"
   wxString file_path_name() const;
@@ -238,12 +243,10 @@ public:
   Coord PrevNonEmptyLine(Coord ln, bool skip_comment) const;
 
   // Return the previous line matching the predicate.
-  Coord PrevLine(Coord ln, const LinePred& line_pred) const;
+  Coord PrevLine(Coord ln, const LinePred& pred) const;
 
   // Return the previous line matching the two predicates.
-  Coord PrevLine(Coord ln,
-                 const LinePred& line_pred1,
-                 const LinePred& line_pred2) const;
+  Coord PrevLine(Coord ln, const LinePred& pred1, const LinePred& pred2) const;
 
   const std::wstring& LineData(Coord ln) const;
 
@@ -289,9 +292,7 @@ public:
 
   TextPoint InsertString(const TextPoint& point, const std::wstring& str);
 
-  void DeleteString(const TextPoint& point,
-                    Coord count,
-                    std::wstring* str = NULL);
+  void DeleteString(const TextPoint& point, Coord count, std::wstring* str = NULL);
 
   // The new line will be with the given line number.
   void InsertLine(Coord ln, const std::wstring& line_data = L"");
@@ -338,10 +339,6 @@ public:
                      bool case_sensitive,
                      bool match_word,
                      std::list<TextRange>* result_ranges) const;
-
-  void ClearFindResults();
-
-  void AddFindMatch(Coord ln, const CharRange& find_match);
 
   //----------------------------------------------------------------------------
   // Listener
@@ -430,16 +427,12 @@ public:
   // Examples:
   //   UnpairedRightKey(point, L'{', L'}')
   //   UnpairedRightKey(point, L'(', L')')
-  TextPoint UnpairedRightKey(const TextPoint& point,
-                             wchar_t l_key,
-                             wchar_t r_key) const;
+  TextPoint UnpairedRightKey(const TextPoint& point, wchar_t l_key, wchar_t r_key) const;
 
   //----------------------------------------------------------------------------
   // Seek
 
-  TextPoint Seek(const TextPoint& point,
-                 TextUnit text_unit,
-                 SeekType seek_type);
+  TextPoint Seek(const TextPoint& point, TextUnit text_unit, SeekType seek_type);
 
   //----------------------------------------------------------------------------
   // Action operations, undo/redo.
@@ -474,7 +467,7 @@ private:
   //----------------------------------------------------------------------------
   // Buffer
 
-  explicit TextBuffer(FtPlugin* ft_plugin);
+  TextBuffer(size_t id, FtPlugin* ft_plugin);
 
   void SetText(const std::wstring& text);
 
@@ -621,9 +614,7 @@ private:
   Coord WordBegin(const TextPoint& point, bool include_space);
   Coord WordEnd(const TextPoint& point, bool include_space);
 
-  void SplitWords(const std::wstring& line_data,
-                  bool include_space,
-                  std::vector<std::wstring>* words);
+  void SplitWords(const std::wstring& line_data, bool include_space, std::vector<std::wstring>* words);
 
   //----------------------------------------------------------------------------
   // Undo / Redo
@@ -674,6 +665,11 @@ private:
   void ClearLineLength();
 
 private:
+  // Unique ID of this text buffer.
+  // You can't use file full path to identify text buffers uniquely because a
+  // new created text buffer doesn't have file name before it's saved.
+  size_t id_;
+
   wxFileName file_name_object_;
 
   // Shared file type specific data.

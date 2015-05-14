@@ -11,6 +11,9 @@ class wxWindow;
 
 namespace jil {
 
+// Allocate a new id for text buffer.
+size_t NewBufferId();
+
 class WorkingDirSwitcher {
  public:
   explicit WorkingDirSwitcher(const wxString& new_wd) {

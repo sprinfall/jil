@@ -25,6 +25,19 @@ enum FindLocation {
   kLocationCount,
 };
 
+// Extra data for each line in the find result buffer.
+// Saved in TextLine.extra_data_.
+class FrExtraData {
+public:
+  wxString file_path;
+
+  // For new buffers/files which don't have file path.
+  size_t buffer_id;
+
+  // Source line id.
+  size_t line_id;
+};
+
 // Internal file type IDs.
 // Format: "jil-xxx_yyy_zzz"
 const char* const kFtId_FindResult = "jil-find_result";

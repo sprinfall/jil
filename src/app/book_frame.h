@@ -286,6 +286,8 @@ private:
 
   TextPage* TextPageByFileName(const wxFileName& fn_object) const;
 
+  TextPage* TextPageByBufferId(size_t buffer_id) const;
+
   void RemovePage(const TextPage* page);
   void RemoveAllPages(const TextPage* except_page = NULL);
 

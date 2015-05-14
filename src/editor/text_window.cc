@@ -1375,24 +1375,6 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
 
   TextLine* line = buffer_->Line(ln);
 
-  // Highlight the find matching results.
-  const std::list<CharRange>& find_matches = line->find_ranges();
-  if (!find_matches.empty()) {
-    const wxColour& bg = theme_->GetColor(MATCHING_BG);
-    const wxColour& border = theme_->GetColor(MATCHING_BORDER);
-    renderer.SetStyle(bg, border, true);
-
-    CharRange char_range = find_matches.front();
-    int x_begin = GetLineWidth(line, 0, char_range.begin());
-    int x_end = GetLineWidth(line, 0, char_range.end());
-    int w = x_end - x_begin;
-
-    wxRect rect(x_begin, y, w, line_height_);
-    renderer.DrawRectangle(rect);
-
-    renderer.RestoreStyle();
-  }
-
   // If in select range, draw the select background.
   if (selection_.HasLine(ln)) {
     CharRange line_selection = selection_.GetCharRange(ln);
@@ -1432,10 +1414,7 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
   y += line_height_;
 }
 
-void TextWindow::DrawWrappedTextLine(Coord ln,
-                                     Renderer& renderer,
-                                     int x,
-                                     int& y) {
+void TextWindow::DrawWrappedTextLine(Coord ln, Renderer& renderer, int x, int& y) {
   assert(view_options_.wrap);
 
   const TextLine* line = buffer_->Line(ln);
@@ -1461,12 +1440,8 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
         continue;  // No intersection with the select range.
       }
 
-      int x1 = GetLineWidth(line,
-                            sub_range.begin(),
-                            sub_select_char_range.begin());
-      int x2 = GetLineWidth(line,
-                            sub_range.begin(),
-                            sub_select_char_range.end());
+      int x1 = GetLineWidth(line, sub_range.begin(), sub_select_char_range.begin());
+      int x2 = GetLineWidth(line, sub_range.begin(), sub_select_char_range.end());
       int w = x2 - x1;
       if (ln != selection_.end().y &&
           sub_select_char_range.end() == kInvalidCoord) {

@@ -246,7 +246,7 @@ void BookFrame::FileNew() {
   using namespace editor;
 
   FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(FileType());
-  TextBuffer* buffer = TextBuffer::Create(ft_plugin, options_->file_encoding);
+  TextBuffer* buffer = TextBuffer::Create(NewBufferId(), ft_plugin, options_->file_encoding);
 
   TextPage* text_page = CreateTextPage(buffer, text_book_->PageParent(), wxID_ANY);
   text_book_->AddPage(text_page, true);
@@ -929,53 +929,57 @@ void BookFrame::OnFindResultPageEvent(wxCommandEvent& evt) {
   int type = evt.GetInt();
 
   if (type == FindResultPage::kLocalizeEvent) {
-    Coord caret_y = fr_page->caret_point().y;
+    Coord fr_ln = fr_page->caret_point().y;
 
     TextBuffer* fr_buffer = fr_page->buffer();
+    TextLine* fr_line = fr_buffer->Line(fr_ln);
 
-    // Find the file path line.
-    // NOTE: Checking line prefix is a temp solution.
-    const std::wstring kPrefix = L"-- ";
-
-    wxString file_path;
-    for (Coord ln = caret_y - 1; ln > 0; --ln) {
-      if (fr_buffer->Line(ln)->StartWith(kPrefix, false)) {
-        file_path = fr_buffer->LineData(ln).substr(kPrefix.size());
-        break;
-      }
-    }
-
-    if (file_path.IsEmpty()) {
+    const wxAny& any = fr_line->extra_data();
+    if (any.IsNull()) {
       return;
     }
 
-    // Find the source text page.
-    wxFileName fn_object(file_path);
-    TextPage* text_page = TextPageByFileName(fn_object);
-    if (text_page == NULL) {
-      // The page is closed? Reopen it.
-      text_page = DoOpenFile(fn_object, true, false, NULL);
+    TextPage* text_page = NULL;
+
+    FrExtraData fr_extra_data = any.As<FrExtraData>();
+
+    if (!fr_extra_data.file_path.IsEmpty()) {
+      wxFileName fn_object(fr_extra_data.file_path);
+      text_page = TextPageByFileName(fn_object);
+
       if (text_page != NULL) {
-        AddRecentFile(fn_object.GetFullPath());
-        UpdateRecentFilesMenu();
+        // The page might not be active, activate it.
+        text_book_->ActivatePage(text_page);
+        text_book_->SetFocus();
       } else {
-        return;  // Failed to reopen it.
+        // The page is closed? Reopen it.
+        text_page = DoOpenFile(fn_object, true, false, NULL);
+
+        if (text_page != NULL) {
+          AddRecentFile(fn_object.GetFullPath());
+          UpdateRecentFilesMenu();
+        } // else: Failed to reopen it.
       }
-    } else {
-      // The page might not be active, activate it.
-      text_book_->ActivatePage(text_page);
-      text_book_->SetFocus();
+    } else if (fr_extra_data.buffer_id) {
+      // The buffer has no file path, a new buffer.
+      text_page = TextPageByBufferId(fr_extra_data.buffer_id);
+
+      if (text_page != NULL) {
+        // The page might not be active, activate it.
+        text_book_->ActivatePage(text_page);
+        text_book_->SetFocus();
+      }
     }
 
-    size_t line_id = fr_buffer->Line(caret_y)->id();
-
-    Coord ln = text_page->buffer()->LineNrFromId(line_id);
-    if (ln == kInvalidCoord) {
+    if (text_page == NULL) {
       return;
     }
 
     // Go to the source line.
-    text_page->Goto(ln);
+    Coord ln = text_page->buffer()->LineNrFromId(fr_extra_data.line_id);
+    if (ln != kInvalidCoord) {
+      text_page->Goto(ln);
+    }
   }
 }
 
@@ -1207,29 +1211,31 @@ void BookFrame::OnFindWindowEvent(FindWindowEvent& evt) {
   FindLocation location = evt.location();
 
   switch (event_type) {
-    case FindWindow::kFindEvent:
-      if (location == kCurrentPage) {
-        FindInActivePage(evt.find_str(), evt.flags());
-      } else if (location == kAllPages) {
-        FindInAllPages(evt.find_str(), evt.flags());
-      }
-      break;
+  case FindWindow::kFindEvent:
+    if (location == kCurrentPage) {
+      FindInActivePage(evt.find_str(), evt.flags());
+    }
+    else if (location == kAllPages) {
+      FindInAllPages(evt.find_str(), evt.flags());
+    }
+    break;
 
-    case FindWindow::kFindAllEvent:
-      if (location == kCurrentPage) {
-        FindAllInActivePage(evt.find_str(), evt.flags());
-      } else if (location == kAllPages) {
-        FindAllInAllPages(evt.find_str(), evt.flags());
-      }
-      break;
+  case FindWindow::kFindAllEvent:
+    if (location == kCurrentPage) {
+      FindAllInActivePage(evt.find_str(), evt.flags());
+    }
+    else if (location == kAllPages) {
+      FindAllInAllPages(evt.find_str(), evt.flags());
+    }
+    break;
 
-    case FindWindow::kReplaceEvent:
-      ReplaceInActivePage(evt.find_str(), evt.replace_str(), evt.flags());
-      break;
+  case FindWindow::kReplaceEvent:
+    ReplaceInActivePage(evt.find_str(), evt.replace_str(), evt.flags());
+    break;
 
-    case FindWindow::kReplaceAllEvent:
-      ReplaceAllInActivePage(evt.find_str(), evt.replace_str(), evt.flags());
-      break;
+  case FindWindow::kReplaceAllEvent:
+    ReplaceAllInActivePage(evt.find_str(), evt.replace_str(), evt.flags());
+    break;
   }
 }
 
@@ -1247,10 +1253,8 @@ FindResultPage* BookFrame::GetFindResultPage() {
   FileType ft(kFtId_FindResult, wxEmptyString);
   FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(ft);
 
-  TextBuffer* buffer = TextBuffer::Create(ft_plugin,
-                                          options_->file_encoding);
-  buffer->set_file_name_object(
-      wxFileName::FileName(kTrPageFindResult + wxT(".txt")));
+  TextBuffer* buffer = TextBuffer::Create(0, ft_plugin, options_->file_encoding);
+  buffer->set_file_name_object(wxFileName::FileName(kTrPageFindResult + wxT(".txt")));
 
   FindResultPage* fr_page = new FindResultPage(buffer);
 
@@ -1621,13 +1625,16 @@ void BookFrame::FindAll(const std::wstring& str,
     return;
   }
 
-  TextLine* fr_line = NULL;
-
   // Add file path name line.
-  std::wstring file_path_name = buffer->file_path_name().ToStdWstring();
-  file_path_name = L"-- " + file_path_name;
-  fr_line = fr_page->buffer()->AppendLine(file_path_name);
-  fr_line->set_id(kNpos);  // Clear line ID.
+  wxString file_path = buffer->file_path_name();
+
+  std::wstring fr_line_data = L"-- ";
+  if (file_path.IsEmpty()) {
+    fr_line_data += wxString(kTrPageUntitled).ToStdWstring();
+  } else {
+    fr_line_data += file_path.ToStdWstring();
+  }
+  fr_page->buffer()->AppendLine(fr_line_data);
 
   // Get max line number's string size.
   Coord max_ln = result_ranges.back().point_end().y;
@@ -1646,13 +1653,12 @@ void BookFrame::FindAll(const std::wstring& str,
 
     TextLine* line = buffer->Line(ln);
 
-    std::wstring line_data = ln_str + L" " + line->data();
-    fr_line = fr_page->buffer()->AppendLine(line_data);
+    std::wstring fr_line_data = ln_str + L" " + line->data();
+    TextLine* fr_line = fr_page->buffer()->AppendLine(fr_line_data);
 
-    // Reuse the ID of the source line.
-    // This might make the line IDs in find result page not unique.
-    // Note that other lines are all set kNpos (-1) as ID.
-    fr_line->set_id(line->id());
+    // Save the file path, buffer id and source line id in the extra data.
+    FrExtraData fr_extra_data = { file_path, buffer->id(), line->id() };
+    fr_line->set_extra_data(fr_extra_data);
 
     // Add lex element for the prefix line number.
     fr_line->AddLexElem(0, max_ln_size, Lex(kLexConstant, kLexConstantNumber));
@@ -1668,10 +1674,10 @@ void BookFrame::FindAll(const std::wstring& str,
   // Example: >> 4
   std::wstring match_count = L">> ";
   match_count += base::LexicalCast<std::wstring>(result_ranges.size());
-  fr_line = fr_page->buffer()->AppendLine(match_count);
-  fr_line->set_id(kNpos);  // Clear line ID.
+  fr_page->buffer()->AppendLine(match_count);
+  fr_page->buffer()->AppendLine(L"");
 }
-
+ 
 void BookFrame::SelectFindResult(TextPage* text_page, const editor::TextRange& result_range) {
   text_page->SetSelection(result_range, editor::kForward, false);
 
@@ -1987,6 +1993,16 @@ TextPage* BookFrame::TextPageByFileName(const wxFileName& fn_object) const {
   return NULL;
 }
 
+TextPage* BookFrame::TextPageByBufferId(size_t buffer_id) const {
+  std::vector<TextPage*> text_pages = text_book_->TextPages();
+  for (size_t i = 0; i < text_pages.size(); ++i) {
+    if (buffer_id == text_pages[i]->buffer()->id()) {
+      return text_pages[i];
+    }
+  }
+  return NULL;
+}
+
 void BookFrame::RemovePage(const TextPage* page) {
   text_book_->RemovePage(page);
 }
@@ -2064,7 +2080,8 @@ TextPage* BookFrame::DoOpenFile(const wxFileName& fn_object, bool active, bool s
   const FileType& ft = app.FileTypeFromExt(fn_object.GetExt());
   FtPlugin* ft_plugin = app.GetFtPlugin(ft);
 
-  TextBuffer* buffer = TextBuffer::Create(fn_object,
+  TextBuffer* buffer = TextBuffer::Create(NewBufferId(),
+                                          fn_object,
                                           ft_plugin,
                                           options_->cjk_filters,
                                           options_->file_encoding);

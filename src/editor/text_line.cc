@@ -59,9 +59,7 @@ bool TextLine::IsEmpty(bool ignore_spaces) const {
   }
 }
 
-bool TextLine::StartWith(wchar_t c,
-                         bool ignore_spaces,
-                         Coord* off) const {
+bool TextLine::StartWith(wchar_t c, bool ignore_spaces, Coord* off) const {
   size_t i = 0;
 
   if (ignore_spaces && !IsSpace(c)) {
@@ -82,9 +80,7 @@ bool TextLine::StartWith(wchar_t c,
   return false;
 }
 
-bool TextLine::StartWith(const std::wstring& str,
-                         bool ignore_spaces,
-                         Coord* off) const {
+bool TextLine::StartWith(const std::wstring& str, bool ignore_spaces, Coord* off) const {
   if (str.size() == 1) {
     return StartWith(str[0], ignore_spaces, off);
   }
@@ -109,10 +105,7 @@ bool TextLine::StartWith(const std::wstring& str,
   return false;
 }
 
-bool TextLine::EndWith(wchar_t c,
-                       bool ignore_comments,
-                       bool ignore_spaces,
-                       Coord* off) const {
+bool TextLine::EndWith(wchar_t c, bool ignore_comments, bool ignore_spaces, Coord* off) const {
   if (data_.empty()) {
     return false;
   }
@@ -348,8 +341,7 @@ void TextLine::ClearLexElems() {
   ClearContainer(&lex_elems_);
 }
 
-std::list<const LexElem*> TextLine::lex_elems(
-    const CharRange& char_range) const {
+std::list<const LexElem*> TextLine::lex_elems(const CharRange& char_range) const {
   std::list<const LexElem*> range_lex_elements;
 
   CharRange adjusted_char_range = char_range;
@@ -461,10 +453,7 @@ bool TextLine::IsComment(Coord off) const {
   return (GetLex(off).major() == kLexComment);
 }
 
-void TextLine::AddQuoteElem(Quote* quote,
-                            size_t off,
-                            size_t len,
-                            QuotePart part) {
+void TextLine::AddQuoteElem(Quote* quote, size_t off, size_t len, QuotePart part) {
   QuoteElem qe = { quote, CoordCast(off), CoordCast(len), part };
   quote_elems_.push_back(qe);
 }
@@ -496,9 +485,7 @@ bool TextLine::EndQuote(Quote* quote) const {
   return false;
 }
 
-bool TextLine::GetQuoteElem(Coord off,
-                            const QuoteElem** start,
-                            const QuoteElem** end) const {
+bool TextLine::GetQuoteElem(Coord off, const QuoteElem** start, const QuoteElem** end) const {
   std::list<QuoteElem>::const_iterator it = quote_elems_.begin();
 
   bool found = false;

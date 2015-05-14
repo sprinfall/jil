@@ -14,12 +14,16 @@
 
 namespace jil {
 
+size_t NewBufferId() {
+  static size_t buffer_id = 1;
+  return buffer_id++;
+}
+
 namespace path {
 
 wxString ExeDir() {
   wxFileName exe_fn(wxStandardPaths::Get().GetExecutablePath());
-  return exe_fn.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR,
-                        wxPATH_NATIVE);
+  return exe_fn.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR, wxPATH_NATIVE);
 }
 
 wxString ResourceDir() {
