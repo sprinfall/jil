@@ -17,17 +17,6 @@ const wxFont& GetGlobalFont(int point_size, const wxString& facename, bool bold,
   return *font;
 }
 
-// Some preferred fixed-width fonts.
-static const wxString kBestFonts[] = {
-#if defined (__WXOSX__)
-  wxT("Menlo"),  // Xcode default font
-#endif
-  wxT("DejaVu Sans Mono"),
-  wxT("Bitstream Vera Sans Mono"),
-  wxT("Consolas"),
-  wxT("Courier New"),
-};
-
 static wxString DoGetDefaultFontName() {
   FontEnumerator fe;
   fe.EnumerateFacenames(wxFONTENCODING_SYSTEM, true);
@@ -35,6 +24,17 @@ static wxString DoGetDefaultFontName() {
     // No fixed-width fonts? Use system font.
     return wxSystemSettings::GetFont(wxSYS_SYSTEM_FONT).GetFaceName();
   }
+
+  // Some preferred fixed-width fonts.
+  static const wxString kBestFonts[] = {
+#if defined (__WXOSX__)
+    wxT("Menlo"),  // Xcode default font.
+#endif
+    wxT("DejaVu Sans Mono"),
+    wxT("Bitstream Vera Sans Mono"),
+    wxT("Consolas"),
+    wxT("Courier New"),
+  };
 
   size_t count = sizeof(kBestFonts) / sizeof(wxString);
   for (size_t i = 0; i < count; ++i) {
@@ -49,11 +49,6 @@ static wxString DoGetDefaultFontName() {
 wxString GetDefaultFontName() {
   static wxString font = DoGetDefaultFontName();
   return font;
-}
-
-int GetDefaultFontSize() {
-  static const int font_size = wxSystemSettings::GetFont(wxSYS_SYSTEM_FONT).GetPointSize();
-  return font_size;
 }
 
 }  // namespace jil
