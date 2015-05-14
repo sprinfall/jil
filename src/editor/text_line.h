@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "wx/any.h"
+#include "boost/any.hpp"
 
 #include "editor/compile_config.h"
 #include "editor/text_point.h"
@@ -40,11 +40,11 @@ public:
     return data_;
   }
 
-  const wxAny& extra_data() const {
+  const boost::any& extra_data() const {
     return extra_data_;
   }
 
-  void set_extra_data(const wxAny& extra_data) {
+  void set_extra_data(const boost::any& extra_data) {
     extra_data_ = extra_data;
   }
 
@@ -172,7 +172,10 @@ private:
 
   std::list<QuoteElem> quote_elems_;
 
-  wxAny extra_data_;
+  // NOTE:
+  // wxAny takes 24 bytes. So boost::any is prefered because it takes only
+  // the same bytes as a pointer.
+  boost::any extra_data_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

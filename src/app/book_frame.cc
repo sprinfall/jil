@@ -934,14 +934,20 @@ void BookFrame::OnFindResultPageEvent(wxCommandEvent& evt) {
     TextBuffer* fr_buffer = fr_page->buffer();
     TextLine* fr_line = fr_buffer->Line(fr_ln);
 
-    const wxAny& any = fr_line->extra_data();
-    if (any.IsNull()) {
+    const boost::any& any = fr_line->extra_data();
+    if (any.empty()) {
+      return;
+    }
+
+    FrExtraData fr_extra_data;
+
+    try {
+      fr_extra_data = boost::any_cast<FrExtraData>(any);
+    } catch (boost::bad_any_cast& ) {
       return;
     }
 
     TextPage* text_page = NULL;
-
-    FrExtraData fr_extra_data = any.As<FrExtraData>();
 
     if (!fr_extra_data.file_path.IsEmpty()) {
       wxFileName fn_object(fr_extra_data.file_path);

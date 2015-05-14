@@ -282,8 +282,6 @@ bool App::OnInit() {
     return false;
   }
 
-  size_t size_of_any = sizeof(wxAny);
-
 #if JIL_SINGLE_INSTANCE
   // Single instance check and the communication between two instances.
 
