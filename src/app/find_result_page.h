@@ -26,7 +26,7 @@ public:
   // OVERRIDE of BookPage:
   virtual wxWindow* Page_Window() override { return this; }
   virtual void Page_Activate(bool active) override;
-  virtual bool Page_Close() override;
+  virtual void Page_Close() override;
   virtual wxString Page_Type() const override;
   virtual wxString Page_Label() const override;
   virtual wxString Page_Description() const override;
@@ -50,15 +50,14 @@ protected:
 };
 
 BEGIN_DECLARE_EVENT_TYPES()
-// Check GetInt(), which returns enum FindResultPage::EventType, for the
-// details.
+// Check GetInt(), which returns enum FindResultPage::EventType, for the details.
 DECLARE_EVENT_TYPE(kFindResultPageEvent, 0)
 END_DECLARE_EVENT_TYPES()
 
 }  // namespace jil
 
 #define EVT_FIND_RESULT_PAGE(id, func)\
-  DECLARE_EVENT_TABLE_ENTRY(jil::kFindResultPageEvent, id, -1, \
+  DECLARE_EVENT_TABLE_ENTRY(jil::kFindResultPageEvent, id, -1,\
   wxCommandEventHandler(func), (wxObject*)NULL),
 
 #endif  // JIL_FIND_RESULT_PAGE_H_

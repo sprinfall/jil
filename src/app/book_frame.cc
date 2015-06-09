@@ -64,9 +64,7 @@ class FileDropTarget : public wxFileDropTarget {
       : book_frame_(book_frame) {
   }
 
-  virtual bool OnDropFiles(wxCoord x,
-                           wxCoord y,
-                           const wxArrayString& file_names) override {
+  virtual bool OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& file_names) override {
     book_frame_->OpenFiles(file_names, false);
     return true;
   }
@@ -110,10 +108,6 @@ EVT_UPDATE_UI_RANGE(ID_MENU_EDIT_BEGIN, ID_MENU_EDIT_END - 1, BookFrame::OnEditU
 EVT_UPDATE_UI_RANGE(ID_MENU_VIEW_BEGIN, ID_MENU_VIEW_END - 1, BookFrame::OnViewUpdateUI)
 
 EVT_CLOSE(BookFrame::OnClose)
-
-// BookCtrl right click menu.
-// NOTE: Only handle "New File"; others are handled by book ctrl.
-EVT_MENU(ID_MENU_BOOK_RCLICK_NEW_FILE, BookFrame::OnBookRClickMenu)
 
 // Use wxID_ANY to accept event from any text window.
 EVT_TEXT_WINDOW(wxID_ANY, BookFrame::OnTextWindowEvent)
@@ -292,12 +286,63 @@ void BookFrame::FileOpen() {
   }
 }
 
+int BookFrame::ConfirmSave(TextPage* text_page) {
+  editor::TextBuffer* buffer = text_page->buffer();
+
+  assert(buffer->modified());
+
+  wxString msg;
+  if (buffer->new_created()) {
+    msg = _("The file is untitled and changed, save it?");
+  } else {
+    msg = wxString::Format(_("The file (%s) has been changed, save it?"), text_page->Page_Label().c_str());
+  }
+
+  long style = wxYES|wxNO|wxCANCEL|wxYES_DEFAULT|wxICON_EXCLAMATION|wxCENTRE;
+  return wxMessageBox(msg, _("Save File"), style);
+}
+
+bool BookFrame::Save(editor::TextBuffer* buffer) {
+  bool saved = false;
+  if (buffer->new_created() || buffer->read_only()) {
+    saved = SaveBufferAs(buffer, this);
+  } else {
+    saved = SaveBuffer(buffer, this);
+  }
+  return saved;
+}
+
 void BookFrame::FileClose() {
-  text_book_->RemoveActivePage();
+  TextPage* text_page = text_book_->ActiveTextPage();
+  if (text_page == NULL) {
+    return;
+  }
+
+  // If the buffer is modified, ask for save.
+  if (text_page->buffer_modified()) {
+    int code = ConfirmSave(text_page);
+
+    if (code == wxCANCEL) {
+      return;  // Don't close.
+    }
+
+    if (code == wxYES) {
+      if (!Save(text_page->buffer())) {
+        // Fail or cancel to save. Don't close.
+        return;
+      }
+    }
+  }
+
+  text_book_->RemovePage(text_page);
 }
 
 void BookFrame::FileCloseAll() {
   RemoveAllPages();
+}
+
+void BookFrame::FileCloseAllButThis() {
+  RemoveAllPages(text_book_->ActiveTextPage());
 }
 
 void BookFrame::FileSave() {
@@ -322,6 +367,23 @@ void BookFrame::FileSaveAll() {
     if (text_pages[i] != NULL) {
       DoSaveBuffer(text_pages[i]->buffer());
     }
+  }
+}
+
+void BookFrame::FileCopyPath() {
+  TextPage* text_page = text_book_->ActiveTextPage();
+  if (text_page != NULL) {
+    if (wxTheClipboard->Open()) {
+      wxTheClipboard->SetData(new wxTextDataObject(text_page->buffer()->file_path_name()));
+      wxTheClipboard->Close();
+    }
+  }
+}
+
+void BookFrame::FileOpenFolder() {
+  TextPage* text_page = text_book_->ActiveTextPage();
+  if (text_page != NULL) {
+    ExploreFile(text_page->buffer()->file_path_name());
   }
 }
 
@@ -589,6 +651,7 @@ void BookFrame::OnMenuFile(wxCommandEvent& evt) {
   // Find menu has no menu items mapping to text function.
   // So only search for void function.
   int menu = evt.GetId();
+
   editor::VoidFunc* void_func = binding_->GetVoidFuncByMenu(menu);
   if (void_func != NULL) {
     void_func->Exec();
@@ -741,13 +804,6 @@ void BookFrame::OnClose(wxCloseEvent& evt) {
   }
 
   evt.Skip();
-}
-
-// NOTE: Only handle "New File"; others are handled by book ctrl.
-void BookFrame::OnBookRClickMenu(wxCommandEvent& evt) {
-  if (evt.GetId() == ID_MENU_BOOK_RCLICK_NEW_FILE) {
-    FileNew();
-  }
 }
 
 void BookFrame::OnTextBookPageChange(wxCommandEvent& evt) {
@@ -2009,11 +2065,28 @@ TextPage* BookFrame::TextPageByBufferId(size_t buffer_id) const {
   return NULL;
 }
 
-void BookFrame::RemovePage(const TextPage* page) {
-  text_book_->RemovePage(page);
-}
-
 void BookFrame::RemoveAllPages(const TextPage* except_page) {
+  std::vector<TextPage*> text_pages = text_book_->TextPages();
+  
+  // If any buffer is modified, ask for save.
+
+  for (TextPage* text_page : text_pages) {
+    if (text_page != except_page && text_page->buffer_modified()) {
+      int code = ConfirmSave(text_page);
+
+      if (code == wxCANCEL) {
+        return;
+      }
+
+      if (code == wxYES) {
+        if (!Save(text_page->buffer())) {
+          // Fail or cancel to save.
+          return;
+        }
+      }
+    }
+  }
+
   text_book_->RemoveAllPages(except_page);
 }
 

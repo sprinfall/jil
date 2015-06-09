@@ -27,44 +27,8 @@ void TextPage::Page_Activate(bool active) {
   SetFocus();
 }
 
-bool TextPage::Page_Close() {
-  if (!buffer_->modified()) {
-    Destroy();
-    return true;
-  }
-
-  wxString confirm_msg;
-  if (buffer_->new_created()) {
-    confirm_msg = _("The file is untitled and changed, save it?");
-  } else {
-    confirm_msg = wxString::Format(
-        _("The file (%s) has been changed, save it?"),
-        Page_Label().c_str());
-  }
-
-  // Confirm save.
-  int confirm_result = wxMessageBox(
-      confirm_msg,
-      _("Save File"),
-      wxYES | wxNO | wxCANCEL | wxYES_DEFAULT | wxICON_EXCLAMATION | wxCENTRE);
-
-  if (confirm_result == wxCANCEL) {
-    // Don't close.
-    return false;
-  }
-
-  if (confirm_result == wxNO) {
-    // Don't save, close directly.
-    Destroy();
-    return true;
-  }
-
-  if (SaveBuffer()) {
-    Destroy();
-    return true;
-  }
-
-  return false;
+void TextPage::Page_Close() {
+  Destroy();
 }
 
 wxString TextPage::Page_Type() const {
@@ -115,15 +79,9 @@ void TextPage::Page_EditMenu(wxMenu* menu) {
   //------------------------------------
 
   wxMenu* indent_menu = new wxMenu;
-  AppendMenuItem(indent_menu,
-                 ID_MENU_EDIT_INCREASE_INDENT,
-                 kTrEditIncreaseIndent);
-  AppendMenuItem(indent_menu,
-                 ID_MENU_EDIT_DECREASE_INDENT,
-                 kTrEditDecreaseIndent);
-  AppendMenuItem(indent_menu,
-                 ID_MENU_EDIT_AUTO_INDENT,
-                 kTrEditAutoIndent);
+  AppendMenuItem(indent_menu, ID_MENU_EDIT_INCREASE_INDENT, kTrEditIncreaseIndent);
+  AppendMenuItem(indent_menu, ID_MENU_EDIT_DECREASE_INDENT, kTrEditDecreaseIndent);
+  AppendMenuItem(indent_menu, ID_MENU_EDIT_AUTO_INDENT, kTrEditAutoIndent);
   menu->AppendSubMenu(indent_menu, kTrEditIndent);
 
   //------------------------------------
@@ -160,6 +118,7 @@ bool TextPage::Page_EditMenuState(int menu_id) {
 bool TextPage::Page_FileMenuState(int menu_id, wxString* text) {
   if (menu_id == ID_MENU_FILE_SAVE_AS) {
     if (text != NULL) {
+      // TODO: The page label might be too long.
       *text = wxString::Format(kTrFileSaveAsFormat, Page_Label());
     }
     return true;
@@ -181,16 +140,6 @@ void TextPage::Page_OnSaveAs() {
   SaveBufferAs(buffer_, NULL);
 }
 
-bool TextPage::SaveBuffer() {
-  bool saved = false;
-  if (buffer_->new_created() || buffer_->read_only()) {
-    saved = SaveBufferAs(buffer_, wxGetTopLevelParent(this));
-  } else {
-    saved = ::jil::SaveBuffer(buffer_, wxGetTopLevelParent(this));
-  }
-  return saved;
-}
-
 void TextPage::HandleTextRightUp(wxMouseEvent& evt) {
   wxMenu menu;
   menu.Append(ID_MENU_EDIT_CUT, kTrRClickCut);
@@ -205,10 +154,10 @@ void TextPage::HandleTextRightUp(wxMouseEvent& evt) {
 ////////////////////////////////////////////////////////////////////////////////
 
 TextPage* AsTextPage(BookPage* page) {
-  if (page == NULL) {
-    return NULL;
+  if (page != NULL) {
+    return wxDynamicCast(page->Page_Window(), TextPage);
   }
-  return wxDynamicCast(page->Page_Window(), TextPage);
+  return NULL;
 }
 
 }  // namespace jil

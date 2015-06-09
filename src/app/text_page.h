@@ -22,7 +22,7 @@ public:
   // OVERRIDE of BookPage:
   virtual wxWindow* Page_Window() override { return this; }
   virtual void Page_Activate(bool active) override;
-  virtual bool Page_Close() override;
+  virtual void Page_Close() override;
   virtual wxString Page_Type() const override;
   virtual wxString Page_Label() const override;
   virtual wxString Page_Description() const override;
@@ -36,8 +36,6 @@ public:
   virtual bool Page_OnMenu(int menu_id) override;
 
   virtual void Page_OnSaveAs() override;
-
-  bool SaveBuffer();
 
 protected:
   // OVERRIDE of editor::TextWindow:

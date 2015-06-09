@@ -43,7 +43,7 @@ public:
   virtual void Page_Activate(bool active) = 0;
 
   // Close this page (also destroy the window).
-  virtual bool Page_Close() = 0;
+  virtual void Page_Close() = 0;
 
   // Page type ID.
   virtual wxString Page_Type() const = 0;
@@ -194,7 +194,7 @@ public:
   bool RemoveActivePage();
 
   // The except page, if specified, won't be removed.
-  bool RemoveAllPages(const BookPage* except_page = NULL);
+  void RemoveAllPages(const BookPage* except_page = NULL);
 
   size_t PageCount() const { return tabs_.size(); }
 
@@ -219,10 +219,6 @@ public:
 
   // Recalculate the size for each tab.
   void ResizeTabs();
-
-  BookPage* rclicked_tab_page() const {
-    return rclicked_tab_ == NULL ? NULL : rclicked_tab_->page;
-  }
 
 protected:
   void Init();
@@ -263,6 +259,8 @@ protected:
   void ActivatePage(TabList::iterator it);
   bool RemovePage(TabList::iterator it);
 
+  void ActivatePageByPos(int pos_x);
+
   TabList::iterator ActiveTab();
   TabList::iterator TabByPage(const BookPage* page);
   TabList::const_iterator TabByPage(const BookPage* page) const;
@@ -302,8 +300,6 @@ protected:
   // The front tab is the current active tab.
   // A tab is moved to the front when it's activated.
   TabList stack_tabs_;
-
-  Tab* rclicked_tab_;
 
   bool batch_;
   bool need_resize_tabs_;

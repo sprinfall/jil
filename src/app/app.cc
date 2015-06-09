@@ -127,6 +127,11 @@ void FileCloseAll() {
   book_frame->FileCloseAll();
 }
 
+void FileCloseAllButThis() {
+  GET_BOOK_FRAME_OR_RETURN;
+  book_frame->FileCloseAllButThis();
+}
+
 void FileSave() {
   GET_BOOK_FRAME_OR_RETURN;
   book_frame->FileSave();
@@ -140,6 +145,16 @@ void FileSaveAs() {
 void FileSaveAll() {
   GET_BOOK_FRAME_OR_RETURN;
   book_frame->FileSaveAll();
+}
+
+void FileCopyPath() {
+  GET_BOOK_FRAME_OR_RETURN;
+  book_frame->FileCopyPath();
+}
+
+void FileOpenFolder() {
+  GET_BOOK_FRAME_OR_RETURN;
+  book_frame->FileOpenFolder();
 }
 
 void NextPage() {
@@ -704,10 +719,13 @@ void App::InitCommands() {
   AddVoidCmd("open", FileOpen, ID_MENU_FILE_OPEN);
   AddVoidCmd("close", FileClose, ID_MENU_FILE_CLOSE);
   AddVoidCmd("close_all", FileCloseAll, ID_MENU_FILE_CLOSE_ALL);
+  AddVoidCmd("close_all_but_this", FileCloseAllButThis, ID_MENU_FILE_CLOSE_ALL_BUT_THIS);
 
   AddVoidCmd("save", FileSave, ID_MENU_FILE_SAVE);
   AddVoidCmd("save_as", FileSaveAs, ID_MENU_FILE_SAVE_AS);
   AddVoidCmd("save_all", FileSaveAll, ID_MENU_FILE_SAVE_ALL);
+  AddVoidCmd("copy_path", FileCopyPath, ID_MENU_FILE_COPY_PATH);
+  AddVoidCmd("open_folder", FileOpenFolder, ID_MENU_FILE_OPEN_FOLDER);
 
   AddVoidCmd("show_find", ShowFind, ID_MENU_EDIT_FIND);
   AddVoidCmd("show_replace", ShowReplace, ID_MENU_EDIT_REPLACE);

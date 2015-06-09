@@ -10,7 +10,6 @@
 namespace jil {
 
 BEGIN_EVENT_TABLE(TextBook, BookCtrl)
-EVT_MENU_RANGE(ID_MENU_BOOK_RCLICK_BEGIN, ID_MENU_BOOK_RCLICK_END - 1,  TextBook::OnRClickMenu)
 END_EVENT_TABLE()
 
 TextBook::TextBook(const editor::SharedTheme& theme)
@@ -70,22 +69,12 @@ std::vector<TextPage*> TextBook::StackTextPages() const {
   return text_pages;
 }
 
-void TextBook::HandleTabMouseLeftDown(wxMouseEvent& evt) {
-  TabList::iterator it = TabByPos(evt.GetPosition().x);
-  if (it != tabs_.end()) {
-    ActivatePage(it);
-  }
-}
-
 void TextBook::HandleTabMouseLeftUp(wxMouseEvent& evt) {
   TabList::iterator it = TabByPos(evt.GetPosition().x);
   if (it == tabs_.end()) {
     if (evt.CmdDown()) {
-      // New file.
-      wxCommandEvent cmd_evt(wxEVT_COMMAND_MENU_SELECTED,
-                             ID_MENU_BOOK_RCLICK_NEW_FILE);
-      // NOTE: Post the event to text book itself instead of its parent.
-      GetEventHandler()->AddPendingEvent(cmd_evt);
+      wxCommandEvent cmd_evt(wxEVT_COMMAND_MENU_SELECTED, ID_MENU_FILE_NEW);
+      GetParent()->GetEventHandler()->AddPendingEvent(cmd_evt);
     }
   }
 }
@@ -95,33 +84,35 @@ void TextBook::HandleTabMouseRightUp(wxMouseEvent& evt) {
   // Note: If a menu item shouldn't exist in the context, don't create it.
   wxMenu menu;
 
+  BookPage* page = NULL;
   TabList::iterator it = TabByPos(evt.GetPosition().x);
-  rclicked_tab_ = it != tabs_.end() ? *it : NULL;
-  BookPage* page = rclicked_tab_ != NULL ? rclicked_tab_->page : NULL;
+  if (it != tabs_.end()) {
+    page = (*it)->page;
+  }
 
-  if (page == NULL) { // Click on blank area
-    menu.Append(ID_MENU_BOOK_RCLICK_NEW_FILE, kTrRClickNewFile);
+  if (page == NULL) {  // Click on blank area
+    menu.Append(ID_MENU_FILE_NEW, kTrRClickNewFile);
 
     if (PageCount() > 0) {
-      menu.Append(ID_MENU_BOOK_RCLICK_CLOSE_ALL, kTrRClickCloseAll);
+      menu.Append(ID_MENU_FILE_CLOSE_ALL, kTrRClickCloseAll);
     }
   } else {
     if ((page->Page_Flags() & BookPage::kModified) != 0) {
-      menu.Append(ID_MENU_BOOK_RCLICK_SAVE, kTrRClickSave);
+      menu.Append(ID_MENU_FILE_SAVE, kTrRClickSave);
     }
 
-    menu.Append(ID_MENU_BOOK_RCLICK_CLOSE, kTrRClickClose);
+    menu.Append(ID_MENU_FILE_CLOSE, kTrRClickClose);
 
     if (PageCount() > 1) {
-      menu.Append(ID_MENU_BOOK_RCLICK_CLOSE_ALL, kTrRClickCloseAll);
-      menu.Append(ID_MENU_BOOK_RCLICK_CLOSE_ALL_BUT_THIS, kTrRClickCloseAllButThis);
+      menu.Append(ID_MENU_FILE_CLOSE_ALL, kTrRClickCloseAll);
+      menu.Append(ID_MENU_FILE_CLOSE_ALL_BUT_THIS, kTrRClickCloseAllButThis);
     }
 
     TextPage* text_page = AsTextPage(page);
     if (text_page != NULL && !text_page->buffer_new_created()) {
       menu.AppendSeparator();
-      menu.Append(ID_MENU_BOOK_RCLICK_COPY_PATH, kTrRClickCopyFilePath);
-      menu.Append(ID_MENU_BOOK_RCLICK_OPEN_FOLDER, kTrRClickOpenFolder);
+      menu.Append(ID_MENU_FILE_COPY_PATH, kTrRClickCopyFilePath);
+      menu.Append(ID_MENU_FILE_OPEN_FOLDER, kTrRClickOpenFolder);
     }
   }
 
@@ -132,58 +123,8 @@ void TextBook::HandleTabMouseRightUp(wxMouseEvent& evt) {
 void TextBook::HandleTabMouseLeftDClick(wxMouseEvent& evt) {
   TabList::iterator it = TabByPos(evt.GetPosition().x);
   if (it == tabs_.end()) {
-    wxCommandEvent cmd_evt(wxEVT_COMMAND_MENU_SELECTED, ID_MENU_BOOK_RCLICK_NEW_FILE);
-    // NOTE: Post the event to text book itself instead of its parent.
-    GetEventHandler()->AddPendingEvent(cmd_evt);
-  }
-}
-
-// NOTE: ID_MENU_BOOK_RCLICK_NEW_FILE is not handled here.
-void TextBook::OnRClickMenu(wxCommandEvent& evt) {
-  TextPage* text_page = AsTextPage(rclicked_tab_page());
-
-  switch (evt.GetId()) {
-  case ID_MENU_BOOK_RCLICK_SAVE:
-    if (text_page != NULL) {
-      text_page->SaveBuffer();
-    }
-    break;
-
-  case ID_MENU_BOOK_RCLICK_CLOSE:
-    if (text_page != NULL) {
-      RemovePage(text_page);
-    }
-    break;
-
-  case ID_MENU_BOOK_RCLICK_CLOSE_ALL:
-    RemoveAllPages();
-    break;
-
-  case ID_MENU_BOOK_RCLICK_COPY_PATH:
-    if (text_page != NULL) {
-      if (wxTheClipboard->Open()) {
-        wxTheClipboard->SetData(new wxTextDataObject(text_page->buffer()->file_path_name()));
-        wxTheClipboard->Close();
-      }
-    }
-    break;
-
-  case ID_MENU_BOOK_RCLICK_CLOSE_ALL_BUT_THIS:
-    if (text_page != NULL) {
-      RemoveAllPages(text_page);
-    }
-    break;
-
-  case ID_MENU_BOOK_RCLICK_OPEN_FOLDER:
-    if (text_page != NULL) {
-      ExploreFile(text_page->buffer()->file_path_name());
-    }
-    break;
-
-  default:
-    // Skip to let book frame handle ID_MENU_BOOK_RCLICK_NEW_FILE.
-    evt.Skip();
-    break;
+    wxCommandEvent cmd_evt(wxEVT_COMMAND_MENU_SELECTED, ID_MENU_FILE_NEW);
+    GetParent()->GetEventHandler()->AddPendingEvent(cmd_evt);
   }
 }
 
