@@ -45,7 +45,10 @@ wxString TextPage::Page_Label() const {
 }
 
 wxString TextPage::Page_Description() const {
-  return buffer_->file_path_name();
+  if (!buffer_->file_name().IsEmpty()) {
+    return buffer_->file_path_name();
+  }
+  return kTrPageUntitled;
 }
 
 int TextPage::Page_Flags() const {
