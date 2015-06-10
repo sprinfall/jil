@@ -6,19 +6,36 @@
 #include "app/splitter.h"
 #include "app/util.h"
 
+#define BOOK_FRAME        "book_frame"
+#define FIND_WINDOW       "find_window"
+#define RECT              "rect"
+#define MAXIMIZED         "maximized"
+
+#define SPLIT             "split"
+#define ID                "id"
+#define ORIENTATION       "orientation"
+#define VERTICAL          "vertical"
+#define HORIZONTAL        "horizontal"
+#define SIZE_RATIO        "size_ratio"
+#define NODE1             "node1"
+#define NODE2             "node2"
+
+#define LOCATION          "location"
+#define SHOW_OPTIONS      "show_options"
+#define USE_REGEX         "use_regex"
+#define CASE_SENSITIVE    "case_sensitive"
+#define MATCH_WORD        "match_word"
+#define FIND_STRINGS      "find_strings"
+#define REPLACE_STRINGS   "replace_strings"
+
+#define OPENED_FILES      "opened_files"
+#define FILE_PATH         "file_path"
+#define STACK_INDEX       "stack_index"
+#define RECENT_FILES      "recent_files"
+
 namespace jil {
 
-// Setting names.
-const char* const kBookFrame = "book_frame";
-const char* const kFindWindow = "find_window";
-const char* const kRect = "rect";
-const char* const kMaximized = "maximized";
-const char* const kFindStrings = "find_strings";
-const char* const kReplaceStrings = "replace_strings";
-
-namespace {
-
-bool GetRect(Setting parent, const char* name, wxRect* rect) {
+static bool GetRect(Setting parent, const char* name, wxRect* rect) {
   Setting rect_setting = parent.Get(name);
   if (!rect_setting) {
     return false;
@@ -36,7 +53,7 @@ bool GetRect(Setting parent, const char* name, wxRect* rect) {
   return true;
 }
 
-void SetRect(Setting parent, const char* name, const wxRect& rect) {
+static void SetRect(Setting parent, const char* name, const wxRect& rect) {
   parent.Remove(name);
   Setting rect_setting = parent.Add(name, Setting::kArray);
   rect_setting.Add(NULL, Setting::kInt).SetInt(rect.x);
@@ -45,45 +62,29 @@ void SetRect(Setting parent, const char* name, const wxRect& rect) {
   rect_setting.Add(NULL, Setting::kInt).SetInt(rect.height);
 }
 
-bool GetStringArray(Setting parent, const char* name, std::list<wxString>* strings) {
+static bool GetStringArray(Setting parent, const char* name, std::list<wxString>* strings) {
   Setting setting = parent.Get(name, Setting::kArray);
   if (!setting) {
     return false;
   }
 
-  for (int i = 0; i < setting.size(); ++i) {
+  int size = setting.size();
+  for (int i = 0; i < size; ++i) {
     strings->push_back(wxString::FromUTF8(setting[i].GetString()));
   }
+
   return true;
 }
 
-void SetStringArray(Setting parent, const char* name, const std::list<wxString>& strings) {
+static void SetStringArray(Setting parent, const char* name, const std::list<wxString>& strings) {
   parent.Remove(name);
-
   Setting setting = parent.Add(name, Setting::kArray);
-
-  std::list<wxString>::const_iterator it = strings.begin();
-  for (; it != strings.end(); ++it) {
-    setting.Add(NULL, Setting::kString).SetString(it->ToUTF8().data());
+  for (const wxString& str : strings) {
+    setting.Add(NULL, Setting::kString).SetString(str.ToUTF8().data());
   }
 }
 
-void SetStringArray(Setting parent, const char* name, const std::list<wxString>& strings, size_t limit) {
-  parent.Remove(name);
-
-  Setting setting = parent.Add(name, Setting::kArray);
-
-  size_t index = 0;
-  std::list<wxString>::const_iterator it = strings.begin();
-  for (; it != strings.end(); ++it) {
-    setting.Add(NULL, Setting::kString).SetString(it->ToUTF8().data());
-    if (++index >= limit) {
-      break;
-    }
-  }
-}
-
-}  // namespace
+////////////////////////////////////////////////////////////////////////////////
 
 Session::Session()
     : book_frame_maximized_(false)
@@ -111,38 +112,38 @@ bool Session::Load(const wxString& file) {
   //----------------------------------------------------------------------------
   // Book frame
 
-  Setting bf_setting = root_setting.Get(kBookFrame, Setting::kGroup);
+  Setting bf_setting = root_setting.Get(BOOK_FRAME, Setting::kGroup);
   if (bf_setting) {
-    GetRect(bf_setting, kRect, &book_frame_rect_);
-    book_frame_maximized_ = bf_setting.GetBool(kMaximized);
+    GetRect(bf_setting, RECT, &book_frame_rect_);
+    book_frame_maximized_ = bf_setting.GetBool(MAXIMIZED);
   }
 
   //----------------------------------------------------------------------------
   // Find window
 
-  Setting fw_setting = root_setting.Get(kFindWindow, Setting::kGroup);
+  Setting fw_setting = root_setting.Get(FIND_WINDOW, Setting::kGroup);
   if (fw_setting) {
-    GetRect(fw_setting, kRect, &find_window_rect_);
+    GetRect(fw_setting, RECT, &find_window_rect_);
 
-    GetStringArray(fw_setting, kFindStrings, &find_strings_);
-    GetStringArray(fw_setting, kReplaceStrings, &replace_strings_);
+    GetStringArray(fw_setting, FIND_STRINGS, &find_strings_);
+    GetStringArray(fw_setting, REPLACE_STRINGS, &replace_strings_);
 
-    find_flags_ = SetBit(find_flags_, kFind_UseRegex, fw_setting.GetBool("use_regex"));
-    find_flags_ = SetBit(find_flags_, kFind_CaseSensitive, fw_setting.GetBool("case_sensitive"));
-    find_flags_ = SetBit(find_flags_, kFind_MatchWord, fw_setting.GetBool("match_word"));
+    find_flags_ = SetBit(find_flags_, kFind_UseRegex, fw_setting.GetBool(USE_REGEX));
+    find_flags_ = SetBit(find_flags_, kFind_CaseSensitive, fw_setting.GetBool(CASE_SENSITIVE));
+    find_flags_ = SetBit(find_flags_, kFind_MatchWord, fw_setting.GetBool(MATCH_WORD));
 
-    int location = fw_setting.GetInt("location");
+    int location = fw_setting.GetInt(LOCATION);
     if (location >= 0 && location < kLocationCount) {
       find_location_ = static_cast<FindLocation>(location);
     }
 
-    show_options_ = fw_setting.GetBool("show_options");
+    show_options_ = fw_setting.GetBool();
   }
 
   //----------------------------------------------------------------------------
   // Split tree
 
-  Setting split_setting = root_setting.Get("split", Setting::kGroup);
+  Setting split_setting = root_setting.Get(SPLIT, Setting::kGroup);
   if (split_setting) {
     split_root_ = RestoreSplitTree(split_setting);
   }
@@ -150,11 +151,24 @@ bool Session::Load(const wxString& file) {
   //----------------------------------------------------------------------------
   // File history
 
-  Setting fs_setting = root_setting.Get("file_history", Setting::kGroup);
-  if (fs_setting) {
-    GetStringArray(fs_setting, "opened_files", &opened_files_);
-    GetStringArray(fs_setting, "recent_files", &recent_files_);
+  Setting of_setting = root_setting.Get(OPENED_FILES, Setting::kList);
+  if (of_setting) {
+    int size = of_setting.size();
+    for (int i = 0; i < size; ++i) {
+      Setting setting = of_setting[i];
+      if (setting.type() == Setting::kGroup) {
+        OpenedFile opened_file;
+        opened_file.file_path = wxString::FromUTF8(setting.GetString(FILE_PATH));
+        opened_file.stack_index = setting.GetInt(STACK_INDEX);
+        opened_files_.push_back(opened_file);
+      }
+    }
   }
+
+  //----------------------------------------------------------------------------
+  // Recent files
+
+  GetStringArray(root_setting, RECENT_FILES, &recent_files_);
 
   return true;
 }
@@ -167,63 +181,77 @@ bool Session::Save(const wxString& file) {
   //----------------------------------------------------------------------------
   // Book frame
 
-  Setting bf_setting = root_setting.Add(kBookFrame, Setting::kGroup);
+  Setting bf_setting = root_setting.Add(BOOK_FRAME, Setting::kGroup);
 
   if (!book_frame_rect_.IsEmpty()) {
-    SetRect(bf_setting, kRect, book_frame_rect_);
+    SetRect(bf_setting, RECT, book_frame_rect_);
   }
 
-  bf_setting.SetBool(kMaximized, book_frame_maximized_);
+  bf_setting.SetBool(MAXIMIZED, book_frame_maximized_);
 
   //----------------------------------------------------------------------------
   // Find window
 
-  Setting fw_setting = root_setting.Add(kFindWindow, Setting::kGroup);
+  Setting fw_setting = root_setting.Add(FIND_WINDOW, Setting::kGroup);
 
   if (!find_window_rect_.IsEmpty()) {
-    SetRect(fw_setting, kRect, find_window_rect_);
+    SetRect(fw_setting, RECT, find_window_rect_);
   }
 
-  SetStringArray(fw_setting, kFindStrings, find_strings_, find_history_limit_);
-  SetStringArray(fw_setting, kReplaceStrings, replace_strings_, find_history_limit_);
+  SetStringArray(fw_setting, FIND_STRINGS, find_strings_);
+  SetStringArray(fw_setting, REPLACE_STRINGS, replace_strings_);
 
-  fw_setting.SetInt("location", find_location_);
+  fw_setting.SetInt(LOCATION, find_location_);
 
-  fw_setting.SetBool("show_options", show_options_);
-  fw_setting.SetBool("use_regex", GetBit(find_flags_, kFind_UseRegex));
-  fw_setting.SetBool("case_sensitive", GetBit(find_flags_, kFind_CaseSensitive));
-  fw_setting.SetBool("match_word", GetBit(find_flags_, kFind_MatchWord));
+  fw_setting.SetBool(SHOW_OPTIONS, show_options_);
+  fw_setting.SetBool(USE_REGEX, GetBit(find_flags_, kFind_UseRegex));
+  fw_setting.SetBool(CASE_SENSITIVE, GetBit(find_flags_, kFind_CaseSensitive));
+  fw_setting.SetBool(MATCH_WORD, GetBit(find_flags_, kFind_MatchWord));
 
   //----------------------------------------------------------------------------
   // Split tree
 
   if (split_root_ != NULL) {
-    Setting split_setting = root_setting.Add("split", Setting::kGroup);
+    Setting split_setting = root_setting.Add(SPLIT, Setting::kGroup);
     SaveSplitTree(split_root_, &split_setting);
   }
 
   //----------------------------------------------------------------------------
-  // File history
+  // Opened files
 
-  Setting fs_setting = root_setting.Add("file_history", Setting::kGroup);
-  SetStringArray(fs_setting, "opened_files", opened_files_);
-  SetStringArray(fs_setting, "recent_files", recent_files_);
+  Setting of_setting = root_setting.Add(OPENED_FILES, Setting::kList);
+
+  std::list<OpenedFile>::const_iterator it = opened_files_.begin();
+  for (OpenedFile& opened_file : opened_files_) {
+    Setting setting = of_setting.Add(NULL, Setting::kGroup);
+    setting.SetString(FILE_PATH, opened_file.file_path.ToUTF8().data());
+    setting.SetInt(STACK_INDEX, opened_file.stack_index);
+  }
+
+  //----------------------------------------------------------------------------
+  // Recent files
+
+  SetStringArray(root_setting, RECENT_FILES, recent_files_);
 
   // Save to file.
   return config.Save(file);
 }
 
-bool Session::AddHistoryString(const wxString& s, std::list<wxString>* strings) {
-  std::list<wxString>::iterator it = std::find(strings->begin(), strings->end(), s);
-  if (it == strings->end()) {
+bool Session::AddHistoryString(std::list<wxString>& strings, const wxString& s, size_t limit) {
+  std::list<wxString>::iterator it = std::find(strings.begin(), strings.end(), s);
+
+  if (it == strings.end()) {
     // Doesn't exist.
-    strings->push_front(s);
+    strings.push_front(s);
+    if (strings.size() > limit) {
+      strings.pop_back();
+    }
     return true;
   } else {
-    if (it != strings->begin()) {
+    if (it != strings.begin()) {
       // Exist but not in the front, move it to front.
-      strings->erase(it);
-      strings->push_front(s);
+      strings.erase(it);
+      strings.push_front(s);
     }
     return false;
   }
@@ -232,27 +260,27 @@ bool Session::AddHistoryString(const wxString& s, std::list<wxString>* strings) 
 void Session::SaveSplitTree(SplitNode* n, Setting* setting) {
   SplitLeaf* leaf = n->AsLeaf();
   if (leaf != NULL) {
-    setting->SetString("id", leaf->id().c_str());
+    setting->SetString(ID, leaf->id().c_str());
     return;
   }
 
-  setting->SetString("orientation", n->vertical() ? "vertical" : "horizontal");
-  setting->SetFloat("size_ratio", n->size_ratio());
+  setting->SetString(ORIENTATION, n->vertical() ? VERTICAL : HORIZONTAL);
+  setting->SetFloat(SIZE_RATIO, n->size_ratio());
 
   if (n->node1() == NULL || n->node2() == NULL) {
     wxLogWarning(wxT("Non-leaf split node must have 2 child nodes!"));
     return;
   }
 
-  Setting setting1 = setting->Add("node1", Setting::kGroup);
+  Setting setting1 = setting->Add(NODE1, Setting::kGroup);
   SaveSplitTree(n->node1(), &setting1);
 
-  Setting setting2 = setting->Add("node2", Setting::kGroup);
+  Setting setting2 = setting->Add(NODE2, Setting::kGroup);
   SaveSplitTree(n->node2(), &setting2);
 }
 
 SplitNode* Session::RestoreSplitTree(Setting setting) {
-  Setting id_setting = setting.Get("id");
+  Setting id_setting = setting.Get(ID);
   if (id_setting) {  // Leaf
     SplitLeaf* leaf = new SplitLeaf(NULL);
     leaf->set_id(id_setting.GetString());
@@ -261,18 +289,18 @@ SplitNode* Session::RestoreSplitTree(Setting setting) {
 
   SplitNode* node = new SplitNode;
 
-  std::string orientation = setting.GetString("orientation");
-  if (orientation == "vertical") {
+  std::string orientation = setting.GetString(ORIENTATION);
+  if (orientation == VERTICAL) {
     node->set_orientation(wxVERTICAL);
   } else {
     node->set_orientation(wxHORIZONTAL);
   }
 
-  double size_ratio = setting.GetFloat("size_ratio");
+  double size_ratio = setting.GetFloat(SIZE_RATIO);
   node->set_size_ratio(size_ratio);
 
-  Setting setting1 = setting.Get("node1", Setting::kGroup);
-  Setting setting2 = setting.Get("node2", Setting::kGroup);
+  Setting setting1 = setting.Get(NODE1, Setting::kGroup);
+  Setting setting2 = setting.Get(NODE2, Setting::kGroup);
   if (setting1 && setting2) {
     node->set_node1(RestoreSplitTree(setting1));
     node->set_node2(RestoreSplitTree(setting2));

@@ -1,5 +1,6 @@
 #include "app/book_frame.h"
 
+#include <algorithm>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -229,6 +230,61 @@ void BookFrame::OpenFiles(const wxArrayString& file_names, bool silent) {
     if (DoOpenFile(file_names[i], active, silent, true, false) != NULL) {
       active = false;
     }
+  }
+
+  text_book_->EndBatch();
+
+  UpdateRecentFilesMenu();
+}
+
+// Helper class for restoring last opened files.
+class OpenedPage {
+public:
+  BookPage* page;
+  int stack_index;
+};
+
+bool operator<(const OpenedPage& lhs, const OpenedPage& rhs) {
+  return lhs.stack_index > rhs.stack_index;
+}
+
+// TODO: Do this in another thread. Don't block the UI.
+void BookFrame::RestoreOpenedFiles() {
+  const std::list<Session::OpenedFile>& opened_files = session_->opened_files();
+  if (opened_files.empty()) {
+    return;
+  }
+
+  text_book_->StartBatch();
+
+  std::vector<OpenedPage> opened_pages;
+
+  for (const Session::OpenedFile& opened_file : opened_files) {
+    TextPage* text_page = DoOpenFile(opened_file.file_path,
+                                     false,   // active: activate later according to stack index.
+                                     true,    // silent: no warning message since the file might not exist any more.
+                                     true,    // update_recent_files
+                                     false);  // update_recent_files_menu: update later
+
+    if (text_page != NULL) {
+      OpenedPage opened_page = { text_page, opened_file.stack_index };
+      opened_pages.push_back(opened_page);
+    }
+  }
+
+  if (!opened_pages.empty()) {
+    // Sort pages by stack index.
+    std::sort(opened_pages.begin(), opened_pages.end());
+
+    OpenedPage last_page = opened_pages.back();
+    opened_pages.pop_back();
+
+    // Adjust stack order.
+    for (OpenedPage& opened_page : opened_pages) {
+      text_book_->MovePageToStackFront(opened_page.page);
+    }
+
+    text_book_->ActivatePage(last_page.page);
   }
 
   text_book_->EndBatch();
@@ -766,12 +822,14 @@ void BookFrame::OnViewUpdateUI(wxUpdateUIEvent& evt) {
 
 void BookFrame::OnClose(wxCloseEvent& evt) {
   // Remember opened files.
-  std::list<wxString> opened_files;
+  session_->ClearOpenedFiles();
 
-  std::vector<TextPage*> text_pages = text_book_->StackTextPages();
+  std::vector<TextPage*> text_pages = text_book_->TextPages();
   for (size_t i = 0; i < text_pages.size(); ++i) {
     if (!text_pages[i]->buffer()->new_created()) {
-      opened_files.push_back(text_pages[i]->buffer()->file_path_name());
+      wxString file_path = text_pages[i]->buffer()->file_path_name();
+      int stack_index = text_book_->GetStackIndex(text_pages[i]);
+      session_->AddOpenedFile(file_path, stack_index);
     }
   }
 
@@ -781,9 +839,6 @@ void BookFrame::OnClose(wxCloseEvent& evt) {
     return;
   }
 
-  // Save session.
-
-  session_->set_opened_files(opened_files);
   session_->set_recent_files(recent_files_);
 
   if (IsMaximized()) {

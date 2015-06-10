@@ -172,6 +172,7 @@ void BookCtrl::AddPage(BookPage* page, bool active) {
     stack_tabs_.push_back(tab);
   }
 
+  // TODO: Avoid when batch is on.
   PostEvent(kEvtBookPageChange);
 }
 
@@ -303,6 +304,28 @@ void BookCtrl::SwitchToPrevStackPage() {
   ActivatePage(stack_tabs_.back()->page);
 }
 #endif
+
+int BookCtrl::GetStackIndex(BookPage* page) const {
+  TabList::const_iterator it = stack_tabs_.begin();
+  for (int i = 0; it != stack_tabs_.end(); ++it, ++i) {
+    if ((*it)->page == page) {
+      return i;
+    }
+  }
+  return wxNOT_FOUND;
+}
+
+void BookCtrl::MovePageToStackFront(BookPage* page) {
+  TabList::const_iterator it = stack_tabs_.begin();
+  for (int i = 0; it != stack_tabs_.end(); ++it) {
+    Tab* tab = *it;
+    if (tab->page == page) {
+      stack_tabs_.erase(it);
+      stack_tabs_.push_front(tab);
+      break;
+    }
+  }
+}
 
 std::vector<BookPage*> BookCtrl::Pages() const {
   std::vector<BookPage*> pages;

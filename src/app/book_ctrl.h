@@ -196,9 +196,12 @@ public:
   // The except page, if specified, won't be removed.
   void RemoveAllPages(const BookPage* except_page = NULL);
 
-  size_t PageCount() const { return tabs_.size(); }
+  size_t PageCount() const {
+    return tabs_.size();
+  }
 
   void ActivatePage(BookPage* page);
+
   BookPage* ActivePage() const;
 
   void SwitchToNextPage();
@@ -209,6 +212,10 @@ public:
   void SwitchToNextStackPage();
   void SwitchToPrevStackPage();
 #endif
+
+  int GetStackIndex(BookPage* page) const;
+
+  void MovePageToStackFront(BookPage* page);
 
   std::vector<BookPage*> Pages() const;
 

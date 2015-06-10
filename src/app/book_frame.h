@@ -75,6 +75,9 @@ public:
   // \param silent Don't popup error message box on failure.
   void OpenFiles(const wxArrayString& file_names, bool silent);
 
+  // Restore last opened files from session.
+  void RestoreOpenedFiles();
+
   // File menu operations.
   void FileNew();
 

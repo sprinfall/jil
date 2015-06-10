@@ -395,7 +395,7 @@ bool App::OnInit() {
   book_frame->Show();
 
   if (options_.restore_files) {
-    RestoreLastOpenedFiles(book_frame);
+    book_frame->RestoreOpenedFiles();
   }
 
   // Open the files specified as command line arguments.
@@ -870,22 +870,6 @@ bool App::LoadFileTypes() {
   }
 
   return true;
-}
-
-// TODO: Stack order
-void App::RestoreLastOpenedFiles(BookFrame* book_frame) {
-  const std::list<wxString>& opened_files = session_.opened_files();
-  if (!opened_files.empty()) {
-    wxArrayString files;
-
-    std::list<wxString>::const_iterator it = opened_files.begin();
-    for (; it != opened_files.end(); ++it) {
-      files.Add(*it);
-    }
-
-    // The last opened files might not exist any more. Silently open them.
-    book_frame->OpenFiles(files, true);
-  }
 }
 
 }  // namespace jil
