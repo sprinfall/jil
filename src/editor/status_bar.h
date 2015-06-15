@@ -22,7 +22,6 @@ public:
     COLORS,
   };
 
-  // TODO: Remove prefix Field_
   enum FieldId {
     kField_Cwd = 0,
     kField_Encoding,

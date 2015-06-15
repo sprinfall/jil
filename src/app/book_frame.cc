@@ -1094,7 +1094,7 @@ void BookFrame::OnFindResultPageEvent(wxCommandEvent& evt) {
 
     // Go to the source line.
     Coord ln = text_page->buffer()->LineNrFromId(fr_extra_data.line_id);
-    if (ln != kInvalidCoord) {
+    if (ln != kInvCoord) {
       text_page->Goto(ln);
     }
   }
@@ -1383,7 +1383,6 @@ FindResultPage* BookFrame::GetFindResultPage() {
   fr_page->set_leader_key(&leader_key_);
 #endif
 
-  fr_page->set_line_padding(options_->line_padding);
   fr_page->Create(tool_book_->PageParent(), ID_FIND_RESULT_PAGE, true);
 
   fr_page->SetTextFont(options_->fonts[kFont_Text]);
@@ -2092,7 +2091,6 @@ TextPage* BookFrame::CreateTextPage(editor::TextBuffer* buffer, wxWindow* parent
   page->set_leader_key(&leader_key_);
 #endif
 
-  page->set_line_padding(options_->line_padding);
   page->Create(parent, id, true);
 
   page->SetTextFont(options_->fonts[kFont_Text]);

@@ -69,7 +69,7 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
   Coord tab_stop = buffer->text_options().tab_stop;
   Coord shift_width = buffer->text_options().shift_width;
 
-  Coord x = kInvalidCoord;
+  Coord x = kInvCoord;
 
   const TextLine* line = buffer->Line(ln);
 
@@ -102,7 +102,7 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
     // Check the char before '{'.
     x = temp_line->LastNonSpaceChar(p.x);
 
-    if (x == kInvalidCoord) {
+    if (x == kInvCoord) {
       // No char before '{'.
       // NOTE: Can't use p.x because there might be tabs.
       return temp_line->GetIndent(tab_stop);
@@ -195,7 +195,7 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
 
   if (prev_line->EndWith(L'{', true, true, &x)) {
     Coord j = prev_line->LastNonSpaceChar(x);
-    if (j == kInvalidCoord) {
+    if (j == kInvCoord) {
       // No char before '{', check the previous line.
       prev_ln = buffer->PrevNonEmptyLine(prev_ln, true);
       if (prev_ln == 0) {  // No previous line.
@@ -315,7 +315,7 @@ Coord IndentGo(const TextBuffer* buffer, Coord ln) {
   const TextLine* prev_line = buffer->Line(prev_ln);
   const TextLine* line = buffer->Line(ln);
 
-  Coord x = kInvalidCoord;
+  Coord x = kInvCoord;
 
   // By default, use the same indent as the previous line.
   return prev_line->GetIndent(tab_stop);

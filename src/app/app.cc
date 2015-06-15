@@ -37,6 +37,7 @@
 #include "app/book_ctrl.h"
 #include "app/book_frame.h"
 #include "app/compile_config.h"
+#include "app/font_util.h"
 #include "app/goto_dialog.h"
 #include "app/i18n_strings.h"
 #include "app/lex_config.h"
@@ -458,6 +459,11 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
       ParseEditorOptions(editor_setting, &ft_editor_options);
     }
   }
+
+  // Some extra view options.
+  ft_editor_options.view.line_padding = options_.line_padding;
+  ft_editor_options.view.min_font_size = kMinFontSize;
+  ft_editor_options.view.max_font_size = kMaxFontSize;
 
   ft_plugin->set_options(ft_editor_options);
 

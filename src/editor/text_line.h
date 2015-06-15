@@ -53,7 +53,7 @@ public:
   }
 
   // Line length with tabs expanded.
-  Coord TabbedLength(int tab_stop, Coord count = kInvalidCoord) const;
+  Coord TabbedLength(int tab_stop, Coord count = kInvCoord) const;
 
   wchar_t Char(Coord off) const;
 
@@ -66,8 +66,8 @@ public:
   // Return line length on failure.
   Coord FirstNonSpaceChar(Coord off = 0) const;
 
-  // Return kInvalidCoord on failure.
-  Coord LastNonSpaceChar(Coord off = kInvalidCoord) const;
+  // Return kInvCoord on failure.
+  Coord LastNonSpaceChar(Coord off = kInvCoord) const;
 
   // Return the indent as spaces.
   // Tab stop is used to expand the tabs, if any.
@@ -120,7 +120,6 @@ public:
     AddLexElem(lex_elem.off, lex_elem.len, lex_elem.lex);
   }
 
-  // TODO: Change size_t to Coord.
   void AddLexElem(size_t off, size_t len, Lex lex);
 
   void ClearLexElems();

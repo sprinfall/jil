@@ -93,7 +93,7 @@ std::vector<CharRange> WrapInfo::GetSubRanges() const {
     off = offsets_[i];
   }
 
-  sub_ranges[i].Set(off, kInvalidCoord);
+  sub_ranges[i].Set(off, kInvCoord);
 
   return sub_ranges;
 }

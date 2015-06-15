@@ -11,11 +11,11 @@ CharRange::CharRange(Coord begin, Coord end)
 CharRange CharRange::Union(const CharRange& rhs) const {
   CharRange result;
   result.begin_ = std::min(begin_, rhs.begin_);
-  if (end_ == kInvalidCoord) {
-    result.end_ = kInvalidCoord;
+  if (end_ == kInvCoord) {
+    result.end_ = kInvCoord;
   } else {
-    if (rhs.end_ == kInvalidCoord) {
-      result.end_ = kInvalidCoord;
+    if (rhs.end_ == kInvCoord) {
+      result.end_ = kInvCoord;
     } else {
       result.end_ = std::max(end_, rhs.end_);
     }
@@ -26,16 +26,16 @@ CharRange CharRange::Union(const CharRange& rhs) const {
 CharRange CharRange::Intersect(const CharRange& rhs) const {
   CharRange result;
   result.begin_ = std::max(begin_, rhs.begin_);
-  if (end_ == kInvalidCoord) {
+  if (end_ == kInvCoord) {
     result.end_ = rhs.end_;
   } else {
-    if (rhs.end_ == kInvalidCoord) {
+    if (rhs.end_ == kInvCoord) {
       result.end_ = end_;
     } else {
       result.end_ = std::min(end_, rhs.end_);
     }
   }
-  if (result.end_ != kInvalidCoord && result.end_ < result.begin_) {
+  if (result.end_ != kInvCoord && result.end_ < result.begin_) {
     result.end_ = result.begin_;
   }
   return result;
@@ -100,11 +100,11 @@ CharRange TextRange::GetCharRange(Coord ln) const {
   if (point_begin_.y == point_end_.y) {  // Single line.
     return CharRange(point_begin_.x, point_end_.x);
   } else if (ln == point_begin_.y) {
-    return CharRange(point_begin_.x, kInvalidCoord);
+    return CharRange(point_begin_.x, kInvCoord);
   } else if (ln == point_end_.y) {
     return CharRange(0, point_end_.x);
   } else {  // Middle line.
-    return CharRange(0, kInvalidCoord);
+    return CharRange(0, kInvCoord);
   }
 }
 

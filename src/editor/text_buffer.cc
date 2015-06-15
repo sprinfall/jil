@@ -676,7 +676,7 @@ Coord TextBuffer::LineNrFromId(size_t id) const {
       return CoordCast(std::distance(lines_.begin(), it)) + 1;
     }
   }
-  return kInvalidCoord;
+  return kInvCoord;
 }
 
 Coord TextBuffer::PrevNonEmptyLine(Coord ln, bool skip_comment) const {
@@ -775,7 +775,7 @@ void TextBuffer::GetText(const TextRange& range, std::wstring* text) const {
   }
 
   // First line.
-  *text = Line(point_begin.y)->Sub(point_begin.x, kInvalidCoord);
+  *text = Line(point_begin.y)->Sub(point_begin.x, kInvCoord);
   *text += LF;
 
   // Middle lines.
@@ -1048,7 +1048,7 @@ void TextBuffer::DeleteText(const TextRange& range, std::wstring* text) {
   FreezeNotify();
 
   // First line.
-  DeleteString(range.point_begin(), kInvalidCoord, text);
+  DeleteString(range.point_begin(), kInvCoord, text);
   if (text != NULL) {
     *text += LF;
   }
@@ -1817,7 +1817,7 @@ TextRange TextBuffer::FindPlainString(const std::wstring& str,
   // Find in the first line of the range.
   if (FindLineString(it,
                      range.point_begin().x,
-                     kInvalidCoord,
+                     kInvCoord,
                      str,
                      case_sensitive,
                      false,
@@ -1833,7 +1833,7 @@ TextRange TextBuffer::FindPlainString(const std::wstring& str,
   for (++it; it != end_it; ++it) {
     if (FindLineString(it,
                        0,
-                       kInvalidCoord,
+                       kInvCoord,
                        str,
                        case_sensitive,
                        false,
@@ -1896,7 +1896,7 @@ TextRange TextBuffer::FindPlainStringReversely(const std::wstring& str,
   for (--it; it != begin_it; --it) {
     if (FindLineString(it,
                        0,
-                       kInvalidCoord,
+                       kInvCoord,
                        str,
                        case_sensitive,
                        true,
@@ -1909,7 +1909,7 @@ TextRange TextBuffer::FindPlainStringReversely(const std::wstring& str,
   // Find in the first line of the range.
   FindLineString(it,
                  range.point_begin().x,
-                 kInvalidCoord,
+                 kInvCoord,
                  str,
                  case_sensitive,
                  true,
@@ -1968,14 +1968,14 @@ void TextBuffer::FindPlainStringAll(const std::wstring& str,
   }
 
   // Find in the first line of the range.
-  FindLineStringAll(it, range.point_begin().x, kInvalidCoord, str, case_sensitive, match_word, result_ranges);
+  FindLineStringAll(it, range.point_begin().x, kInvCoord, str, case_sensitive, match_word, result_ranges);
 
   TextLines::const_iterator end_it = lines_.begin();
   std::advance(end_it, range.point_end().y - 1);
 
   // Find in the middle lines of the range.
   for (++it; it != end_it; ++it) {
-    FindLineStringAll(it, 0, kInvalidCoord, str, case_sensitive, match_word, result_ranges);
+    FindLineStringAll(it, 0, kInvCoord, str, case_sensitive, match_word, result_ranges);
   }
 
   // Find in the last line of the range.
@@ -2034,13 +2034,13 @@ bool TextBuffer::FindLineString(TextLines::const_iterator line_it,
                                 TextRange* result_range) const {
   const TextLine* line = *line_it;
 
-  if (x_end == kInvalidCoord) {
+  if (x_end == kInvCoord) {
     x_end = line->Length();
   }
 
   CmpFunc cmp = case_sensitive ? wcsncmp : wcsnicmp;
 
-  Coord pos = kInvalidCoord;
+  Coord pos = kInvCoord;
 
   if (!reversely) {
     pos = StringFind(line->data(), x_begin, x_end, str, match_word, cmp);
@@ -2053,7 +2053,7 @@ bool TextBuffer::FindLineString(TextLines::const_iterator line_it,
                               cmp);
   }
 
-  if (pos == kInvalidCoord) {
+  if (pos == kInvCoord) {
     return false;
   }
 
@@ -2073,7 +2073,7 @@ void TextBuffer::FindLineStringAll(TextLines::const_iterator line_it,
                                    std::list<TextRange>* result_ranges) const {
   const TextLine* line = *line_it;
 
-  if (x_end == kInvalidCoord) {
+  if (x_end == kInvCoord) {
     x_end = line->Length();
   }
 
@@ -2086,7 +2086,7 @@ void TextBuffer::FindLineStringAll(TextLines::const_iterator line_it,
                            str,
                            match_word,
                            cmp);
-    if (pos == kInvalidCoord) {
+    if (pos == kInvCoord) {
       break;
     }
 
@@ -2109,7 +2109,7 @@ Coord TextBuffer::StringFind(const std::wstring& str,
                              CmpFunc cmp) const {
   Coord sub_size = CoordCast(sub.size());
   if (sub_size == 0 || sub_size > (end - begin)) {
-    return kInvalidCoord;
+    return kInvCoord;
   }
 
   Coord j = end - sub_size + 1;
@@ -2136,7 +2136,7 @@ Coord TextBuffer::StringFind(const std::wstring& str,
     }
   }
 
-  return kInvalidCoord;
+  return kInvCoord;
 }
 
 Coord TextBuffer::StringFindReversely(const std::wstring& str,
@@ -2147,7 +2147,7 @@ Coord TextBuffer::StringFindReversely(const std::wstring& str,
                                       CmpFunc cmp) const {
   Coord sub_size = CoordCast(sub.size());
   if (sub_size == 0 || sub_size > (end - begin)) {
-    return kInvalidCoord;
+    return kInvCoord;
   }
 
   for (Coord i = end - sub_size; i >= begin; --i) {
@@ -2173,7 +2173,7 @@ Coord TextBuffer::StringFindReversely(const std::wstring& str,
     }
   }
 
-  return kInvalidCoord;
+  return kInvCoord;
 }
 
 //------------------------------------------------------------------------------
@@ -2621,6 +2621,8 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
 
   const std::wstring& line_data = line->data();
 
+  const size_t line_length = line_data.length();
+
   // quote != NULL: this line continues the last quote.
   size_t quote_off = quote != NULL ? 0 : kNpos;
 
@@ -2635,10 +2637,10 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
     i = line_data.size();
   }
 
-  for (; i < line_data.size();) {
+  while (i < line_length) {
     // Skip spaces. (Don't keep spaces as lex element to save memory.)
     if (IsSpace(line_data[i])) {
-      for (++i; i < line_data.size() && IsSpace(line_data[i]); ++i) {}
+      for (++i; i < line_length && IsSpace(line_data[i]); ++i) {}
       continue;
     }
 
@@ -2717,7 +2719,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
         }
 
         // Get the word.
-        for (++i; i < line_data.size(); ++i) {
+        for (++i; i < line_length; ++i) {
           if (ft_plugin_->IsSpaceOrDelimiter(line_data[i])) {
             break;
           }
@@ -2757,32 +2759,31 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
 
   assert(quote_off != kNpos);
 
-  if (line_data.size() > quote_off) {
-    line->AddLexElem(quote_off, line_data.size() - quote_off, quote->lex());
+  if (quote_off < line_length) {
+    line->AddLexElem(quote_off, line_length - quote_off, quote->lex());
   }
 
   if (quote->multi_line()) {
     // Quote continues to next line.
     // Note the line might be empty. Add quote info even the line is empty.
-    size_t count = line_data.size() - quote_off;
-    line->AddQuoteElem(quote, quote_off, count, kQuoteBody);
+    line->AddQuoteElem(quote, quote_off, line_length - quote_off, kQuoteBody);
     return;
   }
 
   // Single line quote.
-  line->AddQuoteElem(quote, quote_off, line_data.size() - quote_off, kQuoteBody);
+  line->AddQuoteElem(quote, quote_off, line_length - quote_off, kQuoteBody);
 
   if (quote->end().empty()) {  // Quote ends with EOL.
-    if (!quote->escape_eol() || !(!line_data.empty() && IsUnescapedBackSlash(line_data, line_data.size() - 1))) {
+    if (!quote->escape_eol() || !(!line_data.empty() && IsUnescapedBackSlash(line_data, line_length - 1))) {
       // Quote ends.
-      line->AddQuoteElem(quote, line_data.size(), 0, kQuoteEnd);
+      line->AddQuoteElem(quote, line_length, 0, kQuoteEnd);
       quote = NULL;
     }  // else: EOL is escaped, quote continues.
 
   } else {  // Quote has an end marker.
-    if (line_data.empty() || !quote->escape_eol() || !IsUnescapedBackSlash(line_data, line_data.size() - 1)) {
+    if (line_data.empty() || !quote->escape_eol() || !IsUnescapedBackSlash(line_data, line_length - 1)) {
       // Quote is invalid with no end marker found. Just end it.
-      line->AddQuoteElem(quote, line_data.size(), 0, kQuoteEnd);
+      line->AddQuoteElem(quote, line_length, 0, kQuoteEnd);
       quote = NULL;
     }  // else: Quote continues.
   }

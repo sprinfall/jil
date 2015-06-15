@@ -28,14 +28,14 @@ public:
   }
 
   Coord CharCount() const {
-    return end_ == kInvalidCoord ? kInvalidCoord : (end_ - begin_);
+    return end_ == kInvCoord ? kInvCoord : (end_ - begin_);
   }
 
   CharRange Union(const CharRange& rhs) const;
   CharRange Intersect(const CharRange& rhs) const;
 
   bool IsEmpty() const {
-    return end_ != kInvalidCoord && begin_ >= end_;
+    return end_ != kInvCoord && begin_ >= end_;
   }
 
 private:

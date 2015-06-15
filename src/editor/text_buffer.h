@@ -235,7 +235,7 @@ public:
 
   const TextLine* LineById(size_t id) const;
 
-  // Return kInvalidCoord if the line with the given ID doesn't exist.
+  // Return kInvCoord if the line with the given ID doesn't exist.
   Coord LineNrFromId(size_t id) const;
 
   // Return the previous non-empty line.
@@ -558,7 +558,7 @@ private:
 
   // STL and Boost.Algorithm both suck!
   // Find the sub in the range [begin, end) of str.
-  // Return kInvalidCoord if not found.
+  // Return kInvCoord if not found.
   Coord StringFind(const std::wstring& str,
                    Coord begin,
                    Coord end,
@@ -567,7 +567,7 @@ private:
                    CmpFunc cmp) const;
 
   // Find the sub reversely in the range [begin, end) of str.
-  // Return kInvalidCoord if not found.
+  // Return kInvCoord if not found.
   Coord StringFindReversely(const std::wstring& str,
                             Coord begin,
                             Coord end,

@@ -40,7 +40,7 @@ std::wstring TextLine::Sub(Coord off, Coord count) const {
     return L"";
   }
 
-  if (count == kInvalidCoord) {
+  if (count == kInvCoord) {
     return data_.substr(off, std::wstring::npos);
   }
 
@@ -214,13 +214,13 @@ Coord TextLine::FirstNonSpaceChar(Coord off) const {
 }
 
 Coord TextLine::LastNonSpaceChar(Coord off) const {
-  if (off == kInvalidCoord) {
+  if (off == kInvCoord) {
     off = Length();
   }
 
   Coord i = off - 1;
   for (; i >= 0 && IsSpace(data_[i]); --i) {}
-  return i;  // Might be -1, i.e., kInvalidCoord.
+  return i;  // Might be -1, i.e., kInvCoord.
 }
 
 Coord TextLine::GetIndent(int tab_stop) const {
@@ -282,7 +282,7 @@ void TextLine::DeleteString(Coord off, Coord count, std::wstring* str) {
     *str = Sub(off, count);
   }
 
-  if (count == kInvalidCoord) {
+  if (count == kInvCoord) {
     data_.erase(off, std::wstring::npos);
     return;
   }
@@ -345,7 +345,7 @@ std::list<const LexElem*> TextLine::lex_elems(const CharRange& char_range) const
   std::list<const LexElem*> range_lex_elements;
 
   CharRange adjusted_char_range = char_range;
-  if (adjusted_char_range.end() == kInvalidCoord) {
+  if (adjusted_char_range.end() == kInvCoord) {
     adjusted_char_range.set_end(Length());
   }
 
