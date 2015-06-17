@@ -7,6 +7,7 @@
 #include <list>
 #include <map>
 #include <deque>
+#include "wx/datetime.h"
 #include "wx/string.h"
 #include "wx/filename.h"
 #include "wx/fontenc.h"
@@ -26,6 +27,7 @@ namespace jil {
 namespace editor {
 
 class Action;
+class DeleteAction;
 class FtPlugin;
 class InsertCharAction;
 class LinePred;
@@ -634,6 +636,8 @@ private:
   // undo more practical.
   void MergeInsertCharActions();
 
+  bool MergeDeleteActions(const wxDateTime& now, DeleteAction* delete_action, Action* prev_action);
+
   //----------------------------------------------------------------------------
   // Lex
 
@@ -717,6 +721,10 @@ private:
   // Continuously inserted chars should be undone by word. Keep the recent
   // insert char actions to merge to insert string actions later.
   std::vector<InsertCharAction*> recent_ic_actions_;
+
+  // The timestamp of the previous delete action.
+  // Used to merge continuous the same kind of delete actions.
+  wxDateTime prev_delete_action_time_;
 
   // Line length information.
   // For quick access of the longest line.

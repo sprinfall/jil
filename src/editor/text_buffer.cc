@@ -209,9 +209,7 @@ static std::wstring AddRegexWordBoundary(const std::wstring& str) {
 
 // If wxWidgets pre-defines the conv, reuse it and don't delete it. E.g., reuse
 // wxConvISO8859_1 instead of "new wxCSConv(wxFONTENCODING_ISO8859_1)".
-static wxMBConv* GetCsConv(const Encoding& encoding,
-                           const char** bom,
-                           bool* need_delete) {
+static wxMBConv* GetCsConv(const Encoding& encoding, const char** bom, bool* need_delete) {
   *need_delete = true;
   wxMBConv* conv = NULL;
 
@@ -1407,18 +1405,14 @@ TextPoint TextBuffer::UnpairedLeftKey(const TextPoint& point,
 }
 
 // TODO
-TextPoint TextBuffer::UnpairedRightKey(const TextPoint& point,
-                                       wchar_t l_key,
-                                       wchar_t r_key) const {
+TextPoint TextBuffer::UnpairedRightKey(const TextPoint& point, wchar_t l_key, wchar_t r_key) const {
   return kInvalidPoint;
 }
 
 //----------------------------------------------------------------------------
 // Seek
 
-TextPoint TextBuffer::Seek(const TextPoint& point,
-                           TextUnit text_unit,
-                           SeekType seek_type) {
+TextPoint TextBuffer::Seek(const TextPoint& point, TextUnit text_unit, SeekType seek_type) {
   switch (text_unit) {
   case kChar:
     if (seek_type == kPrev) {
@@ -1470,38 +1464,6 @@ TextPoint TextBuffer::Seek(const TextPoint& point,
 //----------------------------------------------------------------------------
 // Action operations, undo/redo.
 
-static bool MergeDeleteActions(DeleteAction* delete_action,
-                               Action* prev_action) {
-  if (prev_action == NULL) {
-    return false;
-  }
-
-  DeleteAction* prev_delete_action = dynamic_cast<DeleteAction*>(prev_action);
-  if (prev_delete_action == NULL) {
-    return false;
-  }
-
-  if (!prev_delete_action->SameKind(*delete_action)) {
-    return false;
-  }
-
-  if (prev_delete_action->CaretPointAfterExec() !=
-      delete_action->caret_point()) {
-    return false;  // Not continuous.
-  }
-
-  // Check time interval.
-  wxTimeSpan max_interval = wxTimeSpan::Seconds(1);
-  wxDateTime prev_timestamp = prev_delete_action->timestamp();
-  prev_timestamp = prev_timestamp.Add(max_interval);
-  if (prev_timestamp.IsEarlierThan(delete_action->timestamp())) {
-    return false;
-  }
-
-  // Merge them.
-  return prev_delete_action->Merge(delete_action);
-}
-
 Action* TextBuffer::AddAction(Action* action) {
   bool modified_backup = modified();
 
@@ -1519,9 +1481,14 @@ Action* TextBuffer::AddAction(Action* action) {
 
   DeleteAction* delete_action = dynamic_cast<DeleteAction*>(action);
   if (delete_action != NULL) {
-    if (MergeDeleteActions(delete_action, TopUndoAction())) {
+    wxDateTime now = wxDateTime::UNow();
+
+    if (MergeDeleteActions(now, delete_action, TopUndoAction())) {
+      prev_delete_action_time_ = now;
       delete delete_action;
       return TopUndoAction();
+    } else {
+      prev_delete_action_time_ = now;
     }
   }
 
@@ -1691,7 +1658,8 @@ TextBuffer::TextBuffer(size_t id, FtPlugin* ft_plugin)
     , deleted_(false)
     , line_id_(0)
     , notify_frozen_(false)
-    , last_saved_undo_count_(0) {
+    , last_saved_undo_count_(0)
+    , prev_delete_action_time_(wxDateTime::UNow()) {
   ClearLineLength();
 }
 
@@ -2591,6 +2559,36 @@ void TextBuffer::MergeInsertCharActions() {
   }
 
   ClearContainer(&recent_ic_actions_);
+}
+
+bool TextBuffer::MergeDeleteActions(const wxDateTime& now, DeleteAction* delete_action, Action* prev_action) {
+  if (prev_action == NULL) {
+    return false;
+  }
+
+  DeleteAction* prev_delete_action = dynamic_cast<DeleteAction*>(prev_action);
+  if (prev_delete_action == NULL) {
+    return false;
+  }
+
+  if (!prev_delete_action->SameKind(*delete_action)) {
+    return false;
+  }
+
+  if (prev_delete_action->CaretPointAfterExec() != delete_action->caret_point()) {
+    return false;  // Not continuous.
+  }
+
+  // Check time interval.
+  wxDateTime prev_time = prev_delete_action_time_;
+  prev_time.Add(wxTimeSpan::Seconds(1));
+
+  if (prev_time.IsEarlierThan(now)) {
+    return false;
+  }
+
+  // Merge them.
+  return prev_delete_action->Merge(delete_action);
 }
 
 //------------------------------------------------------------------------------

@@ -7,7 +7,6 @@
 #include <list>
 #include <vector>
 #include "wx/string.h"
-#include "wx/datetime.h"
 #include "editor/defs.h"
 #include "editor/text_range.h"
 
@@ -69,10 +68,6 @@ public:
     saved_ = saved;
   }
 
-  const wxDateTime& timestamp() const {
-    return timestamp_;
-  }
-
   const TextPoint& point() const {
     return point_;
   }
@@ -129,10 +124,6 @@ protected:
 
   // Text buffer on which this action is executed.
   TextBuffer* buffer_;
-
-  // Action creation time.
-  // TODO: Only keep last action's timestamp in text buffer.
-  wxDateTime timestamp_;
 
   // Action (insert, delete, etc.) point.
   TextPoint point_;

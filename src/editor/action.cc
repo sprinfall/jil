@@ -10,7 +10,6 @@ namespace editor {
 Action::Action(TextBuffer* buffer, const TextPoint& point)
     : saved_(false)
     , buffer_(buffer)
-    , timestamp_(wxDateTime::UNow())
     , point_(point)
     , delta_point_(0, 0)
     , caret_point_(point)
@@ -22,7 +21,6 @@ Action::Action(TextBuffer* buffer, const TextPoint& point)
 Action::Action(const Action& rhs)
     : saved_(false)
     , buffer_(rhs.buffer_)
-    , timestamp_(wxDateTime::UNow())
     , point_(rhs.point_)
     , delta_point_(0, 0)
     , caret_point_(rhs.caret_point_)
@@ -220,7 +218,6 @@ bool DeleteAction::Merge(DeleteAction* next_delete_action) {
   if (merged) {
     count_ += next_delete_action->count_;
     delta_point_ += next_delete_action->delta_point_;
-    timestamp_ = next_delete_action->timestamp_;
   }
 
   return merged;
