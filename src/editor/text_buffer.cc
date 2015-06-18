@@ -1343,7 +1343,7 @@ TextRange TextBuffer::IncreaseRange(const TextRange& range) const {
       --point_begin.y;
       point_begin.x = LineLength(point_begin.y);
     } else {
-      return range;
+      return TextRange();
     }
   }
 
@@ -1354,7 +1354,7 @@ TextRange TextBuffer::IncreaseRange(const TextRange& range) const {
     if (point_end.y < LineCount()) {
       ++point_end.y;
     } else {
-      return range;
+      return TextRange();
     }
   }
 

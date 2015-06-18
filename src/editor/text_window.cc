@@ -1792,7 +1792,6 @@ void TextWindow::HandleTextLeftDown_Ctrl() {
 
     if (buffer_->IsBracketPairInnerRange(selection_.range)) {
       // If it's already inner range, increase to outer range.
-      // TODO: Return empty range if not increased.
       range = buffer_->IncreaseRange(selection_.range);
     } else {
       // Get inner range.
@@ -1882,8 +1881,7 @@ void TextWindow::HandleTextMotion(wxMouseEvent& evt) {
 void TextWindow::SelectByDragging() {
   if ((down_modifiers_ & wxMOD_ALT) != 0) {
 #if JIL_ENABLE_RECT_SELECT
-    // Select by rectangle.
-    // TODO
+    // Select by rectangle. (TODO)
     TextPoint move_point = CalcCaretPoint(move_position_, true);
     if (move_point != caret_point_) {
       ExtendSelection(move_point, true);
@@ -2079,7 +2077,7 @@ bool TextWindow::OnTextKeyDown(wxKeyEvent& evt) {
       // Input tab (expand or not).
       if (expand_tab_) {
         int spaces = tab_stop_ - (caret_point_.x % tab_stop_);
-        // TODO: Continuous tabs cannot be undone together.
+        // ISSUE: Continuous tabs cannot be undone together.
         InsertString(std::wstring(spaces, kSpaceChar));
       } else {
         InsertChar(kTabChar);
@@ -2597,13 +2595,9 @@ bool TextWindow::HandleTextChange() {
 }
 
 void TextWindow::UpdateCharSize() {
-  int ext_leading = 0;  // Usually 0.
-  text_extent_->GetExtent(L"T", &char_width_, &char_height_, &ext_leading);
-
-  line_height_ = view_options_.line_padding +
-                 char_height_ +
-                 ext_leading +
-                 +view_options_.line_padding;
+  char_width_ = text_extent_->char_width();
+  char_height_ = text_extent_->char_height();
+  line_height_ = view_options_.line_padding + char_height_ + view_options_.line_padding;
 }
 
 void TextWindow::UpdateTextSize() {

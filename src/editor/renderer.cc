@@ -8,8 +8,7 @@
 namespace jil {
 namespace editor {
 
-Renderer::Renderer(wxDC* dc)
-    : dc_(dc) {
+Renderer::Renderer(wxDC* dc) : dc_(dc) {
   UpdateCharSize();
 }
 
@@ -51,9 +50,7 @@ void Renderer::SetStyle(const wxBrush& brush, const wxPen& pen, bool backup) {
   SetPen(pen, backup);
 }
 
-void Renderer::SetStyle(const wxColour& brush_color,
-                        const wxColour& pen_color,
-                        bool backup) {
+void Renderer::SetStyle(const wxColour& brush_color, const wxColour& pen_color, bool backup) {
   if (brush_color.IsOk()) {
     SetBrush(wxBrush(brush_color), backup);
   } else {
@@ -97,16 +94,12 @@ void Renderer::RestoreStyle() {
   dc_->SetPen(pen_);
 }
 
-void Renderer::DrawText(const std::wstring& text,
-                        Coord off,
-                        Coord len,
-                        int x,
-                        int y,
-                        int* w) {
+void Renderer::DrawText(const std::wstring& text, Coord off, Coord len, int x, int y, int* w) {
   assert(len > 0);
 
 #ifdef __WXMSW__
-  // Avoid string copy.
+  // Draw text with Win32 API to avoid string copy.
+
   HDC hdc = (HDC)dc_->GetHDC();
 
   const wxColour& fg = dc_->GetTextForeground();
@@ -124,11 +117,11 @@ void Renderer::DrawText(const std::wstring& text,
   }
   int old_bk_mode = ::SetBkMode(hdc, new_bk_mode);
 
-  ::ExtTextOut(hdc, x, y, 0, NULL, text.c_str() + off, len, NULL);
+  ::ExtTextOutW(hdc, x, y, 0, NULL, text.c_str() + off, len, NULL);
 
   if (w != NULL) {
     SIZE size;
-    ::GetTextExtentPoint32(hdc, text.c_str() + off, len, &size);
+    ::GetTextExtentPoint32W(hdc, text.c_str() + off, len, &size);
     *w = size.cx;
   }
 
@@ -187,7 +180,8 @@ void Renderer::DrawTab(int x, int y, int w, int h) {
 }
 
 void Renderer::UpdateCharSize() {
-  dc_->GetTextExtent(wxT("T"), &char_size_.x, &char_size_.y);
+  char_size_.x = dc_->GetCharWidth();
+  char_size_.y = dc_->GetCharHeight();
 }
 
 }  // namespace editor

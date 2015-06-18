@@ -413,6 +413,7 @@ public:
   // [(2,2), (8,2)) is normally increased to [(1,2), (9,2)).
   //   (      )
   //  (        )   increased
+  // Return empty text range if failed to increase.
   TextRange IncreaseRange(const TextRange& range) const;
 
   // Find the first unpaired left key before the given point.

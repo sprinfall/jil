@@ -30,9 +30,7 @@ public:
 
   void SetStyle(const wxBrush& brush, const wxPen& pen, bool backup);
 
-  void SetStyle(const wxColour& brush_color,
-                const wxColour& pen_color,
-                bool backup);
+  void SetStyle(const wxColour& brush_color, const wxColour& pen_color, bool backup);
 
   void SetTextBackground(const wxColour& bg);
 
@@ -45,12 +43,7 @@ public:
   void BackupStyle();
   void RestoreStyle();
 
-  void DrawText(const std::wstring& text,
-                Coord off,
-                Coord len,
-                int x,
-                int y,
-                int* w = NULL);
+  void DrawText(const std::wstring& text, Coord off, Coord len, int x, int y, int* w = NULL);
 
   void DrawLine(int x1, int y1, int x2, int y2);
 
