@@ -255,6 +255,10 @@ void BookFrame::RestoreOpenedFiles() {
     return;
   }
 
+  // Update GUI. Otherwise, the tab area and the status bar won't be painted
+  // when restore the last opened files.
+  Update();
+
   text_book_->StartBatch();
 
   std::vector<OpenedPage> opened_pages;

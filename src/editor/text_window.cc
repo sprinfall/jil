@@ -2793,6 +2793,7 @@ int TextWindow::GetLineWidth(const TextLine* line, Coord off1, Coord off2) const
     off2 = line->Length();
   }
 
+  // TODO: Avoid copy
   std::wstring line_data = line->data().substr(off1, off2 - off1);
   if (!line_data.empty()) {
     TabbedLineFast(tab_stop_, &line_data);
