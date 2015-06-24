@@ -15,7 +15,7 @@ static const Encoding kEncoding = EncodingFromName(ENCODING_NAME_ISO_8859_1);
 TEST(TextBuffer, CharIterator) {
   FtPlugin ft_plugin(kFtTxt);
 
-  TextBufferPtr buffer(TextBuffer::Create(&ft_plugin, kEncoding));
+  TextBufferPtr buffer(TextBuffer::Create(0, &ft_plugin, kEncoding));
 
   std::wstring text = L"1st line\n2nd line\n3rd line\n4th line";
   buffer->InsertText(TextPoint(0, 1), text);
@@ -35,7 +35,8 @@ TEST(TextBuffer, CharIterator) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// static TextBuffer* Create(const std::wstring& text,
+// static TextBuffer* Create(size_t id,
+//                           const std::wstring& text,
 //                           FtPlugin* ft_plugin,
 //                           const Encoding& file_encoding);
 
@@ -44,44 +45,44 @@ TEST(TextBuffer, Create_WithText_EmptyLines) {
   TextBufferPtr buffer;
 
   std::wstring text;
-  buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
+  buffer.reset(TextBuffer::Create(0, text, &ft_plugin, kEncoding));
   EXPECT_EQ(1, buffer->LineCount());
   EXPECT_TRUE(buffer->Line(1)->IsEmpty(true));
 
   text = L"\r";
-  buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
+  buffer.reset(TextBuffer::Create(0, text, &ft_plugin, kEncoding));
   EXPECT_EQ(2, buffer->LineCount());
   EXPECT_TRUE(buffer->Line(1)->IsEmpty(true));
   EXPECT_TRUE(buffer->Line(2)->IsEmpty(true));
 
   text = L"\n";
-  buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
+  buffer.reset(TextBuffer::Create(0, text, &ft_plugin, kEncoding));
   EXPECT_EQ(2, buffer->LineCount());
   EXPECT_TRUE(buffer->Line(1)->IsEmpty(true));
   EXPECT_TRUE(buffer->Line(2)->IsEmpty(true));
 
   text = L"\r\n";
-  buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
+  buffer.reset(TextBuffer::Create(0, text, &ft_plugin, kEncoding));
   EXPECT_EQ(2, buffer->LineCount());
   EXPECT_TRUE(buffer->Line(1)->IsEmpty(true));
   EXPECT_TRUE(buffer->Line(2)->IsEmpty(true));
 
   text = L"\r\r";
-  buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
+  buffer.reset(TextBuffer::Create(0, text, &ft_plugin, kEncoding));
   EXPECT_EQ(3, buffer->LineCount());
   EXPECT_TRUE(buffer->Line(1)->IsEmpty(true));
   EXPECT_TRUE(buffer->Line(2)->IsEmpty(true));
   EXPECT_TRUE(buffer->Line(3)->IsEmpty(true));
 
   text = L"\n\n";
-  buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
+  buffer.reset(TextBuffer::Create(0, text, &ft_plugin, kEncoding));
   EXPECT_EQ(3, buffer->LineCount());
   EXPECT_TRUE(buffer->Line(1)->IsEmpty(true));
   EXPECT_TRUE(buffer->Line(2)->IsEmpty(true));
   EXPECT_TRUE(buffer->Line(3)->IsEmpty(true));
 
   text = L"\r\n\r\n";
-  buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
+  buffer.reset(TextBuffer::Create(0, text, &ft_plugin, kEncoding));
   EXPECT_EQ(3, buffer->LineCount());
   EXPECT_TRUE(buffer->Line(1)->IsEmpty(true));
   EXPECT_TRUE(buffer->Line(2)->IsEmpty(true));
@@ -93,30 +94,30 @@ TEST(TextBuffer, Create_WithText) {
   TextBufferPtr buffer;
 
   std::wstring text = L"abc";
-  buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
+  buffer.reset(TextBuffer::Create(0, text, &ft_plugin, kEncoding));
   EXPECT_EQ(1, buffer->LineCount());
   EXPECT_EQ(L"abc", buffer->LineData(1));
 
   text = L"abc\nde";
-  buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
+  buffer.reset(TextBuffer::Create(0, text, &ft_plugin, kEncoding));
   EXPECT_EQ(2, buffer->LineCount());
   EXPECT_EQ(L"abc", buffer->LineData(1));
   EXPECT_EQ(L"de", buffer->LineData(2));
 
   text = L"abc\rde";
-  buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
+  buffer.reset(TextBuffer::Create(0, text, &ft_plugin, kEncoding));
   EXPECT_EQ(2, buffer->LineCount());
   EXPECT_EQ(L"abc", buffer->LineData(1));
   EXPECT_EQ(L"de", buffer->LineData(2));
 
   text = L"abc\r\nde";
-  buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
+  buffer.reset(TextBuffer::Create(0, text, &ft_plugin, kEncoding));
   EXPECT_EQ(2, buffer->LineCount());
   EXPECT_EQ(L"abc", buffer->LineData(1));
   EXPECT_EQ(L"de", buffer->LineData(2));
 
   text = L"abc\r\nde\r\n";
-  buffer.reset(TextBuffer::Create(text, &ft_plugin, kEncoding));
+  buffer.reset(TextBuffer::Create(0, text, &ft_plugin, kEncoding));
   EXPECT_EQ(3, buffer->LineCount());
   EXPECT_EQ(L"abc", buffer->LineData(1));
   EXPECT_EQ(L"de", buffer->LineData(2));
@@ -129,7 +130,7 @@ TEST(TextBuffer, PrevNonEmptyLine) {
   ft_plugin.AddQuote(new Quote(kLexComment, L"/*", L"*/", kQuoteMultiLine));
 
   TextBufferPtr buffer;
-  buffer.reset(TextBuffer::Create(&ft_plugin, kEncoding));
+  buffer.reset(TextBuffer::Create(0, &ft_plugin, kEncoding));
 
   buffer->AppendLine(L"int i;");  // Line 2
   buffer->AppendLine(L"while(true) {} // nothing");
@@ -152,7 +153,7 @@ TEST(TextBuffer, PrevLine) {
   ft_plugin.AddQuote(new Quote(kLexComment, L"/*", L"*/", kQuoteMultiLine));
 
   TextBufferPtr buffer;
-  buffer.reset(TextBuffer::Create(&ft_plugin, kEncoding));
+  buffer.reset(TextBuffer::Create(0, &ft_plugin, kEncoding));
 
   buffer->AppendLine(L"    class {");         // Line 2
   buffer->AppendLine(L"");                    // Empty line
@@ -203,7 +204,7 @@ TEST(TextBuffer, Notify) {
 
   TestBufferListener listener;
 
-  TextBufferPtr buffer(TextBuffer::Create(L"line 1", &ft_plugin, kEncoding));
+  TextBufferPtr buffer(TextBuffer::Create(0, L"line 1", &ft_plugin, kEncoding));
   buffer->AttachListener(&listener);
 
   buffer->AppendLine(L"line 2");
@@ -218,7 +219,7 @@ TEST(TextBuffer, Notify) {
 ////////////////////////////////////////////////////////////////////////////////
 
 //TEST(TextBuffer, SearchRegEx_CrossLine) {
-//  std::auto_ptr<TextBuffer> buffer(TextBuffer::Create(NULL, kEncoding));
+//  std::auto_ptr<TextBuffer> buffer(TextBuffer::Create(0, NULL, kEncoding));
 //
 //  std::wstring text = L"1\n22 \"test\n comments\"\n333";
 //  buffer->InsertLine(1, L"1");

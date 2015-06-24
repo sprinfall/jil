@@ -23,11 +23,11 @@ TEST(TextLine, Sub) {
   EXPECT_EQ(L"b\tc", line.Sub(2, 3));
   EXPECT_EQ(L"b\tc", line.Sub(CharRange(2, 5)));
 
-  EXPECT_EQ(L"b\tc", line.Sub(2, kInvalidCoord));
-  EXPECT_EQ(L"b\tc", line.Sub(CharRange(2, kInvalidCoord)));
+  EXPECT_EQ(L"b\tc", line.Sub(2, kInvCoord));
+  EXPECT_EQ(L"b\tc", line.Sub(CharRange(2, kInvCoord)));
 
-  EXPECT_EQ(L"a b\tc", line.Sub(0, kInvalidCoord));
-  EXPECT_EQ(L"a b\tc", line.Sub(CharRange(0, kInvalidCoord)));
+  EXPECT_EQ(L"a b\tc", line.Sub(0, kInvCoord));
+  EXPECT_EQ(L"a b\tc", line.Sub(CharRange(0, kInvCoord)));
 }
 
 TEST(TextLine, FirstNonSpaceChar) {
@@ -44,7 +44,7 @@ TEST(TextLine, FirstNonSpaceChar) {
 
 TEST(TextLine, LastNonSpaceChar) {
   TextLine line(0, L"");
-  EXPECT_EQ(kInvalidCoord, line.LastNonSpaceChar());
+  EXPECT_EQ(kInvCoord, line.LastNonSpaceChar());
 
   line.InsertString(0, L"a b\tc");
   EXPECT_EQ(4, line.LastNonSpaceChar());
@@ -52,7 +52,7 @@ TEST(TextLine, LastNonSpaceChar) {
   EXPECT_EQ(2, line.LastNonSpaceChar(4));
   EXPECT_EQ(0, line.LastNonSpaceChar(2));
   EXPECT_EQ(0, line.LastNonSpaceChar(1));
-  EXPECT_EQ(kInvalidCoord, line.LastNonSpaceChar(0));
+  EXPECT_EQ(kInvCoord, line.LastNonSpaceChar(0));
 }
 
 TEST(TextLine, GetIndentAndIndentStr) {
@@ -133,27 +133,27 @@ TEST(TextLine, StartWith_Char) {
   line.Clear();
   line.Append(L" \t");
 
-  Coord off = kInvalidCoord;
+  Coord off = kInvCoord;
   EXPECT_TRUE(line.StartWith(L' ', true, &off));
   EXPECT_EQ(0, off);
-  off = kInvalidCoord;
+  off = kInvCoord;
   EXPECT_TRUE(line.StartWith(L' ', false, &off));
   EXPECT_EQ(0, off);
 
   line.Clear();
   line.Append(L"\t ");
 
-  off = kInvalidCoord;
+  off = kInvCoord;
   EXPECT_TRUE(line.StartWith(L'\t', true, &off));
   EXPECT_EQ(0, off);
-  off = kInvalidCoord;
+  off = kInvCoord;
   EXPECT_TRUE(line.StartWith(L'\t', false, &off));
   EXPECT_EQ(0, off);
 
   line.Clear();
   line.Append(L"\t test");
 
-  off = kInvalidCoord;
+  off = kInvCoord;
   EXPECT_TRUE(line.StartWith(L't', true, &off));
   EXPECT_EQ(2, off);
   EXPECT_FALSE(line.StartWith(L't', false));
@@ -161,10 +161,10 @@ TEST(TextLine, StartWith_Char) {
   line.Clear();
   line.Append(L"test");
 
-  off = kInvalidCoord;
+  off = kInvCoord;
   EXPECT_TRUE(line.StartWith(L't', true, &off));
   EXPECT_EQ(0, off);
-  off = kInvalidCoord;
+  off = kInvCoord;
   EXPECT_TRUE(line.StartWith(L't', false, &off));
   EXPECT_EQ(0, off);
 }
@@ -180,12 +180,12 @@ TEST(TextLine, EndWith_Char) {
   line.Clear();
   line.Append(L" \t");
 
-  Coord off = kInvalidCoord;
+  Coord off = kInvCoord;
   EXPECT_TRUE(line.EndWith(L'\t', true, true, &off));
   EXPECT_TRUE(line.EndWith(L'\t', false, true, &off));
   EXPECT_EQ(1, off);
 
-  off = kInvalidCoord;
+  off = kInvCoord;
   EXPECT_TRUE(line.EndWith(L'\t', true, false, &off));
   EXPECT_TRUE(line.EndWith(L'\t', false, false, &off));
   EXPECT_EQ(1, off);
@@ -193,12 +193,12 @@ TEST(TextLine, EndWith_Char) {
   line.Clear();
   line.Append(L"\t ");
 
-  off = kInvalidCoord;
+  off = kInvCoord;
   EXPECT_TRUE(line.EndWith(L' ', true, true, &off));
   EXPECT_TRUE(line.EndWith(L' ', false, true, &off));
   EXPECT_EQ(1, off);
 
-  off = kInvalidCoord;
+  off = kInvCoord;
   EXPECT_TRUE(line.EndWith(L' ', true, false, &off));
   EXPECT_TRUE(line.EndWith(L' ', false, false, &off));
   EXPECT_EQ(1, off);
@@ -206,7 +206,7 @@ TEST(TextLine, EndWith_Char) {
   line.Clear();
   line.Append(L"test\t ");
 
-  off = kInvalidCoord;
+  off = kInvCoord;
   EXPECT_TRUE(line.EndWith(L't', true, true, &off));
   EXPECT_TRUE(line.EndWith(L't', false, true, &off));
   EXPECT_EQ(3, off);
@@ -216,12 +216,12 @@ TEST(TextLine, EndWith_Char) {
   line.Clear();
   line.Append(L"test");
 
-  off = kInvalidCoord;
+  off = kInvCoord;
   EXPECT_TRUE(line.EndWith(L't', true, true, &off));
   EXPECT_TRUE(line.EndWith(L't', false, true, &off));
   EXPECT_EQ(3, off);
 
-  off = kInvalidCoord;
+  off = kInvCoord;
   EXPECT_TRUE(line.EndWith(L't', true, false, &off));
   EXPECT_TRUE(line.EndWith(L't', false, false, &off));
   EXPECT_EQ(3, off);
@@ -263,31 +263,31 @@ TEST(TextLine, RangeLexElements) {
 
   typedef std::list<const LexElem*> LexElements;
 
-  LexElements lex_elements0 = line.lex_elems(CharRange(0, kInvalidCoord));
+  LexElements lex_elements0 = line.lex_elems(CharRange(0, kInvCoord));
   EXPECT_EQ(2, lex_elements0.size());
 
-  LexElements lex_elements1 = line.lex_elems(CharRange(1, kInvalidCoord));
+  LexElements lex_elements1 = line.lex_elems(CharRange(1, kInvCoord));
   EXPECT_EQ(2, lex_elements1.size());
 
-  LexElements lex_elements2 = line.lex_elems(CharRange(2, kInvalidCoord));
+  LexElements lex_elements2 = line.lex_elems(CharRange(2, kInvCoord));
   EXPECT_EQ(2, lex_elements2.size());
 
-  LexElements lex_elements3 = line.lex_elems(CharRange(3, kInvalidCoord));
+  LexElements lex_elements3 = line.lex_elems(CharRange(3, kInvCoord));
   EXPECT_EQ(1, lex_elements3.size());
 
-  LexElements lex_elements4 = line.lex_elems(CharRange(4, kInvalidCoord));
+  LexElements lex_elements4 = line.lex_elems(CharRange(4, kInvCoord));
   EXPECT_EQ(1, lex_elements4.size());
 
-  LexElements lex_elements5 = line.lex_elems(CharRange(5, kInvalidCoord));
+  LexElements lex_elements5 = line.lex_elems(CharRange(5, kInvCoord));
   EXPECT_EQ(1, lex_elements5.size());
 
-  LexElements lex_elements6 = line.lex_elems(CharRange(6, kInvalidCoord));
+  LexElements lex_elements6 = line.lex_elems(CharRange(6, kInvCoord));
   EXPECT_EQ(1, lex_elements6.size());
 
-  LexElements lex_elements8 = line.lex_elems(CharRange(8, kInvalidCoord));
+  LexElements lex_elements8 = line.lex_elems(CharRange(8, kInvCoord));
   EXPECT_EQ(1, lex_elements8.size());
 
-  LexElements lex_elements9 = line.lex_elems(CharRange(9, kInvalidCoord));
+  LexElements lex_elements9 = line.lex_elems(CharRange(9, kInvCoord));
   EXPECT_EQ(0, lex_elements9.size());
 
 

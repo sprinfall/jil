@@ -30,7 +30,7 @@ protected:
     Quote* quote2 = new Quote(Lex(kLexComment), L"//", L"", kQuoteEscapeEol);
     ft_plugin_->AddQuote(quote2);
 
-    buffer_ = TextBuffer::Create(ft_plugin_, kEncoding);
+    buffer_ = TextBuffer::Create(0, ft_plugin_, kEncoding);
 
     indent_cpp_ = IndentCpp;
   }
@@ -50,7 +50,7 @@ protected:
 
 TEST(IndentCppHelperTest, IsLineMacro) {
   FtPlugin ft_plugin(FileType(wxT("cpp"), wxT("C++")));
-  TextBufferPtr buffer(TextBuffer::Create(&ft_plugin, kEncoding));
+  TextBufferPtr buffer(TextBuffer::Create(0, &ft_plugin, kEncoding));
 
   buffer->AppendLine(L"#define MAX_SIZE 256");
 
@@ -59,7 +59,7 @@ TEST(IndentCppHelperTest, IsLineMacro) {
 
 TEST(IndentCppHelperTest, IsLineMacro2) {
   FtPlugin ft_plugin(FileType(wxT("cpp"), wxT("C++")));
-  TextBufferPtr buffer(TextBuffer::Create(&ft_plugin, kEncoding));
+  TextBufferPtr buffer(TextBuffer::Create(0, &ft_plugin, kEncoding));
 
   buffer->AppendLine(L"#define MAX_SIZE \\");
   buffer->AppendLine(L"    256");
@@ -70,7 +70,7 @@ TEST(IndentCppHelperTest, IsLineMacro2) {
 
 TEST(IndentCppHelperTest, IsLineMacro3) {
   FtPlugin ft_plugin(FileType(wxT("cpp"), wxT("C++")));
-  TextBufferPtr buffer(TextBuffer::Create(&ft_plugin, kEncoding));
+  TextBufferPtr buffer(TextBuffer::Create(0, &ft_plugin, kEncoding));
 
   buffer->AppendLine(L"#define MAX_SIZE 256 \\");
   buffer->AppendLine(L"");

@@ -19,7 +19,7 @@ static const Encoding kEncoding = EncodingFromName(ENCODING_NAME_ISO_8859_1);
 
 TEST(InsertCharAction, InsertChar) {
   FtPlugin ft_plugin(kFtTxt);
-  TextBufferPtr buffer(TextBuffer::Create(&ft_plugin, kEncoding));
+  TextBufferPtr buffer(TextBuffer::Create(0, &ft_plugin, kEncoding));
 
   TextPoint point(0, 1);
   InsertCharAction ica(buffer.get(), point, L'a');
@@ -40,7 +40,7 @@ TEST(InsertCharAction, InsertChar) {
 
 TEST(InsertCharAction, InsertLineEndingChar) {
   FtPlugin ft_plugin(kFtTxt);
-  TextBufferPtr buffer(TextBuffer::Create(L"abc", &ft_plugin, kEncoding));
+  TextBufferPtr buffer(TextBuffer::Create(0, L"abc", &ft_plugin, kEncoding));
 
   {
     TextPoint point(3, 1);
@@ -90,7 +90,7 @@ TEST(InsertCharAction, InsertLineEndingChar) {
 
 TEST(InsertStringAction, InsertString) {
   FtPlugin ft_plugin(kFtTxt);
-  TextBufferPtr buffer(TextBuffer::Create(&ft_plugin, kEncoding));
+  TextBufferPtr buffer(TextBuffer::Create(0, &ft_plugin, kEncoding));
 
   TextPoint point(0, 1);
   InsertStringAction isa(buffer.get(), point, L"abc");
@@ -119,7 +119,7 @@ TEST(InsertStringAction, InsertString) {
 
 TEST(DeleteAction, DeletePrevChar) {
   FtPlugin ft_plugin(kFtTxt);
-  TextBufferPtr buffer(TextBuffer::Create(L"a", &ft_plugin, kEncoding));
+  TextBufferPtr buffer(TextBuffer::Create(0, L"a", &ft_plugin, kEncoding));
 
   TextPoint point(1, 1);
   DeleteAction da(buffer.get(), point, kChar, kPrev);
@@ -140,7 +140,7 @@ TEST(DeleteAction, DeletePrevChar) {
 
 TEST(DeleteAction, DeletePrevLineEndingChar) {
   FtPlugin ft_plugin(kFtTxt);
-  TextBufferPtr buffer(TextBuffer::Create(L"abc\nde", &ft_plugin, kEncoding));
+  TextBufferPtr buffer(TextBuffer::Create(0, L"abc\nde", &ft_plugin, kEncoding));
 
   TextPoint point(0, 2);
   DeleteAction da(buffer.get(), point, kChar, kPrev);
@@ -164,7 +164,7 @@ TEST(DeleteAction, DeletePrevLineEndingChar) {
 
 TEST(DeleteAction, DeletePrevLineEndingChar_Negative) {
   FtPlugin ft_plugin(kFtTxt);
-  TextBufferPtr buffer(TextBuffer::Create(L"abc", &ft_plugin, kEncoding));
+  TextBufferPtr buffer(TextBuffer::Create(0, L"abc", &ft_plugin, kEncoding));
 
   TextPoint point(0, 1);
   DeleteAction da(buffer.get(), point, kChar, kPrev);
@@ -188,7 +188,7 @@ TEST(DeleteAction, DeletePrevLineEndingChar_Negative) {
 
 TEST(DeleteAction, DeleteNextChar) {
   FtPlugin ft_plugin(kFtTxt);
-  TextBufferPtr buffer(TextBuffer::Create(L"a", &ft_plugin, kEncoding));
+  TextBufferPtr buffer(TextBuffer::Create(0, L"a", &ft_plugin, kEncoding));
 
   TextPoint point(0, 1);
   DeleteAction da(buffer.get(), point, kChar, kNext);
@@ -209,7 +209,7 @@ TEST(DeleteAction, DeleteNextChar) {
 
 TEST(DeleteAction, DeleteNextLineEndingChar) {
   FtPlugin ft_plugin(kFtTxt);
-  TextBufferPtr buffer(TextBuffer::Create(L"abc\nde", &ft_plugin, kEncoding));
+  TextBufferPtr buffer(TextBuffer::Create(0, L"abc\nde", &ft_plugin, kEncoding));
 
   TextPoint point(3, 1);
   DeleteAction da(buffer.get(), point, kChar, kNext);
@@ -233,7 +233,7 @@ TEST(DeleteAction, DeleteNextLineEndingChar) {
 
 TEST(DeleteAction, DeleteNextLineEndingChar_Negative) {
   FtPlugin ft_plugin(kFtTxt);
-  TextBufferPtr buffer(TextBuffer::Create(L"abc", &ft_plugin, kEncoding));
+  TextBufferPtr buffer(TextBuffer::Create(0, L"abc", &ft_plugin, kEncoding));
 
   TextPoint point(3, 1);
   DeleteAction da(buffer.get(), point, kChar, kNext);
@@ -259,7 +259,7 @@ TEST(DeleteAction, DeleteNextLineEndingChar_Negative) {
 
 TEST(DeleteRangeAction, DeleteRange_Forward) {
   FtPlugin ft_plugin(kFtTxt);
-  TextBufferPtr buffer(TextBuffer::Create(L"abc\ndef\nghi\n", &ft_plugin, kEncoding));
+  TextBufferPtr buffer(TextBuffer::Create(0, L"abc\ndef\nghi\n", &ft_plugin, kEncoding));
 
   // a{bc
   // def
@@ -292,7 +292,7 @@ TEST(DeleteRangeAction, DeleteRange_Forward) {
 
 TEST(DeleteRangeAction, DeleteRange_Backward) {
   FtPlugin ft_plugin(kFtTxt);
-  TextBufferPtr buffer(TextBuffer::Create(L"abc\ndef\nghi\n", &ft_plugin, kEncoding));
+  TextBufferPtr buffer(TextBuffer::Create(0, L"abc\ndef\nghi\n", &ft_plugin, kEncoding));
 
   // a{bc
   // def
