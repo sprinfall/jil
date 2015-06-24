@@ -17,7 +17,7 @@ const size_t kNpos = static_cast<size_t>(-1);
 // NOTE: Don't use unsigned type (e.g., size_t) for Coord!
 typedef int Coord;
 
-const Coord kInvalidCoord = -1;
+const Coord kInvCoord = -1;
 
 // Explicitly cast Coord, e.g., from size_t.
 template <typename T>

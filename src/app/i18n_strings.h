@@ -34,7 +34,7 @@
 
 #if !defined (__WXOSX__)
 // About menu will be placed in App menu on Mac while in Help menu on other platforms.
-#  define kTrMenuAbout          _("&About Jil Text")
+#  define kTrMenuAbout        _("&About Jil Text")
 #endif  // !defined (__WXOSX__)
 
 #define kTrMenuFile           _("&File")

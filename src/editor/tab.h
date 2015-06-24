@@ -15,7 +15,7 @@ void TabbedLineFast(int tab_stop, std::wstring* line);
 // Return the tabbed length of line.substr(0, count).
 Coord TabbedLineLength(int tab_stop,
                        const std::wstring& line,
-                       Coord count = kInvalidCoord);
+                       Coord count = kInvCoord);
 
 }  // namespace editor
 }  // namespace jil

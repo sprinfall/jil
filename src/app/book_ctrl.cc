@@ -172,6 +172,7 @@ void BookCtrl::AddPage(BookPage* page, bool active) {
     stack_tabs_.push_back(tab);
   }
 
+  // TODO: Avoid when batch is on.
   PostEvent(kEvtBookPageChange);
 }
 
@@ -193,10 +194,10 @@ bool BookCtrl::RemoveActivePage() {
   return RemovePage(it);
 }
 
-bool BookCtrl::RemoveAllPages(const BookPage* except_page) {
+void BookCtrl::RemoveAllPages(const BookPage* except_page) {
   wxWindowUpdateLocker avoid_flickering(this);
 
-  bool any_page_removed = false;
+  bool removed = PageCount() > (except_page != NULL ? 1 : 0);
 
   TabList::iterator it = tabs_.begin();
   for (; it != tabs_.end(); ) {
@@ -206,15 +207,7 @@ bool BookCtrl::RemoveAllPages(const BookPage* except_page) {
       continue;
     }
 
-    if (!tab->page->Page_Close()) {
-      // Failed to close page, stop removing.
-      break;
-    }
-
-    // Reset right-clicked tab since the page will be destroyed.
-    if (rclicked_tab_ != NULL && rclicked_tab_->page == tab->page) {
-      rclicked_tab_ = NULL;
-    }
+    tab->page->Page_Close();
 
     it = tabs_.erase(it);
     stack_tabs_.remove(tab);
@@ -222,26 +215,18 @@ bool BookCtrl::RemoveAllPages(const BookPage* except_page) {
       page_vsizer_->Clear(false);
     }
     delete tab;
-
-    any_page_removed = true;
   }
 
-  if (any_page_removed) {
+  if (removed) {
     if (!stack_tabs_.empty()) {
       ActivatePage(stack_tabs_.front()->page);
-
       PostEvent(kEvtBookPageSwitch);
     }
 
-    // The tab is removed, more space is available, resize the left tabs.
     ResizeTabs();
-
     tab_area_->Refresh();
-
     PostEvent(kEvtBookPageChange);
   }
-
-  return (PageCount() == (except_page == NULL ? 0 : 1));
 }
 
 void BookCtrl::ActivatePage(BookPage* page) {
@@ -319,6 +304,28 @@ void BookCtrl::SwitchToPrevStackPage() {
   ActivatePage(stack_tabs_.back()->page);
 }
 #endif
+
+int BookCtrl::GetStackIndex(BookPage* page) const {
+  TabList::const_iterator it = stack_tabs_.begin();
+  for (int i = 0; it != stack_tabs_.end(); ++it, ++i) {
+    if ((*it)->page == page) {
+      return i;
+    }
+  }
+  return wxNOT_FOUND;
+}
+
+void BookCtrl::MovePageToStackFront(BookPage* page) {
+  TabList::const_iterator it = stack_tabs_.begin();
+  for (int i = 0; it != stack_tabs_.end(); ++it) {
+    Tab* tab = *it;
+    if (tab->page == page) {
+      stack_tabs_.erase(it);
+      stack_tabs_.push_front(tab);
+      break;
+    }
+  }
+}
 
 std::vector<BookPage*> BookCtrl::Pages() const {
   std::vector<BookPage*> pages;
@@ -494,7 +501,6 @@ void BookCtrl::Init() {
   tab_default_size_ = 130;
 
   free_size_ = 0;
-  rclicked_tab_ = NULL;
   batch_ = false;
   need_resize_tabs_ = false;
 }
@@ -650,6 +656,7 @@ void BookCtrl::OnTabMouseLeftDown(wxMouseEvent& evt) {
 }
 
 void BookCtrl::HandleTabMouseLeftDown(wxMouseEvent& evt) {
+  ActivatePageByPos(evt.GetPosition().x);
 }
 
 void BookCtrl::OnTabMouseLeftUp(wxMouseEvent& evt) {
@@ -716,6 +723,7 @@ void BookCtrl::OnTabMouseRightDown(wxMouseEvent& evt) {
 }
 
 void BookCtrl::HandleTabMouseRightDown(wxMouseEvent& evt) {
+  ActivatePageByPos(evt.GetPosition().x);
 }
 
 void BookCtrl::OnTabMouseRightUp(wxMouseEvent& evt) {
@@ -725,8 +733,6 @@ void BookCtrl::OnTabMouseRightUp(wxMouseEvent& evt) {
   tab_area_->ReleaseMouse();
 
   HandleTabMouseRightUp(evt);
-
-  rclicked_tab_ = NULL;
 }
 
 void BookCtrl::HandleTabMouseRightUp(wxMouseEvent& evt) {
@@ -820,15 +826,7 @@ bool BookCtrl::RemovePage(TabList::iterator it) {
 
   Tab* tab = *it;
 
-  if (!tab->page->Page_Close()) {
-    // Failed to close page, stop removing.
-    return false;
-  }
-
-  // Reset right-clicked tab since the page will be destroyed.
-  if (rclicked_tab_ != NULL && rclicked_tab_->page == tab->page) {
-    rclicked_tab_ = NULL;
-  }
+  tab->page->Page_Close();
 
   //page_area_->Freeze();
 
@@ -862,6 +860,13 @@ bool BookCtrl::RemovePage(TabList::iterator it) {
   PostEvent(kEvtBookPageChange);
 
   return true;
+}
+
+void BookCtrl::ActivatePageByPos(int pos_x) {
+  TabList::iterator it = TabByPos(pos_x);
+  if (it != tabs_.end()) {
+    ActivatePage(it);
+  }
 }
 
 BookCtrl::TabList::iterator BookCtrl::ActiveTab() {

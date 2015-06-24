@@ -37,6 +37,7 @@
 #include "app/book_ctrl.h"
 #include "app/book_frame.h"
 #include "app/compile_config.h"
+#include "app/font_util.h"
 #include "app/goto_dialog.h"
 #include "app/i18n_strings.h"
 #include "app/lex_config.h"
@@ -126,6 +127,11 @@ void FileCloseAll() {
   book_frame->FileCloseAll();
 }
 
+void FileCloseAllButThis() {
+  GET_BOOK_FRAME_OR_RETURN;
+  book_frame->FileCloseAllButThis();
+}
+
 void FileSave() {
   GET_BOOK_FRAME_OR_RETURN;
   book_frame->FileSave();
@@ -139,6 +145,16 @@ void FileSaveAs() {
 void FileSaveAll() {
   GET_BOOK_FRAME_OR_RETURN;
   book_frame->FileSaveAll();
+}
+
+void FileCopyPath() {
+  GET_BOOK_FRAME_OR_RETURN;
+  book_frame->FileCopyPath();
+}
+
+void FileOpenFolder() {
+  GET_BOOK_FRAME_OR_RETURN;
+  book_frame->FileOpenFolder();
 }
 
 void NextPage() {
@@ -380,7 +396,7 @@ bool App::OnInit() {
   book_frame->Show();
 
   if (options_.restore_files) {
-    RestoreLastOpenedFiles(book_frame);
+    book_frame->RestoreOpenedFiles();
   }
 
   // Open the files specified as command line arguments.
@@ -443,6 +459,11 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
       ParseEditorOptions(editor_setting, &ft_editor_options);
     }
   }
+
+  // Some extra view options.
+  ft_editor_options.view.line_padding = options_.line_padding;
+  ft_editor_options.view.min_font_size = kMinFontSize;
+  ft_editor_options.view.max_font_size = kMaxFontSize;
 
   ft_plugin->set_options(ft_editor_options);
 
@@ -704,10 +725,13 @@ void App::InitCommands() {
   AddVoidCmd("open", FileOpen, ID_MENU_FILE_OPEN);
   AddVoidCmd("close", FileClose, ID_MENU_FILE_CLOSE);
   AddVoidCmd("close_all", FileCloseAll, ID_MENU_FILE_CLOSE_ALL);
+  AddVoidCmd("close_all_but_this", FileCloseAllButThis, ID_MENU_FILE_CLOSE_ALL_BUT_THIS);
 
   AddVoidCmd("save", FileSave, ID_MENU_FILE_SAVE);
   AddVoidCmd("save_as", FileSaveAs, ID_MENU_FILE_SAVE_AS);
   AddVoidCmd("save_all", FileSaveAll, ID_MENU_FILE_SAVE_ALL);
+  AddVoidCmd("copy_path", FileCopyPath, ID_MENU_FILE_COPY_PATH);
+  AddVoidCmd("open_folder", FileOpenFolder, ID_MENU_FILE_OPEN_FOLDER);
 
   AddVoidCmd("show_find", ShowFind, ID_MENU_EDIT_FIND);
   AddVoidCmd("show_replace", ShowReplace, ID_MENU_EDIT_REPLACE);
@@ -854,22 +878,6 @@ bool App::LoadFileTypes() {
   }
 
   return true;
-}
-
-// TODO: Stack order
-void App::RestoreLastOpenedFiles(BookFrame* book_frame) {
-  const std::list<wxString>& opened_files = session_.opened_files();
-  if (!opened_files.empty()) {
-    wxArrayString files;
-
-    std::list<wxString>::const_iterator it = opened_files.begin();
-    for (; it != opened_files.end(); ++it) {
-      files.Add(*it);
-    }
-
-    // The last opened files might not exist any more. Silently open them.
-    book_frame->OpenFiles(files, true);
-  }
 }
 
 }  // namespace jil

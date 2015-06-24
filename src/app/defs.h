@@ -34,6 +34,19 @@ extern const wxString kInternalFtIdPrefix;
 // Internal file type IDs.
 extern const wxString kFtId_FindResult;
 
+// Extra data for each line in the find result buffer.
+// Saved in TextLine.extra_data_.
+class FrExtraData {
+public:
+  wxString file_path;
+
+  // For new buffers/files which don't have file path.
+  size_t buffer_id;
+
+  // Source line id.
+  size_t line_id;
+};
+
 // Top level theme IDs.
 enum ThemeId {
   THEME_BOOK_FRAME = 0,

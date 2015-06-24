@@ -65,7 +65,7 @@ public:
   // Add a string to find history.
   // Return true if the find string is new (it didn't exist).
   bool AddFindString(const wxString& find_string) {
-    return AddHistoryString(find_string, &find_strings_);
+    return AddHistoryString(find_strings_, find_string, find_history_limit_);
   }
 
   const std::list<wxString>& replace_strings() const {
@@ -75,7 +75,7 @@ public:
   // Add a string to replace history.
   // Return true if the replace string is new (it didn't exist).
   bool AddReplaceString(const wxString& replace_string) {
-    return AddHistoryString(replace_string, &replace_strings_);
+    return AddHistoryString(replace_strings_, replace_string, find_history_limit_);
   }
 
   int find_flags() const {
@@ -111,14 +111,29 @@ public:
   }
 
   //----------------------------------------------------------------------------
-  // File history
+  // Opened files
 
-  const std::list<wxString>& opened_files() const {
+  class OpenedFile {
+  public:
+    wxString file_path;
+    int stack_index;
+  };
+
+  const std::list<OpenedFile>& opened_files() const {
     return opened_files_;
   }
-  void set_opened_files(const std::list<wxString>& opened_files) {
-    opened_files_ = opened_files;
+
+  void AddOpenedFile(const wxString& file_path, int stack_index) {
+    OpenedFile opened_file = { file_path, stack_index };
+    opened_files_.push_back(opened_file);
   }
+
+  void ClearOpenedFiles() {
+    opened_files_.clear();
+  }
+
+  //----------------------------------------------------------------------------
+  // Recent files
 
   const std::list<wxString>& recent_files() const {
     return recent_files_;
@@ -128,7 +143,7 @@ public:
   }
 
 private:
-  bool AddHistoryString(const wxString& s, std::list<wxString>* strings);
+  bool AddHistoryString(std::list<wxString>& strings, const wxString& s, size_t limit);
 
   void SaveSplitTree(SplitNode* n, Setting* setting);
   SplitNode* RestoreSplitTree(Setting setting);
@@ -157,7 +172,7 @@ private:
 
   // The files opened when last time Jil exits.
   // If option "restore_files" is true, these files will be opened on startup.
-  std::list<wxString> opened_files_;
+  std::list<OpenedFile> opened_files_;
 
   // Recently opened files.
   // Displayed in the Recent Files menu.

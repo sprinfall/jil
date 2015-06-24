@@ -64,36 +64,16 @@ IMPLEMENT_CLASS(TextWindow, wxScrolledWindow)
 
 BEGIN_EVENT_TABLE(TextWindow, wxScrolledWindow)
 EVT_SIZE(TextWindow::OnSize)
-EVT_SET_FOCUS(TextWindow::OnSetFocus)
+
+// NOTE: It seems that text window never gets focus.
+//EVT_SET_FOCUS(TextWindow::OnSetFocus)
+
 END_EVENT_TABLE()
 
 //------------------------------------------------------------------------------
 
-TextWindow::TextWindow(TextBuffer* buffer)
-    : buffer_(buffer)
-    , line_padding_(1)
-    , allow_text_change_(true)
-    , view_options_(buffer->view_options())
-    , style_(NULL)
-    , binding_(NULL)
-    , line_nr_width_(0)
-    , char_width_(0)
-    , char_height_(0)
-    , line_height_(0)
-    , text_width_(0)
-    , text_height_(0)
-    , caret_point_(0, 1)
-    , max_caret_x_(0)
-    , wrap_helper_(NULL)
-    , down_modifiers_(0)
-    , dragged_(false)
-    , scroll_timer_(NULL)
-    , scroll_dir_(kScrollDown) {
-  // Cache some constantly used text options.
-  tab_stop_ = buffer->text_options().tab_stop;
-  expand_tab_ = buffer->text_options().expand_tab;
-
-  text_extent_ = new TextExtent;
+TextWindow::TextWindow(TextBuffer* buffer) : buffer_(buffer) {
+  Init();
 }
 
 bool TextWindow::Create(wxWindow* parent, wxWindowID id, bool hide) {
@@ -780,10 +760,7 @@ void TextWindow::AutoIndent(Coord ln) {
 
 //------------------------------------------------------------------------------
 
-void TextWindow::UpdateCaretPoint(const TextPoint& point,
-                                  bool line_step,
-                                  bool scroll,
-                                  bool vspace) {
+void TextWindow::UpdateCaretPoint(const TextPoint& point, bool line_step, bool scroll, bool vspace) {
   TextPoint p(point);
 
   // Adjust the new caret point.
@@ -917,6 +894,44 @@ void TextWindow::ClearSelection(bool refresh) {
 
 //------------------------------------------------------------------------------
 
+void TextWindow::Init() {
+  allow_text_change_ = true;
+
+  view_options_ = buffer_->view_options();
+
+  style_ = NULL;
+  binding_ = NULL;
+
+  line_nr_width_ = 0;
+
+  char_width_ = 0;
+  char_height_ = 0;
+  line_height_ = 0;
+  text_width_ = 0;
+  text_height_ = 0;
+
+  caret_point_.Set(0, 1);
+
+  max_caret_x_ = 0;
+
+  wrap_helper_ = NULL;
+
+  down_modifiers_ = 0;
+
+  dragged_ = false;
+
+  scroll_timer_ = NULL;
+  scroll_dir_ = kScrollDown;
+
+  // Cache some constantly used text options.
+  tab_stop_ = buffer_->text_options().tab_stop;
+  expand_tab_ = buffer_->text_options().expand_tab;
+
+  text_extent_ = new TextExtent;
+}
+
+//------------------------------------------------------------------------------
+
 FtPlugin* TextWindow::ft_plugin() const {
   return buffer_->ft_plugin();
 }
@@ -1045,14 +1060,14 @@ void TextWindow::OnSize(wxSizeEvent& evt) {
   evt.Skip();
 }
 
-// TODO: Seems never be here. Remove.
-void TextWindow::OnSetFocus(wxFocusEvent& evt) {
-  // Always let text area has the focus.
-  if (text_area_ != NULL) {
-    text_area_->SetFocus();
-  }
-  evt.Skip();
-}
+// NOTE: It seems that text window never gets focus.
+//void TextWindow::OnSetFocus(wxFocusEvent& evt) {
+//  // Always let text area has the focus.
+//  if (text_area_ != NULL) {
+//    text_area_->SetFocus();
+//  }
+//  evt.Skip();
+//}
 
 //------------------------------------------------------------------------------
 // Action
@@ -1326,8 +1341,6 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
     if (!view_options_.rulers.empty()) {
       renderer.SetPen(wxPen(theme_->GetColor(RULER)), true);
 
-      //y2 -= line_padding_;
-
       for (size_t i = 0; i < view_options_.rulers.size(); ++i) {
         int ruler_x = x + char_width_ * view_options_.rulers[i];
         renderer.DrawLine(ruler_x, y1, ruler_x, y2);
@@ -1349,7 +1362,7 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
       renderer.SetBrush(wxBrush(blank_bg), true);
 
       int w = text_area_->GetVirtualSize().x;
-      renderer.DrawRectangle(x, y + line_padding_, w, h);
+      renderer.DrawRectangle(x, y + view_options_.line_padding, w, h);
 
       renderer.RestoreBrush();
       renderer.RestorePen();
@@ -1375,24 +1388,6 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
 
   TextLine* line = buffer_->Line(ln);
 
-  // Highlight the find matching results.
-  const std::list<CharRange>& find_matches = line->find_ranges();
-  if (!find_matches.empty()) {
-    const wxColour& bg = theme_->GetColor(MATCHING_BG);
-    const wxColour& border = theme_->GetColor(MATCHING_BORDER);
-    renderer.SetStyle(bg, border, true);
-
-    CharRange char_range = find_matches.front();
-    int x_begin = GetLineWidth(line, 0, char_range.begin());
-    int x_end = GetLineWidth(line, 0, char_range.end());
-    int w = x_end - x_begin;
-
-    wxRect rect(x_begin, y, w, line_height_);
-    renderer.DrawRectangle(rect);
-
-    renderer.RestoreStyle();
-  }
-
   // If in select range, draw the select background.
   if (selection_.HasLine(ln)) {
     CharRange line_selection = selection_.GetCharRange(ln);
@@ -1416,7 +1411,7 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
       int x_end = GetLineWidth(line, 0, line_selection.end());
 
       int w = x_end - x_begin;
-      if (ln != selection_.end().y && line_selection.end() == kInvalidCoord) {
+      if (ln != selection_.end().y && line_selection.end() == kInvCoord) {
         w += char_width_;  // Extra char width for EOL.
       }
 
@@ -1426,16 +1421,13 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
     }
   }
 
-  int line_text_y = y + line_padding_;
+  int line_text_y = y + view_options_.line_padding;
   DrawTextLine(renderer, line, x, line_text_y);
 
   y += line_height_;
 }
 
-void TextWindow::DrawWrappedTextLine(Coord ln,
-                                     Renderer& renderer,
-                                     int x,
-                                     int& y) {
+void TextWindow::DrawWrappedTextLine(Coord ln, Renderer& renderer, int x, int& y) {
   assert(view_options_.wrap);
 
   const TextLine* line = buffer_->Line(ln);
@@ -1461,15 +1453,11 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
         continue;  // No intersection with the select range.
       }
 
-      int x1 = GetLineWidth(line,
-                            sub_range.begin(),
-                            sub_select_char_range.begin());
-      int x2 = GetLineWidth(line,
-                            sub_range.begin(),
-                            sub_select_char_range.end());
+      int x1 = GetLineWidth(line, sub_range.begin(), sub_select_char_range.begin());
+      int x2 = GetLineWidth(line, sub_range.begin(), sub_select_char_range.end());
       int w = x2 - x1;
       if (ln != selection_.end().y &&
-          sub_select_char_range.end() == kInvalidCoord) {
+          sub_select_char_range.end() == kInvCoord) {
         w += char_width_;  // Extra char width for EOL.
       }
 
@@ -1491,12 +1479,12 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
     for (; range_it != sub_ranges.end(); ++range_it) {
       CharRange& sub_range = *range_it;
 
-      if (sub_range.end() == kInvalidCoord) {  // Last sub range
+      if (sub_range.end() == kInvCoord) {  // Last sub range
         sub_range.set_end(line_data.size());
       }
 
       int _x = x;
-      int _y = y + line_padding_;
+      int _y = y + view_options_.line_padding;
 
       std::list<const LexElem*> lex_elems = line->lex_elems(sub_range);
 
@@ -1557,12 +1545,12 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
     for (; range_it != sub_ranges.end(); ++range_it) {
       CharRange& sub_range = *range_it;
 
-      if (sub_range.end() == kInvalidCoord) {  // Last sub range
+      if (sub_range.end() == kInvCoord) {  // Last sub range
         sub_range.set_end(line_data.size());
       }
 
       int _x = x;
-      int _y = y + line_padding_;
+      int _y = y + view_options_.line_padding;
 
       // Get the range, [i, j), of the line piece to draw.
       Coord i = sub_range.begin();
@@ -1574,10 +1562,7 @@ void TextWindow::DrawWrappedTextLine(Coord ln,
   }
 }
 
-void TextWindow::DrawTextLine(Renderer& renderer,
-                              const TextLine* line,
-                              int x,
-                              int y) {
+void TextWindow::DrawTextLine(Renderer& renderer, const TextLine* line, int x, int y) {
   const std::wstring& line_data = line->data();
   if (line_data.empty()) {
     return;
@@ -1744,8 +1729,7 @@ void TextWindow::DrawTextWord(Renderer& renderer,
   x += piece_w;
 }
 
-void TextWindow::SetRendererStyle(Renderer& renderer,
-                                  const StyleValue* style_value) {
+void TextWindow::SetRendererStyle(Renderer& renderer, const StyleValue* style_value) {
   if (style_value != NULL) {
     wxFont font = text_area_->GetFont();
 
@@ -1804,21 +1788,18 @@ void TextWindow::HandleTextLeftDown_NoAccel() {
 void TextWindow::HandleTextLeftDown_Ctrl() {
   if (selection_.range.Contain(down_point_)) {
     // Click on selected text, select the bracket pair range.
-    TextRange bracket_pair_range;
+    TextRange range;
 
     if (buffer_->IsBracketPairInnerRange(selection_.range)) {
       // If it's already inner range, increase to outer range.
-      // TODO: Return empty range if not increased.
-      bracket_pair_range = buffer_->IncreaseRange(selection_.range);
+      range = buffer_->IncreaseRange(selection_.range);
     } else {
       // Get inner range.
-      bracket_pair_range = buffer_->BracketPairInnerRange(down_point_);
+      range = buffer_->BracketPairInnerRange(down_point_);
     }
 
-    if (!bracket_pair_range.IsEmpty()) {
-      SetSelection(bracket_pair_range.point_begin(),
-                   bracket_pair_range.point_end(),
-                   false);
+    if (!range.IsEmpty()) {
+      SetSelection(range.point_begin(), range.point_end(), false);
     }
   } else {  // Click on unselected text.
     // Select the word under the down point.
@@ -1900,8 +1881,7 @@ void TextWindow::HandleTextMotion(wxMouseEvent& evt) {
 void TextWindow::SelectByDragging() {
   if ((down_modifiers_ & wxMOD_ALT) != 0) {
 #if JIL_ENABLE_RECT_SELECT
-    // Select by rectangle.
-    // TODO
+    // Select by rectangle. (TODO)
     TextPoint move_point = CalcCaretPoint(move_position_, true);
     if (move_point != caret_point_) {
       ExtendSelection(move_point, true);
@@ -1945,9 +1925,7 @@ void TextWindow::StartScrollTimer() {
 
   if (scroll_timer_ == NULL) {
     scroll_timer_ = new wxTimer(this, wxID_ANY);
-    Connect(scroll_timer_->GetId(),
-            wxEVT_TIMER,
-            wxTimerEventHandler(TextWindow::OnScrollTimer));
+    Connect(scroll_timer_->GetId(), wxEVT_TIMER, wxTimerEventHandler(TextWindow::OnScrollTimer));
   }
 
   if (scroll_timer_->IsRunning()) {
@@ -2023,20 +2001,17 @@ void TextWindow::HandleTextLeftDClick(wxMouseEvent& evt) {
 
 bool TextWindow::HandleTextMouseWheel(wxMouseEvent& evt) {
   if (evt.ControlDown()) {
-    // Increase/decrease font size.
-
     wxFont font = text_area_->GetFont();
-    int point_size = font.GetPointSize();
+    int size = font.GetPointSize();
 
     if (evt.GetWheelRotation() > 0) {
-      ++point_size;
+      ++size;
     } else if (evt.GetWheelRotation() < 0) {
-      --point_size;
+      --size;
     }
 
-    const int kMinFontSize = 8;  // TODO
-    if (point_size >= kMinFontSize) {
-      font.SetPointSize(point_size);
+    if (size >= view_options_.min_font_size && size <= view_options_.max_font_size) {
+      font.SetPointSize(size);
       SetTextFont(font);
     }
 
@@ -2102,7 +2077,7 @@ bool TextWindow::OnTextKeyDown(wxKeyEvent& evt) {
       // Input tab (expand or not).
       if (expand_tab_) {
         int spaces = tab_stop_ - (caret_point_.x % tab_stop_);
-        // TODO: Continuous tabs cannot be undone together.
+        // ISSUE: Continuous tabs cannot be undone together.
         InsertString(std::wstring(spaces, kSpaceChar));
       } else {
         InsertChar(kTabChar);
@@ -2487,17 +2462,13 @@ TextPoint TextWindow::CalcCaretPoint(const wxPoint& pos, bool vspace) {
     Coord ln = wrap_helper()->UnwrapLineNr(wrapped_ln, &sub_ln);
 
     caret_point.y = ln;
-    caret_point.x = GetWrappedCharIndex(caret_point.y,
-                                        sub_ln,
-                                        unscrolled_pos.x,
-                                        vspace);
+    caret_point.x = GetWrappedCharIndex(caret_point.y, sub_ln, unscrolled_pos.x, vspace);
   }
 
   return caret_point;
 }
 
-wxRect TextWindow::ClientRectFromLineRange(wxWindow* area,
-                                           const LineRange& line_range) const {
+wxRect TextWindow::ClientRectFromLineRange(wxWindow* area, const LineRange& line_range) const {
   LineRange line_range_copy = line_range;
   if (view_options_.wrap) {
     line_range_copy = wrap_helper()->WrapLineRange(line_range_copy);
@@ -2512,9 +2483,7 @@ wxRect TextWindow::ClientRectFromLineRange(wxWindow* area,
                 line_height_ * line_range_copy.LineCount());
 }
 
-wxRect TextWindow::ClientRectAfterLine(wxWindow* area,
-                                       Coord ln,
-                                       bool included) const {
+wxRect TextWindow::ClientRectAfterLine(wxWindow* area, Coord ln, bool included) const {
   Coord v_ln = ln;
   if (view_options_.wrap) {
     v_ln = wrap_helper()->WrapLineNr(ln);
@@ -2573,8 +2542,7 @@ void TextWindow::RefreshTextByLine(Coord ln, bool update) {
   }
 }
 
-void TextWindow::RefreshTextByLineRange(const LineRange& line_range,
-                                        bool update) {
+void TextWindow::RefreshTextByLineRange(const LineRange& line_range, bool update) {
   wxRect refresh_rect = ClientRectFromLineRange(text_area_, line_range);
   text_area_->RefreshRect(refresh_rect);
   if (update) {
@@ -2591,8 +2559,7 @@ void TextWindow::RefreshLineNrByLine(Coord ln, bool update) {
   }
 }
 
-void TextWindow::RefreshLineNrByLineRange(const LineRange& line_range,
-                                          bool update) {
+void TextWindow::RefreshLineNrByLineRange(const LineRange& line_range, bool update) {
   wxRect rect = ClientRectFromLineRange(line_nr_area_, line_range);
   line_nr_area_->RefreshRect(rect);
   if (update) {
@@ -2628,10 +2595,9 @@ bool TextWindow::HandleTextChange() {
 }
 
 void TextWindow::UpdateCharSize() {
-  int ext_leading = 0;  // Usually 0.
-  text_extent_->GetExtent(L"T", &char_width_, &char_height_, &ext_leading);
-
-  line_height_ = char_height_ + ext_leading + line_padding_ + line_padding_;
+  char_width_ = text_extent_->char_width();
+  char_height_ = text_extent_->char_height();
+  line_height_ = view_options_.line_padding + char_height_ + view_options_.line_padding;
 }
 
 void TextWindow::UpdateTextSize() {
@@ -2709,9 +2675,7 @@ void TextWindow::UpdateCaretPosition() {
   if (!view_options_.wrap) {
     y = caret_point_.y;
   } else {
-    Coord sub_ln = wrap_helper()->SubLineNr(caret_point_.y,
-                                            caret_point_.x,
-                                            &x_off);
+    Coord sub_ln = wrap_helper()->SubLineNr(caret_point_.y, caret_point_.x, &x_off);
     // -1 because sub_ln is 1-based.
     y = wrap_helper()->WrapLineNr(caret_point_.y) + sub_ln - 1;
   }
@@ -2728,9 +2692,7 @@ void TextWindow::UpdateCaretPosition() {
 //------------------------------------------------------------------------------
 // Selection
 
-void TextWindow::SetSelection(const TextPoint& point_from,
-                              const TextPoint& point_to,
-                              bool vspace) {
+void TextWindow::SetSelection(const TextPoint& point_from, const TextPoint& point_to, bool vspace) {
   if (point_from <= point_to) {
     SetSelection(TextRange(point_from, point_to), kForward, vspace);
   } else {
@@ -2781,8 +2743,7 @@ void TextWindow::ExtendSelectionByLine(Coord ln_to) {
   }
 }
 
-void TextWindow::SelectByWord(const TextPoint& point_from,
-                              const TextPoint& point_to) {
+void TextWindow::SelectByWord(const TextPoint& point_from, const TextPoint& point_to) {
   if (point_from <= point_to) {
     TextPoint word_point_begin = buffer_->Seek(point_from, kWord, kBegin);
     TextPoint word_point_end = buffer_->Seek(point_to, kWord, kEnd);
@@ -2820,20 +2781,19 @@ void TextWindow::SelectByLine(Coord ln_from, Coord ln_to) {
 
 //------------------------------------------------------------------------------
 
-int TextWindow::GetLineWidth(const TextLine* line,
-                             Coord off1,
-                             Coord off2) const {
+int TextWindow::GetLineWidth(const TextLine* line, Coord off1, Coord off2) const {
   assert(off1 <= line->Length());
 
   int line_width = 0;
 
-  if (off2 == kInvalidCoord) {
+  if (off2 == kInvCoord) {
     off2 = line->Length();
   } else if (off2 > line->Length()) {
     line_width = char_width_ * (off2 - line->Length());
     off2 = line->Length();
   }
 
+  // TODO: Avoid copy
   std::wstring line_data = line->data().substr(off1, off2 - off1);
   if (!line_data.empty()) {
     TabbedLineFast(tab_stop_, &line_data);
@@ -2848,16 +2808,10 @@ int TextWindow::GetLineWidth(Coord ln, Coord off1, Coord off2) const {
 }
 
 Coord TextWindow::GetCharIndex(Coord ln, int client_x, bool vspace) const {
-  return text_extent_->IndexChar(tab_stop_,
-                                 buffer_->LineData(ln),
-                                 client_x,
-                                 vspace);
+  return text_extent_->IndexChar(tab_stop_, buffer_->LineData(ln), client_x, vspace);
 }
 
-Coord TextWindow::GetWrappedCharIndex(Coord ln,
-                                      Coord wrapped_sub_ln,
-                                      int client_x,
-                                      bool vspace) const {
+Coord TextWindow::GetWrappedCharIndex(Coord ln, Coord wrapped_sub_ln, int client_x, bool vspace) const {
   assert(wrapped_sub_ln >= 1);
 
   if (wrapped_sub_ln == 1) {
@@ -2868,10 +2822,7 @@ Coord TextWindow::GetWrappedCharIndex(Coord ln,
 
     // TODO: Avoid copy.
     std::wstring line_data = buffer_->LineData(ln).substr(offset);
-    Coord i = text_extent_->IndexChar(tab_stop_,
-                                      line_data,
-                                      client_x,
-                                      vspace);
+    Coord i = text_extent_->IndexChar(tab_stop_, line_data, client_x, vspace);
     return offset + i;
   }
 }

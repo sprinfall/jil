@@ -40,7 +40,7 @@ std::wstring TextLine::Sub(Coord off, Coord count) const {
     return L"";
   }
 
-  if (count == kInvalidCoord) {
+  if (count == kInvCoord) {
     return data_.substr(off, std::wstring::npos);
   }
 
@@ -59,9 +59,7 @@ bool TextLine::IsEmpty(bool ignore_spaces) const {
   }
 }
 
-bool TextLine::StartWith(wchar_t c,
-                         bool ignore_spaces,
-                         Coord* off) const {
+bool TextLine::StartWith(wchar_t c, bool ignore_spaces, Coord* off) const {
   size_t i = 0;
 
   if (ignore_spaces && !IsSpace(c)) {
@@ -82,9 +80,7 @@ bool TextLine::StartWith(wchar_t c,
   return false;
 }
 
-bool TextLine::StartWith(const std::wstring& str,
-                         bool ignore_spaces,
-                         Coord* off) const {
+bool TextLine::StartWith(const std::wstring& str, bool ignore_spaces, Coord* off) const {
   if (str.size() == 1) {
     return StartWith(str[0], ignore_spaces, off);
   }
@@ -109,10 +105,7 @@ bool TextLine::StartWith(const std::wstring& str,
   return false;
 }
 
-bool TextLine::EndWith(wchar_t c,
-                       bool ignore_comments,
-                       bool ignore_spaces,
-                       Coord* off) const {
+bool TextLine::EndWith(wchar_t c, bool ignore_comments, bool ignore_spaces, Coord* off) const {
   if (data_.empty()) {
     return false;
   }
@@ -221,13 +214,13 @@ Coord TextLine::FirstNonSpaceChar(Coord off) const {
 }
 
 Coord TextLine::LastNonSpaceChar(Coord off) const {
-  if (off == kInvalidCoord) {
+  if (off == kInvCoord) {
     off = Length();
   }
 
   Coord i = off - 1;
   for (; i >= 0 && IsSpace(data_[i]); --i) {}
-  return i;  // Might be -1, i.e., kInvalidCoord.
+  return i;  // Might be -1, i.e., kInvCoord.
 }
 
 Coord TextLine::GetIndent(int tab_stop) const {
@@ -289,7 +282,7 @@ void TextLine::DeleteString(Coord off, Coord count, std::wstring* str) {
     *str = Sub(off, count);
   }
 
-  if (count == kInvalidCoord) {
+  if (count == kInvCoord) {
     data_.erase(off, std::wstring::npos);
     return;
   }
@@ -348,12 +341,11 @@ void TextLine::ClearLexElems() {
   ClearContainer(&lex_elems_);
 }
 
-std::list<const LexElem*> TextLine::lex_elems(
-    const CharRange& char_range) const {
+std::list<const LexElem*> TextLine::lex_elems(const CharRange& char_range) const {
   std::list<const LexElem*> range_lex_elements;
 
   CharRange adjusted_char_range = char_range;
-  if (adjusted_char_range.end() == kInvalidCoord) {
+  if (adjusted_char_range.end() == kInvCoord) {
     adjusted_char_range.set_end(Length());
   }
 
@@ -461,10 +453,7 @@ bool TextLine::IsComment(Coord off) const {
   return (GetLex(off).major() == kLexComment);
 }
 
-void TextLine::AddQuoteElem(Quote* quote,
-                            size_t off,
-                            size_t len,
-                            QuotePart part) {
+void TextLine::AddQuoteElem(Quote* quote, size_t off, size_t len, QuotePart part) {
   QuoteElem qe = { quote, CoordCast(off), CoordCast(len), part };
   quote_elems_.push_back(qe);
 }
@@ -496,9 +485,7 @@ bool TextLine::EndQuote(Quote* quote) const {
   return false;
 }
 
-bool TextLine::GetQuoteElem(Coord off,
-                            const QuoteElem** start,
-                            const QuoteElem** end) const {
+bool TextLine::GetQuoteElem(Coord off, const QuoteElem** start, const QuoteElem** end) const {
   std::list<QuoteElem>::const_iterator it = quote_elems_.begin();
 
   bool found = false;

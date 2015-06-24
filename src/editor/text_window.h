@@ -105,13 +105,11 @@ public:
 
   void SetTextFont(const wxFont& font);
 
-  void set_line_padding(int line_padding) {
-    line_padding_ = line_padding;
-  }
-
   //----------------------------------------------------------------------------
 
-  TextBuffer* buffer() const { return buffer_; }
+  TextBuffer* buffer() const {
+    return buffer_;
+  }
 
   // Text buffer mediators:
   wxString buffer_file_name() const;
@@ -119,8 +117,7 @@ public:
   bool buffer_new_created() const;
 
   // Overriddens of BufferListener:
-  virtual void OnBufferLineChange(LineChangeType type,
-                                  const LineChangeData& data) override;
+  virtual void OnBufferLineChange(LineChangeType type, const LineChangeData& data) override;
   virtual void OnBufferChange(ChangeType type) override;
 
   //----------------------------------------------------------------------------
@@ -248,10 +245,7 @@ public:
   // \param line_step Caret point is changed by line step action.
   // \param scroll Scroll to the caret point if it's not in the client area.
   // \vspace Allow virtual space.
-  void UpdateCaretPoint(const TextPoint& point,
-                        bool line_step,
-                        bool scroll,
-                        bool vspace);
+  void UpdateCaretPoint(const TextPoint& point, bool line_step, bool scroll, bool vspace);
 
   //----------------------------------------------------------------------------
   // Selection
@@ -262,6 +256,11 @@ public:
   void ClearSelection(bool refresh = true);
 
 protected:
+  //----------------------------------------------------------------------------
+
+  // Initialize member variables.
+  void Init();
+
   //----------------------------------------------------------------------------
   // Mediators.
 
@@ -285,7 +284,8 @@ protected:
 
   void OnSize(wxSizeEvent& evt);
 
-  void OnSetFocus(wxFocusEvent& evt);
+  // NOTE: It seems that text window never gets focus.
+  //void OnSetFocus(wxFocusEvent& evt);
 
   //----------------------------------------------------------------------------
   // Action
@@ -294,10 +294,7 @@ protected:
   void UpdateAfterExec(Action* action);
   void UpdateAfterUndo(Action* action);
 
-  void InsertChar(const TextPoint& point,
-                  wchar_t c,
-                  TextDir dir,
-                  bool grouped);
+  void InsertChar(const TextPoint& point, wchar_t c, TextDir dir, bool grouped);
 
   //----------------------------------------------------------------------------
   // Delegated event handlers from TextArea.
@@ -401,8 +398,7 @@ protected:
   TextPoint CalcCaretPoint(const wxPoint& pos, bool vspace);
 
   // Get the client rect of text or line nr area from the given line range.
-  wxRect ClientRectFromLineRange(wxWindow* area,
-                                 const LineRange& line_range) const;
+  wxRect ClientRectFromLineRange(wxWindow* area, const LineRange& line_range) const;
 
   wxRect ClientRectAfterLine(wxWindow* area, Coord ln, bool included) const;
 
@@ -420,15 +416,13 @@ protected:
   void RefreshTextByLine(Coord ln, bool update = false);
 
   // Refresh a range of lines.
-  void RefreshTextByLineRange(const LineRange& line_range,
-                              bool update = false);
+  void RefreshTextByLineRange(const LineRange& line_range, bool update = false);
 
   // Refresh the line number area of a line.
   void RefreshLineNrByLine(Coord ln, bool update = false);
 
   // Refresh the line number area of a range of lines.
-  void RefreshLineNrByLineRange(const LineRange& line_range,
-                                bool update = false);
+  void RefreshLineNrByLineRange(const LineRange& line_range, bool update = false);
 
   //----------------------------------------------------------------------------
 
@@ -457,9 +451,7 @@ protected:
   // The caret point will be updated to the point_to.
   // And point_from might > point_to.
   // \param vspace Allow virtual space or not when update the caret point.
-  void SetSelection(const TextPoint& point_from,
-                    const TextPoint& point_to,
-                    bool vspace);
+  void SetSelection(const TextPoint& point_from, const TextPoint& point_to, bool vspace);
 
   // Extend the current selection to the given point.
   // The caret point will be updated to the point_to.
@@ -476,18 +468,13 @@ protected:
   //----------------------------------------------------------------------------
 
   // Get the width of the sub-line (substr(off1, off2 - off1)).
-  int GetLineWidth(const TextLine* line,
-                   Coord off1,
-                   Coord off2 = kInvalidCoord) const;
-  int GetLineWidth(Coord ln, Coord off1, Coord off2 = kInvalidCoord) const;
+  int GetLineWidth(const TextLine* line, Coord off1, Coord off2 = kInvCoord) const;
+  int GetLineWidth(Coord ln, Coord off1, Coord off2 = kInvCoord) const;
 
   // The char index might > line length if vspace is true.
   Coord GetCharIndex(Coord ln, int client_x, bool vspace) const;
 
-  Coord GetWrappedCharIndex(Coord ln,
-                            Coord wrapped_sub_ln,
-                            int client_x,
-                            bool vspace) const;
+  Coord GetWrappedCharIndex(Coord ln, Coord wrapped_sub_ln, int client_x, bool vspace) const;
 
   int GetUnscrolledX(int scrolled_x) const;
   int GetUnscrolledY(int scrolled_y) const;
@@ -522,9 +509,6 @@ protected:
 
   // View options copied from text buffer.
   ViewOptions view_options_;
-
-  // Spacing at the top and bottom of a line.
-  int line_padding_;
 
   Style* style_;
   SharedTheme theme_;

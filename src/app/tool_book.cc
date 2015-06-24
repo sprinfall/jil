@@ -6,9 +6,7 @@
 namespace jil {
 
 BEGIN_EVENT_TABLE(ToolBook, BookCtrl)
-EVT_MENU_RANGE(ID_MENU_BOOK_RCLICK_BEGIN, \
-               ID_MENU_BOOK_RCLICK_END - 1, \
-               ToolBook::OnRClickMenu)
+EVT_MENU(ID_MENU_FILE_CLOSE, ToolBook::OnMenuClose)
 END_EVENT_TABLE()
 
 ToolBook::ToolBook(const editor::SharedTheme& theme)
@@ -26,31 +24,17 @@ bool ToolBook::Create(wxWindow* parent, wxWindowID id) {
 ToolBook::~ToolBook() {
 }
 
-void ToolBook::HandleTabMouseLeftUp(wxMouseEvent& evt) {
-  TabList::iterator it = TabByPos(evt.GetPosition().x);
-  if (it != tabs_.end()) {
-    ActivatePage(it);
-  }
-}
-
 void ToolBook::HandleTabMouseRightUp(wxMouseEvent& evt) {
   TabList::iterator it = TabByPos(evt.GetPosition().x);
-  rclicked_tab_ = it != tabs_.end() ? *it : NULL;
-
-  if (rclicked_tab_ != NULL) {
+  if (it != tabs_.end()) {
     wxMenu menu;
-    menu.Append(ID_MENU_BOOK_RCLICK_CLOSE, kTrRClickClose);
+    menu.Append(ID_MENU_FILE_CLOSE, kTrRClickClose);
     PopupMenu(&menu, evt.GetPosition());
   }
 }
 
-void ToolBook::OnRClickMenu(wxCommandEvent& evt) {
-  if (evt.GetId() == ID_MENU_BOOK_RCLICK_CLOSE) {
-    BookPage* page = rclicked_tab_page();
-    if (page != NULL) {
-      RemovePage(page);
-    }
-  }
+void ToolBook::OnMenuClose(wxCommandEvent& evt) {
+  RemoveActivePage();
 }
 
 }  // namespace jil

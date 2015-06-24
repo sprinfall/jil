@@ -2,7 +2,6 @@
 #define JIL_EDITOR_BUFFER_LISTENER_H_
 #pragma once
 
-#include "boost/any.hpp"
 #include "editor/text_range.h"
 
 namespace jil {
@@ -11,8 +10,10 @@ namespace editor {
 enum LineChangeType {
   kLineUpdated    = 1,
   kLineAdded      = 2,
+
   // NOTE: The line number in the change data will be invalid.
   kLineDeleted    = 4,
+
   kLineRefresh    = 8,
 };
 
@@ -33,17 +34,6 @@ public:
   explicit LineChangeData(const LineRange& line_range)
       : LineRange(line_range) {
   }
-
-  // TODO: Not used. Remove?
-  const boost::any& extra() const { return extra_; }
-
-  LineChangeData& set_extra(const boost::any& extra) {
-    extra_ = extra;
-    return *this;
-  }
-
-private:
-  boost::any extra_;
 };
 
 // Implement this interface and attach to a text buffer to listen to
@@ -53,8 +43,7 @@ public:
   virtual ~BufferListener() {
   }
 
-  virtual void OnBufferLineChange(LineChangeType type,
-                                  const LineChangeData& data) = 0;
+  virtual void OnBufferLineChange(LineChangeType type, const LineChangeData& data) = 0;
 
   virtual void OnBufferChange(ChangeType type) = 0;
 };

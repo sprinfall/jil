@@ -8,8 +8,8 @@ bool operator<(const TextPoint& lhs, const TextPoint& rhs) {
     return true;
   }
   if (lhs.y == rhs.y) {
-    if (rhs.x == kInvalidCoord) {
-      return lhs.x != kInvalidCoord;
+    if (rhs.x == kInvCoord) {
+      return lhs.x != kInvCoord;
     } else {
       return lhs.x < rhs.x;
     }

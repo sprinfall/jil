@@ -163,9 +163,6 @@ private:
   // Load lex for the file type.
   void LoadLex(editor::FtPlugin* ft_plugin);
 
-  // Open the last opened files, activate the last active file.
-  void RestoreLastOpenedFiles(BookFrame* book_frame);
-
 private:
   wxSingleInstanceChecker* instance_checker_;
   wxServer* server_;

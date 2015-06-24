@@ -32,8 +32,8 @@ void FindResultPage::Page_Activate(bool active) {
   SetFocus();
 }
 
-bool FindResultPage::Page_Close() {
-  return Destroy();
+void FindResultPage::Page_Close() {
+  Destroy();
 }
 
 wxString FindResultPage::Page_Type() const {

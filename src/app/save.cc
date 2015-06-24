@@ -16,8 +16,7 @@ bool SaveBuffer(editor::TextBuffer* buffer, wxWindow* parent) {
 
   // Show error message.
 
-  wxString msg = wxString::Format(_("Failed to save file! (%s)"),
-                                  buffer->file_path_name());
+  wxString msg = wxString::Format(_("Failed to save file! (%s)"), buffer->file_path_name());
 
   // Detailed error information.
   if (error == editor::kIOError) {
@@ -28,7 +27,7 @@ bool SaveBuffer(editor::TextBuffer* buffer, wxWindow* parent) {
     msg += _("File encoding issue.");
   }
 
-  wxMessageBox(msg, kTrSaveFile, wxOK | wxCENTRE | wxICON_ERROR, parent);
+  wxMessageBox(msg, kTrSaveFile, wxOK|wxCENTRE|wxICON_ERROR, parent);
 
   return false;
 }
@@ -54,14 +53,10 @@ bool SaveBufferAs(editor::TextBuffer* buffer, wxWindow* parent) {
   if (wxFileExists(file_path)) {
     // Shouldn't be here since flag wxFD_OVERWRITE_PROMPT is used.
     // But just check it again.
-    wxString msg = wxString::Format(
-        _("The file already exists. Replace it? (%s)"),
-        file_path);
+    wxString msg = wxString::Format(_("The file already exists. Replace it? (%s)"), file_path);
 
-    long flags = wxOK | wxCANCEL | wxCANCEL_DEFAULT | wxICON_EXCLAMATION;
-    flags |= wxCENTRE;
-
-    int confirm_result = wxMessageBox(msg, kTrSaveFileAs, flags, parent);
+    long style = wxOK|wxCANCEL|wxCANCEL_DEFAULT|wxICON_EXCLAMATION|wxCENTRE;
+    int confirm_result = wxMessageBox(msg, kTrSaveFileAs, style, parent);
     if (confirm_result == wxCANCEL) {
       return false;
     }

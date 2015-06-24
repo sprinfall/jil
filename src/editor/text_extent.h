@@ -14,7 +14,7 @@ class wxMemoryDC;
 namespace jil {
 namespace editor {
 
-// Text extent used to calculate the text size.
+// Text extent is used to measure the text size.
 class TextExtent {
 public:
   TextExtent();
@@ -22,12 +22,15 @@ public:
 
   void SetFont(const wxFont& font);
 
-  wxCoord GetWidth(const std::wstring& text);
+  wxCoord char_width() const {
+    return char_width_;
+  }
+  wxCoord char_height() const {
+    return char_height_;
+  }
 
-  void GetExtent(const std::wstring& text,
-                 wxCoord* x,
-                 wxCoord* y,
-                 wxCoord* external_leading = NULL);
+  wxCoord GetWidth(const std::wstring& text);
+  wxCoord GetWidth(const std::wstring& text, Coord off, Coord len);
 
   // Binary search to get the char index with the given client x coordinate.
   // The return value might >= line length if vspace is true.
@@ -37,6 +40,15 @@ public:
                   bool vspace);
 
 private:
+  void UpdateCharSize();
+
+  void GetExtent(const std::wstring& text,
+                 Coord off,
+                 Coord len,
+                 wxCoord* x,
+                 wxCoord* y,
+                 wxCoord* external_leading = NULL);
+
   // Binary search to get the char index.
   // The range is STL-style: [begin, end).
   // Called by IndexChar().
@@ -49,7 +61,9 @@ private:
 
 private:
   wxMemoryDC* dc_;
-  int char_width_;
+
+  wxCoord char_width_;
+  wxCoord char_height_;
 };
 
 size_t TailorLabel(const wxDC& dc, const wxString& label, int max_width);

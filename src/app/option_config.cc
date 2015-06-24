@@ -191,7 +191,7 @@ void ParseAppOptions(const Setting& setting, Options* options) {
   }
 
   if (!options->fonts[kFont_Text].IsOk()) {
-    wxFont font = GetGlobalFont(GetDefaultFontSize(), GetDefaultFontName());
+    wxFont font = GetGlobalFont(kDefaultFontSize, GetDefaultFontName());
     options->fonts[kFont_Text] = font;
   }
 

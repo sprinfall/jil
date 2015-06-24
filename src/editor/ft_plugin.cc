@@ -211,9 +211,7 @@ size_t FtPlugin::MatchQuote(const std::wstring& str,
   return off;
 }
 
-size_t FtPlugin::MatchRegex(const std::wstring& str,
-                            size_t off,
-                            Lex* lex) const {
+size_t FtPlugin::MatchRegex(const std::wstring& str, size_t off, Lex* lex) const {
   for (size_t i = 0; i < regexs_.size(); ++i) {
     size_t matched_off = regexs_[i]->Match(str, off);
     if (matched_off > off) {
@@ -224,10 +222,7 @@ size_t FtPlugin::MatchRegex(const std::wstring& str,
   return off;
 }
 
-bool FtPlugin::MatchPrefix(const std::wstring& str,
-                           size_t off,
-                           size_t len,
-                           Lex* lex) {
+bool FtPlugin::MatchPrefix(const std::wstring& str, size_t off, size_t len, Lex* lex) {
   for (size_t i = 0; i < prefixes_.size(); ++i) {
     if (len == prefixes_[i].first.size() &&
         wcsncmp_(&str[off], prefixes_[i].first.c_str(), len) == 0) {

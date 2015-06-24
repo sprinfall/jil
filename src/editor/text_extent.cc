@@ -1,45 +1,43 @@
 #include "editor/text_extent.h"
 #include "wx/dcmemory.h"
 #include "wx/font.h"
+#ifdef __WXMSW__
+#include "wx/msw/private.h"
+#endif  // __WXMSW__
 #include "editor/tab.h"
 
 namespace jil {
 namespace editor {
 
 TextExtent::TextExtent()
-    : dc_(NULL), char_width_(0) {
+    : dc_(NULL), char_width_(0), char_height_(0) {
   wxBitmap bmp(1, 1);
   dc_ = new wxMemoryDC(bmp);
-
-  char_width_ = dc_->GetCharWidth();
+  UpdateCharSize();
 }
 
 TextExtent::~TextExtent() {
-  delete dc_;
+  wxDELETE(dc_);
 }
 
 void TextExtent::SetFont(const wxFont& font) {
   dc_->SetFont(font);
-  char_width_ = dc_->GetCharWidth();
+  UpdateCharSize();
 }
 
 wxCoord TextExtent::GetWidth(const std::wstring& text) {
   wxCoord x = 0;
-  GetExtent(text, &x, NULL);
+  GetExtent(text, 0, text.length(), &x, NULL);
   return x;
 }
 
-void TextExtent::GetExtent(const std::wstring& text,
-                           wxCoord* x,
-                           wxCoord* y,
-                           wxCoord* external_leading) {
-  dc_->GetTextExtent(wxString(text.c_str()), x, y, 0, external_leading);
+wxCoord TextExtent::GetWidth(const std::wstring& text, Coord off, Coord len) {
+  wxCoord x = 0;
+  GetExtent(text, off, len, &x, NULL);
+  return x;
 }
 
-Coord TextExtent::IndexChar(int tab_stop,
-                            const std::wstring& line,
-                            int client_x,
-                            bool vspace) {
+Coord TextExtent::IndexChar(int tab_stop, const std::wstring& line, int client_x, bool vspace) {
   if (line.empty()) {
     if (!vspace) {  // Virtual space not allowed.
       return 0;
@@ -52,12 +50,40 @@ Coord TextExtent::IndexChar(int tab_stop,
     return chars;
   }
 
-  return IndexCharRecursively(tab_stop,
-                              line,
-                              0,
-                              line.length(),
-                              client_x,
-                              vspace);
+  return IndexCharRecursively(tab_stop, line, 0, line.length(), client_x, vspace);
+}
+
+void TextExtent::UpdateCharSize() {
+  char_width_ = dc_->GetCharWidth();
+  char_height_ = dc_->GetCharHeight();
+}
+
+void TextExtent::GetExtent(const std::wstring& text,
+                           Coord off,
+                           Coord len,
+                           wxCoord* x,
+                           wxCoord* y,
+                           wxCoord* external_leading) {
+#ifdef __WXMSW__
+
+  // Use Win32 API to avoid converting std::wstring to wxString.
+  HDC hdc = (HDC)dc_->GetHDC();
+
+  SIZE size;
+  ::GetTextExtentPoint32W(hdc, text.c_str() + off, len, &size);
+
+  if (x != NULL) {
+    *x = size.cx;
+  }
+  if (y != NULL) {
+    *y = size.cy;
+  }
+
+#else
+
+  dc_->GetTextExtent(wxString(text.c_str() + off, len), x, y, 0, external_leading);
+
+#endif  // __WXMSW__
 }
 
 Coord TextExtent::IndexCharRecursively(int tab_stop,
@@ -72,6 +98,7 @@ Coord TextExtent::IndexCharRecursively(int tab_stop,
 
   Coord m = begin + (end - begin) / 2;
 
+  // TODO: Avoid copy
   // Take unexpanded tab into account.
   std::wstring line_left = line.substr(0, m);
   TabbedLineFast(tab_stop, &line_left);

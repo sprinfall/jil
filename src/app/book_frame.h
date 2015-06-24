@@ -77,6 +77,9 @@ public:
   // \param silent Don't popup error message box on failure.
   void OpenFiles(const wxArrayString& file_names, bool silent);
 
+  // Restore last opened files from session.
+  void RestoreOpenedFiles();
+
   // File menu operations.
   void FileNew();
 
@@ -86,12 +89,22 @@ public:
 
   void FileOpen();
 
+  // Comfirm to save the modified text page.
+  // Return wxYES, wxNO or wxCANCEL.
+  int ConfirmSave(TextPage* text_page);
+
+  // Save a text buffer.
+  bool Save(editor::TextBuffer* buffer);
+
   void FileClose();
   void FileCloseAll();
+  void FileCloseAllButThis();
 
   void FileSave();
   void FileSaveAs();
   void FileSaveAll();
+  void FileCopyPath();
+  void FileOpenFolder();
 
   size_t PageCount() const;
 
@@ -161,9 +174,6 @@ protected:
   void OnViewUpdateUI(wxUpdateUIEvent& evt);
 
   void OnClose(wxCloseEvent& evt);
-
-  // BookCtrl tab right-click menu event handler.
-  void OnBookRClickMenu(wxCommandEvent& evt);
 
   // Text page(s) added or removed.
   void OnTextBookPageChange(wxCommandEvent& evt);
@@ -291,7 +301,8 @@ private:
 
   TextPage* TextPageByFileName(const wxFileName& fn_object) const;
 
-  void RemovePage(const TextPage* page);
+  TextPage* TextPageByBufferId(size_t buffer_id) const;
+
   void RemoveAllPages(const TextPage* except_page = NULL);
 
   void SwitchStackPage(bool forward);

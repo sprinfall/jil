@@ -24,12 +24,9 @@ class TextBook : public BookCtrl {
   std::vector<TextPage*> StackTextPages() const;
 
  protected:
-  virtual void HandleTabMouseLeftDown(wxMouseEvent& evt) override;
   virtual void HandleTabMouseLeftUp(wxMouseEvent& evt) override;
   virtual void HandleTabMouseRightUp(wxMouseEvent& evt) override;
   virtual void HandleTabMouseLeftDClick(wxMouseEvent& evt) override;
-
-  void OnRClickMenu(wxCommandEvent& evt);
 
   // Handle text window event to update and refresh tab area.
   void OnTextWindowEvent(wxCommandEvent& evt);

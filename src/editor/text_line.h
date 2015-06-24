@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "boost/any.hpp"
+
 #include "editor/compile_config.h"
 #include "editor/text_point.h"
 #include "editor/text_range.h"
@@ -38,12 +40,20 @@ public:
     return data_;
   }
 
+  const boost::any& extra_data() const {
+    return extra_data_;
+  }
+
+  void set_extra_data(const boost::any& extra_data) {
+    extra_data_ = extra_data;
+  }
+
   Coord Length() const {
     return CoordCast(data_.length());
   }
 
   // Line length with tabs expanded.
-  Coord TabbedLength(int tab_stop, Coord count = kInvalidCoord) const;
+  Coord TabbedLength(int tab_stop, Coord count = kInvCoord) const;
 
   wchar_t Char(Coord off) const;
 
@@ -56,8 +66,8 @@ public:
   // Return line length on failure.
   Coord FirstNonSpaceChar(Coord off = 0) const;
 
-  // Return kInvalidCoord on failure.
-  Coord LastNonSpaceChar(Coord off = kInvalidCoord) const;
+  // Return kInvCoord on failure.
+  Coord LastNonSpaceChar(Coord off = kInvCoord) const;
 
   // Return the indent as spaces.
   // Tab stop is used to expand the tabs, if any.
@@ -77,15 +87,10 @@ public:
   bool StartWith(wchar_t c, bool ignore_spaces, Coord* off = NULL) const;
 
   // NOTE: ignore_spaces will be ignored if str[0] is an empty space.
-  bool StartWith(const std::wstring& str,
-                 bool ignore_spaces,
-                 Coord* off = NULL) const;
+  bool StartWith(const std::wstring& str, bool ignore_spaces, Coord* off = NULL) const;
 
   // NOTE: ignore_spaces will be ignored if c is an empty space.
-  bool EndWith(wchar_t c,
-               bool ignore_comments,
-               bool ignore_spaces,
-               Coord* off = NULL) const;
+  bool EndWith(wchar_t c, bool ignore_comments, bool ignore_spaces, Coord* off = NULL) const;
 
   // NOTE: ignore_spaces will be ignored if str[str.size()-1] is an empty space.
   bool EndWith(const std::wstring& str,
@@ -115,7 +120,6 @@ public:
     AddLexElem(lex_elem.off, lex_elem.len, lex_elem.lex);
   }
 
-  // TODO: Change size_t to Coord.
   void AddLexElem(size_t off, size_t len, Lex lex);
 
   void ClearLexElems();
@@ -154,26 +158,10 @@ public:
     return quote_elems_;
   }
 
-  bool GetQuoteElem(Coord off,
-                    const QuoteElem** start,
-                    const QuoteElem** end) const;
+  bool GetQuoteElem(Coord off, const QuoteElem** start, const QuoteElem** end) const;
 
   const QuoteElem* FirstUnstartedQuoteEnd() const;
   const QuoteElem* LastUnendedQuoteStart() const;
-
-  //----------------------------------------------------------------------------
-
-  void AddFindRange(const CharRange& find_range) {
-    find_ranges_.push_back(find_range);
-  }
-
-  void ClearFindRanges() {
-    find_ranges_.clear();
-  }
-
-  const std::list<CharRange>& find_ranges() const {
-    return find_ranges_;
-  }
 
 private:
   size_t id_;
@@ -183,8 +171,10 @@ private:
 
   std::list<QuoteElem> quote_elems_;
 
-  // Find match result.
-  std::list<CharRange> find_ranges_;
+  // NOTE:
+  // wxAny takes 24 bytes. So boost::any is prefered because it takes only
+  // the same bytes as a pointer.
+  boost::any extra_data_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -205,9 +195,7 @@ public:
     strs_.push_back(str2);
   }
 
-  LineStartWith(const std::wstring& str1,
-                const std::wstring& str2,
-                const std::wstring& str3) {
+  LineStartWith(const std::wstring& str1, const std::wstring& str2, const std::wstring& str3) {
     strs_.push_back(str1);
     strs_.push_back(str2);
     strs_.push_back(str3);

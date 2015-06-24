@@ -10,7 +10,6 @@ namespace editor {
 Action::Action(TextBuffer* buffer, const TextPoint& point)
     : saved_(false)
     , buffer_(buffer)
-    , timestamp_(wxDateTime::UNow())
     , point_(point)
     , delta_point_(0, 0)
     , caret_point_(point)
@@ -22,7 +21,6 @@ Action::Action(TextBuffer* buffer, const TextPoint& point)
 Action::Action(const Action& rhs)
     : saved_(false)
     , buffer_(rhs.buffer_)
-    , timestamp_(wxDateTime::UNow())
     , point_(rhs.point_)
     , delta_point_(0, 0)
     , caret_point_(rhs.caret_point_)
@@ -220,7 +218,6 @@ bool DeleteAction::Merge(DeleteAction* next_delete_action) {
   if (merged) {
     count_ += next_delete_action->count_;
     delta_point_ += next_delete_action->delta_point_;
-    timestamp_ = next_delete_action->timestamp_;
   }
 
   return merged;
@@ -921,14 +918,14 @@ const LexComment& CommentAction::GetBlockComment() const {
 }
 
 Coord CommentAction::GetMinIndent(const LineRange& line_range) const {
-  Coord min_indent = kInvalidCoord;
+  Coord min_indent = kInvCoord;
   Coord indent = 0;
 
   for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
     if (!buffer_->IsLineEmpty(ln, true)) {
       indent = buffer_->GetIndentStrLength(ln);
 
-      if (min_indent == kInvalidCoord) {
+      if (min_indent == kInvCoord) {
         min_indent = indent;
       } else if (min_indent > indent) {
         min_indent = indent;
@@ -948,7 +945,7 @@ UncommentAction::UncommentAction(TextBuffer* buffer,
                                  bool selected)
     : Action(buffer, TextPoint())
     , RangeAction(range, dir, rect, selected)
-    , refresh_line_range_(kInvalidCoord, 0)
+    , refresh_line_range_(kInvCoord, 0)
     , point_begin_delta_(0, 0)
     , point_end_delta_(0, 0) {
 }
@@ -957,7 +954,7 @@ UncommentAction::~UncommentAction() {
 }
 
 void UncommentAction::Exec() {
-  refresh_line_range_.Set(kInvalidCoord, 0);
+  refresh_line_range_.Set(kInvCoord, 0);
   change_infos_.clear();
 
   // Copy the range to avoid changing it.
@@ -1118,7 +1115,7 @@ void UncommentAction::Delete(const TextPoint& point, Coord count) {
   }
 
   // Update the refresh line range.
-  if (refresh_line_range_.first() == kInvalidCoord ||
+  if (refresh_line_range_.first() == kInvCoord ||
       refresh_line_range_.first() > point.y) {
     refresh_line_range_.set_first(point.y);
   }
