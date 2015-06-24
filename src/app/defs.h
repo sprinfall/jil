@@ -3,6 +3,7 @@
 #pragma once
 
 #include "wx/defs.h"
+#include "wx/string.h"
 
 #define wxLR (wxLEFT|wxRIGHT)
 #define wxTB (wxTOP|wxBOTTOM)
@@ -25,9 +26,13 @@ enum FindLocation {
   kLocationCount,
 };
 
+const int kMaxFileTypes = 256;
+
+// Prefix of internal file type ID.
+extern const wxString kInternalFtIdPrefix;
+
 // Internal file type IDs.
-// Format: "jil-xxx_yyy_zzz"
-const char* const kFtId_FindResult = "jil-find_result";
+extern const wxString kFtId_FindResult;
 
 // Top level theme IDs.
 enum ThemeId {

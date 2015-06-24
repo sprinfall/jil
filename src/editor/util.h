@@ -18,10 +18,7 @@ inline bool IsSpace(wchar_t c) {
 }
 
 // Returns true if any str.substr(off, n) == sub.
-bool SubStringEquals(const std::wstring& str,
-                     size_t off,
-                     const std::wstring& sub,
-                     WcsNCmp cmp = wcsncmp);
+bool SubStringEquals(const std::wstring& str, size_t off, const std::wstring& sub, WcsNCmp cmp = wcsncmp);
 
 // Count char c after index i.
 // Example: CountCharAfter(L"abc***d", 2, L'*') returns 3.
@@ -56,7 +53,9 @@ public:
   void Start();
   void End();
 
-  const wxString& result_msg() const { return msg_; }
+  const wxString& result_msg() const {
+    return msg_;
+  }
 
 private:
   wxString msg_;

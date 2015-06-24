@@ -40,7 +40,8 @@
 #define kTrMenuFile           _("&File")
 #define kTrMenuEdit           _("&Edit")
 #define kTrMenuView           _("&View")
-#define kTrMenuTools          _("&Tools")
+//#define kTrMenuTools          _("&Tools")
+#define kTrMenuPrefs          _("&Preferences")
 #define kTrMenuHelp           _("&Help")
 
 #define kTrFileNew            _("&New")

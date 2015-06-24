@@ -16,6 +16,10 @@ enum FontArea {
   kFont_Count,
 };
 
+// Line padding range.
+const int kMinLinePadding = 1;
+const int kMaxLinePadding = 9;
+
 // Application options.
 class Options {
 public:

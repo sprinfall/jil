@@ -5,21 +5,22 @@
 #include <vector>
 #include <list>
 
-#include "wx/sizer.h"
-#include "wx/splitter.h"
-#include "wx/image.h"
-#include "wx/menu.h"
-#include "wx/toolbar.h"
-#include "wx/filedlg.h"
-#include "wx/msgdlg.h"
-#include "wx/stdpaths.h"
-#include "wx/dir.h"
-#include "wx/dnd.h"
-#include "wx/utils.h"
 #include "wx/clipbrd.h"
 #include "wx/dataobj.h"
+#include "wx/dir.h"
+#include "wx/dnd.h"
+#include "wx/filedlg.h"
+#include "wx/image.h"
 #include "wx/intl.h"
 #include "wx/log.h"
+#include "wx/menu.h"
+#include "wx/msgdlg.h"
+#include "wx/preferences.h"
+#include "wx/sizer.h"
+#include "wx/splitter.h"
+#include "wx/toolbar.h"
+#include "wx/stdpaths.h"
+#include "wx/utils.h"
 
 #include "base/string_util.h"
 
@@ -42,6 +43,7 @@
 #include "app/find_window.h"
 #include "app/i18n_strings.h"
 #include "app/navigation_dialog.h"
+#include "app/preferences.h"
 #include "app/save.h"
 #include "app/session.h"
 #include "app/skin.h"
@@ -92,21 +94,20 @@ EVT_MENU_RANGE(ID_MENU_FILE_BEGIN, ID_MENU_FILE_END - 1, BookFrame::OnMenuFile)
 EVT_MENU_RANGE(ID_MENU_FILE_RECENT_FILE0, ID_MENU_FILE_RECENT_FILE9, BookFrame::OnMenuFileRecentFile)
 
 EVT_MENU(wxID_ABOUT, BookFrame::OnAbout)
-EVT_MENU(wxID_PREFERENCES, BookFrame::OnPreferences)
 EVT_MENU(wxID_EXIT, BookFrame::OnQuit)
 
 EVT_MENU_RANGE(ID_MENU_EDIT_BEGIN, ID_MENU_EDIT_END - 1, BookFrame::OnMenuEdit)
-
 EVT_MENU_RANGE(ID_MENU_VIEW_BEGIN, ID_MENU_VIEW_END - 1, BookFrame::OnMenuView)
-
 EVT_MENU_RANGE(ID_MENU_TOOLS_BEGIN, ID_MENU_TOOLS_END - 1, BookFrame::OnMenuTools)
+
+EVT_MENU(wxID_PREFERENCES, BookFrame::OnGlobalPreferences)
+EVT_MENU_RANGE(ID_MENU_PREFS_EDITOR_0, ID_MENU_PREFS_EDITOR_LAST, BookFrame::OnEditorPreferences)
+
 EVT_MENU_RANGE(ID_MENU_HELP_BEGIN, ID_MENU_HELP_END - 1, BookFrame::OnMenuHelp)
 
 // Update UI
 EVT_UPDATE_UI_RANGE(ID_MENU_FILE_BEGIN, ID_MENU_FILE_END - 1, BookFrame::OnFileUpdateUI)
-
 EVT_UPDATE_UI_RANGE(ID_MENU_EDIT_BEGIN, ID_MENU_EDIT_END - 1, BookFrame::OnEditUpdateUI)
-
 EVT_UPDATE_UI_RANGE(ID_MENU_VIEW_BEGIN, ID_MENU_VIEW_END - 1, BookFrame::OnViewUpdateUI)
 
 EVT_CLOSE(BookFrame::OnClose)
@@ -128,8 +129,9 @@ EVT_FIND_WINDOW(ID_FIND_WINDOW, BookFrame::OnFindWindowEvent)
 
 END_EVENT_TABLE()
 
-BookFrame::BookFrame(Options* options, Session* session)
+BookFrame::BookFrame(Options* options, editor::Options* editor_options, Session* session)
     : options_(options)
+    , editor_options_(editor_options)
     , session_(session)
     , splitter_(NULL)
     , tool_book_(NULL)
@@ -613,8 +615,16 @@ void BookFrame::ShowAboutWindow() {
   wxMessageBox(kTrComingSoon);
 }
 
-void BookFrame::OnPreferences(wxCommandEvent& WXUNUSED(evt)) {
+void BookFrame::OnGlobalPreferences(wxCommandEvent& WXUNUSED(evt)) {
   wxGetApp().ShowPreferencesEditor(this);
+}
+
+void BookFrame::OnEditorPreferences(wxCommandEvent& WXUNUSED(evt)) {
+  wxPreferencesEditor pref_editor(kTrOptions);
+  pref_editor.AddPage(new pref::Editor_GeneralPage(editor_options_));
+
+  // TODO: ShowModal
+  pref_editor.Show(this);
 }
 
 void BookFrame::OnQuit(wxCommandEvent& WXUNUSED(evt)) {
@@ -1247,10 +1257,8 @@ FindResultPage* BookFrame::GetFindResultPage() {
   FileType ft(kFtId_FindResult, wxEmptyString);
   FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(ft);
 
-  TextBuffer* buffer = TextBuffer::Create(ft_plugin,
-                                          options_->file_encoding);
-  buffer->set_file_name_object(
-      wxFileName::FileName(kTrPageFindResult + wxT(".txt")));
+  TextBuffer* buffer = TextBuffer::Create(ft_plugin, options_->file_encoding);
+  buffer->set_file_name_object(wxFileName::FileName(kTrPageFindResult + wxT(".txt")));
 
   FindResultPage* fr_page = new FindResultPage(buffer);
 
@@ -1797,23 +1805,28 @@ void BookFrame::LoadMenus() {
   menu_bar->Append(view_menu, kTrMenuView);
 
   //------------------------------------
-  // Tools
+  // Preferences
 
-  wxMenu* tools_menu = new wxMenu;
+  wxMenu* prefs_menu = new wxMenu;
 
 #if !defined (__WXOSX__)
 
+  AppendMenuItem(prefs_menu, wxID_PREFERENCES, _("Global"));
+  
+  wxMenu* editor_menu = new wxMenu;
+  prefs_menu->AppendSubMenu(editor_menu, _("Syntax Specific"));
+  InitFileTypeMenu(editor_menu);
+
+  prefs_menu->AppendSeparator();
+
   // Theme
   wxMenu* theme_menu = new wxMenu;
-  tools_menu->AppendSubMenu(theme_menu, kTrToolsTheme);
+  prefs_menu->AppendSubMenu(theme_menu, kTrToolsTheme);
   InitThemeMenu(theme_menu);
-
-  // Preferences
-  tools_menu->Append(wxID_PREFERENCES, kTrToolsOptions);
 
 #endif  // !defined (__WXOSX__)
 
-  menu_bar->Append(tools_menu, kTrMenuTools);
+  menu_bar->Append(prefs_menu, kTrMenuPrefs);
 
   //------------------------------------
   // Help
@@ -1936,6 +1949,14 @@ void BookFrame::InitThemeMenu(wxMenu* theme_menu) {
     if (id > ID_MENU_THEME_LAST) {
       break;
     }
+  }
+}
+
+void BookFrame::InitFileTypeMenu(wxMenu* ft_menu) {
+  const std::list<editor::FileType*>& file_types = wxGetApp().file_types();
+  std::list<editor::FileType*>::const_iterator it = file_types.begin();
+  for (int i = 0; it != file_types.end() && i < kMaxFileTypes; ++it, ++i) {
+    AppendMenuItem(ft_menu, ID_MENU_PREFS_EDITOR_0 + i, (*it)->name);
   }
 }
 

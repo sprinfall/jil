@@ -41,8 +41,7 @@
 #include "app/i18n_strings.h"
 #include "app/lex_config.h"
 #include "app/option_config.h"
-#include "app/pref/editor_page.h"
-#include "app/pref/general_page.h"
+#include "app/preferences.h"
 #include "app/status_fields_config.h"
 #include "app/theme_config.h"
 #include "app/util.h"
@@ -266,6 +265,7 @@ App::App()
 // If OnInit() returns false, OnExit() won't be called.
 App::~App() {
   editor::ClearContainer(&file_types_);
+  editor::ClearContainer(&internal_file_types_);
   editor::ClearContainer(&ft_plugins_);
 
   wxDELETE(binding_);
@@ -366,7 +366,7 @@ bool App::OnInit() {
   session_.Load(user_data_dir + kSessionFile);
 
   // Create book frame.
-  BookFrame* book_frame = new BookFrame(&options_, &session_);
+  BookFrame* book_frame = new BookFrame(&options_, &editor_options_, &session_);
   book_frame->set_theme(theme_);
   book_frame->set_style(style_);
   book_frame->set_binding(binding_);
@@ -453,8 +453,8 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
 void App::ShowPreferencesEditor(wxWindow* parent) {
   if (!pref_editor_) {
     pref_editor_.reset(new wxPreferencesEditor(kTrOptions));
-    pref_editor_->AddPage(new pref::GeneralPage(&options_));
-    pref_editor_->AddPage(new pref::EditorPage());
+    pref_editor_->AddPage(new pref::Global_GeneralPage(&options_));
+    pref_editor_->AddPage(new pref::Global_FontPage(&options_));
   }
 
   pref_editor_->Show(parent);
@@ -832,14 +832,16 @@ bool App::LoadFileTypes() {
     std::string ext = setting.GetString("ext");
 
     FileType* ft = new FileType(id, name);
-    file_types_.push_back(ft);
+
+    if (id.StartsWith(kInternalFtIdPrefix)) {
+      internal_file_types_.push_back(ft);
+    } else {
+      file_types_.push_back(ft);
+    }
 
     // Map ext to file type.
     std::vector<std::string> ext_array;
-    boost::split(ext_array,
-                 ext,
-                 boost::is_any_of(","),
-                 boost::token_compress_on);
+    boost::split(ext_array, ext, boost::is_any_of(","), boost::token_compress_on);
 
     for (size_t i = 0; i < ext_array.size(); ++i) {
       wxString ext_key = wxString::FromAscii(ext_array[i].c_str());

@@ -190,6 +190,15 @@ struct Encoding {
   wxString display_name;
 };
 
+// NOTE: Name is the unique identifier.
+inline bool operator==(const Encoding& lhs, const Encoding& rhs) {
+  return (lhs.name == rhs.name);
+}
+
+inline bool operator!=(const Encoding& lhs, const Encoding& rhs) {
+  return (lhs.name != rhs.name);
+}
+
 // BOM bytes.
 const char* const UTF_8_BOM_BYTES = "\xEF\xBB\xBF";
 const char* const UTF_16BE_BOM_BYTES = "\xFE\xFF";

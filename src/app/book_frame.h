@@ -20,6 +20,7 @@ namespace jil {
 namespace editor {
 class Binding;
 class FtPlugin;
+class Options;
 class StatusBar;
 class Style;
 class TextBuffer;
@@ -49,7 +50,8 @@ public:
     COLOR_COUNT,
   };
 
-  BookFrame(Options* options, Session* session);
+public:
+  BookFrame(Options* options, editor::Options* editor_options, Session* session);
   bool Create(wxWindow* parent, wxWindowID id, const wxString& title);
   virtual ~BookFrame();
 
@@ -138,7 +140,8 @@ protected:
   void OnAbout(wxCommandEvent& evt);
   void ShowAboutWindow();
 
-  void OnPreferences(wxCommandEvent& evt);
+  void OnGlobalPreferences(wxCommandEvent& evt);
+  void OnEditorPreferences(wxCommandEvent& evt);
 
   void OnQuit(wxCommandEvent& evt);
 
@@ -275,6 +278,8 @@ private:
   // Add installed themes to the theme menu.
   void InitThemeMenu(wxMenu* theme_menu);
 
+  void InitFileTypeMenu(wxMenu* ft_menu);
+
   // Clear and recreate the items for Recent Files menu.
   void UpdateRecentFilesMenu();
 
@@ -315,6 +320,8 @@ private:
 
 private:
   Options* options_;
+  editor::Options* editor_options_;
+
   Session* session_;
 
   // Splitter splits sub windows.

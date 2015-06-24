@@ -5,6 +5,7 @@
 // Window ID, menu ID, etc.
 
 #include "wx/defs.h"
+#include "app/defs.h"
 
 namespace jil {
 
@@ -91,6 +92,10 @@ enum {
   // Tools menu
   ID_MENU_TOOLS_BEGIN,
   ID_MENU_TOOLS_END,
+
+  // Preferences menu
+  ID_MENU_PREFS_EDITOR_0,
+  ID_MENU_PREFS_EDITOR_LAST = ID_MENU_PREFS_EDITOR_0 + kMaxFileTypes,
 
   // Help menu
   ID_MENU_HELP_BEGIN,

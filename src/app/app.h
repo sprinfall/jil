@@ -64,6 +64,10 @@ public:
     return theme_names_;
   }
 
+  const std::list<editor::FileType*>& file_types() const {
+    return file_types_;
+  }
+
   const editor::FileType& FileTypeFromExt(const wxString& ext) const;
 
   // Get ft plugin object.
@@ -188,6 +192,10 @@ private:
 
   std::list<editor::FileType*> file_types_;
 
+  // The ID of internal file types always starts with "jil-".
+  // Internal file types won't be displayed to the end user.
+  std::list<editor::FileType*> internal_file_types_;
+
   // Example: wxT("cpp") -> { "cpp", wxT("C++") }
   typedef std::map<wxString, editor::FileType*> ExtFtMap;
   ExtFtMap ext_ft_map_;
@@ -199,7 +207,7 @@ private:
   // Status fields for status line.
   std::vector<editor::StatusBar::FieldInfo> status_fields_;
 
-  // For options dialog.
+  // For preferences dialog.
   // NOTE: Both OS X and GTK+ preferences windows are modeless unlike
   // Windows options dialogs that are typically modal.
   wxScopedPtr<wxPreferencesEditor> pref_editor_;

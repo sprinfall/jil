@@ -5,7 +5,7 @@ endif()
 # NOTE:
 # You have to build libconfig and install to home directory (~/include and ~/lib).
 # I don't add a cmake project for Mac because I don't know how to do it.
-# 
+#
 if(APPLE)
     set(LIBCONFIG_INCLUDE_DIR $ENV{HOME}/include)
     set(LIBCONFIG_LIBRARY_DIR $ENV{HOME}/lib)
@@ -26,6 +26,7 @@ set(SRCS
     compile_config.h
     config.cc
     config.h
+    defs.cc
     defs.h
     find_result_page.cc
     find_result_page.h
@@ -46,19 +47,8 @@ set(SRCS
     option.h
     option_config.cc
     option_config.h
-    pref/advanced_editor_config_dialog.cc
-    pref/advanced_editor_config_dialog.h
-    pref/defs.h
-    pref/editor_config_panel.cc
-    pref/editor_config_panel.h
-    pref/editor_page.cc
-    pref/editor_page.h
-    pref/font_config_dialog.cc
-    pref/font_config_dialog.h
-    pref/general_config_panel.cc
-    pref/general_config_panel.h
-    pref/general_page.cc
-    pref/general_page.h
+    preferences.cc
+    preferences.h
     save.cc
     save.h
     separator.h

@@ -7,10 +7,7 @@ namespace editor {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool SubStringEquals(const std::wstring& str,
-                     size_t off,
-                     const std::wstring& sub,
-                     WcsNCmp cmp) {
+bool SubStringEquals(const std::wstring& str, size_t off, const std::wstring& sub, WcsNCmp cmp) {
   if (off + sub.length() <= str.length()) {
     if (cmp(sub.c_str(), &str[off], sub.length()) == 0) {
       return true;
@@ -54,11 +51,7 @@ void TimeIt::End() {
 }
 
 wxString RectString(const wxRect& rect) {
-  return wxString::Format(wxT("%d, %d, %d, %d"),
-                          rect.x,
-                          rect.y,
-                          rect.width,
-                          rect.height);
+  return wxString::Format(wxT("%d, %d, %d, %d"), rect.x, rect.y, rect.width, rect.height);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
