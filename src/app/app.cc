@@ -732,14 +732,13 @@ void App::InitCommands() {
   AddVoidCmd("save_all", FileSaveAll, ID_MENU_FILE_SAVE_ALL);
   AddVoidCmd("copy_path", FileCopyPath, ID_MENU_FILE_COPY_PATH);
   AddVoidCmd("open_folder", FileOpenFolder, ID_MENU_FILE_OPEN_FOLDER);
+  AddVoidCmd("next_page", NextPage, ID_MENU_FILE_NEXT_PAGE);
+  AddVoidCmd("prev_page", PrevPage, ID_MENU_FILE_PREV_PAGE);
+  AddVoidCmd("next_stack_page", NextStackPage, ID_MENU_FILE_NEXT_STACK_PAGE);
+  AddVoidCmd("prev_stack_page", PrevStackPage, ID_MENU_FILE_PREV_STACK_PAGE);
 
   AddVoidCmd("show_find", ShowFind, ID_MENU_EDIT_FIND);
   AddVoidCmd("show_replace", ShowReplace, ID_MENU_EDIT_REPLACE);
-
-  AddVoidCmd("next_page", NextPage, 0);
-  AddVoidCmd("prev_page", PrevPage, 0);
-  AddVoidCmd("next_stack_page", NextStackPage, 0);
-  AddVoidCmd("prev_stack_page", PrevStackPage, 0);
 
   AddVoidCmd("wrap", Wrap, ID_MENU_VIEW_WRAP);
   AddVoidCmd("show_number", ShowNumber, ID_MENU_VIEW_SHOW_NUMBER);

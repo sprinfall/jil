@@ -48,7 +48,7 @@ void ClearContainer(C* c) {
 //   SomeLogFunc(time_it.result_msg());
 class TimeIt {
 public:
-  TimeIt(const wxChar* msg = wxT(""));
+  TimeIt(const wxString& msg = wxEmptyString);
 
   void Start();
   void End();

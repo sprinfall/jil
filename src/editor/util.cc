@@ -29,8 +29,7 @@ Coord CountCharAfter(const std::wstring& str, Coord i, wchar_t c) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-TimeIt::TimeIt(const wxChar* msg)
-    : msg_(msg) {
+TimeIt::TimeIt(const wxString& msg) : msg_(msg) {
 }
 
 void TimeIt::Start() {
@@ -45,9 +44,8 @@ void TimeIt::End() {
 
   wxTimeSpan ts = end_dt.Subtract(start_dt_);
 
-  msg_ += wxT(" - ");
-  msg_ += ts.GetSeconds().ToString() + wxT("s");
-  msg_ += ts.GetMilliseconds().ToString() + wxT("ms");
+  msg_ += wxT(" (");
+  msg_ += ts.GetMilliseconds().ToString() + wxT("ms)");
 }
 
 wxString RectString(const wxRect& rect) {
