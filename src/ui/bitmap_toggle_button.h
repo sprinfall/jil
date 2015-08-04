@@ -19,7 +19,7 @@ namespace ui {
 class BitmapToggleButton : public wxControl {
   DECLARE_EVENT_TABLE()
 
- public:
+public:
   BitmapToggleButton(wxWindow* parent, wxWindowID id);
   virtual ~BitmapToggleButton();
 
@@ -56,7 +56,7 @@ class BitmapToggleButton : public wxControl {
     disabled_toggle_bitmap_ = disabled_toggle_bitmap;
   }
 
- protected:
+protected:
   virtual wxSize DoGetBestSize() const override;
 
   void OnPaint(wxPaintEvent& evt);
@@ -64,7 +64,7 @@ class BitmapToggleButton : public wxControl {
   void OnLeftDown(wxMouseEvent& evt);
   void OnLeftUp(wxMouseEvent& evt);
 
- private:
+private:
   bool accept_focus_;
   bool toggle_;
 

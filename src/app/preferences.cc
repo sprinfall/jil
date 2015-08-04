@@ -13,6 +13,8 @@
 #include "wx/statbox.h"
 #include "wx/stattext.h"
 
+#include "ui/static_box.h"
+
 #include "editor/defs.h"
 
 #include "app/defs.h"
@@ -407,77 +409,76 @@ protected:
   void CreateControls() {
     wxSizer* top_vsizer = new wxBoxSizer(wxVERTICAL);
 
-    //--------------------------------------------------------------------------
-    // Display
-
-    {
-      wxStaticBox* box = new wxStaticBox(this, wxID_ANY, _("Display"));
-      wxSizer* box_vsizer = new wxStaticBoxSizer(box, wxVERTICAL);
-
-      show_hscrollbar_check_box_ = new wxCheckBox(box, wxID_ANY, _("Show horizontal scrollbar"));
-      box_vsizer->Add(show_hscrollbar_check_box_, wxSizerFlags().Border(wxLTR));
-
-      show_number_check_box_ = new wxCheckBox(box, wxID_ANY, _("Show line numbers"));
-      box_vsizer->Add(show_number_check_box_, wxSizerFlags().Border(wxLTR));
-
-      show_space_check_box_ = new wxCheckBox(box, wxID_ANY, _("Show white spaces"));
-      box_vsizer->Add(show_space_check_box_, wxSizerFlags().Border(wxLTR));
-
-      wrap_check_box_ = new wxCheckBox(box, wxID_ANY, _("Wrap line"));
-      box_vsizer->Add(wrap_check_box_, wxSizerFlags().Border(wxALL));
-
-      top_vsizer->Add(box_vsizer, wxSizerFlags().Expand().Border(wxLR));
-    }
-
-    //--------------------------------------------------------------------------
-    // Rulers
-
-    wxStaticText* rulers_label = new wxStaticText(this, wxID_ANY, _("Rulers:"));
-    rulers_text_ctrl_ = new wxTextCtrl(this, wxID_ANY, wxEmptyString);
-
-    wxSizer* rulers_hsizer = new wxBoxSizer(wxHORIZONTAL);
-    rulers_hsizer->Add(rulers_label, wxSizerFlags().Center());
-    rulers_hsizer->AddStretchSpacer(1);
-    rulers_hsizer->Add(rulers_text_ctrl_, wxSizerFlags().Center().Border(wxLEFT));
-    top_vsizer->Add(rulers_hsizer, wxSizerFlags().Expand().Border(wxALL));
-
-    //--------------------------------------------------------------------------
-    // Delimiters
-
-    wxStaticText* delimiters_label = new wxStaticText(this, wxID_ANY, _("Delimiters:"));
-    wxTextCtrl* delimiters_text_ctrl_ = new wxTextCtrl(this, wxID_ANY, wxEmptyString);
-    {
-      wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-      hsizer->Add(delimiters_label, wxSizerFlags().Center());
-      hsizer->Add(delimiters_text_ctrl_, wxSizerFlags(1).Center().Border(wxLEFT));
-      top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
-    }
-
-    //--------------------------------------------------------------------------
-    // Tab
-
-    {
-      wxStaticBox* box = new wxStaticBox(this, wxID_ANY, _("Tab"));
-      wxSizer* box_vsizer = new wxStaticBoxSizer(box, wxVERTICAL);
-
-      {
-        wxStaticText* ts_label = new wxStaticText(box, wxID_ANY, _("Tab stop:"));
-        ts_text_ctrl_ = new wxTextCtrl(box, wxID_ANY, wxEmptyString, wxDefaultPosition, kNumTextSize);
-
-        expand_tab_check_box_ = new wxCheckBox(box, wxID_ANY, _("Expand tabs"));
-
-        wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-        hsizer->Add(ts_label, wxSizerFlags().Center());
-        hsizer->Add(ts_text_ctrl_, wxSizerFlags().Center().Border(wxLEFT));
-        hsizer->AddStretchSpacer(1);
-        hsizer->Add(expand_tab_check_box_, wxSizerFlags().Center().Border(wxLEFT));
-        box_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
-      }
-
-      top_vsizer->Add(box_vsizer, wxSizerFlags().Expand().Border(wxALL));
-    }
+    CreateDisplaySection(top_vsizer);
+    CreateRulersSection(top_vsizer);
+    CreateDelimitersSection(top_vsizer);
+    CreateTabSection(top_vsizer);
 
     SetSizerAndFit(top_vsizer);
+  }
+
+  void CreateDisplaySection(wxSizer* top_vsizer) {
+    ui::StaticBox* box = new ui::StaticBox(this, _("Display"));
+    wxSizer* box_vsizer = new wxBoxSizer(wxVERTICAL);
+
+    show_hscrollbar_check_box_ = new wxCheckBox(box, wxID_ANY, _("Show horizontal scrollbar"));
+    box_vsizer->Add(show_hscrollbar_check_box_);
+
+    show_number_check_box_ = new wxCheckBox(box, wxID_ANY, _("Show line numbers"));
+    box_vsizer->Add(show_number_check_box_, wxSizerFlags().Border(wxTOP));
+
+    show_space_check_box_ = new wxCheckBox(box, wxID_ANY, _("Show white spaces"));
+    box_vsizer->Add(show_space_check_box_, wxSizerFlags().Border(wxTOP));
+
+    wrap_check_box_ = new wxCheckBox(box, wxID_ANY, _("Wrap line"));
+    box_vsizer->Add(wrap_check_box_, wxSizerFlags().Border(wxTOP));
+
+    box->SetBodySizer(box_vsizer);
+    top_vsizer->Add(box, wxSizerFlags().Expand().Border(wxALL));
+  }
+
+  void CreateRulersSection(wxSizer* top_vsizer) {
+    wxStaticText* label = new wxStaticText(this, wxID_ANY, _("Rulers:"));
+    rulers_text_ctrl_ = new wxTextCtrl(this, wxID_ANY, wxEmptyString);
+
+    wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+    hsizer->Add(label, wxSizerFlags().Center());
+    hsizer->AddStretchSpacer(1);
+    hsizer->Add(rulers_text_ctrl_, wxSizerFlags().Center().Border(wxLEFT));
+
+    top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
+  }
+
+  void CreateDelimitersSection(wxSizer* top_vsizer) {
+    wxStaticText* label = new wxStaticText(this, wxID_ANY, _("Delimiters:"));
+    delimiters_text_ctrl_ = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, kStrTextSize);
+
+    wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+    hsizer->Add(label, wxSizerFlags().Center());
+    hsizer->Add(delimiters_text_ctrl_, wxSizerFlags(1).Center().Border(wxLEFT));
+
+    top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
+  }
+
+  void CreateTabSection(wxSizer* top_vsizer) {
+    ui::StaticBox* box = new ui::StaticBox(this, _("Tab"));
+    wxSizer* box_vsizer = new wxBoxSizer(wxVERTICAL);
+
+    wxStaticText* ts_label = new wxStaticText(box, wxID_ANY, _("Tab stop:"));
+    ts_text_ctrl_ = new wxTextCtrl(box, wxID_ANY, wxEmptyString, wxDefaultPosition, kNumTextSize);
+
+    expand_tab_check_box_ = new wxCheckBox(box, wxID_ANY, _("Expand tabs"));
+
+    wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+    hsizer->Add(ts_label, wxSizerFlags().Center());
+    hsizer->Add(ts_text_ctrl_, wxSizerFlags().Center().Border(wxLR));
+    hsizer->AddStretchSpacer(1);
+    hsizer->Add(expand_tab_check_box_, wxSizerFlags().Center().Border(wxLEFT));
+
+    box_vsizer->Add(hsizer, wxSizerFlags().Expand());
+
+    box->SetBodySizer(box_vsizer);
+    top_vsizer->Add(box, wxSizerFlags().Expand().Border(wxALL));
   }
 
 private:
