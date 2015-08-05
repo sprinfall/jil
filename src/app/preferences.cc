@@ -7,6 +7,8 @@
 
 #include "wx/checkbox.h"
 #include "wx/combobox.h"
+#include "wx/listctrl.h"
+#include "wx/notebook.h"
 #include "wx/panel.h"
 #include "wx/sizer.h"
 #include "wx/spinctrl.h"
@@ -387,12 +389,13 @@ wxWindow* Global_FontPage::CreateWindow(wxWindow *parent) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class Editor_GeneralPanel : public wxPanel {
+class Editor_GeneralPage : public wxPanel {
 public:
-  Editor_GeneralPanel(editor::Options* options) : options_(options) {
+  explicit Editor_GeneralPage(editor::Options* options)
+      : options_(options) {
   }
 
-  virtual ~Editor_GeneralPanel() {
+  virtual ~Editor_GeneralPage() {
   }
 
   bool Create(wxWindow* parent, wxWindowID id = wxID_ANY) {
@@ -412,7 +415,6 @@ protected:
     CreateDisplaySection(top_vsizer);
     CreateRulersSection(top_vsizer);
     CreateDelimitersSection(top_vsizer);
-    CreateTabSection(top_vsizer);
 
     SetSizerAndFit(top_vsizer);
   }
@@ -438,15 +440,15 @@ protected:
   }
 
   void CreateRulersSection(wxSizer* top_vsizer) {
-    wxStaticText* label = new wxStaticText(this, wxID_ANY, _("Rulers:"));
+    wxStaticText* rulers_label = new wxStaticText(this, wxID_ANY, _("Rulers:"));
     rulers_text_ctrl_ = new wxTextCtrl(this, wxID_ANY, wxEmptyString);
 
-    wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-    hsizer->Add(label, wxSizerFlags().Center());
-    hsizer->AddStretchSpacer(1);
-    hsizer->Add(rulers_text_ctrl_, wxSizerFlags().Center().Border(wxLEFT));
+    wxSizer* rulers_hsizer = new wxBoxSizer(wxHORIZONTAL);
+    rulers_hsizer->Add(rulers_label, wxSizerFlags().Center());
+    rulers_hsizer->AddStretchSpacer(1);
+    rulers_hsizer->Add(rulers_text_ctrl_, wxSizerFlags().Center().Border(wxLEFT));
 
-    top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
+    top_vsizer->Add(rulers_hsizer, wxSizerFlags().Expand().Border(wxALL));
   }
 
   void CreateDelimitersSection(wxSizer* top_vsizer) {
@@ -460,22 +462,87 @@ protected:
     top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
   }
 
-  void CreateTabSection(wxSizer* top_vsizer) {
-    ui::StaticBox* box = new ui::StaticBox(this, _("Tab"));
+private:
+  editor::Options* options_;
+
+  wxCheckBox* show_hscrollbar_check_box_;
+  wxCheckBox* show_number_check_box_;
+  wxCheckBox* show_space_check_box_;
+  wxCheckBox* wrap_check_box_;
+  wxTextCtrl* rulers_text_ctrl_;
+  wxTextCtrl* delimiters_text_ctrl_;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class Editor_IndentPage : public wxPanel {
+public:
+  explicit Editor_IndentPage(editor::Options* options)
+      : options_(options) {
+  }
+
+  virtual ~Editor_IndentPage() {
+  }
+
+  bool Create(wxWindow* parent, wxWindowID id = wxID_ANY) {
+    if (!wxPanel::Create(parent, id)) {
+      return false;
+    }
+
+    CreateControls();
+
+    return true;
+  }
+
+protected:
+  void CreateControls() {
+    wxSizer* top_vsizer = new wxBoxSizer(wxVERTICAL);
+
+    CreateTabsSection(top_vsizer);
+
+    wxStaticText* indent_keys_label = new wxStaticText(this, wxID_ANY, _("Indent keys:"));
+    indent_keys_text_ctrl_ = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, kStrTextSize);
+    {
+      wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+      hsizer->Add(indent_keys_label, wxSizerFlags().Center());
+      hsizer->Add(indent_keys_text_ctrl_, wxSizerFlags(1).Center().Border(wxLEFT));
+
+      top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
+    }
+
+    // More indent options.
+    indent_list_ctrl_ = new wxListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT);
+    indent_list_ctrl_->AppendColumn(_("Key"));
+    indent_list_ctrl_->AppendColumn(_("Value"));
+    top_vsizer->Add(indent_list_ctrl_, wxSizerFlags().Expand().Border(wxALL));
+
+    SetSizerAndFit(top_vsizer);
+  }
+
+  void CreateTabsSection(wxSizer* top_vsizer) {
+    ui::StaticBox* box = new ui::StaticBox(this, _("Tabs"));
     wxSizer* box_vsizer = new wxBoxSizer(wxVERTICAL);
 
-    wxStaticText* ts_label = new wxStaticText(box, wxID_ANY, _("Tab stop:"));
-    ts_text_ctrl_ = new wxTextCtrl(box, wxID_ANY, wxEmptyString, wxDefaultPosition, kNumTextSize);
+    wxStaticText* tab_stop_label = new wxStaticText(box, wxID_ANY, _("Tab stop:"));
+    tab_stop_text_ctrl_ = new wxTextCtrl(box, wxID_ANY, wxEmptyString, wxDefaultPosition, kNumTextSize);
+
+    wxStaticText* shift_width_label = new wxStaticText(box, wxID_ANY, _("Shift width:"));
+    shift_width_text_ctrl_ = new wxTextCtrl(box, wxID_ANY, wxEmptyString, wxDefaultPosition, kNumTextSize);
 
     expand_tab_check_box_ = new wxCheckBox(box, wxID_ANY, _("Expand tabs"));
 
-    wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-    hsizer->Add(ts_label, wxSizerFlags().Center());
-    hsizer->Add(ts_text_ctrl_, wxSizerFlags().Center().Border(wxLR));
-    hsizer->AddStretchSpacer(1);
-    hsizer->Add(expand_tab_check_box_, wxSizerFlags().Center().Border(wxLEFT));
+    {
+      wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+      hsizer->Add(tab_stop_label, wxSizerFlags().Center());
+      hsizer->Add(tab_stop_text_ctrl_, wxSizerFlags().Center().Border(wxLR));
+      hsizer->AddStretchSpacer(1);
+      hsizer->Add(shift_width_label, wxSizerFlags().Center().Border(wxLEFT));
+      hsizer->Add(shift_width_text_ctrl_, wxSizerFlags().Center().Border(wxLEFT));
 
-    box_vsizer->Add(hsizer, wxSizerFlags().Expand());
+      box_vsizer->Add(hsizer, wxSizerFlags().Expand());
+    }
+
+    box_vsizer->Add(expand_tab_check_box_, wxSizerFlags().Border(wxTOP));
 
     box->SetBodySizer(box_vsizer);
     top_vsizer->Add(box, wxSizerFlags().Expand().Border(wxALL));
@@ -484,23 +551,66 @@ protected:
 private:
   editor::Options* options_;
 
-  wxCheckBox* show_hscrollbar_check_box_;
-  wxCheckBox* show_number_check_box_;
-  wxCheckBox* show_space_check_box_;
-  wxCheckBox* wrap_check_box_;
-
-  wxTextCtrl* rulers_text_ctrl_;
-
-  wxTextCtrl* delimiters_text_ctrl_;
-
-  wxTextCtrl* ts_text_ctrl_;
+  wxTextCtrl* tab_stop_text_ctrl_;
+  wxTextCtrl* shift_width_text_ctrl_;
   wxCheckBox* expand_tab_check_box_;
+
+  wxTextCtrl* indent_keys_text_ctrl_;
+  wxListCtrl* indent_list_ctrl_;
 };
 
-wxWindow* Editor_GeneralPage::CreateWindow(wxWindow *parent) {
-  Editor_GeneralPanel* panel = new Editor_GeneralPanel(options_);
-  panel->Create(parent);
-  return panel;
+////////////////////////////////////////////////////////////////////////////////
+
+EditorDialog::EditorDialog(editor::Options* options)
+    : options_(options)
+    , notebook_(NULL) {
+}
+
+EditorDialog::~EditorDialog() {
+}
+
+bool EditorDialog::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
+  if (!wxDialog::Create(parent, id, title)) {
+    return false;
+  }
+
+  notebook_ = new wxNotebook(this, wxID_ANY);
+
+  notebook_->AddPage(CreateGeneralPage(), _("General"), true);
+  notebook_->AddPage(CreateIndentPage(), _("Indent"), false);
+
+  // Layout
+  wxSizer* vsizer = new wxBoxSizer(wxVERTICAL);
+  vsizer->Add(notebook_, 1, wxEXPAND | wxALL, 5);
+  SetSizer(vsizer);
+
+  Fit();
+
+  return true;
+}
+
+wxWindow* EditorDialog::CreateGeneralPage() {
+  Editor_GeneralPage* page = new Editor_GeneralPage(options_);
+
+  wxColour theme_bg_colour = notebook_->GetThemeBackgroundColour();
+  if (theme_bg_colour.IsOk()) {
+    page->SetBackgroundColour(theme_bg_colour);
+  }
+
+  page->Create(notebook_);
+  return page;
+}
+
+wxWindow* EditorDialog::CreateIndentPage() {
+  Editor_IndentPage* page = new Editor_IndentPage(options_);
+
+  wxColour theme_bg_colour = notebook_->GetThemeBackgroundColour();
+  if (theme_bg_colour.IsOk()) {
+    page->SetBackgroundColour(theme_bg_colour);
+  }
+
+  page->Create(notebook_);
+  return page;
 }
 
 }  // namespace pref

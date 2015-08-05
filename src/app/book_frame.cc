@@ -743,11 +743,10 @@ void BookFrame::OnGlobalPreferences(wxCommandEvent& WXUNUSED(evt)) {
 }
 
 void BookFrame::OnEditorPreferences(wxCommandEvent& WXUNUSED(evt)) {
-  wxPreferencesEditor pref_editor(kTrOptions);
-  pref_editor.AddPage(new pref::Editor_GeneralPage(editor_options_));
-
-  // TODO: ShowModal
-  pref_editor.Show(this);
+  pref::EditorDialog dialog(editor_options_);
+  dialog.Create(this, wxID_ANY, _("Preferences"));
+  dialog.CenterOnParent();
+  dialog.ShowModal();
 }
 
 void BookFrame::OnQuit(wxCommandEvent& WXUNUSED(evt)) {

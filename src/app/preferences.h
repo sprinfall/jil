@@ -5,6 +5,9 @@
 #include "wx/artprov.h"
 #include "wx/intl.h"
 #include "wx/preferences.h"
+#include "wx/dialog.h"
+
+class wxNotebook;
 
 namespace jil {
 
@@ -57,17 +60,22 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class Editor_GeneralPage : public wxStockPreferencesPage {
+// Editor (Syntax specific) preferences dialog.
+class EditorDialog : public wxDialog {
 public:
-  explicit Editor_GeneralPage(editor::Options* options)
-      : wxStockPreferencesPage(Kind_General)
-      , options_(options) {
-  }
+  EditorDialog(editor::Options* options);
+  virtual ~EditorDialog();
 
-  virtual wxWindow* CreateWindow(wxWindow* parent) override;
+  bool Create(wxWindow* parent, wxWindowID id, const wxString& title);
+
+private:
+  wxWindow* CreateGeneralPage();
+  wxWindow* CreateIndentPage();
 
 private:
   editor::Options* options_;
+
+  wxNotebook* notebook_;
 };
 
 }  // namespace pref
