@@ -4,6 +4,7 @@
 
 #include <string>
 #include "wx/defs.h"
+#include "wx/gdicmn.h"
 #include "wx/string.h"
 #include "editor/text_point.h"
 
@@ -22,11 +23,8 @@ public:
 
   void SetFont(const wxFont& font);
 
-  wxCoord char_width() const {
-    return char_width_;
-  }
-  wxCoord char_height() const {
-    return char_height_;
+  wxSize char_size() const {
+    return char_size_;
   }
 
   wxCoord GetWidth(const std::wstring& text);
@@ -61,9 +59,7 @@ private:
 
 private:
   wxMemoryDC* dc_;
-
-  wxCoord char_width_;
-  wxCoord char_height_;
+  wxSize char_size_;
 };
 
 size_t TailorLabel(const wxDC& dc, const wxString& label, int max_width);

@@ -156,7 +156,7 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
 
   // Create text book.
   text_book_ = new TextBook(theme_->GetTheme(THEME_TEXT_BOOK));
-  text_book_->set_tab_font(options_->fonts[kFont_Tab]);
+  text_book_->set_tab_font(options_->gui_font);
   text_book_->Create(splitter_, wxID_ANY);
 
   Connect(text_book_->GetId(), kEvtBookPageChange, wxCommandEventHandler(BookFrame::OnTextBookPageChange));
@@ -181,7 +181,7 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
   // Create status line.
   status_bar_ = new editor::StatusBar;
   status_bar_->set_theme(theme_->GetTheme(THEME_STATUS_BAR));
-  status_bar_->set_font(options_->fonts[kFont_Status]);
+  status_bar_->set_font(options_->gui_font);
   status_bar_->SetFields(wxGetApp().status_fields());
 
   status_bar_->Create(this, ID_STATUS_BAR);
@@ -739,11 +739,40 @@ void BookFrame::ShowAboutWindow() {
 }
 
 void BookFrame::OnGlobalPreferences(wxCommandEvent& WXUNUSED(evt)) {
-  wxGetApp().ShowPreferencesEditor(this);
+  // Backup current options.
+  Options old_options = *options_;
+
+  PrefGlobalDialog dialog(options_);
+  dialog.Create(this, wxID_ANY, _("Preferences"));
+  dialog.CenterOnParent();
+
+  if (dialog.ShowModal() != wxID_OK) {
+    return;
+  }
+
+  if (options_->line_padding != old_options.line_padding) {
+    std::vector<TextPage*> text_pages = text_book_->TextPages();
+    for (TextPage* text_page : text_pages) {
+      text_page->SetLinePadding(options_->line_padding);
+    }
+
+    FindResultPage* fr_page = GetFindResultPage(false);
+    if (fr_page != NULL) {
+      fr_page->SetLinePadding(options_->line_padding);
+    }
+  }
+
+  if (options_->show_path != old_options.show_path) {
+    if (options_->show_path) {
+      UpdateTitleWithPath();
+    } else {
+      SetTitle(kAppDisplayName);
+    }
+  }
 }
 
 void BookFrame::OnEditorPreferences(wxCommandEvent& WXUNUSED(evt)) {
-  pref::EditorDialog dialog(editor_options_);
+  PrefEditorDialog dialog(editor_options_);
   dialog.Create(this, wxID_ANY, _("Preferences"));
   dialog.CenterOnParent();
   dialog.ShowModal();
@@ -880,7 +909,7 @@ void BookFrame::OnTextBookPageChange(wxCommandEvent& evt) {
     UpdateStatusFields();
 
     if (options_->show_path) {
-      UpdateTitle();
+      UpdateTitleWithPath();
     }
 
     // Transfer focus to tool book if it's shown.
@@ -900,7 +929,7 @@ void BookFrame::OnTextBookPageSwitch(wxCommandEvent& evt) {
   UpdateStatusFields();
 
   if (options_->show_path) {
-    UpdateTitle();
+    UpdateTitleWithPath();
   }
 }
 
@@ -952,7 +981,7 @@ void BookFrame::UpdateStatusFields() {
   status_bar_->Refresh();
 }
 
-void BookFrame::UpdateTitle() {
+void BookFrame::UpdateTitleWithPath() {
   TextPage* text_page = text_book_->ActiveTextPage();
   if (text_page == NULL) {
     SetTitle(kAppDisplayName);
@@ -1045,7 +1074,7 @@ void BookFrame::HandleTextWindowGetFocus(wxCommandEvent& evt) {
 void BookFrame::OnFindResultPageEvent(wxCommandEvent& evt) {
   using namespace editor;
 
-  FindResultPage* fr_page = GetFindResultPage();
+  FindResultPage* fr_page = GetFindResultPage(false);
   if (fr_page == NULL) {
     return;
   }
@@ -1369,7 +1398,7 @@ void BookFrame::OnFindWindowEvent(FindWindowEvent& evt) {
   }
 }
 
-FindResultPage* BookFrame::GetFindResultPage() {
+FindResultPage* BookFrame::GetFindResultPage(bool create) {
   using namespace editor;
 
   wxWindow* w = FindWindowById(ID_FIND_RESULT_PAGE, tool_book_);
@@ -1378,6 +1407,10 @@ FindResultPage* BookFrame::GetFindResultPage() {
     FindResultPage* page = wxDynamicCast(w, FindResultPage);
     assert(page != NULL);
     return page;
+  }
+
+  if (!create) {
+    return NULL;
   }
 
   FileType ft(kFtId_FindResult, wxEmptyString);
@@ -1398,7 +1431,8 @@ FindResultPage* BookFrame::GetFindResultPage() {
 
   fr_page->Create(tool_book_->PageParent(), ID_FIND_RESULT_PAGE, true);
 
-  fr_page->SetTextFont(options_->fonts[kFont_Text]);
+  fr_page->SetTextFont(options_->font);
+  fr_page->SetLinePadding(options_->line_padding);
 
   Connect(fr_page->GetId(),
           kFindResultPageEvent,
@@ -1531,7 +1565,7 @@ void BookFrame::FindInAllPages(const std::wstring& str, int flags) {
 }
 
 void BookFrame::FindAllInActivePage(const std::wstring& str, int flags) {
-  FindResultPage* fr_page = GetFindResultPage();
+  FindResultPage* fr_page = GetFindResultPage(true);
 
   // Clear previous result.
   editor::TextRange range = fr_page->buffer()->range();
@@ -1552,7 +1586,7 @@ void BookFrame::FindAllInActivePage(const std::wstring& str, int flags) {
 }
 
 void BookFrame::FindAllInAllPages(const std::wstring& str, int flags) {
-  FindResultPage* fr_page = GetFindResultPage();
+  FindResultPage* fr_page = GetFindResultPage(true);
 
   // Clear previous result.
   editor::TextRange range = fr_page->buffer()->range();
@@ -2119,7 +2153,8 @@ TextPage* BookFrame::CreateTextPage(editor::TextBuffer* buffer, wxWindow* parent
 
   page->Create(parent, id, true);
 
-  page->SetTextFont(options_->fonts[kFont_Text]);
+  page->SetTextFont(options_->font);
+  page->SetLinePadding(options_->line_padding);
 
   return page;
 }

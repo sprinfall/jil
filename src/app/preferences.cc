@@ -5,6 +5,7 @@
 #include "uchardet/nscore.h"
 #include "uchardet/nsUniversalDetector.h"
 
+#include "wx/button.h"
 #include "wx/checkbox.h"
 #include "wx/combobox.h"
 #include "wx/listctrl.h"
@@ -12,9 +13,9 @@
 #include "wx/panel.h"
 #include "wx/sizer.h"
 #include "wx/spinctrl.h"
-#include "wx/statbox.h"
 #include "wx/stattext.h"
 
+#include "ui/font_preview_ctrl.h"
 #include "ui/static_box.h"
 
 #include "editor/defs.h"
@@ -24,9 +25,6 @@
 #include "app/option.h"
 
 namespace jil {
-namespace pref {
-
-////////////////////////////////////////////////////////////////////////////////
 
 static const wxSize kMinComboBoxSize(120, -1);
 static const wxSize kNumTextSize(60, -1);
@@ -41,19 +39,21 @@ static void UpdateFlag(int& flags, int flag, bool enable) {
   }
 }
 
-wxComboBox* CreateReadonlyComboBox(wxWindow* parent, wxWindowID id, const wxString& value = wxEmptyString) {
+static wxComboBox* CreateReadonlyComboBox(wxWindow* parent, wxWindowID id, const wxString& value = wxEmptyString) {
   return new wxComboBox(parent, id, value, wxDefaultPosition, wxDefaultSize, 0, NULL, wxCB_READONLY);
 }
 
+namespace pref {
+
 ////////////////////////////////////////////////////////////////////////////////
 
-class Global_GeneralPanel : public wxPanel {
+class Global_GeneralPage : public wxPanel {
 public:
-  Global_GeneralPanel(Options* options) : options_(options) {
+  Global_GeneralPage(Options* options) : options_(options) {
     InitFileEncodingTable();
   }
 
-  virtual ~Global_GeneralPanel() {
+  virtual ~Global_GeneralPage() {
   }
 
   bool Create(wxWindow* parent, wxWindowID id = wxID_ANY) {
@@ -106,94 +106,85 @@ private:
   void CreateControls() {
     wxSizer* top_vsizer = new wxBoxSizer(wxVERTICAL);
 
-    //--------------------------------------------------------------------------
-    // Encoding
+    CreateEncodingSection(top_vsizer);
 
-    {
-      wxStaticBox* box = new wxStaticBox(this, wxID_ANY, _("Encoding"));
-      wxSizer* box_vsizer = new wxStaticBoxSizer(box, wxVERTICAL);
+    switch_cwd_check_box_ = new wxCheckBox(this, wxID_ANY, _("Switch current working directory"));
+    top_vsizer->Add(switch_cwd_check_box_, wxSizerFlags().Border(wxLTR));
 
-      //------------------------------------------------------------------------
-      // CJK
+    restore_files_check_box_ = new wxCheckBox(this, wxID_ANY, _("Restore last open files"));
+    top_vsizer->Add(restore_files_check_box_, wxSizerFlags().Border(wxLTR));
 
-      {
-        wxStaticText* cjk_label = new wxStaticText(box, wxID_ANY, _("Detect CJK encodings:"));
+    show_path_check_box_ = new wxCheckBox(this, wxID_ANY, _("Show file path in title bar"));
+    top_vsizer->Add(show_path_check_box_, wxSizerFlags().Border(wxALL));
 
-        // NOTE:
-        // Don't separate Chinese to Simplified and Traditional. Keep it simple.
-        c_check_box_ = new wxCheckBox(box, wxID_ANY, _("Chinese"));
-        j_check_box_ = new wxCheckBox(box, wxID_ANY, _("Japanese"));
-        k_check_box_ = new wxCheckBox(box, wxID_ANY, _("Korean"));
-
-        wxBoxSizer* cjk_vsizer = new wxBoxSizer(wxVERTICAL);
-        cjk_vsizer->Add(cjk_label);
-
-        wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-        hsizer->Add(c_check_box_);
-        hsizer->Add(j_check_box_, wxSizerFlags().Border(wxLEFT));
-        hsizer->Add(k_check_box_, wxSizerFlags().Border(wxLEFT));
-        cjk_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxTOP));
-
-        box_vsizer->Add(cjk_vsizer, wxSizerFlags().Expand().Border(wxALL));
-      }
-
-      //------------------------------------------------------------------------
-      // File Encoding
-
-      {
-        wxStaticText* label = new wxStaticText(box, wxID_ANY, _("Default file encoding:"));
-
-        fenc_combo_box_ = CreateReadonlyComboBox(box, wxID_ANY);
-        fenc_combo_box_->SetMinSize(kMinComboBoxSize);
-        InitFileEncodingComboBox(fenc_combo_box_);
-
-        wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-        hsizer->Add(label, wxSizerFlags().Center());
-        hsizer->AddStretchSpacer(1);
-        hsizer->Add(fenc_combo_box_, wxSizerFlags().Center().Border(wxLEFT));
-
-        box_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
-      }
-
-      top_vsizer->Add(box_vsizer, wxSizerFlags().Expand().Border(wxALL));
-    }
-
-    //--------------------------------------------------------------------------
-
-    {
-      switch_cwd_check_box_ = new wxCheckBox(this, wxID_ANY, _("Switch current working directory"));
-      top_vsizer->Add(switch_cwd_check_box_, wxSizerFlags().Border(wxLTR));
-    }
-
-    {
-      restore_files_check_box_ = new wxCheckBox(this, wxID_ANY, _("Restore last open files"));
-      top_vsizer->Add(restore_files_check_box_, wxSizerFlags().Border(wxLTR));
-    }
-
-    {
-      show_path_check_box_ = new wxCheckBox(this, wxID_ANY, _("Show file path in title bar"));
-      top_vsizer->Add(show_path_check_box_, wxSizerFlags().Border(wxALL));
-    }
-
-    //--------------------------------------------------------------------------
-    // Line padding
-
-    {
-      wxStaticText* label = new wxStaticText(this, wxID_ANY, _("Line padding:"));
-      line_padding_spin_ctrl_ = new wxSpinCtrl(this, wxID_ANY);
-      line_padding_spin_ctrl_->SetRange(kMinLinePadding, kMaxLinePadding);
-
-      wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-      hsizer->Add(label, wxSizerFlags().Center());
-      hsizer->AddStretchSpacer(1);
-      hsizer->Add(line_padding_spin_ctrl_, wxSizerFlags().Center().Border(wxLEFT));
-
-      top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
-    }
-
-    //--------------------------------------------------------------------------
+    CreateLinePaddingSection(top_vsizer);
 
     SetSizerAndFit(top_vsizer);
+  }
+
+  void CreateEncodingSection(wxSizer* top_vsizer) {
+    ui::StaticBox* box = new ui::StaticBox(this, _("Encoding"));
+    wxSizer* box_vsizer = new wxBoxSizer(wxVERTICAL);
+
+    //--------------------------------------------------------------------------
+    // CJK
+
+    wxStaticText* cjk_label = new wxStaticText(box, wxID_ANY, _("Detect CJK encodings:"));
+
+    // NOTE:
+    // Don't separate Chinese to Simplified and Traditional. Keep it simple.
+    c_check_box_ = new wxCheckBox(box, wxID_ANY, _("Chinese"));
+    j_check_box_ = new wxCheckBox(box, wxID_ANY, _("Japanese"));
+    k_check_box_ = new wxCheckBox(box, wxID_ANY, _("Korean"));
+
+    wxBoxSizer* cjk_vsizer = new wxBoxSizer(wxVERTICAL);
+    cjk_vsizer->Add(cjk_label);
+
+    {
+      wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+      hsizer->Add(c_check_box_);
+      hsizer->Add(j_check_box_, wxSizerFlags().Border(wxLEFT));
+      hsizer->Add(k_check_box_, wxSizerFlags().Border(wxLEFT));
+
+      cjk_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxTOP));
+    }
+
+    box_vsizer->Add(cjk_vsizer, wxSizerFlags().Expand().Border(wxALL));
+
+    //--------------------------------------------------------------------------
+    // File Encoding
+
+    wxStaticText* fenc_label = new wxStaticText(box, wxID_ANY, _("Default file encoding:"));
+
+    fenc_combo_box_ = CreateReadonlyComboBox(box, wxID_ANY);
+    fenc_combo_box_->SetMinSize(kMinComboBoxSize);
+    InitFileEncodingComboBox(fenc_combo_box_);
+
+    {
+      wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+      hsizer->Add(fenc_label, wxSizerFlags().Center());
+      hsizer->AddStretchSpacer(1);
+      hsizer->Add(fenc_combo_box_, wxSizerFlags().Center().Border(wxLEFT));
+
+      box_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
+    }
+
+    box->SetBodySizer(box_vsizer);
+    top_vsizer->Add(box, wxSizerFlags().Expand().Border(wxALL));
+  }
+
+  void CreateLinePaddingSection(wxSizer* top_vsizer) {
+    wxStaticText* label = new wxStaticText(this, wxID_ANY, _("Line padding:"));
+
+    line_padding_spin_ctrl_ = new wxSpinCtrl(this, wxID_ANY);
+    line_padding_spin_ctrl_->SetRange(kMinLinePadding, kMaxLinePadding);
+
+    wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+    hsizer->Add(label, wxSizerFlags().Center());
+    hsizer->AddStretchSpacer(1);
+    hsizer->Add(line_padding_spin_ctrl_, wxSizerFlags().Center().Border(wxLEFT));
+
+    top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
   }
 
   void InitFileEncodingTable() {
@@ -270,20 +261,14 @@ private:
   wxButton* fonts_button_;
 };
 
-wxWindow* Global_GeneralPage::CreateWindow(wxWindow *parent) {
-  Global_GeneralPanel* panel = new Global_GeneralPanel(options_);
-  panel->Create(parent);
-  return panel;
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 
-class Global_FontPanel : public wxPanel {
+class Global_FontPage : public wxPanel {
 public:
-  Global_FontPanel(Options* options) : options_(options) {
+  Global_FontPage(Options* options) : options_(options) {
   }
 
-  virtual ~Global_FontPanel() {
+  virtual ~Global_FontPage() {
   }
 
   bool Create(wxWindow* parent, wxWindowID id = wxID_ANY) {
@@ -300,66 +285,48 @@ protected:
   void CreateControls() {
     wxSizer* top_vsizer = new wxBoxSizer(wxVERTICAL);
 
-    //--------------------------------------------------------------------------
-    // Font
-
-    {
-      wxStaticBox* box = new wxStaticBox(this, wxID_ANY, _("Font"));
-      wxSizer* box_vsizer = new wxStaticBoxSizer(box, wxVERTICAL);
-
-      // Font Area
-      {
-        wxStaticText* label = new wxStaticText(box, wxID_ANY, _("Area:"));
-
-        wxComboBox* combo_box = new wxComboBox(box, wxID_ANY, wxEmptyString);
-        combo_box->SetMinSize(kMinComboBoxSize);
-        combo_box->Append(_("Text Editor"));
-        combo_box->Append(_("Tab"));
-        combo_box->Append(_("Status Bar"));
-        combo_box->Select(0);
-
-        wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-        hsizer->AddStretchSpacer();
-        hsizer->Add(label, wxSizerFlags().Center());
-        hsizer->Add(combo_box, wxSizerFlags().Center().Border(wxLEFT));
-
-        box_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
-      }
-
-      //--------------------------------------------------------------------------
-
-      // Font Name & Size
-      {
-        wxStaticText* name_label = new wxStaticText(box, wxID_ANY, _("Font:"));
-        wxComboBox* name_combo_box = new wxComboBox(box, wxID_ANY, wxEmptyString);
-        InitFontNameComboBox(name_combo_box, false);
-
-        wxStaticText* size_label = new wxStaticText(box, wxID_ANY, _("Size:"));
-        wxComboBox* size_combo_box = new wxComboBox(box, wxID_ANY, wxEmptyString);
-        InitFontSizeComboBox(size_combo_box);
-
-        wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-
-        wxBoxSizer* name_vsizer = new wxBoxSizer(wxVERTICAL);
-        name_vsizer->Add(name_label);
-        name_vsizer->Add(name_combo_box, wxSizerFlags().Expand());
-
-        wxBoxSizer* size_vsizer = new wxBoxSizer(wxVERTICAL);
-        size_vsizer->Add(size_label);
-        size_vsizer->Add(size_combo_box, wxSizerFlags().Expand());
-
-        hsizer->Add(name_vsizer, wxSizerFlags(3));
-        hsizer->Add(size_vsizer, wxSizerFlags(1).Border(wxLEFT));
-
-        box_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
-      }
-
-      top_vsizer->Add(box_vsizer, wxSizerFlags().Expand().Border(wxALL));
-    }
-
-    //--------------------------------------------------------------------------
+    CreateAreaSection(top_vsizer);
+    CreateNameSizeSection(top_vsizer);
 
     SetSizerAndFit(top_vsizer);
+  }
+
+  void CreateAreaSection(wxSizer* top_vsizer) {
+
+    wxStaticText* font_label = new wxStaticText(this, wxID_ANY, _("Font:"));
+    ui::FontPreviewCtrl* font_preview_ctrl = new ui::FontPreviewCtrl(this, wxID_ANY, GetFont());
+
+    wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+    hsizer->Add(font_label, wxSizerFlags().Center());
+    hsizer->AddStretchSpacer();
+    hsizer->Add(font_preview_ctrl, wxSizerFlags().Center().Border(wxLEFT));
+
+    top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
+  }
+
+  void CreateNameSizeSection(wxSizer* top_vsizer) {
+    wxStaticText* name_label = new wxStaticText(this, wxID_ANY, _("Font:"));
+    wxComboBox* name_combo_box = new wxComboBox(this, wxID_ANY, wxEmptyString);
+    InitFontNameComboBox(name_combo_box, false);
+
+    wxStaticText* size_label = new wxStaticText(this, wxID_ANY, _("Size:"));
+    wxComboBox* size_combo_box = new wxComboBox(this, wxID_ANY, wxEmptyString);
+    InitFontSizeComboBox(size_combo_box);
+
+    wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+
+    wxBoxSizer* name_vsizer = new wxBoxSizer(wxVERTICAL);
+    name_vsizer->Add(name_label);
+    name_vsizer->Add(name_combo_box, wxSizerFlags().Expand());
+
+    wxBoxSizer* size_vsizer = new wxBoxSizer(wxVERTICAL);
+    size_vsizer->Add(size_label);
+    size_vsizer->Add(size_combo_box, wxSizerFlags().Expand());
+
+    hsizer->Add(name_vsizer, wxSizerFlags(3));
+    hsizer->Add(size_vsizer, wxSizerFlags(1).Border(wxLEFT));
+
+    top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
   }
 
   void InitFontNameComboBox(wxComboBox* combo_box, bool fixed_width_only) {
@@ -380,12 +347,6 @@ protected:
 private:
   Options* options_;
 };
-
-wxWindow* Global_FontPage::CreateWindow(wxWindow *parent) {
-  Global_FontPanel* panel = new Global_FontPanel(options_);
-  panel->Create(parent);
-  return panel;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -559,29 +520,48 @@ private:
   wxListCtrl* indent_list_ctrl_;
 };
 
+}  // namespace pref
+
+
 ////////////////////////////////////////////////////////////////////////////////
 
-EditorDialog::EditorDialog(editor::Options* options)
-    : options_(options)
-    , notebook_(NULL) {
+BEGIN_EVENT_TABLE(PrefDialogBase, wxDialog)
+EVT_BUTTON(wxID_OK,       PrefDialogBase::OnButtonOK)
+EVT_BUTTON(wxID_CANCEL,   PrefDialogBase::OnButtonCancel)
+END_EVENT_TABLE()
+
+PrefDialogBase::PrefDialogBase() : notebook_(NULL) {
 }
 
-EditorDialog::~EditorDialog() {
+PrefDialogBase::~PrefDialogBase() {
 }
 
-bool EditorDialog::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
+bool PrefDialogBase::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
+  // Recursively call TransferDataFromWindow() and TransferDataToWindow().
+  SetExtraStyle(GetExtraStyle() | wxWS_EX_VALIDATE_RECURSIVELY);
+
   if (!wxDialog::Create(parent, id, title)) {
     return false;
   }
 
   notebook_ = new wxNotebook(this, wxID_ANY);
 
-  notebook_->AddPage(CreateGeneralPage(), _("General"), true);
-  notebook_->AddPage(CreateIndentPage(), _("Indent"), false);
+  AddPages();
+
+  // NOTE: Don't use CreateStdDialogButtonSizer.
+  wxButton* ok_button = new wxButton(this, wxID_OK, _("OK"));
+  wxButton* cancel_button = new wxButton(this, wxID_CANCEL, _("Cancel"));
 
   // Layout
   wxSizer* vsizer = new wxBoxSizer(wxVERTICAL);
-  vsizer->Add(notebook_, 1, wxEXPAND | wxALL, 5);
+  vsizer->Add(notebook_, wxSizerFlags().Expand().Border(wxALL));
+
+  wxSizer* button_hsizer = new wxBoxSizer(wxHORIZONTAL);
+  button_hsizer->AddStretchSpacer(1);
+  button_hsizer->Add(ok_button);
+  button_hsizer->Add(cancel_button, wxSizerFlags().Border(wxLEFT));
+  vsizer->Add(button_hsizer, wxSizerFlags().Expand().Border(wxALL));
+
   SetSizer(vsizer);
 
   Fit();
@@ -589,8 +569,31 @@ bool EditorDialog::Create(wxWindow* parent, wxWindowID id, const wxString& title
   return true;
 }
 
-wxWindow* EditorDialog::CreateGeneralPage() {
-  Editor_GeneralPage* page = new Editor_GeneralPage(options_);
+void PrefDialogBase::OnButtonOK(wxCommandEvent& evt) {
+  TransferDataFromWindow();
+  EndModal(wxID_OK);
+}
+
+void PrefDialogBase::OnButtonCancel(wxCommandEvent& evt) {
+  EndModal(wxID_CANCEL);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+PrefGlobalDialog::PrefGlobalDialog(Options* options)
+    : options_(options) {
+}
+
+PrefGlobalDialog::~PrefGlobalDialog() {
+}
+
+void PrefGlobalDialog::AddPages() {
+  notebook_->AddPage(CreateGeneralPage(), _("General"), true);
+  notebook_->AddPage(CreateFontPage(), _("Font"), false);
+}
+
+wxWindow* PrefGlobalDialog::CreateGeneralPage() {
+  pref::Global_GeneralPage* page = new pref::Global_GeneralPage(options_);
 
   wxColour theme_bg_colour = notebook_->GetThemeBackgroundColour();
   if (theme_bg_colour.IsOk()) {
@@ -601,8 +604,8 @@ wxWindow* EditorDialog::CreateGeneralPage() {
   return page;
 }
 
-wxWindow* EditorDialog::CreateIndentPage() {
-  Editor_IndentPage* page = new Editor_IndentPage(options_);
+wxWindow* PrefGlobalDialog::CreateFontPage() {
+  pref::Global_FontPage* page = new pref::Global_FontPage(options_);
 
   wxColour theme_bg_colour = notebook_->GetThemeBackgroundColour();
   if (theme_bg_colour.IsOk()) {
@@ -613,5 +616,42 @@ wxWindow* EditorDialog::CreateIndentPage() {
   return page;
 }
 
-}  // namespace pref
+////////////////////////////////////////////////////////////////////////////////
+
+PrefEditorDialog::PrefEditorDialog(editor::Options* options)
+    : options_(options) {
+}
+
+PrefEditorDialog::~PrefEditorDialog() {
+}
+
+void PrefEditorDialog::AddPages() {
+  notebook_->AddPage(CreateGeneralPage(), _("General"), true);
+  notebook_->AddPage(CreateIndentPage(), _("Indent"), false);
+}
+
+wxWindow* PrefEditorDialog::CreateGeneralPage() {
+  pref::Editor_GeneralPage* page = new pref::Editor_GeneralPage(options_);
+
+  wxColour theme_bg_colour = notebook_->GetThemeBackgroundColour();
+  if (theme_bg_colour.IsOk()) {
+    page->SetBackgroundColour(theme_bg_colour);
+  }
+
+  page->Create(notebook_);
+  return page;
+}
+
+wxWindow* PrefEditorDialog::CreateIndentPage() {
+  pref::Editor_IndentPage* page = new pref::Editor_IndentPage(options_);
+
+  wxColour theme_bg_colour = notebook_->GetThemeBackgroundColour();
+  if (theme_bg_colour.IsOk()) {
+    page->SetBackgroundColour(theme_bg_colour);
+  }
+
+  page->Create(notebook_);
+  return page;
+}
+
 }  // namespace jil

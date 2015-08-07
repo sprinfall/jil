@@ -2,9 +2,7 @@
 #define JIL_PREFERENCES_H_
 #pragma once
 
-#include "wx/artprov.h"
 #include "wx/intl.h"
-#include "wx/preferences.h"
 #include "wx/dialog.h"
 
 class wxNotebook;
@@ -17,42 +15,41 @@ namespace editor {
 class Options;
 }
 
-namespace pref {
-
 ////////////////////////////////////////////////////////////////////////////////
 
-class Global_GeneralPage : public wxStockPreferencesPage {
+class PrefDialogBase : public wxDialog {
+  DECLARE_EVENT_TABLE()
+
 public:
-  explicit Global_GeneralPage(Options* options)
-      : wxStockPreferencesPage(Kind_General)
-      , options_(options) {
-  }
+  virtual ~PrefDialogBase();
 
-  virtual wxWindow* CreateWindow(wxWindow* parent) override;
+  bool Create(wxWindow* parent, wxWindowID id, const wxString& title);
 
-private:
-  Options* options_;
+protected:
+  PrefDialogBase();
+
+  virtual void AddPages() = 0;
+
+  void OnButtonOK(wxCommandEvent& evt);
+  void OnButtonCancel(wxCommandEvent& evt);
+
+protected:
+  wxNotebook* notebook_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class Global_FontPage : public wxPreferencesPage {
+// Global preferences dialog.
+class PrefGlobalDialog : public PrefDialogBase {
 public:
-  explicit Global_FontPage(Options* options) : options_(options) {
-  }
+  explicit PrefGlobalDialog(Options* options);
+  virtual ~PrefGlobalDialog();
 
-  virtual wxString GetName() const override {
-    return _("Font");
-  }
+protected:
+  virtual void AddPages() override;
 
-#ifdef wxHAS_PREF_EDITOR_ICONS
-  // TODO
-  virtual wxBitmap GetLargeIcon() const override {
-    return wxArtProvider::GetBitmap(wxART_INFORMATION);
-  }
-#endif  // wxHAS_PREF_EDITOR_ICONS
-
-  virtual wxWindow* CreateWindow(wxWindow* parent) override;
+  wxWindow* CreateGeneralPage();
+  wxWindow* CreateFontPage();
 
 private:
   Options* options_;
@@ -61,24 +58,21 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 
 // Editor (Syntax specific) preferences dialog.
-class EditorDialog : public wxDialog {
+class PrefEditorDialog : public PrefDialogBase {
 public:
-  EditorDialog(editor::Options* options);
-  virtual ~EditorDialog();
+  PrefEditorDialog(editor::Options* options);
+  virtual ~PrefEditorDialog();
 
-  bool Create(wxWindow* parent, wxWindowID id, const wxString& title);
+protected:
+  virtual void AddPages() override;
 
-private:
   wxWindow* CreateGeneralPage();
   wxWindow* CreateIndentPage();
 
 private:
   editor::Options* options_;
-
-  wxNotebook* notebook_;
 };
 
-}  // namespace pref
 }  // namespace jil
 
 #endif  // JIL_PREFERENCES_H_

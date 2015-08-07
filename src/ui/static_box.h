@@ -9,7 +9,7 @@
 namespace jil {
 namespace ui {
 
-class StaticBox : public wxPanel{
+class StaticBox : public wxPanel {
   DECLARE_EVENT_TABLE()
 
 public:

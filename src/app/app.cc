@@ -16,7 +16,6 @@
 #include "wx/intl.h"
 #include "wx/log.h"
 #include "wx/msgdlg.h"
-#include "wx/preferences.h"
 #include "wx/snglinst.h"
 #include "wx/stdpaths.h"
 #include "wx/sysopt.h"
@@ -461,7 +460,6 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
   }
 
   // Some extra view options.
-  ft_editor_options.view.line_padding = options_.line_padding;
   ft_editor_options.view.min_font_size = kMinFontSize;
   ft_editor_options.view.max_font_size = kMaxFontSize;
 
@@ -469,22 +467,6 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
 
   ft_plugins_.push_back(ft_plugin);
   return ft_plugin;
-}
-
-void App::ShowPreferencesEditor(wxWindow* parent) {
-  if (!pref_editor_) {
-    pref_editor_.reset(new wxPreferencesEditor(kTrOptions));
-    pref_editor_->AddPage(new pref::Global_GeneralPage(&options_));
-    pref_editor_->AddPage(new pref::Global_FontPage(&options_));
-  }
-
-  pref_editor_->Show(parent);
-}
-
-void App::DismissPreferencesEditor() {
-  if (pref_editor_) {
-    pref_editor_->Dismiss();
-  }
 }
 
 // Command line parsing.

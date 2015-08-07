@@ -9,8 +9,7 @@
 namespace jil {
 namespace editor {
 
-TextExtent::TextExtent()
-    : dc_(NULL), char_width_(0), char_height_(0) {
+TextExtent::TextExtent() : dc_(NULL) {
   wxBitmap bmp(1, 1);
   dc_ = new wxMemoryDC(bmp);
   UpdateCharSize();
@@ -43,8 +42,8 @@ Coord TextExtent::IndexChar(int tab_stop, const std::wstring& line, int client_x
       return 0;
     }
 
-    Coord chars = client_x / char_width_;
-    if ((client_x % char_width_) > (char_width_ / 2)) {
+    Coord chars = client_x / char_size_.x;
+    if ((client_x % char_size_.x) > (char_size_.x / 2)) {
       ++chars;
     }
     return chars;
@@ -54,8 +53,8 @@ Coord TextExtent::IndexChar(int tab_stop, const std::wstring& line, int client_x
 }
 
 void TextExtent::UpdateCharSize() {
-  char_width_ = dc_->GetCharWidth();
-  char_height_ = dc_->GetCharHeight();
+  char_size_.x = dc_->GetCharWidth();
+  char_size_.y = dc_->GetCharHeight();
 }
 
 void TextExtent::GetExtent(const std::wstring& text,
@@ -105,14 +104,14 @@ Coord TextExtent::IndexCharRecursively(int tab_stop,
 
   int width = GetWidth(line_left);
 
-  // NOTE: Can't use char_width_ because it might be a CJK charactor.
+  // NOTE: Can't use char_size_.x because it might be a CJK charactor.
   int m_char_width = GetWidth(std::wstring(1, line[m]));
 
   if (abs(width - client_x) < (m_char_width / 2)) {
     return m;
   } else if (client_x > width) {
     if (vspace && m + 1 >= end) {  // No more chars.
-      Coord chars = (client_x - width) / char_width_;
+      Coord chars = (client_x - width) / char_size_.x;
       return m + chars;
     } else {
       return IndexCharRecursively(tab_stop, line, m + 1, end, client_x, vspace);

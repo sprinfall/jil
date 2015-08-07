@@ -9,7 +9,6 @@
 #include "wx/app.h"
 #include "wx/arrstr.h"
 #include "wx/ipc.h"
-#include "wx/scopedptr.h"
 
 #include "editor/defs.h"
 #include "editor/option.h"
@@ -21,7 +20,6 @@
 #include "app/option.h"
 #include "app/session.h"
 
-class wxPreferencesEditor;
 class wxSingleInstanceChecker;
 
 // App name used for paths, config, and other places the user doesn't see.
@@ -77,9 +75,6 @@ public:
   const std::vector<editor::StatusBar::FieldInfo>& status_fields() const {
     return status_fields_;
   }
-
-  void ShowPreferencesEditor(wxWindow* parent);
-  void DismissPreferencesEditor();
 
 protected:
 #if wxUSE_CMDLINE_PARSER
@@ -203,11 +198,6 @@ private:
 
   // Status fields for status line.
   std::vector<editor::StatusBar::FieldInfo> status_fields_;
-
-  // For preferences dialog.
-  // NOTE: Both OS X and GTK+ preferences windows are modeless unlike
-  // Windows options dialogs that are typically modal.
-  wxScopedPtr<wxPreferencesEditor> pref_editor_;
 };
 
 DECLARE_APP(App)

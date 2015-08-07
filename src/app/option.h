@@ -9,13 +9,6 @@
 
 namespace jil {
 
-enum FontArea {
-  kFont_Text = 0,
-  kFont_Tab,
-  kFont_Status,
-  kFont_Count,
-};
-
 // Line padding range.
 const int kMinLinePadding = 1;
 const int kMaxLinePadding = 9;
@@ -40,8 +33,11 @@ public:
   // Encoding for new created file.
   editor::Encoding file_encoding;
 
-  // Fonts for different areas.
-  wxFont fonts[kFont_Count];
+  // Font for text editor.
+  wxFont font;
+
+  // Font for GUI components (tab area, status bar, etc.).
+  wxFont gui_font;
 
   // Theme name.
   wxString theme;

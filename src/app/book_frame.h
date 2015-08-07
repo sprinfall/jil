@@ -187,8 +187,8 @@ protected:
   // Update status fields according to active text page.
   void UpdateStatusFields();
 
-  // Update title according to active text page.
-  void UpdateTitle();
+  // Update title with the file path of the active text page.
+  void UpdateTitleWithPath();
 
   // Example: "3/120, 27"
   wxString FormatCaretString(TextPage* page) const;
@@ -220,7 +220,7 @@ protected:
   void OnFindWindowEvent(FindWindowEvent& evt);
 
   // Get find result page, create it if necessary.
-  FindResultPage* GetFindResultPage();
+  FindResultPage* GetFindResultPage(bool create);
 
   // Show tool book and activate the given page.
   void ActivateToolPage(BookPage* page);

@@ -5,12 +5,14 @@ endif()
 set(HEADERS
     bitmap_toggle_button.h
     color.h
+    font_preview_ctrl.h
     static_box.h
     )
 
 set(SRCS
     bitmap_toggle_button.cc
     color.cc
+    font_preview_ctrl.cc
     static_box.cc
     )
 

@@ -178,21 +178,25 @@ void ParseAppOptions(const Setting& setting, Options* options) {
   std::string fenc_str;
   GetString(setting_map, FILE_ENCODING, &fenc_str);
   if (fenc_str.empty()) {
-    fenc_str = "utf-8";
+    fenc_str = editor::ENCODING_NAME_UTF8;
   }
   options->file_encoding = editor::EncodingFromName(fenc_str);
 
-  // Fonts
-  Setting fonts_setting = GetSetting(setting_map, FONTS, Setting::kGroup);
-  if (fonts_setting) {
-    options->fonts[kFont_Text] = fonts_setting.GetFont("text");
-    options->fonts[kFont_Tab] = fonts_setting.GetFont("tab");
-    options->fonts[kFont_Status] = fonts_setting.GetFont("status");
+  // Font
+  Setting font_setting = GetSetting(setting_map, FONT, Setting::kString);
+  if (font_setting) {
+    options->font = font_setting.GetFont();
   }
 
-  if (!options->fonts[kFont_Text].IsOk()) {
+  if (!options->font.IsOk()) {
     wxFont font = GetGlobalFont(kDefaultFontSize, GetDefaultFontName());
-    options->fonts[kFont_Text] = font;
+    options->font = font;
+  }
+
+  // GUI Font
+  Setting gui_font_setting = GetSetting(setting_map, GUI_FONT, Setting::kString);
+  if (gui_font_setting) {
+    options->gui_font = gui_font_setting.GetFont();
   }
 
   GetInt(setting_map, LINE_PADDING, &options->line_padding);

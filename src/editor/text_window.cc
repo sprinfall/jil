@@ -172,26 +172,14 @@ void TextWindow::SetFocus() {
 //------------------------------------------------------------------------------
 
 void TextWindow::SetTextFont(const wxFont& font) {
-  // Text area
-
   text_area_->SetOwnFont(font);
-
-  // Update the font of text extent.
-  text_extent_->SetFont(text_area_->GetFont());
-
-  UpdateCharSize();
-  SetScrollbars(char_width_, line_height_, 1, 1);
-
-  UpdateTextSize();
-  UpdateVirtualSize();
-
-  // Update caret size and position.
-  text_area_->GetCaret()->SetSize(kCaretWidth, line_height_);
-  UpdateCaretPosition();
-
-  // Line number area
-
   line_nr_area_->SetOwnFont(font);
+
+  text_extent_->SetFont(text_area_->GetFont());
+  char_size_ = text_extent_->char_size();
+
+  UpdateLineHeight();
+  HandleLineHeightChange();
 
   int old_line_nr_width = line_nr_width_;
   UpdateLineNrWidth();
@@ -203,6 +191,33 @@ void TextWindow::SetTextFont(const wxFont& font) {
 
   text_area_->Refresh();
   line_nr_area_->Refresh();
+}
+
+void TextWindow::SetLinePadding(int line_padding) {
+  if (line_padding_ != line_padding) {
+    line_padding_ = line_padding;
+
+    UpdateLineHeight();
+    HandleLineHeightChange();
+
+    text_area_->Refresh();
+    line_nr_area_->Refresh();
+  }
+}
+
+void TextWindow::UpdateLineHeight() {
+  line_height_ = line_padding_ + char_size_.y + line_padding_;
+}
+
+void TextWindow::HandleLineHeightChange() {
+  SetScrollbars(char_size_.x, line_height_, 1, 1);
+
+  UpdateTextSize();
+  UpdateVirtualSize();
+
+  // Update caret size and position.
+  text_area_->GetCaret()->SetSize(kCaretWidth, line_height_);
+  UpdateCaretPosition();
 }
 
 //------------------------------------------------------------------------------
@@ -303,7 +318,9 @@ void TextWindow::Wrap(bool wrap) {
 
   // Caret position might change due to the wrap change.
   UpdateCaretPosition();
-  ScrollToPoint(caret_point_);
+
+  // TODO
+  //ScrollToPoint(caret_point_);
 }
 
 void TextWindow::ShowNumber(bool show_number) {
@@ -693,7 +710,7 @@ void TextWindow::ScrollToPoint(const TextPoint& point) {
       }
     } else {
       int unscrolled_right = GetUnscrolledX(client_rect.GetRight());
-      int char_end = (unscrolled_right + char_width_ / 2) / char_width_;
+      int char_end = (unscrolled_right + char_size_.x / 2) / char_size_.x;
       if (point.x >= char_end) {
         // 3 units per scroll.
         x = view_start_x + (point.x - char_end) + kScrollRateX;
@@ -902,13 +919,10 @@ void TextWindow::Init() {
   style_ = NULL;
   binding_ = NULL;
 
-  line_nr_width_ = 0;
-
-  char_width_ = 0;
-  char_height_ = 0;
+  line_padding_ = 1;
   line_height_ = 0;
-  text_width_ = 0;
-  text_height_ = 0;
+
+  line_nr_width_ = 0;
 
   caret_point_.Set(0, 1);
 
@@ -1279,7 +1293,7 @@ void TextWindow::HandleTextPaint(Renderer& renderer) {
     renderer.SetPen(wxPen(theme_->GetColor(RULER)), true);
 
     for (size_t i = 0; i < view_options_.rulers.size(); ++i) {
-      int ruler_x = x + char_width_ * view_options_.rulers[i];
+      int ruler_x = x + char_size_.x * view_options_.rulers[i];
       renderer.DrawLine(ruler_x, y1, ruler_x, y2);
     }
 
@@ -1342,7 +1356,7 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
       renderer.SetPen(wxPen(theme_->GetColor(RULER)), true);
 
       for (size_t i = 0; i < view_options_.rulers.size(); ++i) {
-        int ruler_x = x + char_width_ * view_options_.rulers[i];
+        int ruler_x = x + char_size_.x * view_options_.rulers[i];
         renderer.DrawLine(ruler_x, y1, ruler_x, y2);
       }
 
@@ -1362,7 +1376,7 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
       renderer.SetBrush(wxBrush(blank_bg), true);
 
       int w = text_area_->GetVirtualSize().x;
-      renderer.DrawRectangle(x, y + view_options_.line_padding, w, h);
+      renderer.DrawRectangle(x, y, w, h);
 
       renderer.RestoreBrush();
       renderer.RestorePen();
@@ -1374,7 +1388,7 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
 
       int y2 = y + h;
       for (size_t i = 0; i < view_options_.rulers.size(); ++i) {
-        int ruler_x = x + char_width_ * view_options_.rulers[i];
+        int ruler_x = x + char_size_.x * view_options_.rulers[i];
         renderer.DrawLine(ruler_x, y, ruler_x, y2);
       }
 
@@ -1412,7 +1426,7 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
 
       int w = x_end - x_begin;
       if (ln != selection_.end().y && line_selection.end() == kInvCoord) {
-        w += char_width_;  // Extra char width for EOL.
+        w += char_size_.x;  // Extra char width for EOL.
       }
 
       renderer.DrawRectangle(x_begin, y, w, line_height_);
@@ -1421,7 +1435,7 @@ void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
     }
   }
 
-  int line_text_y = y + view_options_.line_padding;
+  int line_text_y = y + line_padding_;
   DrawTextLine(renderer, line, x, line_text_y);
 
   y += line_height_;
@@ -1456,9 +1470,8 @@ void TextWindow::DrawWrappedTextLine(Coord ln, Renderer& renderer, int x, int& y
       int x1 = GetLineWidth(line, sub_range.begin(), sub_select_char_range.begin());
       int x2 = GetLineWidth(line, sub_range.begin(), sub_select_char_range.end());
       int w = x2 - x1;
-      if (ln != selection_.end().y &&
-          sub_select_char_range.end() == kInvCoord) {
-        w += char_width_;  // Extra char width for EOL.
+      if (ln != selection_.end().y && sub_select_char_range.end() == kInvCoord) {
+        w += char_size_.x;  // Extra char width for EOL.
       }
 
       renderer.DrawRectangle(x1, _y, w, line_height_);
@@ -1484,7 +1497,7 @@ void TextWindow::DrawWrappedTextLine(Coord ln, Renderer& renderer, int x, int& y
       }
 
       int _x = x;
-      int _y = y + view_options_.line_padding;
+      int _y = y + line_padding_;
 
       std::list<const LexElem*> lex_elems = line->lex_elems(sub_range);
 
@@ -1550,7 +1563,7 @@ void TextWindow::DrawWrappedTextLine(Coord ln, Renderer& renderer, int x, int& y
       }
 
       int _x = x;
-      int _y = y + view_options_.line_padding;
+      int _y = y + line_padding_;
 
       // Get the range, [i, j), of the line piece to draw.
       Coord i = sub_range.begin();
@@ -1600,7 +1613,7 @@ void TextWindow::DrawTextLine(Renderer& renderer, const TextLine* line, int x, i
 
 #if JIL_TEST_UNDERLINE_LEX_ELEMENT
     int ul_x1 = _x + 3;
-    int ul_y = _y + char_height_;
+    int ul_y = _y + char_size_.y;
 #endif  // JIL_TEST_UNDERLINE_LEX_ELEMENT
 
     i = le->off;
@@ -1662,7 +1675,7 @@ void TextWindow::DrawTextLinePiece(Renderer& renderer,
         renderer.SetPen(space_pen);
         renderer.DrawWhiteSpaces(x, y, spaces);
       }
-      x += char_width_ * spaces;
+      x += char_size_.x * spaces;
       chars += spaces;
       i += spaces - 1;
       p = i + 1;
@@ -1671,10 +1684,10 @@ void TextWindow::DrawTextLinePiece(Renderer& renderer,
       int tab_spaces = tab_stop_ - (chars % tab_stop_);
       chars += tab_spaces;
 
-      int tab_w = char_width_ * tab_spaces;
+      int tab_w = char_size_.x * tab_spaces;
       if (view_options_.show_space) {
         renderer.SetPen(space_pen);
-        renderer.DrawTab(x, y, tab_w, char_height_);
+        renderer.DrawTab(x, y, tab_w, char_size_.y);
       }
       x += tab_w;
 
@@ -2594,19 +2607,13 @@ bool TextWindow::HandleTextChange() {
   return resized;
 }
 
-void TextWindow::UpdateCharSize() {
-  char_width_ = text_extent_->char_width();
-  char_height_ = text_extent_->char_height();
-  line_height_ = view_options_.line_padding + char_height_ + view_options_.line_padding;
-}
-
 void TextWindow::UpdateTextSize() {
   if (!view_options_.wrap) {
-    text_width_ = char_width_ * buffer_->GetMaxLineLength();
-    text_height_ = line_height_ * buffer_->LineCount();
+    text_size_.x = char_size_.x * buffer_->GetMaxLineLength();
+    text_size_.y = line_height_ * buffer_->LineCount();
   } else {
-    text_width_ = -1;
-    text_height_ = line_height_ * wrap_helper()->WrappedLineCount();
+    text_size_.x = -1;
+    text_size_.y = line_height_ * wrap_helper()->WrappedLineCount();
   }
 }
 
@@ -2633,8 +2640,8 @@ void TextWindow::UpdateVirtualSize() {
   int vh = line_height_ * (line_count + GetPageSize() - 1);
 
   if (!view_options_.wrap) {
-    // - char_width_ to keep the last char visible when scroll to the end.
-    int vw = text_width_ + text_area_->GetClientSize().GetWidth() - char_width_;
+    // - char_size_.x to keep the last char visible when scroll to the end.
+    int vw = text_size_.x + text_area_->GetClientSize().GetWidth() - char_size_.x;
     text_area_->SetVirtualSize(vw, vh);
   } else {
     text_area_->SetVirtualSize(-1, vh);
@@ -2789,7 +2796,7 @@ int TextWindow::GetLineWidth(const TextLine* line, Coord off1, Coord off2) const
   if (off2 == kInvCoord) {
     off2 = line->Length();
   } else if (off2 > line->Length()) {
-    line_width = char_width_ * (off2 - line->Length());
+    line_width = char_size_.x * (off2 - line->Length());
     off2 = line->Length();
   }
 

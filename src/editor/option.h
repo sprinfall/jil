@@ -113,8 +113,6 @@ public:
   }
 
   void Init() {
-    line_padding = 1;
-
     min_font_size = 0;
     max_font_size = 0;
 
@@ -123,9 +121,6 @@ public:
     show_space = false;
     show_hscrollbar = false;
   }
-
-  // Spacing at the top and bottom of a line.
-  int line_padding;
 
   // Font size range.
   // Used in text window when increase/decrease font size with mouse wheel.

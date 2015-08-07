@@ -105,6 +105,8 @@ public:
 
   void SetTextFont(const wxFont& font);
 
+  void SetLinePadding(int line_padding);
+
   //----------------------------------------------------------------------------
 
   TextBuffer* buffer() const {
@@ -429,8 +431,11 @@ protected:
   // Return true if areas are resized.
   bool HandleTextChange();
 
-  void UpdateCharSize();
+  void UpdateLineHeight();
+  void HandleLineHeightChange();
+
   void UpdateTextSize();
+
   void UpdateLineNrWidth();
 
   void UpdateVirtualSize();
@@ -515,19 +520,17 @@ protected:
 
   Binding* binding_;
 
-  // Sub-windows and the GUI related properties.
   LineNrArea* line_nr_area_;
   TextArea* text_area_;
 
+  // Spacing at the top and bottom of a line.
+  int line_padding_;
+
+  int line_height_;
   int line_nr_width_;
 
-  // Char width is not very useful now, especially when the text font is not
-  // mono-space or there are CJK characters. But just keep it.
-  int char_width_;
-  int char_height_;
-  int line_height_;
-  int text_width_;
-  int text_height_;
+  wxSize char_size_;
+  wxSize text_size_;
 
   mutable WrapHelper* wrap_helper_;
 
