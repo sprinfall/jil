@@ -4,10 +4,12 @@
 namespace jil {
 namespace ui {
 
- static const wxSize kPadding(5, 2);
+static const wxSize kPadding(5, 1);
 
 BEGIN_EVENT_TABLE(FontPreviewCtrl, wxControl)
-EVT_PAINT(FontPreviewCtrl::OnPaint)
+EVT_PAINT       (FontPreviewCtrl::OnPaint)
+EVT_LEFT_DOWN   (FontPreviewCtrl::OnMouseLeftDown)
+EVT_LEFT_UP     (FontPreviewCtrl::OnMouseLeftUp)
 END_EVENT_TABLE()
 
 FontPreviewCtrl::FontPreviewCtrl(wxWindow* parent, wxWindowID id, const wxFont& font)
@@ -22,7 +24,7 @@ FontPreviewCtrl::~FontPreviewCtrl() {
 }
 
 wxSize FontPreviewCtrl::DoGetBestSize() const {
-  wxSize size = GetTextExtent(GetFont().GetFaceName());
+  wxSize size = GetTextExtent(GetFontLabel());
   size.IncBy(GetWindowBorderSize());
   size.IncBy(kPadding);
   size.IncBy(kPadding);
@@ -39,8 +41,40 @@ void FontPreviewCtrl::OnPaint(wxPaintEvent& evt) {
   wxFont font = GetFont();
   if (font.IsOk()) {
     dc.SetFont(font);
-    dc.DrawText(font.GetFaceName(), kPadding.x, kPadding.y);
+    dc.DrawText(GetFontLabel(), kPadding.x, kPadding.y);
   }
+}
+
+void FontPreviewCtrl::OnMouseLeftDown(wxMouseEvent& evt) {
+  if (!HasCapture()) {
+    CaptureMouse();
+  }
+  evt.Skip();
+}
+
+void FontPreviewCtrl::OnMouseLeftUp(wxMouseEvent& evt) {
+  if (!HasCapture()) {
+    return;
+  }
+  ReleaseMouse();
+
+  if (!GetClientRect().Contains(evt.GetPosition())) {
+    return;
+  }
+
+  wxCommandEvent button_evt(wxEVT_BUTTON, GetId());
+  button_evt.SetEventObject(this);
+  GetParent()->GetEventHandler()->AddPendingEvent(button_evt);
+}
+
+wxString FontPreviewCtrl::GetFontLabel() const {
+  wxFont font = GetFont();
+
+  wxString name = font.GetFaceName();
+  wxString size = wxString::Format(wxT("%d"), font.GetPointSize());
+
+  // Vim: set guifont=Consolas:h11:cDEFAULT
+  return (name + wxT(" : ") + size); 
 }
 
 }  // namespace ui

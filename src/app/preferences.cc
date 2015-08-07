@@ -263,6 +263,141 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// Dialog for selecting font name and size.
+class SelectFontDialog : public wxDialog {
+  DECLARE_EVENT_TABLE()
+
+public:
+  explicit SelectFontDialog(const wxFont& font) : font_(font) {
+  }
+
+  virtual ~SelectFontDialog() {
+  }
+
+  const wxFont& font() const {
+    return font_;
+  }
+
+  bool Create(wxWindow* parent, wxWindowID id, const wxString& title) {
+    if (!wxDialog::Create(parent, id, title)) {
+      return false;
+    }
+
+    wxBusyCursor wait;
+
+    CreateControls();
+
+    return true;
+  }
+
+protected:
+  virtual bool TransferDataToWindow() override {
+    name_combo_box_->SetValue(font_.GetFaceName());
+
+    wxString size_str = wxString::Format(wxT("%d"), font_.GetPointSize());
+    size_combo_box_->SetValue(size_str);
+
+    return true;
+  }
+
+  virtual bool TransferDataFromWindow() override {
+    wxString name = name_combo_box_->GetValue();
+    if (!font_.SetFaceName(name)) {
+      return false;
+    }
+
+    long size = 10;
+    if (!name_combo_box_->GetValue().ToLong(&size)) {
+      return false;
+    }
+
+    font_.SetPointSize(static_cast<int>(size));
+
+    return true;
+  }
+
+  void CreateControls() {
+    wxSizer* top_vsizer = new wxBoxSizer(wxVERTICAL);
+
+    // Font name & size combo boxes
+
+    wxStaticText* name_label = new wxStaticText(this, wxID_ANY, _("Font:"));
+    name_combo_box_ = new wxComboBox(this, wxID_ANY, wxEmptyString);
+    InitNameComboBox(name_combo_box_, true);
+
+    wxStaticText* size_label = new wxStaticText(this, wxID_ANY, _("Size:"));
+    size_combo_box_ = new wxComboBox(this, wxID_ANY, wxEmptyString);
+    InitSizeComboBox(size_combo_box_);
+
+    wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+
+    wxBoxSizer* name_vsizer = new wxBoxSizer(wxVERTICAL);
+    name_vsizer->Add(name_label);
+    name_vsizer->Add(name_combo_box_, wxSizerFlags().Expand());
+
+    wxBoxSizer* size_vsizer = new wxBoxSizer(wxVERTICAL);
+    size_vsizer->Add(size_label);
+    size_vsizer->Add(size_combo_box_, wxSizerFlags().Expand());
+
+    hsizer->Add(name_vsizer, wxSizerFlags(3));
+    hsizer->Add(size_vsizer, wxSizerFlags(1).Border(wxLEFT));
+
+    top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
+
+    // Fix-width check box
+
+    fixed_width_check_box_ = new wxCheckBox(this, wxID_ANY, wxT("Fixed width only"));
+    top_vsizer->Add(fixed_width_check_box_, wxSizerFlags().Expand().Border(wxALL));
+
+    // OK & Cancel buttons
+
+    wxSizer* button_sizer = CreateStdDialogButtonSizer(wxOK | wxCANCEL);
+    // NOTE: No left/right border, the button sizer has considered it.
+    top_vsizer->Add(button_sizer, wxSizerFlags().Expand().Border(wxTOP | wxBOTTOM));
+
+    SetSizerAndFit(top_vsizer);
+  }
+
+  void InitNameComboBox(wxComboBox* combo_box, bool fixed_width_only) {
+    FontEnumerator fe;
+    fe.EnumerateFacenames(wxFONTENCODING_SYSTEM, fixed_width_only);
+    std::set<wxString>::iterator it = fe.facenames.begin();
+    for (; it != fe.facenames.end(); ++it) {
+      combo_box->Append(*it);
+    }
+  }
+
+  void InitSizeComboBox(wxComboBox* combo_box) {
+    for (int i = kMinFontSize; i <= kMaxFontSize; ++i) {
+      combo_box->Append(wxString::Format(wxT("%d"), i));
+    }
+  }
+
+  void OnButtonOK(wxCommandEvent& evt) {
+    TransferDataFromWindow();
+    EndModal(wxID_OK);
+  }
+
+  void OnButtonCancel(wxCommandEvent& evt) {
+    EndModal(wxID_CANCEL);
+  }
+
+private:
+  wxFont font_;
+
+  wxComboBox* name_combo_box_;
+  wxComboBox* size_combo_box_;
+
+  wxCheckBox* fixed_width_check_box_;
+};
+
+BEGIN_EVENT_TABLE(SelectFontDialog, wxDialog)
+EVT_BUTTON(wxID_OK,       SelectFontDialog::OnButtonOK)
+EVT_BUTTON(wxID_CANCEL,   SelectFontDialog::OnButtonCancel)
+END_EVENT_TABLE()
+
+////////////////////////////////////////////////////////////////////////////////
+
 class Global_FontPage : public wxPanel {
 public:
   Global_FontPage(Options* options) : options_(options) {
@@ -285,63 +420,40 @@ protected:
   void CreateControls() {
     wxSizer* top_vsizer = new wxBoxSizer(wxVERTICAL);
 
-    CreateAreaSection(top_vsizer);
-    CreateNameSizeSection(top_vsizer);
+    wxSizer* sizer = CreateFontSection(top_vsizer, _("Font"), options_->font);
+    top_vsizer->Add(sizer, wxSizerFlags().Expand().Border(wxLTR));
+
+    sizer = CreateFontSection(top_vsizer, _("GUI font"), options_->gui_font);
+    top_vsizer->Add(sizer, wxSizerFlags().Expand().Border(wxALL));
 
     SetSizerAndFit(top_vsizer);
   }
 
-  void CreateAreaSection(wxSizer* top_vsizer) {
+  void OnFontPreviewCtrlClick(wxCommandEvent& evt) {
+    SelectFontDialog dialog(GetFont());
+    dialog.Create(this, wxID_ANY, _("Select Font"));
 
-    wxStaticText* font_label = new wxStaticText(this, wxID_ANY, _("Font:"));
-    ui::FontPreviewCtrl* font_preview_ctrl = new ui::FontPreviewCtrl(this, wxID_ANY, GetFont());
+    if (dialog.ShowModal() != wxID_OK) {
+      return;
+    }
+
+    dialog.font();
+  }
+
+  wxSizer* CreateFontSection(wxSizer* top_vsizer, const wxString& label, const wxFont& font) {
+    wxStaticText* text = new wxStaticText(this, wxID_ANY, label);
+    ui::FontPreviewCtrl* preview_ctrl = new ui::FontPreviewCtrl(this, wxID_ANY, font);
+
+    Connect(preview_ctrl->GetId(),
+            wxEVT_BUTTON,
+            wxCommandEventHandler(Global_FontPage::OnFontPreviewCtrlClick));
 
     wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-    hsizer->Add(font_label, wxSizerFlags().Center());
+    hsizer->Add(text, wxSizerFlags().Center());
     hsizer->AddStretchSpacer();
-    hsizer->Add(font_preview_ctrl, wxSizerFlags().Center().Border(wxLEFT));
+    hsizer->Add(preview_ctrl, wxSizerFlags().Center().Border(wxLEFT));
 
-    top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
-  }
-
-  void CreateNameSizeSection(wxSizer* top_vsizer) {
-    wxStaticText* name_label = new wxStaticText(this, wxID_ANY, _("Font:"));
-    wxComboBox* name_combo_box = new wxComboBox(this, wxID_ANY, wxEmptyString);
-    InitFontNameComboBox(name_combo_box, false);
-
-    wxStaticText* size_label = new wxStaticText(this, wxID_ANY, _("Size:"));
-    wxComboBox* size_combo_box = new wxComboBox(this, wxID_ANY, wxEmptyString);
-    InitFontSizeComboBox(size_combo_box);
-
-    wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-
-    wxBoxSizer* name_vsizer = new wxBoxSizer(wxVERTICAL);
-    name_vsizer->Add(name_label);
-    name_vsizer->Add(name_combo_box, wxSizerFlags().Expand());
-
-    wxBoxSizer* size_vsizer = new wxBoxSizer(wxVERTICAL);
-    size_vsizer->Add(size_label);
-    size_vsizer->Add(size_combo_box, wxSizerFlags().Expand());
-
-    hsizer->Add(name_vsizer, wxSizerFlags(3));
-    hsizer->Add(size_vsizer, wxSizerFlags(1).Border(wxLEFT));
-
-    top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
-  }
-
-  void InitFontNameComboBox(wxComboBox* combo_box, bool fixed_width_only) {
-    FontEnumerator fe;
-    fe.EnumerateFacenames(wxFONTENCODING_SYSTEM, fixed_width_only);
-    std::set<wxString>::iterator it = fe.facenames.begin();
-    for (; it != fe.facenames.end(); ++it) {
-      combo_box->Append(*it);
-    }
-  }
-
-  void InitFontSizeComboBox(wxComboBox* combo_box) {
-    for (int i = kMinFontSize; i <= kMaxFontSize; ++i) {
-      combo_box->Append(wxString::Format(wxT("%d"), i));
-    }
+    return hsizer;
   }
 
 private:
@@ -548,19 +660,13 @@ bool PrefDialogBase::Create(wxWindow* parent, wxWindowID id, const wxString& tit
 
   AddPages();
 
-  // NOTE: Don't use CreateStdDialogButtonSizer.
-  wxButton* ok_button = new wxButton(this, wxID_OK, _("OK"));
-  wxButton* cancel_button = new wxButton(this, wxID_CANCEL, _("Cancel"));
-
   // Layout
   wxSizer* vsizer = new wxBoxSizer(wxVERTICAL);
   vsizer->Add(notebook_, wxSizerFlags().Expand().Border(wxALL));
 
-  wxSizer* button_hsizer = new wxBoxSizer(wxHORIZONTAL);
-  button_hsizer->AddStretchSpacer(1);
-  button_hsizer->Add(ok_button);
-  button_hsizer->Add(cancel_button, wxSizerFlags().Border(wxLEFT));
-  vsizer->Add(button_hsizer, wxSizerFlags().Expand().Border(wxALL));
+  wxSizer* button_sizer = CreateStdDialogButtonSizer(wxOK | wxCANCEL);
+  // NOTE: No left/right border, the button sizer has considered it.
+  vsizer->Add(button_sizer, wxSizerFlags().Expand().Border(wxTOP | wxBOTTOM));
 
   SetSizer(vsizer);
 

@@ -19,6 +19,12 @@ protected:
   virtual wxSize DoGetBestSize() const override;
 
   void OnPaint(wxPaintEvent& evt);
+  void OnMouseLeftDown(wxMouseEvent& evt);
+  void OnMouseLeftUp(wxMouseEvent& evt);
+
+private:
+  // Return the font description to display.
+  wxString GetFontLabel() const;
 };
 
 }  // namespace ui
