@@ -187,7 +187,6 @@ void ParseAppOptions(const Setting& setting, Options* options) {
   if (font_setting) {
     options->font = font_setting.GetFont();
   }
-
   if (!options->font.IsOk()) {
     wxFont font = GetGlobalFont(kDefaultFontSize, GetDefaultFontName());
     options->font = font;
@@ -197,6 +196,9 @@ void ParseAppOptions(const Setting& setting, Options* options) {
   Setting gui_font_setting = GetSetting(setting_map, GUI_FONT, Setting::kString);
   if (gui_font_setting) {
     options->gui_font = gui_font_setting.GetFont();
+  }
+  if (!options->gui_font.IsOk()) {
+    options->gui_font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
   }
 
   GetInt(setting_map, LINE_PADDING, &options->line_padding);

@@ -15,7 +15,7 @@
 #include "wx/spinctrl.h"
 #include "wx/stattext.h"
 
-#include "ui/font_preview_ctrl.h"
+#include "ui/label_ctrl.h"
 #include "ui/static_box.h"
 
 #include "editor/defs.h"
@@ -44,6 +44,16 @@ static wxComboBox* CreateReadonlyComboBox(wxWindow* parent, wxWindowID id, const
 }
 
 namespace pref {
+
+////////////////////////////////////////////////////////////////////////////////
+
+enum Id {
+  ID_PREF_BEGIN = wxID_HIGHEST + 100,
+
+  ID_FONT_LABEL_CTRL,
+  ID_GUI_FONT_LABEL_CTRL,
+  ID_FIXED_WIDTH_ONLY_CHECKBOX,
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -268,7 +278,8 @@ class SelectFontDialog : public wxDialog {
   DECLARE_EVENT_TABLE()
 
 public:
-  explicit SelectFontDialog(const wxFont& font) : font_(font) {
+  SelectFontDialog(const wxFont& font, bool fixed_width_only)
+      : font_(font), fixed_width_only_(fixed_width_only) {
   }
 
   virtual ~SelectFontDialog() {
@@ -297,6 +308,8 @@ protected:
     wxString size_str = wxString::Format(wxT("%d"), font_.GetPointSize());
     size_combo_box_->SetValue(size_str);
 
+    fixed_width_check_box_->SetValue(fixed_width_only_);
+
     return true;
   }
 
@@ -306,11 +319,13 @@ protected:
       return false;
     }
 
-    long size = 10;
-    if (!name_combo_box_->GetValue().ToLong(&size)) {
+    long size = kDefaultFontSize;
+    if (!size_combo_box_->GetValue().ToLong(&size)) {
       return false;
     }
-
+    if (size < kMinFontSize || size > kMaxFontSize) {
+      size = kDefaultFontSize;
+    }
     font_.SetPointSize(static_cast<int>(size));
 
     return true;
@@ -319,35 +334,24 @@ protected:
   void CreateControls() {
     wxSizer* top_vsizer = new wxBoxSizer(wxVERTICAL);
 
-    // Font name & size combo boxes
+    name_combo_box_ = new wxComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, kStrTextSize);
+    InitNameComboBox(name_combo_box_, fixed_width_only_);
 
-    wxStaticText* name_label = new wxStaticText(this, wxID_ANY, _("Font:"));
-    name_combo_box_ = new wxComboBox(this, wxID_ANY, wxEmptyString);
-    InitNameComboBox(name_combo_box_, true);
-
-    wxStaticText* size_label = new wxStaticText(this, wxID_ANY, _("Size:"));
-    size_combo_box_ = new wxComboBox(this, wxID_ANY, wxEmptyString);
+    size_combo_box_ = new wxComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, kNumTextSize);
     InitSizeComboBox(size_combo_box_);
 
+    fixed_width_check_box_ = new wxCheckBox(this, ID_FIXED_WIDTH_ONLY_CHECKBOX, wxT("Fixed width only"));
+
+    // Layout
+
+    top_vsizer->Add(fixed_width_check_box_, wxSizerFlags().Expand().Border(wxALL));
+
     wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-
-    wxBoxSizer* name_vsizer = new wxBoxSizer(wxVERTICAL);
-    name_vsizer->Add(name_label);
-    name_vsizer->Add(name_combo_box_, wxSizerFlags().Expand());
-
-    wxBoxSizer* size_vsizer = new wxBoxSizer(wxVERTICAL);
-    size_vsizer->Add(size_label);
-    size_vsizer->Add(size_combo_box_, wxSizerFlags().Expand());
-
-    hsizer->Add(name_vsizer, wxSizerFlags(3));
-    hsizer->Add(size_vsizer, wxSizerFlags(1).Border(wxLEFT));
-
+    hsizer->Add(name_combo_box_, wxSizerFlags(3));
+    hsizer->Add(size_combo_box_, wxSizerFlags(1).Border(wxLEFT));
     top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
 
-    // Fix-width check box
-
-    fixed_width_check_box_ = new wxCheckBox(this, wxID_ANY, wxT("Fixed width only"));
-    top_vsizer->Add(fixed_width_check_box_, wxSizerFlags().Expand().Border(wxALL));
+    top_vsizer->AddSpacer(10);
 
     // OK & Cancel buttons
 
@@ -373,6 +377,12 @@ protected:
     }
   }
 
+  void OnFixedWidthOnlyCheckBox(wxCommandEvent& evt) {
+    name_combo_box_->Clear();
+    InitNameComboBox(name_combo_box_, evt.IsChecked());
+    name_combo_box_->SetValue(font_.GetFaceName());
+  }
+
   void OnButtonOK(wxCommandEvent& evt) {
     TransferDataFromWindow();
     EndModal(wxID_OK);
@@ -384,6 +394,7 @@ protected:
 
 private:
   wxFont font_;
+  bool fixed_width_only_;
 
   wxComboBox* name_combo_box_;
   wxComboBox* size_combo_box_;
@@ -392,8 +403,9 @@ private:
 };
 
 BEGIN_EVENT_TABLE(SelectFontDialog, wxDialog)
-EVT_BUTTON(wxID_OK,       SelectFontDialog::OnButtonOK)
-EVT_BUTTON(wxID_CANCEL,   SelectFontDialog::OnButtonCancel)
+EVT_CHECKBOX(ID_FIXED_WIDTH_ONLY_CHECKBOX, SelectFontDialog::OnFixedWidthOnlyCheckBox)
+EVT_BUTTON(wxID_OK, SelectFontDialog::OnButtonOK)
+EVT_BUTTON(wxID_CANCEL, SelectFontDialog::OnButtonCancel)
 END_EVENT_TABLE()
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -420,44 +432,85 @@ protected:
   void CreateControls() {
     wxSizer* top_vsizer = new wxBoxSizer(wxVERTICAL);
 
-    wxSizer* sizer = CreateFontSection(top_vsizer, _("Font"), options_->font);
-    top_vsizer->Add(sizer, wxSizerFlags().Expand().Border(wxLTR));
+    // Create controls
 
-    sizer = CreateFontSection(top_vsizer, _("GUI font"), options_->gui_font);
-    top_vsizer->Add(sizer, wxSizerFlags().Expand().Border(wxALL));
+    wxStaticText* label = new wxStaticText(this, wxID_ANY, _("Font"));
+    font_label_ctrl_ = new ui::LabelCtrl(this, ID_FONT_LABEL_CTRL, GetFontLabel(options_->font));
+
+    wxStaticText* gui_label = new wxStaticText(this, wxID_ANY, _("GUI font"));
+    gui_font_label_ctrl_ = new ui::LabelCtrl(this, ID_GUI_FONT_LABEL_CTRL, GetFontLabel(options_->gui_font));
+
+    // Layout
+
+    top_vsizer->Add(LayoutFont(label, font_label_ctrl_), wxSizerFlags().Expand().Border(wxLTR));
+    top_vsizer->Add(LayoutFont(gui_label, gui_font_label_ctrl_), wxSizerFlags().Expand().Border(wxLTR));
+
+    // Connect event handlers
+
+    Connect(ID_FONT_LABEL_CTRL,
+            wxEVT_BUTTON,
+            wxCommandEventHandler(Global_FontPage::OnFontLabelClick));
+
+    Connect(ID_GUI_FONT_LABEL_CTRL,
+            wxEVT_BUTTON,
+            wxCommandEventHandler(Global_FontPage::OnGuiFontLabelClick));
 
     SetSizerAndFit(top_vsizer);
   }
 
-  void OnFontPreviewCtrlClick(wxCommandEvent& evt) {
-    SelectFontDialog dialog(GetFont());
-    dialog.Create(this, wxID_ANY, _("Select Font"));
-
-    if (dialog.ShowModal() != wxID_OK) {
-      return;
-    }
-
-    dialog.font();
-  }
-
-  wxSizer* CreateFontSection(wxSizer* top_vsizer, const wxString& label, const wxFont& font) {
-    wxStaticText* text = new wxStaticText(this, wxID_ANY, label);
-    ui::FontPreviewCtrl* preview_ctrl = new ui::FontPreviewCtrl(this, wxID_ANY, font);
-
-    Connect(preview_ctrl->GetId(),
-            wxEVT_BUTTON,
-            wxCommandEventHandler(Global_FontPage::OnFontPreviewCtrlClick));
-
+  wxSizer* LayoutFont(wxStaticText* text, ui::LabelCtrl* label_ctrl) {
     wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
     hsizer->Add(text, wxSizerFlags().Center());
     hsizer->AddStretchSpacer();
-    hsizer->Add(preview_ctrl, wxSizerFlags().Center().Border(wxLEFT));
-
+    hsizer->Add(label_ctrl, wxSizerFlags().Center().Border(wxLEFT));
     return hsizer;
+  }
+
+  wxString GetFontLabel(const wxFont& font) const {
+    if (!font.IsOk()) {
+      return wxT("N/A");
+    }
+    return font.GetFaceName() + wxString::Format(wxT(", %d"), font.GetPointSize());
+  }
+
+  void OnFontLabelClick(wxCommandEvent& evt) {
+    if (ShowFontDialog(options_->font, true)) {
+      font_label_ctrl_->SetLabel(GetFontLabel(options_->font));
+      GetSizer()->Layout();
+      font_label_ctrl_->Refresh();
+    }
+  }
+
+  void OnGuiFontLabelClick(wxCommandEvent& evt) {
+    if (ShowFontDialog(options_->gui_font, false)) {
+      gui_font_label_ctrl_->SetLabel(GetFontLabel(options_->gui_font));
+      GetSizer()->Layout();
+      gui_font_label_ctrl_->Refresh();
+    }
+  }
+
+  // Return true if the font is changed.
+  bool ShowFontDialog(wxFont& font, bool fixed_width_only) {
+    SelectFontDialog dialog(font, fixed_width_only);
+    dialog.Create(this, wxID_ANY, _("Font"));
+
+    if (dialog.ShowModal() != wxID_OK) {
+      return false;
+    }
+
+    if (font == dialog.font()) {
+      return false;
+    }
+
+    font = dialog.font();
+    return true;
   }
 
 private:
   Options* options_;
+
+  ui::LabelCtrl* font_label_ctrl_;
+  ui::LabelCtrl* gui_font_label_ctrl_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
