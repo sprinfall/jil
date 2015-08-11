@@ -61,6 +61,14 @@ enum ThemeId {
 const char* const kSplit_Text = "text";  // Text book
 const char* const kSplit_Tool = "tool";  // Tool book
 
+enum FontType {
+  FONT_TEXT = 0,
+  FONT_LINE_NR,
+  FONT_TABS,
+  FONT_STATUS_BAR,
+  FONT_COUNT,
+};
+
 }  // namespace jil
 
 #endif  // JIL_DEFS_H_

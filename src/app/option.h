@@ -6,6 +6,7 @@
 #include "wx/string.h"
 #include "wx/font.h"
 #include "editor/defs.h"
+#include "app/defs.h"
 
 namespace jil {
 
@@ -33,11 +34,8 @@ public:
   // Encoding for new created file.
   editor::Encoding file_encoding;
 
-  // Font for text editor.
-  wxFont font;
-
-  // Font for GUI components (tab area, status bar, etc.).
-  wxFont gui_font;
+  // Fonts.
+  wxFont fonts[FONT_COUNT];
 
   // Theme name.
   wxString theme;

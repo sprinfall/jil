@@ -10,8 +10,9 @@
 #include "editor/util.h"
 #include "editor/option.h"
 #include "app/config.h"
-#include "app/option.h"
+#include "app/defs.h"
 #include "app/font_util.h"
+#include "app/option.h"
 
 namespace jil {
 
@@ -162,6 +163,36 @@ static void GetOptionTable(Setting setting, editor::OptionTable* option_table) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+static void NormalizeFont(wxFont& font) {
+  if (font.GetWeight() != wxFONTWEIGHT_NORMAL) {
+    font.SetWeight(wxFONTWEIGHT_NORMAL);
+  }
+
+  if (font.GetStyle() != wxFONTSTYLE_NORMAL) {
+    font.SetStyle(wxFONTSTYLE_NORMAL);
+  }
+}
+
+static void ValidateFonts(wxFont fonts[FONT_COUNT]) {
+  if (!fonts[FONT_TEXT].IsOk()) {
+    fonts[FONT_TEXT] = GetGlobalFont(kDefaultFontSize, GetDefaultFontName());
+  }
+
+  if (!fonts[FONT_LINE_NR].IsOk()) {
+    fonts[FONT_LINE_NR] = fonts[FONT_TEXT];
+  }
+
+  if (!fonts[FONT_TABS].IsOk()) {
+    wxFont gui_font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+    NormalizeFont(gui_font);
+    fonts[FONT_TABS] = gui_font;
+  }
+
+  if (!fonts[FONT_STATUS_BAR].IsOk()) {
+    fonts[FONT_STATUS_BAR] = fonts[FONT_TABS];
+  }
+}
+
 void ParseAppOptions(const Setting& setting, Options* options) {
   SettingMap setting_map;
   setting.AsMap(&setting_map);
@@ -182,24 +213,16 @@ void ParseAppOptions(const Setting& setting, Options* options) {
   }
   options->file_encoding = editor::EncodingFromName(fenc_str);
 
-  // Font
-  Setting font_setting = GetSetting(setting_map, FONT, Setting::kString);
-  if (font_setting) {
-    options->font = font_setting.GetFont();
-  }
-  if (!options->font.IsOk()) {
-    wxFont font = GetGlobalFont(kDefaultFontSize, GetDefaultFontName());
-    options->font = font;
+  // Fonts
+  Setting fonts_setting = GetSetting(setting_map, FONTS, Setting::kGroup);
+  if (fonts_setting) {
+    options->fonts[FONT_TEXT] = fonts_setting.GetFont("text");
+    options->fonts[FONT_LINE_NR] = fonts_setting.GetFont("line_nr");
+    options->fonts[FONT_TABS] = fonts_setting.GetFont("tabs");
+    options->fonts[FONT_STATUS_BAR] = fonts_setting.GetFont("status_bar");
   }
 
-  // GUI Font
-  Setting gui_font_setting = GetSetting(setting_map, GUI_FONT, Setting::kString);
-  if (gui_font_setting) {
-    options->gui_font = gui_font_setting.GetFont();
-  }
-  if (!options->gui_font.IsOk()) {
-    options->gui_font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
-  }
+  ValidateFonts(options->fonts);
 
   GetInt(setting_map, LINE_PADDING, &options->line_padding);
 
