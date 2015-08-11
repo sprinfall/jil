@@ -164,11 +164,10 @@ public:
   explicit BookCtrl(const editor::SharedTheme& theme);
   virtual ~BookCtrl();
 
-  void set_tab_font(const wxFont& tab_font) {
-    tab_font_ = tab_font;
-  }
-
   bool Create(wxWindow* parent, wxWindowID id);
+
+  // NOTE: Call after Create().
+  void SetTabFont(const wxFont& tab_font);
 
   virtual bool HasFocus() const override;
 
@@ -230,7 +229,8 @@ public:
 protected:
   void Init();
 
-  void CreateTabArea();
+  // Update values determined by tab font.
+  void UpdateTabFontDetermined();
 
   friend class BookTabArea;
 
@@ -280,8 +280,6 @@ protected:
 
 protected:
   editor::SharedTheme theme_;
-
-  wxFont tab_font_;
 
   int char_width_;
   int ellipsis_width_;  // Size of "...".

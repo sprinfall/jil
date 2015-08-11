@@ -20,6 +20,9 @@ StatusBar::StatusBar()
     : char_height_(0) {
 }
 
+StatusBar::~StatusBar() {
+}
+
 bool StatusBar::Create(wxWindow* parent, wxWindowID id) {
   assert(theme_);
 
@@ -29,27 +32,21 @@ bool StatusBar::Create(wxWindow* parent, wxWindowID id) {
 
   SetBackgroundStyle(wxBG_STYLE_PAINT);
 
-  if (font_.IsOk()) {
-    SetFont(font_);
-  }
-
-  // Cache the char height after set font.
-  char_height_ = GetCharHeight();
-
-  // Determine padding by char width.
-  int char_width = GetCharWidth();
-  padding_.Set(char_width, char_width / 2 + 1);
+  UpdateFontDetermined();
 
   return true;
 }
 
-StatusBar::~StatusBar() {
+// NOTE: Don't have to refresh. The book frame should update layout.
+bool StatusBar::SetFont(const wxFont& font) {
+  if (wxPanel::SetFont(font)) {
+    UpdateFontDetermined();
+    return true;
+  }
+  return false;
 }
 
-void StatusBar::AddField(FieldId id,
-                         wxAlignment align,
-                         SizeType size_type,
-                         int size_value) {
+void StatusBar::AddField(FieldId id, wxAlignment align, SizeType size_type, int size_value) {
   FieldInfo field_info = { id, align, size_type, size_value, 0 };
   field_infos_.push_back(field_info);
 }
@@ -229,6 +226,14 @@ void StatusBar::OnMouseLeftDown(wxMouseEvent& evt) {
   field_click_evt.SetEventObject(this);
   field_click_evt.SetInt(field_info->id);
   GetParent()->GetEventHandler()->AddPendingEvent(field_click_evt);
+}
+
+void StatusBar::UpdateFontDetermined() {
+  char_height_ = GetCharHeight();
+
+  // Determine padding by char width.
+  int char_width = GetCharWidth();
+  padding_.Set(char_width, char_width / 2 + 1);
 }
 
 wxString StatusBar::GetFieldValue(FieldId id) {

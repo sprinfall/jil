@@ -156,8 +156,8 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
 
   // Create text book.
   text_book_ = new TextBook(theme_->GetTheme(THEME_TEXT_BOOK));
-  text_book_->set_tab_font(options_->fonts[FONT_TABS]);
   text_book_->Create(splitter_, wxID_ANY);
+  text_book_->SetTabFont(options_->fonts[FONT_TABS]);
 
   Connect(text_book_->GetId(), kEvtBookPageChange, wxCommandEventHandler(BookFrame::OnTextBookPageChange));
   Connect(text_book_->GetId(), kEvtBookPageSwitch, wxCommandEventHandler(BookFrame::OnTextBookPageSwitch));
@@ -165,6 +165,7 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
   // Create tool book.
   tool_book_ = new ToolBook(theme_->GetTheme(THEME_TEXT_BOOK));
   tool_book_->Create(splitter_, wxID_ANY);
+  tool_book_->SetTabFont(options_->fonts[FONT_TABS]);
   tool_book_->Hide();
   Connect(tool_book_->GetId(), kEvtBookPageChange, wxCommandEventHandler(BookFrame::OnToolBookPageChange));
 
@@ -181,10 +182,11 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
   // Create status line.
   status_bar_ = new editor::StatusBar;
   status_bar_->set_theme(theme_->GetTheme(THEME_STATUS_BAR));
-  status_bar_->set_font(options_->fonts[FONT_STATUS_BAR]);
   status_bar_->SetFields(wxGetApp().status_fields());
 
   status_bar_->Create(this, ID_STATUS_BAR);
+
+  status_bar_->SetFont(options_->fonts[FONT_STATUS_BAR]);
 
   status_bar_->SetFieldValue(editor::StatusBar::kField_Cwd, wxGetCwd(), false);
 
@@ -750,17 +752,7 @@ void BookFrame::OnGlobalPreferences(wxCommandEvent& WXUNUSED(evt)) {
     return;
   }
 
-  if (options_->line_padding != old_options.line_padding) {
-    std::vector<TextPage*> text_pages = text_book_->TextPages();
-    for (TextPage* text_page : text_pages) {
-      text_page->SetLinePadding(options_->line_padding);
-    }
-
-    FindResultPage* fr_page = GetFindResultPage(false);
-    if (fr_page != NULL) {
-      fr_page->SetLinePadding(options_->line_padding);
-    }
-  }
+  // Apply changes.
 
   if (options_->show_path != old_options.show_path) {
     if (options_->show_path) {
@@ -768,6 +760,64 @@ void BookFrame::OnGlobalPreferences(wxCommandEvent& WXUNUSED(evt)) {
     } else {
       SetTitle(kAppDisplayName);
     }
+  }
+
+  if (options_->line_padding != old_options.line_padding) {
+    ApplyLinePadding(options_->line_padding);
+  }
+
+  if (options_->fonts[FONT_TEXT] != old_options.fonts[FONT_TEXT]) {
+    ApplyTextFont(options_->fonts[FONT_TEXT]);
+  }
+
+  if (options_->fonts[FONT_LINE_NR] != old_options.fonts[FONT_LINE_NR]) {
+    ApplyLineNrFont(options_->fonts[FONT_LINE_NR]);
+  }
+
+  if (options_->fonts[FONT_TABS] != old_options.fonts[FONT_TABS]) {
+    text_book_->SetTabFont(options_->fonts[FONT_TABS]);
+    tool_book_->SetTabFont(options_->fonts[FONT_TABS]);
+  }
+
+  if (options_->fonts[FONT_STATUS_BAR] != old_options.fonts[FONT_STATUS_BAR]) {
+    status_bar_->SetFont(options_->fonts[FONT_STATUS_BAR]);
+    UpdateLayout();
+  }
+}
+
+void BookFrame::ApplyLinePadding(int line_padding) {
+  std::vector<TextPage*> text_pages = text_book_->TextPages();
+  for (TextPage* text_page : text_pages) {
+    text_page->SetLinePadding(line_padding);
+  }
+
+  FindResultPage* fr_page = GetFindResultPage(false);
+  if (fr_page != NULL) {
+    fr_page->SetLinePadding(line_padding);
+  }
+}
+
+void BookFrame::ApplyTextFont(const wxFont& font) {
+  std::vector<TextPage*> text_pages = text_book_->TextPages();
+  for (TextPage* text_page : text_pages) {
+    text_page->SetTextFont(font);
+  }
+
+  FindResultPage* fr_page = GetFindResultPage(false);
+  if (fr_page != NULL) {
+    fr_page->SetTextFont(font);
+  }
+}
+
+void BookFrame::ApplyLineNrFont(const wxFont& font) {
+  std::vector<TextPage*> text_pages = text_book_->TextPages();
+  for (TextPage* text_page : text_pages) {
+    text_page->SetLineNrFont(font);
+  }
+
+  FindResultPage* fr_page = GetFindResultPage(false);
+  if (fr_page != NULL) {
+    fr_page->SetLineNrFont(font);
   }
 }
 

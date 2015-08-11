@@ -45,14 +45,18 @@ public:
 
   struct FieldInfo {
     FieldId id;
+
     wxAlignment align;
+
     SizeType size_type;
+
     // For different size types, different meanings of size value:
     // kFit -> padding
     // kFixedPixel -> pixels
     // kFixedPercentage -> % x 100
     // kStretch -> stretch factor
     int size_value;
+
     // Actually size.
     int size;
   };
@@ -67,14 +71,9 @@ public:
     theme_ = theme;
   }
 
-  void set_font(const wxFont& font) {
-    font_ = font;
-  }
+  virtual bool SetFont(const wxFont& font) override;
 
-  void AddField(FieldId id,
-                wxAlignment align,
-                SizeType size_type,
-                int size_value);
+  void AddField(FieldId id, wxAlignment align, SizeType size_type, int size_value);
 
   void SetFields(const std::vector<FieldInfo>& field_infos);
 
@@ -93,6 +92,8 @@ protected:
   void OnMouseLeftDown(wxMouseEvent& evt);
 
 private:
+  void UpdateFontDetermined();
+
   wxString GetFieldValue(FieldId id);
 
   // Get field rect according to its size and the client rect.
@@ -103,8 +104,6 @@ private:
 
 private:
   SharedTheme theme_;
-
-  wxFont font_;
 
   std::vector<FieldInfo> field_infos_;
 

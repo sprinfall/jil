@@ -38,8 +38,8 @@ static void UpdateFlag(int& flags, int flag, bool enable) {
   }
 }
 
-static wxComboBox* CreateReadonlyComboBox(wxWindow* parent, wxWindowID id, const wxString& value = wxEmptyString) {
-  return new wxComboBox(parent, id, value, wxDefaultPosition, wxDefaultSize, 0, NULL, wxCB_READONLY);
+static wxComboBox* CreateReadonlyComboBox(wxWindow* parent, wxWindowID id) {
+  return new wxComboBox(parent, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, wxCB_READONLY);
 }
 
 namespace pref {
@@ -334,14 +334,8 @@ protected:
 
     wxStaticText* type_label = new wxStaticText(this, wxID_ANY, wxT("Font type:"));
 
-    type_combo_box_ = new wxComboBox(this,
-                                     ID_FONT_TYPE_COMBOBOX,
-                                     wxEmptyString,
-                                     wxDefaultPosition,
-                                     wxDefaultSize,
-                                     FONT_COUNT,
-                                     font_types,
-                                     wxCB_READONLY);
+    type_combo_box_ = CreateReadonlyComboBox(this, ID_FONT_TYPE_COMBOBOX);
+    type_combo_box_->Append(FONT_COUNT, font_types);
     type_combo_box_->Select(FONT_TEXT);
 
     wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);

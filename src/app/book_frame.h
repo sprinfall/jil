@@ -154,6 +154,11 @@ protected:
   void ShowAboutWindow();
 
   void OnGlobalPreferences(wxCommandEvent& evt);
+
+  void ApplyLinePadding(int line_padding);
+  void ApplyTextFont(const wxFont& font);
+  void ApplyLineNrFont(const wxFont& font);
+
   void OnEditorPreferences(wxCommandEvent& evt);
 
   void OnQuit(wxCommandEvent& evt);

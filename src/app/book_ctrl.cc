@@ -101,10 +101,11 @@ bool BookCtrl::Create(wxWindow* parent, wxWindowID id) {
 
   SetBackgroundColour(theme_->GetColor(BG));
 
-  CreateTabArea();
+  tab_area_ = new BookTabArea(this, wxID_ANY);
 
-  // Book ctrl's min size is the best size of its tab area.
-  SetMinSize(tab_area_->GetBestSize());
+  if (theme_->GetColor(TAB_AREA_BG).IsOk()) {
+    tab_area_->SetBackgroundColour(theme_->GetColor(TAB_AREA_BG));
+  }
 
   page_area_ = new wxPanel(this, wxID_ANY);
   page_vsizer_ = new wxBoxSizer(wxVERTICAL);
@@ -115,7 +116,17 @@ bool BookCtrl::Create(wxWindow* parent, wxWindowID id) {
   vsizer->Add(page_area_, 1, wxEXPAND);
   SetSizer(vsizer);
 
+  UpdateTabFontDetermined();
+
   return true;
+}
+
+void BookCtrl::SetTabFont(const wxFont& tab_font) {
+  assert(tab_area_ != NULL);
+
+  if (tab_area_->SetFont(tab_font)) {
+    UpdateTabFontDetermined();
+  }
 }
 
 bool BookCtrl::HasFocus() const {
@@ -501,24 +512,32 @@ void BookCtrl::Init() {
   tab_default_size_ = 130;
 
   free_size_ = 0;
+
+  tab_area_ = NULL;
+  page_area_ = NULL;
+  page_vsizer_ = NULL;
+
   batch_ = false;
   need_resize_tabs_ = false;
 }
 
-void BookCtrl::CreateTabArea() {
-  tab_area_ = new BookTabArea(this, wxID_ANY);
-
-  if (theme_->GetColor(TAB_AREA_BG).IsOk()) {
-    tab_area_->SetBackgroundColour(theme_->GetColor(TAB_AREA_BG));
-  }
-
-  if (tab_font_.IsOk()) {
-    tab_area_->SetFont(tab_font_);
-  }
-
+void BookCtrl::UpdateTabFontDetermined() {
   char_width_ = tab_area_->GetCharWidth();
   tab_area_->GetTextExtent(kEllipsis, &ellipsis_width_, NULL);
   tab_padding_.Set(char_width_, char_width_ / 2 + 1);
+
+  // Book ctrl's min size is the best size of its tab area.
+  SetMinSize(tab_area_->GetBestSize());
+
+  // Update tabs best size.
+  for (Tab* tab : tabs_) {
+    tab->best_size = CalcTabBestSize(tab->page->Page_Label());
+  }
+
+  ResizeTabs();
+
+  Layout();
+  //tab_area_->Refresh();
 }
 
 void BookCtrl::OnTabSize(wxSizeEvent& evt) {
