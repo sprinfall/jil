@@ -62,7 +62,7 @@ public:
     return theme_names_;
   }
 
-  const std::list<editor::FileType*>& file_types() const {
+  const std::vector<editor::FileType*>& file_types() const {
     return file_types_;
   }
 
@@ -182,11 +182,11 @@ private:
   editor::SharedTheme theme_;
   editor::Style* style_;
 
-  std::list<editor::FileType*> file_types_;
+  std::vector<editor::FileType*> file_types_;
 
   // The ID of internal file types always starts with "jil-".
   // Internal file types won't be displayed to the end user.
-  std::list<editor::FileType*> internal_file_types_;
+  std::vector<editor::FileType*> internal_file_types_;
 
   // Example: wxT("cpp") -> { "cpp", wxT("C++") }
   typedef std::map<wxString, editor::FileType*> ExtFtMap;

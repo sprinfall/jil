@@ -18,6 +18,7 @@
 #include "ui/static_box.h"
 
 #include "editor/defs.h"
+#include "editor/option.h"
 
 #include "app/defs.h"
 #include "app/font_util.h"
@@ -489,6 +490,33 @@ public:
     }
 
     CreateControls();
+
+    return true;
+  }
+
+  virtual bool TransferDataToWindow() override {
+    show_hscrollbar_check_box_->SetValue(options_->view.show_hscrollbar);
+    show_number_check_box_->SetValue(options_->view.show_number);
+    show_space_check_box_->SetValue(options_->view.show_space);
+    wrap_check_box_->SetValue(options_->view.wrap);
+
+    wxString rulers_value;
+    for (int ruler : options_->view.rulers) {
+      if (!rulers_value.IsEmpty()) {
+        rulers_value += wxT(",");
+      }
+      rulers_value += wxString::Format(wxT("%d"), ruler);
+    }
+    rulers_text_ctrl_->SetValue(rulers_value);
+
+    return true;
+  }
+
+  virtual bool TransferDataFromWindow() override {
+    options_->view.show_hscrollbar = show_hscrollbar_check_box_->GetValue();
+    options_->view.show_number = show_number_check_box_->GetValue();
+    options_->view.show_space = show_space_check_box_->GetValue();
+    options_->view.wrap = wrap_check_box_->GetValue();
 
     return true;
   }

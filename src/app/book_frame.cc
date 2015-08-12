@@ -821,11 +821,34 @@ void BookFrame::ApplyLineNrFont(const wxFont& font) {
   }
 }
 
-void BookFrame::OnEditorPreferences(wxCommandEvent& WXUNUSED(evt)) {
-  PrefEditorDialog dialog(editor_options_);
-  dialog.Create(this, wxID_ANY, _("Preferences"));
+void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
+  int index = evt.GetId() - ID_MENU_PREFS_EDITOR_0;
+
+  const std::vector<editor::FileType*>& file_types = wxGetApp().file_types();
+  if (index < 0 || index >= static_cast<int>(file_types.size())) {
+    return;
+  }
+
+  editor::FileType* ft = file_types[index];
+
+  editor::FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(*ft);
+  if (ft_plugin == NULL) {
+    return;
+  }
+
+  editor::Options editor_options = ft_plugin->options();
+  PrefEditorDialog dialog(&editor_options);
+
+  wxString title = _("Preferences") + wxT(" - ") + ft->name;
+  dialog.Create(this, wxID_ANY, title);
   dialog.CenterOnParent();
-  dialog.ShowModal();
+
+  if (dialog.ShowModal() != wxID_OK) {
+    return;
+  }
+
+  // Apply changes.
+
 }
 
 void BookFrame::OnQuit(wxCommandEvent& WXUNUSED(evt)) {
@@ -2165,10 +2188,10 @@ void BookFrame::InitThemeMenu(wxMenu* theme_menu) {
 }
 
 void BookFrame::InitFileTypeMenu(wxMenu* ft_menu) {
-  const std::list<editor::FileType*>& file_types = wxGetApp().file_types();
-  std::list<editor::FileType*>::const_iterator it = file_types.begin();
-  for (int i = 0; it != file_types.end() && i < kMaxFileTypes; ++it, ++i) {
-    AppendMenuItem(ft_menu, ID_MENU_PREFS_EDITOR_0 + i, (*it)->name);
+  const std::vector<editor::FileType*>& file_types = wxGetApp().file_types();
+  int count = wxMin(static_cast<int>(file_types.size()), kMaxFileTypes);
+  for (int i = 0; i < count; ++i) {
+    AppendMenuItem(ft_menu, ID_MENU_PREFS_EDITOR_0 + i, file_types[i]->name);
   }
 }
 
