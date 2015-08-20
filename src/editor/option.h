@@ -15,53 +15,56 @@ namespace editor {
 
 class OptionValue {
 public:
-  OptionValue() {
+  enum Type {
+    kNone = 0,
+    kBool,
+    kInt,
+    kString,
+  };
+
+  OptionValue() : type_(kNone) {
   }
 
-  explicit OptionValue(bool data) : data_(data) {
+  explicit OptionValue(bool data) : data_(data), type_(kBool) {
   }
 
-  explicit OptionValue(int data) : data_(data) {
+  explicit OptionValue(int data) : data_(data), type_(kInt) {
   }
 
-  explicit OptionValue(const std::string& data) : data_(data) {
+  explicit OptionValue(const std::string& data) : data_(data), type_(kString) {
+  }
+
+  Type type() const {
+    return type_;
   }
 
   bool IsEmpty() const {
     return data_.empty();
   }
 
-  int AsInt() const {
+  template <typename T>
+  bool As(T* value) const {
     try {
-      return boost::any_cast<int>(data_);
-    } catch(const boost::bad_any_cast&) {
-      return 0;
-    }
-  }
-
-  std::string AsString() const {
-    try {
-      return boost::any_cast<std::string>(data_);
-    } catch(const boost::bad_any_cast&) {
-      return "";
-    }
-  }
-
-  bool AsBool() const {
-    try {
-      return boost::any_cast<bool>(data_);
-    } catch(const boost::bad_any_cast&) {
+      *value = boost::any_cast<T>(data_);
+      return true;
+    } catch (const boost::bad_any_cast&) {
       return false;
     }
   }
 
 private:
   boost::any data_;
+  Type type_;
 };
 
-typedef std::vector<std::pair<std::string, OptionValue> > OptionTable;
+typedef std::pair<std::string, editor::OptionValue> OptionPair;
+typedef std::vector<OptionPair> OptionTable;
 
 ////////////////////////////////////////////////////////////////////////////////
+
+// Tab stop range.
+const int kMinTabStop = 1;
+const int kMaxTabStop = 8;
 
 class TextOptions {
 public:
@@ -73,6 +76,7 @@ public:
     shift_width = 4;
     tab_stop = 4;
     expand_tab = true;
+    guess_tab = true;
 
     comment_add_space = true;
     comment_respect_indent = true;
@@ -84,8 +88,11 @@ public:
   // The number of spaces a tab occupies.
   int tab_stop;
 
-  // Insert spaces for tab.
+  // Expand tab with spaces.
   bool expand_tab;
+
+  // Guess tab options from existing lines.
+  bool guess_tab;
 
   // Word delimiters (exluding ' ' and '\t').
   // E.g., !@#%^$&*()+-=\|/?[]{}<>,.;:'"`~
@@ -96,7 +103,7 @@ public:
   // Similar to Vim option "indentkeys".
   // E.g., '}' for C/C++, "endif" for Vim Script, etc.
   std::vector<std::wstring> indent_keys;
-
+   
   // Extra indent options.
   // E.g., indent_namespace, indent_case for C++.
   OptionTable indent_options;

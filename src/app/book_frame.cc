@@ -830,14 +830,13 @@ void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
   }
 
   editor::FileType* ft = file_types[index];
-
   editor::FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(*ft);
   if (ft_plugin == NULL) {
     return;
   }
 
-  editor::Options editor_options = ft_plugin->options();
-  PrefEditorDialog dialog(&editor_options);
+  editor::Options options = ft_plugin->options();
+  PrefEditorDialog dialog(&options);
 
   wxString title = _("Preferences") + wxT(" - ") + ft->name;
   dialog.Create(this, wxID_ANY, title);
@@ -849,6 +848,7 @@ void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
 
   // Apply changes.
 
+  ft_plugin->set_options(options);
 }
 
 void BookFrame::OnQuit(wxCommandEvent& WXUNUSED(evt)) {

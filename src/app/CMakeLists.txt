@@ -51,7 +51,6 @@ set(SRCS
     preferences.h
     save.cc
     save.h
-    separator.h
     session.cc
     session.h
     skin.cc

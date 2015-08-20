@@ -32,6 +32,7 @@ const char* const WRAP = "wrap";
 const char* const SHIFT_WIDTH = "shift_width";
 const char* const TAB_STOP = "tab_stop";
 const char* const EXPAND_TAB = "expand_tab";
+const char* const GUESS_TAB = "guess_tab";
 const char* const SHOW_NUMBER = "show_number";
 const char* const SHOW_SPACE = "show_space";
 const char* const SHOW_HSCROLLBAR = "show_hscrollbar";

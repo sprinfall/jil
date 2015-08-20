@@ -247,6 +247,7 @@ void ParseEditorOptions(const Setting& setting, editor::Options* options) {
   GetInt(setting_map, SHIFT_WIDTH, &options->text.shift_width);
   GetInt(setting_map, TAB_STOP, &options->text.tab_stop);
   GetBool(setting_map, EXPAND_TAB, &options->text.expand_tab);
+  GetBool(setting_map, GUESS_TAB, &options->text.guess_tab);
 
   GetWString(setting_map, DELIMITERS, &options->text.delimiters);
 

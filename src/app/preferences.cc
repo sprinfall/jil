@@ -1,6 +1,7 @@
 #include "app/preferences.h"
 
 #include <vector>
+#include "boost/algorithm/string.hpp"
 
 #include "uchardet/nscore.h"
 #include "uchardet/nsUniversalDetector.h"
@@ -8,13 +9,16 @@
 #include "wx/button.h"
 #include "wx/checkbox.h"
 #include "wx/combobox.h"
-#include "wx/listctrl.h"
 #include "wx/notebook.h"
 #include "wx/panel.h"
+#include "wx/scrolwin.h"
 #include "wx/sizer.h"
 #include "wx/spinctrl.h"
+#include "wx/statline.h"
 #include "wx/stattext.h"
+#include "wx/valnum.h"
 
+#include "ui/property_list.h"
 #include "ui/static_box.h"
 
 #include "editor/defs.h"
@@ -25,6 +29,8 @@
 #include "app/option.h"
 
 namespace jil {
+
+////////////////////////////////////////////////////////////////////////////////
 
 static const wxSize kMinComboBoxSize(120, -1);
 static const wxSize kNumTextSize(60, -1);
@@ -39,8 +45,55 @@ static void UpdateFlag(int& flags, int flag, bool enable) {
   }
 }
 
-static wxComboBox* CreateReadonlyComboBox(wxWindow* parent, wxWindowID id) {
+static wxString IntToStr(int i) {
+  return wxString::Format(wxT("%d"), i);
+}
+
+static int StrToInt(const wxString& str) {
+  long i = 0;
+  str.ToLong(&i);
+  return static_cast<int>(i);
+}
+
+static int ValidateInt(int i, int min, int max) {
+  if (i < min) {
+    return min;
+  }
+  if (i > max) {
+    return max;
+  }
+  return i;
+}
+
+static wxStaticText* CreateStaticText(wxWindow* parent, const wxString& label, bool bold = false) {
+  wxStaticText* static_text = new wxStaticText(parent, wxID_ANY, label);
+  if (bold) {
+    wxFont font = static_text->GetFont();
+    font.SetWeight(wxFONTWEIGHT_BOLD);
+    static_text->SetFont(font);
+  }
+  return static_text;
+}
+
+static wxSizer* CreateSeparator(wxWindow* parent, const wxString& label, bool bold = false) {
+  wxStaticText* static_text = CreateStaticText(parent, label, bold);
+  wxStaticLine* sep = new wxStaticLine(parent);
+
+  wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+  hsizer->Add(static_text, wxSizerFlags().Center());
+  hsizer->Add(sep, wxSizerFlags(1).Center().Border(wxLEFT));
+  return hsizer;
+}
+
+static inline wxComboBox* CreateReadonlyComboBox(wxWindow* parent, wxWindowID id) {
   return new wxComboBox(parent, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, wxCB_READONLY);
+}
+
+static inline wxTextCtrl* CreateTextCtrl(wxWindow* parent,
+                                         wxWindowID id,
+                                         const wxSize& size = wxDefaultSize,
+                                         const wxValidator& validator = wxDefaultValidator) {
+  return new wxTextCtrl(parent, id, wxEmptyString, wxDefaultPosition, size, 0, validator);
 }
 
 namespace pref {
@@ -56,6 +109,9 @@ enum Id {
   ID_FONT_FIXED_WIDTH_ONLY_CHECKBOX,
   ID_FONT_RESET_BUTTON,
 
+  ID_TAB_STOP_CTRL,
+  ID_SHIFT_WIDTH_CTRL,
+  ID_EXPAND_TAB_CHECKBOX,
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -348,8 +404,6 @@ protected:
   void CreateFontSection(wxSizer* top_vsizer) {
     bool fixed_width_only = false;
 
-    // Create
-
     wxStaticText* name_label = new wxStaticText(this, wxID_ANY, wxT("Name:"));
     name_combo_box_ = new wxComboBox(this, ID_FONT_NAME_COMBOBOX, wxEmptyString, wxDefaultPosition, kStrTextSize);
     InitNameComboBox(name_combo_box_, fixed_width_only);
@@ -360,8 +414,6 @@ protected:
 
     fixed_width_check_box_ = new wxCheckBox(this, ID_FONT_FIXED_WIDTH_ONLY_CHECKBOX, wxT("Fixed width only"));
     fixed_width_check_box_->SetValue(fixed_width_only);
-
-    // Layout
 
     wxBoxSizer* name_vsizer = new wxBoxSizer(wxVERTICAL);
     name_vsizer->Add(name_label);
@@ -494,20 +546,39 @@ public:
     return true;
   }
 
+  wxString JoinRulers(const std::vector<int>& rulers) {
+    wxString rulers_str;
+    for (int ruler : rulers) {
+      if (!rulers_str.IsEmpty()) {
+        rulers_str += wxT(",");
+      }
+      rulers_str += wxString::Format(wxT("%d"), ruler);
+    }
+    return rulers_str;
+  }
+
+  void SplitRulers(const wxString& rulers_str, std::vector<int>& rulers) {
+    wxArrayString ruler_strs = wxSplit(rulers_str, wxT(','));
+    long ruler = 0;
+    for (size_t i = 0; i < ruler_strs.size(); ++i) {
+      if (ruler_strs[i].ToLong(&ruler)) {
+        if (ruler > 0) {
+          rulers.push_back(static_cast<int>(ruler));
+        }
+      }
+    }
+  }
+
   virtual bool TransferDataToWindow() override {
     show_hscrollbar_check_box_->SetValue(options_->view.show_hscrollbar);
     show_number_check_box_->SetValue(options_->view.show_number);
     show_space_check_box_->SetValue(options_->view.show_space);
     wrap_check_box_->SetValue(options_->view.wrap);
 
-    wxString rulers_value;
-    for (int ruler : options_->view.rulers) {
-      if (!rulers_value.IsEmpty()) {
-        rulers_value += wxT(",");
-      }
-      rulers_value += wxString::Format(wxT("%d"), ruler);
-    }
-    rulers_text_ctrl_->SetValue(rulers_value);
+    rulers_text_ctrl_->SetValue(JoinRulers(options_->view.rulers));
+
+    //wxString delimiters(options_->text.delimiters);
+    //delimiters_text_ctrl_->SetValue(delimiters);
 
     return true;
   }
@@ -517,6 +588,19 @@ public:
     options_->view.show_number = show_number_check_box_->GetValue();
     options_->view.show_space = show_space_check_box_->GetValue();
     options_->view.wrap = wrap_check_box_->GetValue();
+
+    options_->view.rulers.clear();
+    SplitRulers(rulers_text_ctrl_->GetValue(), options_->view.rulers);
+
+    //std::wstring delimiters = delimiters_text_ctrl_->GetValue().ToStdWstring();
+    //// Remove ' ' and '\t'.
+    //std::wstring::iterator end = std::remove(delimiters.begin(), delimiters.end(), L' ');
+    //end = std::remove(delimiters.begin(), end, L'\t');
+    //if (end != delimiters.end()) {
+    //  delimiters.erase(end, delimiters.end());
+    //}
+    //options_->text.delimiters = delimiters;
+    
 
     return true;
   }
@@ -554,7 +638,7 @@ protected:
 
   void CreateRulersSection(wxSizer* top_vsizer) {
     wxStaticText* rulers_label = new wxStaticText(this, wxID_ANY, _("Rulers:"));
-    rulers_text_ctrl_ = new wxTextCtrl(this, wxID_ANY, wxEmptyString);
+    rulers_text_ctrl_ = CreateTextCtrl(this, wxID_ANY);
 
     wxSizer* rulers_hsizer = new wxBoxSizer(wxHORIZONTAL);
     rulers_hsizer->Add(rulers_label, wxSizerFlags().Center());
@@ -566,7 +650,8 @@ protected:
 
   void CreateDelimitersSection(wxSizer* top_vsizer) {
     wxStaticText* label = new wxStaticText(this, wxID_ANY, _("Delimiters:"));
-    delimiters_text_ctrl_ = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, kStrTextSize);
+    delimiters_text_ctrl_ = CreateTextCtrl(this, wxID_ANY, kStrTextSize);
+    delimiters_text_ctrl_->SetToolTip(_("Word delimiters (exluding ' ' and '\t')."));
 
     wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
     hsizer->Add(label, wxSizerFlags().Center());
@@ -607,14 +692,51 @@ public:
     return true;
   }
 
+  virtual bool TransferDataToWindow() override {
+    tab_stop_text_ctrl_->SetValue(IntToStr(options_->text.tab_stop));
+    shift_width_text_ctrl_->SetValue(IntToStr(options_->text.shift_width));
+    expand_tab_check_box_->SetValue(options_->text.expand_tab);
+    guess_check_box_->SetValue(options_->text.guess_tab);
+
+    std::wstring indent_keys = boost::join(options_->text.indent_keys, L",");
+    indent_keys_text_ctrl_->SetValue(indent_keys);
+
+    return true;
+  }
+
+  virtual bool TransferDataFromWindow() override {
+    int tab_stop = StrToInt(tab_stop_text_ctrl_->GetValue());
+    options_->text.tab_stop = ValidateInt(tab_stop, editor::kMinTabStop, editor::kMaxTabStop);
+   
+    int shift_width = StrToInt(shift_width_text_ctrl_->GetValue());
+    options_->text.shift_width = ValidateInt(shift_width, editor::kMinTabStop, editor::kMaxTabStop);
+
+    options_->text.expand_tab = expand_tab_check_box_->GetValue();
+    options_->text.guess_tab = guess_check_box_->GetValue();
+
+    std::wstring indent_keys_str = indent_keys_text_ctrl_->GetValue().ToStdWstring();
+    // Split
+    std::vector<std::wstring> indent_keys;
+    boost::split(indent_keys, indent_keys_str, boost::is_any_of(L", "), boost::token_compress_on);
+    // Remove empty strings.
+    std::vector<std::wstring>::iterator end = std::remove(indent_keys.begin(), indent_keys.end(), L"");
+    if (end != indent_keys.end()) {
+      indent_keys.erase(end, indent_keys.end());
+    }
+    options_->text.indent_keys = indent_keys;
+
+    return true;
+  }
+
 protected:
   void CreateControls() {
     wxSizer* top_vsizer = new wxBoxSizer(wxVERTICAL);
 
     CreateTabsSection(top_vsizer);
 
+    // Indent keys
     wxStaticText* indent_keys_label = new wxStaticText(this, wxID_ANY, _("Indent keys:"));
-    indent_keys_text_ctrl_ = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, kStrTextSize);
+    indent_keys_text_ctrl_ = CreateTextCtrl(this, wxID_ANY, kStrTextSize);
     {
       wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
       hsizer->Add(indent_keys_label, wxSizerFlags().Center());
@@ -623,11 +745,7 @@ protected:
       top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
     }
 
-    // More indent options.
-    indent_list_ctrl_ = new wxListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT);
-    indent_list_ctrl_->AppendColumn(_("Key"));
-    indent_list_ctrl_->AppendColumn(_("Value"));
-    top_vsizer->Add(indent_list_ctrl_, wxSizerFlags().Expand().Border(wxALL));
+    CreateDynamicSection(top_vsizer);
 
     SetSizerAndFit(top_vsizer);
   }
@@ -637,12 +755,19 @@ protected:
     wxSizer* box_vsizer = new wxBoxSizer(wxVERTICAL);
 
     wxStaticText* tab_stop_label = new wxStaticText(box, wxID_ANY, _("Tab stop:"));
-    tab_stop_text_ctrl_ = new wxTextCtrl(box, wxID_ANY, wxEmptyString, wxDefaultPosition, kNumTextSize);
+
+    wxIntegerValidator<int> validator(NULL, 0);
+    validator.SetMin(editor::kMinTabStop);
+    validator.SetMax(editor::kMaxTabStop);
+
+    tab_stop_text_ctrl_ = CreateTextCtrl(box, wxID_ANY, kNumTextSize, validator);
 
     wxStaticText* shift_width_label = new wxStaticText(box, wxID_ANY, _("Shift width:"));
-    shift_width_text_ctrl_ = new wxTextCtrl(box, wxID_ANY, wxEmptyString, wxDefaultPosition, kNumTextSize);
+    shift_width_text_ctrl_ = CreateTextCtrl(box, wxID_ANY, kNumTextSize, validator);
 
     expand_tab_check_box_ = new wxCheckBox(box, wxID_ANY, _("Expand tabs"));
+
+    guess_check_box_ = new wxCheckBox(box, wxID_ANY, _("Guess from existing lines"));
 
     {
       wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
@@ -656,9 +781,86 @@ protected:
     }
 
     box_vsizer->Add(expand_tab_check_box_, wxSizerFlags().Border(wxTOP));
+    box_vsizer->Add(guess_check_box_, wxSizerFlags().Expand().Border(wxTOP));
 
     box->SetBodySizer(box_vsizer);
     top_vsizer->Add(box, wxSizerFlags().Expand().Border(wxALL));
+  }
+
+  //void CreateDynamicBoolCtrl(wxSizer* top_vsizer,
+  //                           const std::string& option_key,
+  //                           const editor::OptionValue& option_value) {
+  //  bool value = false;
+  //  if (!option_value.As<bool>(&value)) {
+  //    return;
+  //  }
+
+  //  wxCheckBox* check_box = new wxCheckBox(dynamic_panel_, wxID_ANY, wxString(option_key));
+  //  check_box->SetValue(value);
+
+  //  dynamic_ctrls_.push_back(check_box);
+
+  //  top_vsizer->Add(check_box, wxSizerFlags().Border(wxLTR));
+  //}
+
+  //void CreateDynamicIntCtrl(wxSizer* top_vsizer,
+  //                          const std::string& option_key,
+  //                          const editor::OptionValue& option_value) {
+  //  int value = 0;
+  //  if (!option_value.As<int>(&value)) {
+  //    return;
+  //  }
+
+  //  wxStaticText* label = CreateStaticText(dynamic_panel_, wxString(option_key));
+
+  //  wxTextCtrl* text_ctrl = CreateTextCtrl(dynamic_panel_, wxID_ANY, kNumTextSize);
+  //  text_ctrl->SetValue(wxString::Format(wxT("%d"), value));
+
+  //  dynamic_ctrls_.push_back(text_ctrl);
+
+  //  wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+  //  hsizer->Add(label, wxSizerFlags().Center());
+  //  hsizer->AddStretchSpacer(1);
+  //  hsizer->Add(text_ctrl, wxSizerFlags().Center().Border(wxLEFT));
+
+  //  top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxLTR));
+  //}
+
+  void CreateDynamicSection(wxSizer* top_vsizer) {
+    top_vsizer->Add(CreateSeparator(this, _("Dynamic options"), true), wxSizerFlags().Expand().Border(wxALL));
+
+    ui::PropertyList* property_list = new ui::PropertyList();
+    property_list->Create(this, wxID_ANY, wxSize(-1, 120));
+
+    property_list->AddProperty("indent_namespace", "true");
+    property_list->AddProperty("indent_case", "true");
+    property_list->AddProperty("test", "true");
+    property_list->AddProperty("test", "true");
+    property_list->AddProperty("test", "true");
+    property_list->AddProperty("test", "true");
+    property_list->AddProperty("test", "true");
+
+    top_vsizer->Add(property_list, wxSizerFlags().Expand().Border(wxALL));
+
+    //dynamic_panel_ = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 100), wxALWAYS_SHOW_SB | wxVSCROLL);
+    //wxSizer* vsizer = new wxBoxSizer(wxVERTICAL);
+    //dynamic_panel_->SetSizer(vsizer);
+
+    //editor::OptionTable& indent_options = options_->text.indent_options;
+    //for (size_t i = 0; i < indent_options.size(); ++i) {
+    //  editor::OptionPair& option_pair = indent_options[i];
+
+    //  std::string& option_key = option_pair.first;
+    //  editor::OptionValue& option_value = option_pair.second;
+
+    //  if (option_value.type() == editor::OptionValue::kBool) {
+    //    CreateDynamicBoolCtrl(vsizer, option_key, option_value);
+    //  } else if (option_value.type() == editor::OptionValue::kInt) {
+    //    CreateDynamicIntCtrl(vsizer, option_key, option_value);
+    //  }
+    //}
+
+    //top_vsizer->Add(dynamic_panel_, wxSizerFlags().Expand().Border(wxALL));
   }
 
 private:
@@ -667,9 +869,8 @@ private:
   wxTextCtrl* tab_stop_text_ctrl_;
   wxTextCtrl* shift_width_text_ctrl_;
   wxCheckBox* expand_tab_check_box_;
-
+  wxCheckBox* guess_check_box_;
   wxTextCtrl* indent_keys_text_ctrl_;
-  wxListCtrl* indent_list_ctrl_;
 };
 
 }  // namespace pref
