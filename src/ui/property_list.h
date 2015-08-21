@@ -8,6 +8,8 @@
 #include "wx/scrolwin.h"
 #include "wx/panel.h"
 
+class wxTextCtrl;
+
 namespace jil {
 namespace ui {
 
@@ -44,10 +46,8 @@ public:
     COLOR_HEAD_BAR,
     COLOR_BODY_BG,
     COLOR_BODY_BG_SELECT,
-    COLOR_BODY_BG_SELECT_NOFOCUS,
     COLOR_BODY_FG,
     COLOR_BODY_FG_SELECT,
-    COLOR_BODY_FG_SELECT_NOFOCUS,
     COLOR_BODY_BAR,
     COLOR_COUNT
   };
@@ -90,13 +90,22 @@ protected:
   void HandleBodySetFocus(wxFocusEvent& evt);
   void HandleBodyKillFocus(wxFocusEvent& evt);
 
+  void FinishEditing();
+
   wxRect GetRowClientRect(int row) const;
   void RefreshRow(int row);
 
-  // Update virtual size, scrollbars, position and size of sub-windows.
   void UpdateLayout();
-
   void UpdateVirtualSize();
+
+  int GetKeyWidth() const;
+  int GetValueWidth() const;
+
+  wxRect GetKeyRect(int row) const;
+  wxRect GetValueRect(int row) const;
+
+  int GetScrolledX(int unscrolled_x) const;
+  int GetScrolledY(int unscrolled_y) const;
 
 private:
   bool created_;
@@ -111,6 +120,8 @@ private:
 
   std::vector<Property*> properties_;
   int selected_row_;
+
+  wxTextCtrl* text_ctrl_;
 };
 
 }  // namespace ui

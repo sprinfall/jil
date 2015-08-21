@@ -1,7 +1,7 @@
 #include "ui/property_list.h"
 #include "wx/dcbuffer.h"
-//#include "wx/dcclient.h"
 #include "wx/sizer.h"
+#include "wx/textctrl.h"
 
 namespace jil {
 namespace ui {
@@ -119,6 +119,8 @@ void PropertyList::Init() {
   row_height_ = 0;
 
   selected_row_ = 0;
+
+  text_ctrl_ = NULL;
 }
 
 void PropertyList::CheckColors() {
@@ -145,11 +147,7 @@ void PropertyList::CheckColors() {
   if (!GetColor(COLOR_BODY_BG_SELECT).IsOk()) {
     SetColor(COLOR_BODY_BG_SELECT, wxColour(51, 153, 255));
   }
-
-  if (!GetColor(COLOR_BODY_BG_SELECT_NOFOCUS).IsOk()) {
-    SetColor(COLOR_BODY_BG_SELECT_NOFOCUS, wxSystemSettings::GetColour(wxSYS_COLOUR_BTNSHADOW));
-  }
-
+   
   if (!GetColor(COLOR_BODY_BAR).IsOk()) {
     SetColor(COLOR_BODY_BAR, *wxLIGHT_GREY);
   }
@@ -180,8 +178,7 @@ void PropertyList::HandleBodyPaint(wxDC& dc) {
   dc.SetTextForeground(GetColor(COLOR_BODY_FG));
 
   const wxRect rect = body_panel_->GetClientRect();
-
-  int key_col_width = rect.width / 2;  // TODO
+  int key_width = GetKeyWidth();
 
   int x = rect.x;
   int y = rect.y;
@@ -190,29 +187,24 @@ void PropertyList::HandleBodyPaint(wxDC& dc) {
 
   for (int row = 1; row <= row_count; ++row) {
     if (row == selected_row_) {
-      // This row is selected.
-      wxPen pen = dc.GetPen();  // Backup
-      wxRect select_rect(x, y, key_col_width, row_height_ - 1);
-
+      wxPen pen = dc.GetPen();
       dc.SetPen(*wxTRANSPARENT_PEN);
+      dc.SetBrush(wxBrush(GetColor(COLOR_BODY_BG_SELECT)));
 
-      if (body_panel_->HasFocus()) {
-        dc.SetBrush(wxBrush(GetColor(COLOR_BODY_BG_SELECT)));
-      } else {
-        dc.SetBrush(wxBrush(GetColor(COLOR_BODY_BG_SELECT_NOFOCUS)));
-      }
-
+      wxRect select_rect(x, y, key_width, row_height_ - 1);
       dc.DrawRectangle(select_rect);
 
-      dc.SetPen(pen);  // Restore
+      dc.SetPen(pen);
     }
 
     Property* prop = GetPropertyByRow(row);
 
     dc.DrawText(prop->key, x + row_padding_.x, y + row_padding_.y);
 
+    dc.DrawText(prop->value, x + key_width + row_padding_.x, y + row_padding_.y);
+
     // Column bar
-    int col_bar_x = x + key_col_width;
+    int col_bar_x = x + key_width;
     dc.DrawLine(col_bar_x, y, col_bar_x, y + row_height_);
 
     y += row_height_;
@@ -236,15 +228,40 @@ void PropertyList::HandleBodyMouseLeftDown(wxMouseEvent& evt) {
     row = 0;
   }
 
+  if (row == selected_row_) {
+    return;
+  }
+
   int old_selected_row = selected_row_;
   selected_row_ = row;
 
   if (old_selected_row != 0) {
+    FinishEditing();
     RefreshRow(old_selected_row);
   }
 
   if (selected_row_ != 0) {
     RefreshRow(selected_row_);
+
+    Property* prop = GetPropertyByRow(selected_row_);
+    wxRect rect = GetValueRect(selected_row_);
+
+    if (text_ctrl_ == NULL) {
+      text_ctrl_ = new wxTextCtrl(body_panel_,
+                                  wxID_ANY,
+                                  prop->value,
+                                  rect.GetPosition(),
+                                  rect.GetSize(),
+                                  wxTE_PROCESS_ENTER);
+      //Connect(text_ctrl_->GetId(), wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(ListCtrl::OnTextEditDone));
+    } else {
+      text_ctrl_->SetValue(prop->value);
+      text_ctrl_->SetSize(rect);
+      text_ctrl_->Show();
+    }
+
+    text_ctrl_->SetInsertionPointEnd();
+    text_ctrl_->SetFocus();
   }
 }
 
@@ -257,6 +274,12 @@ void PropertyList::HandleBodySetFocus(wxFocusEvent& evt) {
 void PropertyList::HandleBodyKillFocus(wxFocusEvent& evt) {
   if (selected_row_ != 0) {
     RefreshRow(selected_row_);
+  }
+}
+
+void PropertyList::FinishEditing() {
+  if (text_ctrl_ != NULL) {
+    text_ctrl_->Hide();
   }
 }
 
@@ -318,6 +341,41 @@ void PropertyList::UpdateVirtualSize() {
   //  // TODO: For user toolbar. If use default toolbar, don't need this.
   //  SetVirtualSize(, list_ctrl_v_height);
   //}
+}
+
+int PropertyList::GetKeyWidth() const {
+  wxSize size = body_panel_->GetClientSize();
+  return size.x / 2;
+}
+
+int PropertyList::GetValueWidth() const {
+  wxSize size = body_panel_->GetClientSize();
+  return size.x - GetKeyWidth();
+}
+
+wxRect PropertyList::GetKeyRect(int row) const {
+  wxRect body_rect = body_panel_->GetClientRect();
+  int y = GetScrolledY(body_rect.y + row_height_ * (row - 1));
+  return wxRect(body_rect.x, y, GetKeyWidth(), row_height_);
+}
+
+wxRect PropertyList::GetValueRect(int row) const {
+  wxRect body_rect = body_panel_->GetClientRect();
+  int x = body_rect.x + GetKeyWidth();
+  int y = GetScrolledY(body_rect.y + row_height_ * (row - 1));
+  return wxRect(x, y, GetValueWidth(), row_height_);
+}
+
+int PropertyList::GetScrolledX(int unscrolled_x) const {
+  int x = 0;
+  CalcScrolledPosition(unscrolled_x, 0, &x, NULL);
+  return x;
+}
+
+int PropertyList::GetScrolledY(int unscrolled_y) const {
+  int y = 0;
+  CalcScrolledPosition(0, unscrolled_y, NULL, &y);
+  return y;
 }
 
 }  // namespace ui
