@@ -62,12 +62,19 @@ public:
   PropertyList();
   virtual ~PropertyList();
 
-  bool Create(wxWindow* parent, wxWindowID id, const wxSize& size = wxDefaultSize, long style = wxScrolledWindowStyle);
+  bool Create(wxWindow* parent,
+              wxWindowID id,
+              const wxSize& size = wxDefaultSize,
+              long style = wxScrolledWindowStyle);
 
   virtual wxSize GetMinSize() const override;
 
-  void SetColor(ColorId id, const wxColour& color) { colors_[id] = color; }
-  const wxColour& GetColor(ColorId id) const { return colors_[id]; }
+  const wxColour& GetColor(ColorId id) const {
+    return colors_[id];
+  }
+  void SetColor(ColorId id, const wxColour& color) {
+    colors_[id] = color;
+  }
 
   void AddProperty(const wxString& key, const wxString& value);
 
@@ -84,13 +91,17 @@ protected:
 
   void OnSize(wxSizeEvent& evt);
 
+  void OnEditingDone(wxCommandEvent& evt);
+
   friend class BodyPanel;
   void HandleBodyPaint(wxDC& dc);
   void HandleBodyMouseLeftDown(wxMouseEvent& evt);
   void HandleBodySetFocus(wxFocusEvent& evt);
   void HandleBodyKillFocus(wxFocusEvent& evt);
 
-  void FinishEditing();
+  bool IsEditing() const;
+  void StartEditing(int row);
+  void StopEditing();
 
   wxRect GetRowClientRect(int row) const;
   void RefreshRow(int row);

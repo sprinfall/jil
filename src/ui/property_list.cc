@@ -1,5 +1,6 @@
 #include "ui/property_list.h"
 #include "wx/dcbuffer.h"
+#include "wx/log.h"
 #include "wx/sizer.h"
 #include "wx/textctrl.h"
 
@@ -171,6 +172,18 @@ void PropertyList::OnSize(wxSizeEvent& evt) {
   Refresh();
 }
 
+void PropertyList::OnEditingDone(wxCommandEvent& evt) {
+  assert(text_ctrl_ != NULL);
+
+  Property* prop = static_cast<Property*>(text_ctrl_->GetClientData());
+
+  wxString value = text_ctrl_->GetValue();
+  prop->value = value;
+  wxLogDebug(prop->key + wxT(": ") + value);
+
+  StopEditing();
+}
+
 void PropertyList::HandleBodyPaint(wxDC& dc) {
   PrepareDC(dc);
 
@@ -228,40 +241,26 @@ void PropertyList::HandleBodyMouseLeftDown(wxMouseEvent& evt) {
     row = 0;
   }
 
-  if (row == selected_row_) {
-    return;
-  }
-
   int old_selected_row = selected_row_;
   selected_row_ = row;
 
-  if (old_selected_row != 0) {
-    FinishEditing();
-    RefreshRow(old_selected_row);
-  }
-
-  if (selected_row_ != 0) {
-    RefreshRow(selected_row_);
-
-    Property* prop = GetPropertyByRow(selected_row_);
-    wxRect rect = GetValueRect(selected_row_);
-
-    if (text_ctrl_ == NULL) {
-      text_ctrl_ = new wxTextCtrl(body_panel_,
-                                  wxID_ANY,
-                                  prop->value,
-                                  rect.GetPosition(),
-                                  rect.GetSize(),
-                                  wxTE_PROCESS_ENTER);
-      //Connect(text_ctrl_->GetId(), wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler(ListCtrl::OnTextEditDone));
-    } else {
-      text_ctrl_->SetValue(prop->value);
-      text_ctrl_->SetSize(rect);
-      text_ctrl_->Show();
+  if (selected_row_ == old_selected_row) {
+    if (selected_row_ != 0) {
+      if (!IsEditing()) {
+        StartEditing(selected_row_);
+      }
+    }
+  } else {
+    if (old_selected_row != 0) {
+      if (IsEditing()) {
+        StopEditing();
+      }
+      RefreshRow(old_selected_row);
     }
 
-    text_ctrl_->SetInsertionPointEnd();
-    text_ctrl_->SetFocus();
+    if (selected_row_ != 0) {
+      RefreshRow(selected_row_);
+    }
   }
 }
 
@@ -277,7 +276,33 @@ void PropertyList::HandleBodyKillFocus(wxFocusEvent& evt) {
   }
 }
 
-void PropertyList::FinishEditing() {
+bool PropertyList::IsEditing() const {
+  return (text_ctrl_ != NULL && text_ctrl_->IsShown());
+}
+
+void PropertyList::StartEditing(int row) {
+  Property* prop = GetPropertyByRow(row);
+  wxRect rect = GetValueRect(row);
+
+  if (text_ctrl_ == NULL) {
+    text_ctrl_ = new wxTextCtrl(body_panel_, wxID_ANY, prop->value,
+                                rect.GetPosition(), rect.GetSize(), wxTE_PROCESS_ENTER);
+    Connect(text_ctrl_->GetId(),
+            wxEVT_COMMAND_TEXT_ENTER,
+            wxCommandEventHandler(PropertyList::OnEditingDone));
+  } else {
+    text_ctrl_->SetValue(prop->value);
+    text_ctrl_->SetSize(rect);
+    text_ctrl_->Show();
+  }
+
+  text_ctrl_->SetClientData(prop);
+
+  text_ctrl_->SetInsertionPointEnd();
+  text_ctrl_->SetFocus();
+}
+
+void PropertyList::StopEditing() {
   if (text_ctrl_ != NULL) {
     text_ctrl_->Hide();
   }
