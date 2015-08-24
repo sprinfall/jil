@@ -4,6 +4,7 @@
 #include "wx/log.h"
 #include "wx/panel.h"
 #include "wx/sizer.h"
+#include "ui/util.h"
 #include "editor/defs.h"
 #include "editor/text_extent.h"
 #include "app/text_page.h"
@@ -16,8 +17,6 @@ static const int kSpaceX = 10;
 static const int kSpaceY = 7;
 static const int kPaddingX = 5;
 static const int kPaddingY = 3;
-
-static const wxString kEllipsis = wxT("...");
 
 BEGIN_EVENT_TABLE(NavigationDialog, wxDialog)
 EVT_PAINT         (NavigationDialog::OnPaint)
@@ -257,10 +256,10 @@ void NavigationDialog::DrawText(wxDC& dc,
   }
 
   int ellipsis_w = 0;
-  dc.GetTextExtent(kEllipsis, &ellipsis_w, NULL);
+  dc.GetTextExtent(ui::kEllipsis, &ellipsis_w, NULL);
 
-  size_t i = editor::TailorLabel(dc, text, rect.width - ellipsis_w);
-  dc.DrawText(text.Mid(0, i) + kEllipsis, rect.x, rect.y);
+  size_t i = ui::TailorLabel(dc, text, rect.width - ellipsis_w);
+  dc.DrawText(text.Mid(0, i) + ui::kEllipsis, rect.x, rect.y);
 }
 
 size_t NavigationDialog::GetIndexByPos(const wxPoint& pos) const {

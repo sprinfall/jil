@@ -7,6 +7,7 @@ set(HEADERS
     color.h
     property_list.h
     static_box.h
+    util.h
     )
 
 set(SRCS
@@ -14,6 +15,7 @@ set(SRCS
     color.cc
     property_list.cc
     static_box.cc
+    util.cc
     )
 
 add_library(ui ${SRCS} ${HEADERS})

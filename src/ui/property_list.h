@@ -13,9 +13,32 @@ class wxTextCtrl;
 namespace jil {
 namespace ui {
 
+class PropertyList;
+
 ////////////////////////////////////////////////////////////////////////////////
 
-class PropertyList;
+class HeadPanel : public wxPanel {
+  DECLARE_EVENT_TABLE()
+
+public:
+  HeadPanel(PropertyList* property_ctrl, wxWindowID id);
+  virtual ~HeadPanel();
+
+  // Let body panel have the focus.
+  virtual bool AcceptsFocus() const override {
+    return false;
+  }
+
+protected:
+  void OnPaint(wxPaintEvent& evt);
+  void OnMouseEvents(wxMouseEvent& evt);
+  void OnMouseCaptureLost(wxMouseCaptureLostEvent& evt);
+
+private:
+  PropertyList* property_ctrl_;
+};
+
+////////////////////////////////////////////////////////////////////////////////
 
 class BodyPanel : public wxPanel {
   DECLARE_EVENT_TABLE()
@@ -67,14 +90,15 @@ public:
               const wxSize& size = wxDefaultSize,
               long style = wxScrolledWindowStyle);
 
-  virtual wxSize GetMinSize() const override;
-
   const wxColour& GetColor(ColorId id) const {
     return colors_[id];
   }
   void SetColor(ColorId id, const wxColour& color) {
     colors_[id] = color;
   }
+
+  void StartBatch();
+  void EndBatch();
 
   void AddProperty(const wxString& key, const wxString& value);
 
@@ -93,11 +117,15 @@ protected:
 
   void OnEditingDone(wxCommandEvent& evt);
 
+  friend class HeadPanel;
+  void OnHeadPaint(wxDC& dc);
+  void OnHeadMouse(wxMouseEvent& evt);
+
   friend class BodyPanel;
-  void HandleBodyPaint(wxDC& dc);
-  void HandleBodyMouseLeftDown(wxMouseEvent& evt);
-  void HandleBodySetFocus(wxFocusEvent& evt);
-  void HandleBodyKillFocus(wxFocusEvent& evt);
+  void OnBodyPaint(wxDC& dc);
+  void OnBodyMouseLeftDown(wxMouseEvent& evt);
+  void OnBodySetFocus(wxFocusEvent& evt);
+  void OnBodyKillFocus(wxFocusEvent& evt);
 
   bool IsEditing() const;
   void StartEditing(int row);
@@ -124,6 +152,7 @@ private:
 
   wxColour colors_[COLOR_COUNT];
 
+  HeadPanel* head_panel_;
   BodyPanel* body_panel_;
 
   wxSize row_padding_;

@@ -62,8 +62,6 @@ private:
   wxSize char_size_;
 };
 
-size_t TailorLabel(const wxDC& dc, const wxString& label, int max_width);
-
 }  // namespace editor
 }  // namespace jil
 

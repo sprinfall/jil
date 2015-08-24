@@ -6,6 +6,7 @@
 #include "wx/sizer.h"
 #include "wx/wupdlock.h"
 #include "base/math_util.h"
+#include "ui/util.h"
 #include "editor/text_extent.h"
 #include "editor/tip.h"
 #include "app/i18n_strings.h"
@@ -13,7 +14,6 @@
 
 namespace jil {
 
-static const wxString kEllipsis = wxT("...");
 static const wxString kStar = wxT("*");
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -523,7 +523,7 @@ void BookCtrl::Init() {
 
 void BookCtrl::UpdateTabFontDetermined() {
   char_width_ = tab_area_->GetCharWidth();
-  tab_area_->GetTextExtent(kEllipsis, &ellipsis_width_, NULL);
+  tab_area_->GetTextExtent(ui::kEllipsis, &ellipsis_width_, NULL);
   tab_padding_.Set(char_width_, char_width_ / 2 + 1);
 
   // Book ctrl's min size is the best size of its tab area.
@@ -616,8 +616,8 @@ void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
       } else {
         if (tab_fg_rect.width > ellipsis_width_) {
           int max_width = tab_fg_rect.width - ellipsis_width_;
-          size_t i = editor::TailorLabel(dc, label, max_width);
-          label = label.Mid(0, i) + kEllipsis;
+          size_t i = ui::TailorLabel(dc, label, max_width);
+          label = label.Mid(0, i) + ui::kEllipsis;
           dc.DrawText(label, tab_fg_rect.x, tab_fg_rect.y);
         }
       }

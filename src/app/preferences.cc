@@ -787,80 +787,51 @@ protected:
     top_vsizer->Add(box, wxSizerFlags().Expand().Border(wxALL));
   }
 
-  //void CreateDynamicBoolCtrl(wxSizer* top_vsizer,
-  //                           const std::string& option_key,
-  //                           const editor::OptionValue& option_value) {
-  //  bool value = false;
-  //  if (!option_value.As<bool>(&value)) {
-  //    return;
-  //  }
+  static wxString OptionValueStr(editor::OptionValue& option_value) {
+    if (option_value.type() == editor::OptionValue::kBool) {
+      bool value = false;
+      if (option_value.As<bool>(&value)) {
+        return value ? wxT("true") : wxT("false");
+      }
+    } else if (option_value.type() == editor::OptionValue::kInt) {
+      int value = 0;
+      if (option_value.As<int>(&value)) {
+        return wxString::Format(wxT("%d"), value);
+      }
+    } else if (option_value.type() == editor::OptionValue::kString) {
+      std::string value;
+      if (option_value.As<std::string>(&value)) {
+        return wxString::FromUTF8(value.c_str());
+      }
+    }
 
-  //  wxCheckBox* check_box = new wxCheckBox(dynamic_panel_, wxID_ANY, wxString(option_key));
-  //  check_box->SetValue(value);
-
-  //  dynamic_ctrls_.push_back(check_box);
-
-  //  top_vsizer->Add(check_box, wxSizerFlags().Border(wxLTR));
-  //}
-
-  //void CreateDynamicIntCtrl(wxSizer* top_vsizer,
-  //                          const std::string& option_key,
-  //                          const editor::OptionValue& option_value) {
-  //  int value = 0;
-  //  if (!option_value.As<int>(&value)) {
-  //    return;
-  //  }
-
-  //  wxStaticText* label = CreateStaticText(dynamic_panel_, wxString(option_key));
-
-  //  wxTextCtrl* text_ctrl = CreateTextCtrl(dynamic_panel_, wxID_ANY, kNumTextSize);
-  //  text_ctrl->SetValue(wxString::Format(wxT("%d"), value));
-
-  //  dynamic_ctrls_.push_back(text_ctrl);
-
-  //  wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-  //  hsizer->Add(label, wxSizerFlags().Center());
-  //  hsizer->AddStretchSpacer(1);
-  //  hsizer->Add(text_ctrl, wxSizerFlags().Center().Border(wxLEFT));
-
-  //  top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxLTR));
-  //}
+    return wxEmptyString;
+  }
 
   void CreateDynamicSection(wxSizer* top_vsizer) {
     top_vsizer->Add(CreateSeparator(this, _("Dynamic options"), true), wxSizerFlags().Expand().Border(wxALL));
 
-    ui::PropertyList* property_list = new ui::PropertyList();
-    property_list->Create(this, wxID_ANY, wxSize(-1, 120));
+    property_list_ = new ui::PropertyList();
+    property_list_->Create(this, wxID_ANY, wxSize(-1, 120));
 
-    property_list->AddProperty("indent_namespace", "true");
-    property_list->AddProperty("indent_case", "true");
-    property_list->AddProperty("test", "true");
-    property_list->AddProperty("test", "true");
-    property_list->AddProperty("test", "true");
-    property_list->AddProperty("test", "true");
-    property_list->AddProperty("test", "true");
+    property_list_->StartBatch();
 
-    top_vsizer->Add(property_list, wxSizerFlags().Expand().Border(wxALL));
+    editor::OptionTable& indent_options = options_->text.indent_options;
+    for (size_t i = 0; i < indent_options.size(); ++i) {
+      editor::OptionPair& option_pair = indent_options[i];
 
-    //dynamic_panel_ = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 100), wxALWAYS_SHOW_SB | wxVSCROLL);
-    //wxSizer* vsizer = new wxBoxSizer(wxVERTICAL);
-    //dynamic_panel_->SetSizer(vsizer);
+      std::string& option_key = option_pair.first;
+      editor::OptionValue& option_value = option_pair.second;
 
-    //editor::OptionTable& indent_options = options_->text.indent_options;
-    //for (size_t i = 0; i < indent_options.size(); ++i) {
-    //  editor::OptionPair& option_pair = indent_options[i];
+      wxString value_str = OptionValueStr(option_value);
+      if (!value_str.IsEmpty()) {
+        property_list_->AddProperty(wxString::FromUTF8(option_key.c_str()), value_str);
+      }
+    }
 
-    //  std::string& option_key = option_pair.first;
-    //  editor::OptionValue& option_value = option_pair.second;
+    property_list_->EndBatch();
 
-    //  if (option_value.type() == editor::OptionValue::kBool) {
-    //    CreateDynamicBoolCtrl(vsizer, option_key, option_value);
-    //  } else if (option_value.type() == editor::OptionValue::kInt) {
-    //    CreateDynamicIntCtrl(vsizer, option_key, option_value);
-    //  }
-    //}
-
-    //top_vsizer->Add(dynamic_panel_, wxSizerFlags().Expand().Border(wxALL));
+    top_vsizer->Add(property_list_, wxSizerFlags().Expand().Border(wxALL));
   }
 
 private:
@@ -871,6 +842,8 @@ private:
   wxCheckBox* expand_tab_check_box_;
   wxCheckBox* guess_check_box_;
   wxTextCtrl* indent_keys_text_ctrl_;
+
+  ui::PropertyList* property_list_;
 };
 
 }  // namespace pref

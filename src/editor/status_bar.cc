@@ -3,6 +3,7 @@
 #include "wx/menu.h"
 #include "wx/log.h"
 #include "ui/color.h"
+#include "ui/util.h"
 #include "editor/text_extent.h"
 #include "editor/ft_plugin.h"
 #include "editor/text_buffer.h"
@@ -195,7 +196,7 @@ void StatusBar::OnPaint(wxPaintEvent& evt) {
     dc.GetTextExtent(label, &expected_size, NULL, NULL, NULL);
 
     if (expected_size > field_rect.GetWidth()) {
-      label = label.Mid(0, TailorLabel(dc, label, field_rect.GetWidth()));
+      label = label.Mid(0, ui::TailorLabel(dc, label, field_rect.GetWidth()));
     }
 
     int flags = field_info.align | wxALIGN_CENTER_VERTICAL;
