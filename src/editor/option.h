@@ -22,6 +22,7 @@ public:
     kString,
   };
 
+public:
   OptionValue() : type_(kNone) {
   }
 
@@ -52,12 +53,19 @@ public:
     }
   }
 
+  wxString ToString() const;
+
 private:
   boost::any data_;
   Type type_;
 };
 
-typedef std::pair<std::string, editor::OptionValue> OptionPair;
+class OptionPair {
+public:
+  std::string key;
+  OptionValue value;
+};
+
 typedef std::vector<OptionPair> OptionTable;
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -1,28 +1,29 @@
-#ifndef JIL_UI_PROPERTY_LIST_H
-#define JIL_UI_PROPERTY_LIST_H
+#ifndef JIL_OPTION_LIST_CTRL_H
+#define JIL_OPTION_LIST_CTRL_H
 #pragma once
 
 // A replacement of wxPropertyGrid.
 
 #include <vector>
+#include "boost/any.hpp"
 #include "wx/scrolwin.h"
 #include "wx/panel.h"
+#include "editor/option.h"
 
 class wxTextCtrl;
 
 namespace jil {
-namespace ui {
 
-class PropertyList;
+class OptionListCtrl;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class HeadPanel : public wxPanel {
+class OlcHeadPanel : public wxPanel {
   DECLARE_EVENT_TABLE()
 
 public:
-  HeadPanel(PropertyList* property_ctrl, wxWindowID id);
-  virtual ~HeadPanel();
+  OlcHeadPanel(OptionListCtrl* option_list_ctrl, wxWindowID id);
+  virtual ~OlcHeadPanel();
 
   // Let body panel have the focus.
   virtual bool AcceptsFocus() const override {
@@ -35,55 +36,48 @@ protected:
   void OnMouseCaptureLost(wxMouseCaptureLostEvent& evt);
 
 private:
-  PropertyList* property_ctrl_;
+  OptionListCtrl* option_list_ctrl_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class BodyPanel : public wxPanel {
+class OlcBodyPanel : public wxPanel {
   DECLARE_EVENT_TABLE()
 
 public:
-  BodyPanel(PropertyList* property_ctrl, wxWindowID id);
-  virtual ~BodyPanel();
+  OlcBodyPanel(OptionListCtrl* option_list_ctrl, wxWindowID id);
+  virtual ~OlcBodyPanel();
 
 protected:
+  void OnSize(wxSizeEvent& evt);
   void OnPaint(wxPaintEvent& evt);
   void OnMouseLeftDown(wxMouseEvent& evt);
-  void OnSetFocus(wxFocusEvent& evt);
-  void OnKillFocus(wxFocusEvent& evt);
 
 private:
-  PropertyList* property_ctrl_;
+  OptionListCtrl* option_list_ctrl_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class PropertyList : public wxScrolledWindow {
+class OptionListCtrl : public wxScrolledWindow {
   DECLARE_EVENT_TABLE()
 
 public:
   enum ColorId {
     COLOR_HEAD_FG = 0,
     COLOR_HEAD_BG,
-    COLOR_HEAD_BAR,
+    COLOR_HEAD_BORDER,
     COLOR_BODY_BG,
     COLOR_BODY_BG_SELECT,
     COLOR_BODY_FG,
     COLOR_BODY_FG_SELECT,
-    COLOR_BODY_BAR,
+    COLOR_BODY_BORDER,
     COLOR_COUNT
   };
 
-private:
-  struct Property {
-    wxString key;
-    wxString value;
-  };
-
 public:
-  PropertyList();
-  virtual ~PropertyList();
+  OptionListCtrl();
+  virtual ~OptionListCtrl();
 
   bool Create(wxWindow* parent,
               wxWindowID id,
@@ -100,10 +94,10 @@ public:
   void StartBatch();
   void EndBatch();
 
-  void AddProperty(const wxString& key, const wxString& value);
+  void AddOption(const editor::OptionPair& option_pair);
 
   int GetCount() const {
-    return static_cast<int>(properties_.size());
+    return static_cast<int>(options_.size());
   }
 
 protected:
@@ -111,21 +105,20 @@ protected:
 
   void CheckColors();
 
-  Property* GetPropertyByRow(int row);
+  editor::OptionPair* GetOptionByRow(int row);
 
   void OnSize(wxSizeEvent& evt);
 
   void OnEditingDone(wxCommandEvent& evt);
 
-  friend class HeadPanel;
+  friend class OlcHeadPanel;
   void OnHeadPaint(wxDC& dc);
   void OnHeadMouse(wxMouseEvent& evt);
 
-  friend class BodyPanel;
+  friend class OlcBodyPanel;
+  void OnBodySize(wxSizeEvent& evt);
   void OnBodyPaint(wxDC& dc);
   void OnBodyMouseLeftDown(wxMouseEvent& evt);
-  void OnBodySetFocus(wxFocusEvent& evt);
-  void OnBodyKillFocus(wxFocusEvent& evt);
 
   bool IsEditing() const;
   void StartEditing(int row);
@@ -134,17 +127,28 @@ protected:
   wxRect GetRowClientRect(int row) const;
   void RefreshRow(int row);
 
-  void UpdateLayout();
-  void UpdateVirtualSize();
-
-  int GetKeyWidth() const;
-  int GetValueWidth() const;
-
-  wxRect GetKeyRect(int row) const;
-  wxRect GetValueRect(int row) const;
+  int GetColumnX(int col) const;
+  int GetColumnWidth(int col) const;
+  wxRect GetColumnRect(int row, int col) const;
 
   int GetScrolledX(int unscrolled_x) const;
   int GetScrolledY(int unscrolled_y) const;
+
+  void UpdateLayout();
+  void UpdateVirtualSize();
+
+private:
+  class Column {
+  public:
+    enum {
+      KEY = 0,
+      VALUE,
+      COUNT,
+    };
+
+    wxString label;
+    int width;
+  };
 
 private:
   bool created_;
@@ -152,19 +156,21 @@ private:
 
   wxColour colors_[COLOR_COUNT];
 
-  HeadPanel* head_panel_;
-  BodyPanel* body_panel_;
+  OlcHeadPanel* head_panel_;
+  OlcBodyPanel* body_panel_;
 
   wxSize row_padding_;
   int row_height_;
 
-  std::vector<Property*> properties_;
+  // Key, value columns.
+  Column columns_[2];
+
+  std::vector<editor::OptionPair*> options_;
   int selected_row_;
 
   wxTextCtrl* text_ctrl_;
 };
 
-}  // namespace ui
 }  // namespace jil
 
-#endif  // JIL_UI_PROPERTY_LIST_H
+#endif  // JIL_OPTION_LIST_CTRL_H

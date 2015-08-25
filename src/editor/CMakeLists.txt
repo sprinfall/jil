@@ -44,6 +44,7 @@ set(SRCS
     key.cc
     lex.cc
     line_nr_area.cc
+    option.cc
     renderer.cc
     selection.cc
     status_bar.cc

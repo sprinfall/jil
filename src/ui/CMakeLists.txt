@@ -5,7 +5,6 @@ endif()
 set(HEADERS
     bitmap_toggle_button.h
     color.h
-    property_list.h
     static_box.h
     util.h
     )
@@ -13,7 +12,6 @@ set(HEADERS
 set(SRCS
     bitmap_toggle_button.cc
     color.cc
-    property_list.cc
     static_box.cc
     util.cc
     )

@@ -60,8 +60,6 @@ protected:
 private:
   void AdjustSize();
 
-  void DrawText(wxDC& dc, const wxString& text, const wxRect& rect);
-
   size_t GetIndexByPos(const wxPoint& pos) const;
 
 private:

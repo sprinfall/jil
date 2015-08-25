@@ -85,7 +85,7 @@ void NavigationDialog::OnPaint(wxPaintEvent& evt) {
     dc.SetFont(title_font_);
 
     wxString title = _("Active Files");
-    DrawText(dc, title, title_rect_);
+    ui::DrawTextInRect(dc, title, title_rect_);
 
     // Selected file name
     dc.SetFont(GetFont());
@@ -98,13 +98,13 @@ void NavigationDialog::OnPaint(wxPaintEvent& evt) {
     dc.DrawRectangle(text_rect);
 
     text_rect.Deflate(kPaddingX, kPaddingY);
-    DrawText(dc, text_pages_[select_index_]->Page_Label(), text_rect);
+    ui::DrawTextInRect(dc, text_pages_[select_index_]->Page_Label(), text_rect);
 
     // Selected file path
     dc.SetTextForeground(theme_->GetColor(FG));
 
     wxString path = text_pages_[select_index_]->Page_Description();
-    DrawText(dc, path, path_rect_);
+    ui::DrawTextInRect(dc, path, path_rect_);
   }
 
   dc.SetFont(GetFont());
@@ -114,7 +114,7 @@ void NavigationDialog::OnPaint(wxPaintEvent& evt) {
     if (i != select_index_) {
       wxRect text_rect = text_rects_[i];
       text_rect.Deflate(kPaddingX, kPaddingY);
-      DrawText(dc, text_pages_[i]->Page_Label(), text_rect);
+      ui::DrawTextInRect(dc, text_pages_[i]->Page_Label(), text_rect);
     }
   }
 }
@@ -238,28 +238,6 @@ void NavigationDialog::AdjustSize() {
     int y = kMarginY + title_h + kSpaceY + name_h * row;
     text_rects_[i] = wxRect(x, y, column_width_, name_h);
   }
-}
-
-void NavigationDialog::DrawText(wxDC& dc,
-                                const wxString& text,
-                                const wxRect& rect) {
-  if (text.size() <= 3) {
-    dc.DrawText(text, rect.x, rect.y);
-    return;
-  }
-
-  int w = 0;
-  dc.GetTextExtent(text, &w, NULL);
-  if (w <= rect.width) {
-    dc.DrawText(text, rect.x, rect.y);
-    return;
-  }
-
-  int ellipsis_w = 0;
-  dc.GetTextExtent(ui::kEllipsis, &ellipsis_w, NULL);
-
-  size_t i = ui::TailorLabel(dc, text, rect.width - ellipsis_w);
-  dc.DrawText(text.Mid(0, i) + ui::kEllipsis, rect.x, rect.y);
 }
 
 size_t NavigationDialog::GetIndexByPos(const wxPoint& pos) const {

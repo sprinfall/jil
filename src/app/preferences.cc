@@ -18,7 +18,6 @@
 #include "wx/stattext.h"
 #include "wx/valnum.h"
 
-#include "ui/property_list.h"
 #include "ui/static_box.h"
 
 #include "editor/defs.h"
@@ -27,6 +26,7 @@
 #include "app/defs.h"
 #include "app/font_util.h"
 #include "app/option.h"
+#include "app/option_list_ctrl.h"
 
 namespace jil {
 
@@ -787,51 +787,22 @@ protected:
     top_vsizer->Add(box, wxSizerFlags().Expand().Border(wxALL));
   }
 
-  static wxString OptionValueStr(editor::OptionValue& option_value) {
-    if (option_value.type() == editor::OptionValue::kBool) {
-      bool value = false;
-      if (option_value.As<bool>(&value)) {
-        return value ? wxT("true") : wxT("false");
-      }
-    } else if (option_value.type() == editor::OptionValue::kInt) {
-      int value = 0;
-      if (option_value.As<int>(&value)) {
-        return wxString::Format(wxT("%d"), value);
-      }
-    } else if (option_value.type() == editor::OptionValue::kString) {
-      std::string value;
-      if (option_value.As<std::string>(&value)) {
-        return wxString::FromUTF8(value.c_str());
-      }
-    }
-
-    return wxEmptyString;
-  }
-
   void CreateDynamicSection(wxSizer* top_vsizer) {
     top_vsizer->Add(CreateSeparator(this, _("Dynamic options"), true), wxSizerFlags().Expand().Border(wxALL));
 
-    property_list_ = new ui::PropertyList();
-    property_list_->Create(this, wxID_ANY, wxSize(-1, 120));
+    option_list_ctrl_ = new OptionListCtrl();
+    option_list_ctrl_->Create(this, wxID_ANY, wxSize(-1, 120));
 
-    property_list_->StartBatch();
+    option_list_ctrl_->StartBatch();
 
     editor::OptionTable& indent_options = options_->text.indent_options;
     for (size_t i = 0; i < indent_options.size(); ++i) {
-      editor::OptionPair& option_pair = indent_options[i];
-
-      std::string& option_key = option_pair.first;
-      editor::OptionValue& option_value = option_pair.second;
-
-      wxString value_str = OptionValueStr(option_value);
-      if (!value_str.IsEmpty()) {
-        property_list_->AddProperty(wxString::FromUTF8(option_key.c_str()), value_str);
-      }
+      option_list_ctrl_->AddOption(indent_options[i]);
     }
 
-    property_list_->EndBatch();
+    option_list_ctrl_->EndBatch();
 
-    top_vsizer->Add(property_list_, wxSizerFlags().Expand().Border(wxALL));
+    top_vsizer->Add(option_list_ctrl_, wxSizerFlags().Expand().Border(wxALL));
   }
 
 private:
@@ -843,7 +814,7 @@ private:
   wxCheckBox* guess_check_box_;
   wxTextCtrl* indent_keys_text_ctrl_;
 
-  ui::PropertyList* property_list_;
+  OptionListCtrl* option_list_ctrl_;
 };
 
 }  // namespace pref

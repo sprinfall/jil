@@ -608,8 +608,8 @@ wxString TextBuffer::file_path(int flags, wxPathFormat format) const {
 
 OptionValue TextBuffer::GetIndentOption(const std::string& key) const {
   for (size_t i = 0; i < options_.text.indent_options.size(); ++i) {
-    if (key == options_.text.indent_options[i].first) {
-      options_.text.indent_options[i].second;
+    if (key == options_.text.indent_options[i].key) {
+      options_.text.indent_options[i].value;
     }
   }
   return OptionValue();

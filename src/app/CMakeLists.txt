@@ -47,6 +47,8 @@ set(SRCS
     option.h
     option_config.cc
     option_config.h
+    option_list_ctrl.cc
+    option_list_ctrl.h
     preferences.cc
     preferences.h
     save.cc

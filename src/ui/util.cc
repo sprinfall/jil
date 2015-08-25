@@ -23,5 +23,25 @@ size_t TailorLabel(const wxDC& dc, const wxString& label, int max_width) {
   return i;
 }
 
+void DrawTextInRect(wxDC& dc, const wxString& text, const wxRect& rect) {
+  if (text.size() <= 3) {
+    dc.DrawText(text, rect.x, rect.y);
+    return;
+  }
+
+  int w = 0;
+  dc.GetTextExtent(text, &w, NULL);
+  if (w <= rect.width) {
+    dc.DrawText(text, rect.x, rect.y);
+    return;
+  }
+
+  int ellipsis_w = 0;
+  dc.GetTextExtent(kEllipsis, &ellipsis_w, NULL);
+
+  size_t i = TailorLabel(dc, text, rect.width - ellipsis_w);
+  dc.DrawText(text.Mid(0, i) + kEllipsis, rect.x, rect.y);
+}
+
 }  // namespace ui
 }  // namespace jil

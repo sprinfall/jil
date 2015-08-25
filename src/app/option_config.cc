@@ -141,22 +141,23 @@ static void GetOptionTable(Setting setting, editor::OptionTable* option_table) {
 
   int size = setting.size();
 
+  editor::OptionPair option_pair;
+
   for (int i = 0; i < size; ++i) {
-    std::string key = setting[i].name();
-    editor::OptionValue value;
+    option_pair.key = setting[i].name();
 
     int type = setting[i].type();
 
     if (type == Setting::kBool) {
-      value = editor::OptionValue(setting[i].GetBool());
+      option_pair.value = editor::OptionValue(setting[i].GetBool());
     } else if (type == Setting::kInt) {
-      value = editor::OptionValue(setting[i].GetInt());
+      option_pair.value = editor::OptionValue(setting[i].GetInt());
     } else if (type == Setting::kString) {
-      value = editor::OptionValue(std::string(setting[i].GetString()));
+      option_pair.value = editor::OptionValue(std::string(setting[i].GetString()));
     }
 
-    if (!value.IsEmpty()) {
-      option_table->push_back(std::make_pair(key, value));
+    if (!option_pair.value.IsEmpty()) {
+      option_table->push_back(option_pair);
     }
   }
 }
