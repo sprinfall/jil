@@ -439,25 +439,32 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
 
   editor::FtPlugin* ft_plugin = new editor::FtPlugin(ft);
 
-  wxString ftplugin_dir = ResourceDir(kFtPluginDir, ft_plugin->id());
-  wxString ftplugin_user_dir = UserDataDir(kFtPluginDir, ft_plugin->id());
+  wxString ft_plugin_dir = ResourceDir(kFtPluginDir, ft_plugin->id());
+  wxString ft_plugin_user_dir = UserDataDir(kFtPluginDir, ft_plugin->id());
 
-  // Lex
-  LoadLexFile(ftplugin_dir + kLexFile, ft_plugin);
+  //----------------------------------------------------------------------------
+  // Load lex
 
-  // Options
+  wxString ft_lex_file = ft_plugin_user_dir + kLexFile;
+  if (!wxFileName::FileExists(ft_lex_file)) {
+    ft_lex_file = ft_plugin_dir + kLexFile;
+  }
 
-  // Copy global options.
+  LoadLexFile(ft_lex_file, ft_plugin);
+
+  //----------------------------------------------------------------------------
+  // Load editor options
+
+  // Copy global editor options.
   editor::Options ft_editor_options = editor_options_;
 
-  // Overwrite with the file type specific values.
-  Config config;
-  if (config.Load(ftplugin_dir + kOptionsFile)) {
-    Setting editor_setting = config.Root().Get("editor");
-    if (editor_setting) {
-      ParseEditorOptions(editor_setting, &ft_editor_options);
-    }
+  wxString ft_options_file = ft_plugin_user_dir + kOptionsFile;
+  if (!wxFileName::FileExists(ft_options_file)) {
+    ft_options_file = ft_plugin_dir + kOptionsFile;
   }
+
+  // Overwrite with the file type specific values.
+  LoadEditorOptionsFile(ft_options_file, &ft_editor_options);
 
   // Some extra view options.
   ft_editor_options.view.min_font_size = kMinFontSize;
@@ -467,6 +474,17 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
 
   ft_plugins_.push_back(ft_plugin);
   return ft_plugin;
+}
+
+bool App::SaveUserEditorOptions(const wxString& ft_id, const editor::Options& options) {
+  wxString ft_options_dir = UserDataDir(kFtPluginDir, ft_id);
+
+  if (!editor::MakeDirFully(ft_options_dir)) {
+    wxLogError(wxT("Failed to create directory: %s"), ft_options_dir);
+    return false;
+  }
+
+  return SaveEditorOptionsFile(ft_options_dir + kOptionsFile, options);
 }
 
 // Command line parsing.
@@ -505,8 +523,7 @@ bool App::OnCmdLineError(wxCmdLineParser& parser) {
 #endif  // wxUSE_CMDLINE_PARSER
 
 const wxString& App::UserDataDir() const {
-  static const wxString user_data_dir =
-      wxStandardPaths::Get().GetUserDataDir() + wxFILE_SEP_PATH;
+  static const wxString user_data_dir = wxStandardPaths::Get().GetUserDataDir() + wxFILE_SEP_PATH;
   return user_data_dir;
 }
 
@@ -526,6 +543,10 @@ wxString App::UserDataFile(const wxString& dir, const wxString& file) const {
   return UserDataDir(dir) + file;
 }
 
+wxString App::UserDataFile(const wxString& dir, const wxString& dir2, const wxString& file) const {
+  return UserDataDir(dir, dir2) + file;
+}
+
 wxString App::ResourceDir(const wxString& dir) const {
   return path::ResourceDir() + dir + wxFILE_SEP_PATH;
 }
@@ -539,7 +560,11 @@ wxString App::ResourceFile(const wxString& file) const {
 }
 
 wxString App::ResourceFile(const wxString& dir, const wxString& file) const {
-  return path::ResourceDir() + dir + wxFILE_SEP_PATH + file;
+  return ResourceDir(dir) + file;
+}
+
+wxString App::ResourceFile(const wxString& dir, const wxString& dir2, const wxString& file) const {
+  return ResourceDir(dir, dir2) + file;
 }
 
 void App::LoadStatusFields() {
@@ -562,30 +587,19 @@ void App::LoadStatusFields() {
   ParseStatusFields(list_setting, &status_fields_);
 }
 
-// Load user option file firstly.
-// If user option file doesn't exist, load the default one.
 void App::LoadOptions() {
-  wxString options_file = UserDataFile(kOptionsFile);
-  if (!wxFileName::FileExists(options_file)) {
+  wxString global_options_file = UserDataFile(kOptionsFile);
+  if (!wxFileName::FileExists(global_options_file)) {
     wxLogInfo(wxT("No user options config file."));
-    options_file = ResourceFile(kOptionsFile);
+    global_options_file = ResourceFile(kOptionsFile);
   }
 
-  Config config;
-  if (!config.Load(options_file)) {
-    ErrorMsg(kTrFailedToLoad + kSpaceStr + options_file);
-    return;
+  if (!LoadGlobalOptionsFile(global_options_file, &options_)) {
+    ErrorMsg(kTrFailedToLoad + kSpaceStr + global_options_file);
   }
 
-  Setting app_setting = config.Root().Get("app");
-  if (app_setting) {
-    ParseAppOptions(app_setting, &options_);
-  }
-
-  Setting editor_setting = config.Root().Get("editor");
-  if (editor_setting) {
-    ParseEditorOptions(editor_setting, &editor_options_);
-  }
+  wxString editor_options_file = ResourceFile(kFtPluginDir, wxT("__default"), kOptionsFile);
+  LoadEditorOptionsFile(editor_options_file, &editor_options_);
 }
 
 bool App::LoadTheme() {

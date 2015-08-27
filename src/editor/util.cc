@@ -1,5 +1,6 @@
 #include "editor/util.h"
 #include "wx/clipbrd.h"
+#include "wx/filename.h"
 #include "wx/intl.h"
 
 namespace jil {
@@ -195,6 +196,14 @@ bool IsClipboardEmpty() {
   }
 
   return is_empty;
+}
+
+bool MakeDirFully(const wxString& dir) {
+  wxFileName dir_fn = wxFileName::DirName(dir);
+  if (dir_fn.DirExists()) {
+    return true;
+  }
+  return dir_fn.Mkdir(0777, wxPATH_MKDIR_FULL);
 }
 
 }  // namespace editor

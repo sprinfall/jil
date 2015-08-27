@@ -24,5 +24,29 @@ wxString OptionValue::ToString() const {
   return wxEmptyString;
 }
 
+bool OptionValue::Parse(const wxString& str) {
+  if (type_ == kBool) {
+    if (str.CmpNoCase(wxT("true")) == 0) {
+      data_ = true;
+      return true;
+    } else if (str.CmpNoCase(wxT("false")) == 0) {
+      data_ = false;
+      return true;
+    }
+  } else if (type_ == kInt) {
+    long value = 0;
+    if (str.ToLong(&value)) {
+      data_ = static_cast<int>(value);
+      return true;
+    }
+  } else if (type_ == kString) {
+    // NOTE: Don't assign str.ToUTF8().data() directly to data_!!!
+    data_ = std::string(str.ToUTF8().data()); 
+    return true;
+  }
+
+  return false;
+}
+
 }  // namespace editor
 }  // namespace jil

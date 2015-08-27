@@ -96,9 +96,9 @@ public:
 
   void AddOption(const editor::OptionPair& option_pair);
 
-  int GetCount() const {
-    return static_cast<int>(options_.size());
-  }
+  const editor::OptionPair* GetOption(int i) const;
+
+  int GetCount() const;
 
 protected:
   void Init();
@@ -122,10 +122,12 @@ protected:
 
   bool IsEditing() const;
   void StartEditing(int row);
-  void StopEditing();
+  void FinishEditing();
 
   wxRect GetRowClientRect(int row) const;
+
   void RefreshRow(int row);
+  void RefreshRowByKey(const std::string& key);
 
   int GetColumnX(int col) const;
   int GetColumnWidth(int col) const;

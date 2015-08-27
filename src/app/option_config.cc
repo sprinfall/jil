@@ -17,6 +17,41 @@
 namespace jil {
 
 ////////////////////////////////////////////////////////////////////////////////
+// Option names.
+// Consistent with names in config file.
+
+// Names of application options.
+const char* const OPT_S_CJK = "cjk";
+const char* const OPT_S_FILE_ENCODING = "file_encoding";
+const char* const OPT_S_THEME = "theme";
+const char* const OPT_G_FONTS = "fonts";
+const char* const OPT_F_TEXT = "text";
+const char* const OPT_F_LINE_NR = "line_nr";
+const char* const OPT_F_TABS = "tabs";
+const char* const OPT_F_STATUS_BAR = "status_bar";
+const char* const OPT_I_LINE_PADDING = "line_padding";
+const char* const OPT_B_SWITCH_CWD = "switch_cwd";
+const char* const OPT_B_RESTORE_FILES = "restore_files";
+const char* const OPT_B_SHOW_PATH = "show_path";
+
+// Names of editor options.
+const char* const OPT_B_WRAP = "wrap";
+const char* const OPT_I_SHIFT_WIDTH = "shift_width";
+const char* const OPT_I_TAB_STOP = "tab_stop";
+const char* const OPT_B_EXPAND_TAB = "expand_tab";
+const char* const OPT_B_GUESS_TAB = "guess_tab";
+const char* const OPT_B_SHOW_NUMBER = "show_number";
+const char* const OPT_B_SHOW_SPACE = "show_space";
+const char* const OPT_B_SHOW_HSCROLLBAR = "show_hscrollbar";
+const char* const OPT_S_DELIMITERS = "delimiters";
+const char* const OPT_IA_RULERS = "rulers";
+const char* const OPT_SA_INDENT_KEYS = "indent_keys";
+const char* const OPT_G_INDENT = "indent";
+const char* const OPT_G_COMMENT = "comment";
+const char* const OPT_B_ADD_SPACE = "add_space";
+const char* const OPT_B_RESPECT_INDENT = "respect_indent";
+
+////////////////////////////////////////////////////////////////////////////////
 // Helper functions.
 
 static int ParseCjk(const std::string& cjk) {
@@ -149,11 +184,11 @@ static void GetOptionTable(Setting setting, editor::OptionTable* option_table) {
     int type = setting[i].type();
 
     if (type == Setting::kBool) {
-      option_pair.value = editor::OptionValue(setting[i].GetBool());
+      option_pair.value = editor::OptionValue::FromBool(setting[i].GetBool());
     } else if (type == Setting::kInt) {
-      option_pair.value = editor::OptionValue(setting[i].GetInt());
+      option_pair.value = editor::OptionValue::FromInt(setting[i].GetInt());
     } else if (type == Setting::kString) {
-      option_pair.value = editor::OptionValue(std::string(setting[i].GetString()));
+      option_pair.value = editor::OptionValue::FromString(std::string(setting[i].GetString()));
     }
 
     if (!option_pair.value.IsEmpty()) {
@@ -194,13 +229,13 @@ static void ValidateFonts(wxFont fonts[FONT_COUNT]) {
   }
 }
 
-void ParseAppOptions(const Setting& setting, Options* options) {
+static void ParseGlobalOptions(const Setting& setting, Options* options) {
   SettingMap setting_map;
   setting.AsMap(&setting_map);
 
   // CJK
   std::string cjk_str;
-  GetString(setting_map, CJK, &cjk_str);
+  GetString(setting_map, OPT_S_CJK, &cjk_str);
   if (!cjk_str.empty()) {
     options->cjk_filters = ParseCjk(cjk_str);
   }
@@ -208,35 +243,52 @@ void ParseAppOptions(const Setting& setting, Options* options) {
 
   // File encoding
   std::string fenc_str;
-  GetString(setting_map, FILE_ENCODING, &fenc_str);
+  GetString(setting_map, OPT_S_FILE_ENCODING, &fenc_str);
   if (fenc_str.empty()) {
     fenc_str = editor::ENCODING_NAME_UTF8;
   }
   options->file_encoding = editor::EncodingFromName(fenc_str);
 
   // Fonts
-  Setting fonts_setting = GetSetting(setting_map, FONTS, Setting::kGroup);
+  Setting fonts_setting = GetSetting(setting_map, OPT_G_FONTS, Setting::kGroup);
   if (fonts_setting) {
-    options->fonts[FONT_TEXT] = fonts_setting.GetFont("text");
-    options->fonts[FONT_LINE_NR] = fonts_setting.GetFont("line_nr");
-    options->fonts[FONT_TABS] = fonts_setting.GetFont("tabs");
-    options->fonts[FONT_STATUS_BAR] = fonts_setting.GetFont("status_bar");
+    options->fonts[FONT_TEXT] = fonts_setting.GetFont(OPT_F_TEXT);
+    options->fonts[FONT_LINE_NR] = fonts_setting.GetFont(OPT_F_LINE_NR);
+    options->fonts[FONT_TABS] = fonts_setting.GetFont(OPT_F_TABS);
+    options->fonts[FONT_STATUS_BAR] = fonts_setting.GetFont(OPT_F_STATUS_BAR);
   }
 
   ValidateFonts(options->fonts);
 
-  GetInt(setting_map, LINE_PADDING, &options->line_padding);
+  GetInt(setting_map, OPT_I_LINE_PADDING, &options->line_padding);
 
-  GetBool(setting_map, SWITCH_CWD, &options->switch_cwd);
+  GetBool(setting_map, OPT_B_SWITCH_CWD, &options->switch_cwd);
 
-  GetWxString(setting_map, THEME, &options->theme);
+  GetWxString(setting_map, OPT_S_THEME, &options->theme);
 
-  GetBool(setting_map, RESTORE_FILES, &options->restore_files);
-  GetBool(setting_map, SHOW_PATH, &options->show_path);
+  GetBool(setting_map, OPT_B_RESTORE_FILES, &options->restore_files);
+  GetBool(setting_map, OPT_B_SHOW_PATH, &options->show_path);
+}
+
+bool LoadGlobalOptionsFile(const wxString& file, Options* options) {
+  if (!wxFileName::FileExists(file)) {
+    wxLogInfo(wxT("Options file doesn't exist: %s"), file);
+    return false;
+  }
+
+  Config config;
+  if (!config.Load(file)) {
+    wxLogError(wxT("Failed to parse options file: %s"), file);
+    return false;
+  }
+
+  ParseGlobalOptions(config.Root(), options);
+
+  return true;
 }
 
 // NOTE: If a setting is not provided, don't set the related option.
-void ParseEditorOptions(const Setting& setting, editor::Options* options) {
+static void ParseEditorOptions(const Setting& setting, editor::Options* options) {
   using namespace editor;
 
   SettingMap setting_map;
@@ -245,15 +297,15 @@ void ParseEditorOptions(const Setting& setting, editor::Options* options) {
   //----------------------------------------------------------------------------
   // Text options
 
-  GetInt(setting_map, SHIFT_WIDTH, &options->text.shift_width);
-  GetInt(setting_map, TAB_STOP, &options->text.tab_stop);
-  GetBool(setting_map, EXPAND_TAB, &options->text.expand_tab);
-  GetBool(setting_map, GUESS_TAB, &options->text.guess_tab);
+  GetInt(setting_map, OPT_I_SHIFT_WIDTH, &options->text.shift_width);
+  GetInt(setting_map, OPT_I_TAB_STOP, &options->text.tab_stop);
+  GetBool(setting_map, OPT_B_EXPAND_TAB, &options->text.expand_tab);
+  GetBool(setting_map, OPT_S_DELIMITERS, &options->text.guess_tab);
 
-  GetWString(setting_map, DELIMITERS, &options->text.delimiters);
+  GetWString(setting_map, OPT_S_DELIMITERS, &options->text.delimiters);
 
   // Indent keys
-  Setting ik_setting = GetSetting(setting_map, INDENT_KEYS, Setting::kArray);
+  Setting ik_setting = GetSetting(setting_map, OPT_SA_INDENT_KEYS, Setting::kArray);
   if (ik_setting) {
     options->text.indent_keys.clear();  // Clear global setting.
 
@@ -265,30 +317,127 @@ void ParseEditorOptions(const Setting& setting, editor::Options* options) {
   }
 
   // Extra indent options
-  GetOptionTable(setting_map["indent"], &options->text.indent_options);
+  GetOptionTable(setting_map[OPT_G_INDENT], &options->text.indent_options);
 
   // Comment options
-  Setting comment_setting = setting_map["comment"];
+  Setting comment_setting = setting_map[OPT_G_COMMENT];
   if (comment_setting) {
-    options->text.comment_add_space = comment_setting.GetBool("add_space");
-    options->text.comment_respect_indent = comment_setting.GetBool("respect_indent");
+    options->text.comment_add_space = comment_setting.GetBool(OPT_B_ADD_SPACE);
+    options->text.comment_respect_indent = comment_setting.GetBool(OPT_B_RESPECT_INDENT);
   }
 
   //----------------------------------------------------------------------------
   // View options
 
-  GetBool(setting_map, WRAP, &options->view.wrap);
-  GetBool(setting_map, SHOW_NUMBER, &options->view.show_number);
-  GetBool(setting_map, SHOW_SPACE, &options->view.show_space);
-  GetBool(setting_map, SHOW_HSCROLLBAR, &options->view.show_hscrollbar);
+  GetBool(setting_map, OPT_B_WRAP, &options->view.wrap);
+  GetBool(setting_map, OPT_B_SHOW_NUMBER, &options->view.show_number);
+  GetBool(setting_map, OPT_B_SHOW_SPACE, &options->view.show_space);
+  GetBool(setting_map, OPT_B_SHOW_HSCROLLBAR, &options->view.show_hscrollbar);
 
-  Setting rulers_setting = GetSetting(setting_map, RULERS, Setting::kArray);
+  Setting rulers_setting = GetSetting(setting_map, OPT_IA_RULERS, Setting::kArray);
   if (rulers_setting) {
     options->view.rulers.clear();  // Clear global setting.
     for (int i = 0; i < rulers_setting.size(); ++i) {
       options->view.rulers.push_back(rulers_setting[i].GetInt());
     }
   }
+}
+
+bool LoadEditorOptionsFile(const wxString& file, editor::Options* options) {
+  if (!wxFileName::FileExists(file)) {
+    wxLogInfo(wxT("Options file doesn't exist: %s"), file);
+    return false;
+  }
+
+  Config config;
+  if (!config.Load(file)) {
+    wxLogError(wxT("Failed to parse options file: %s"), file);
+    return false;
+  }
+
+  ParseEditorOptions(config.Root(), options);
+
+  return true;
+}
+
+static void AddOptionPair(Setting& setting, const editor::OptionPair& option_pair) {
+  using namespace editor;
+
+  const char* key = option_pair.key.c_str();
+  const OptionValue& value = option_pair.value;
+  int type = value.type();
+
+  if (type == OptionValue::kBool) {
+    bool b = false;
+    if (value.As<bool>(&b)) {
+      setting.Add(key, Setting::kBool).SetBool(b);
+    }
+  } else if (type == OptionValue::kInt) {
+    int i = false;
+    if (value.As<int>(&i)) {
+      setting.Add(key, Setting::kInt).SetInt(i);
+    }
+  } else if (type == OptionValue::kString) {
+    std::string s;
+    if (value.As<std::string>(&s)) {
+      setting.Add(key, Setting::kString).SetString(s.c_str());
+    }
+  }
+}
+
+bool SaveEditorOptionsFile(const wxString& file, const editor::Options& options) {
+  using namespace editor;
+
+  Config config;
+  Setting root_setting = config.Root();
+
+  //----------------------------------------------------------------------------
+  // Text options
+
+  root_setting.SetInt(OPT_I_SHIFT_WIDTH, options.text.shift_width);
+  root_setting.SetInt(OPT_I_TAB_STOP, options.text.tab_stop);
+  root_setting.SetBool(OPT_B_EXPAND_TAB, options.text.expand_tab);
+  root_setting.SetBool(OPT_S_DELIMITERS, options.text.guess_tab);
+
+  root_setting.SetString(OPT_S_DELIMITERS, wxString(options.text.delimiters).ToAscii().data());
+
+  // Indent keys
+  Setting ik_setting = root_setting.Add(OPT_SA_INDENT_KEYS, Setting::kArray);
+  for (const std::wstring& indent_key : options.text.indent_keys) {
+    ik_setting.Add(NULL, Setting::kString).SetString(wxString(indent_key).ToAscii().data());
+  }
+
+  // Extra indent options
+  Setting indent_setting = root_setting.Add(OPT_G_INDENT, Setting::kGroup);
+  for (const OptionPair& option_pair : options.text.indent_options) {
+    AddOptionPair(indent_setting, option_pair);
+  }
+
+  // Comment options
+  Setting comment_setting = root_setting.Add(OPT_G_COMMENT, Setting::kGroup);
+  comment_setting.SetBool(OPT_B_ADD_SPACE, options.text.comment_add_space);
+  comment_setting.SetBool(OPT_B_RESPECT_INDENT, options.text.comment_respect_indent);
+
+  //----------------------------------------------------------------------------
+  // View options
+
+  root_setting.SetBool(OPT_B_WRAP, options.view.wrap);
+  root_setting.SetBool(OPT_B_SHOW_NUMBER, options.view.show_number);
+  root_setting.SetBool(OPT_B_SHOW_SPACE, options.view.show_space);
+  root_setting.SetBool(OPT_B_SHOW_HSCROLLBAR, options.view.show_hscrollbar);
+
+  // Rulers
+  Setting rulers_setting = root_setting.Add(OPT_IA_RULERS, Setting::kArray);
+  for (int ruler : options.view.rulers) {
+    rulers_setting.Add(NULL, Setting::kInt).SetInt(ruler);
+  }
+
+  if (!config.Save(file)) {
+    wxLogError(wxT("Failed to save options file: %s"), file);
+    return false;
+  }
+
+  return true;
 }
 
 }  // namespace jil

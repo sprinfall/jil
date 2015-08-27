@@ -822,9 +822,9 @@ void BookFrame::ApplyLineNrFont(const wxFont& font) {
 }
 
 void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
-  int index = evt.GetId() - ID_MENU_PREFS_EDITOR_0;
-
+  // Get the file type.
   const std::vector<editor::FileType*>& file_types = wxGetApp().file_types();
+  int index = evt.GetId() - ID_MENU_PREFS_EDITOR_0;
   if (index < 0 || index >= static_cast<int>(file_types.size())) {
     return;
   }
@@ -835,7 +835,9 @@ void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
     return;
   }
 
+  // Copy the options.
   editor::Options options = ft_plugin->options();
+
   PrefEditorDialog dialog(&options);
 
   wxString title = _("Preferences") + wxT(" - ") + ft->name;
@@ -849,6 +851,8 @@ void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
   // Apply changes.
 
   ft_plugin->set_options(options);
+
+  wxGetApp().SaveUserEditorOptions(ft_plugin->id(), ft_plugin->options());
 }
 
 void BookFrame::OnQuit(wxCommandEvent& WXUNUSED(evt)) {

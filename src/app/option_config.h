@@ -14,37 +14,12 @@ namespace editor {
 class Options;
 }  // namespace editor
 
-// Option names.
-// Consistent with names in config file.
-
-// Names of application options.
-const char* const CJK = "cjk";
-const char* const FILE_ENCODING = "file_encoding";
-const char* const THEME = "theme";
-const char* const FONTS = "fonts";
-const char* const LINE_PADDING = "line_padding";
-const char* const SWITCH_CWD = "switch_cwd";
-const char* const RESTORE_FILES = "restore_files";
-const char* const SHOW_PATH = "show_path";
-
-// Names of editor options.
-const char* const WRAP = "wrap";
-const char* const SHIFT_WIDTH = "shift_width";
-const char* const TAB_STOP = "tab_stop";
-const char* const EXPAND_TAB = "expand_tab";
-const char* const GUESS_TAB = "guess_tab";
-const char* const SHOW_NUMBER = "show_number";
-const char* const SHOW_SPACE = "show_space";
-const char* const SHOW_HSCROLLBAR = "show_hscrollbar";
-const char* const DELIMITERS = "delimiters";
-const char* const RULERS = "rulers";
-const char* const INDENT_KEYS = "indent_keys";
-
 class Options;
 
-void ParseAppOptions(const Setting& setting, Options* options);
+bool LoadGlobalOptionsFile(const wxString& file, Options* options);
 
-void ParseEditorOptions(const Setting& setting, editor::Options* options);
+bool LoadEditorOptionsFile(const wxString& file, editor::Options* options);
+bool SaveEditorOptionsFile(const wxString& file, const editor::Options& options);
 
 }  // namespace jil
 

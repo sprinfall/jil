@@ -143,6 +143,15 @@ void OptionListCtrl::AddOption(const editor::OptionPair& option_pair) {
   }
 }
 
+const editor::OptionPair* OptionListCtrl::GetOption(int i) const {
+  assert(i >= 0 && i < GetCount());
+  return options_[i];
+}
+
+int OptionListCtrl::GetCount() const {
+  return static_cast<int>(options_.size());
+}
+
 void OptionListCtrl::Init() {
   created_ = false;
   batch_ = false;
@@ -164,7 +173,7 @@ void OptionListCtrl::CheckColors() {
   }
 
   if (!GetColor(COLOR_HEAD_BG).IsOk()) {
-    SetColor(COLOR_HEAD_BG, wxColour(75, 75, 75));
+    SetColor(COLOR_HEAD_BG, wxColour(85, 85, 85));
   }
 
   if (!GetColor(COLOR_HEAD_BORDER).IsOk()) {
@@ -180,7 +189,7 @@ void OptionListCtrl::CheckColors() {
   }
 
   if (!GetColor(COLOR_BODY_BG_SELECT).IsOk()) {
-    SetColor(COLOR_BODY_BG_SELECT, wxColour(51, 153, 255));
+    SetColor(COLOR_BODY_BG_SELECT, wxColour(175, 175, 175));
   }
    
   if (!GetColor(COLOR_BODY_BORDER).IsOk()) {
@@ -206,20 +215,9 @@ void OptionListCtrl::OnSize(wxSizeEvent& evt) {
   Refresh();
 }
 
-// TODO
 void OptionListCtrl::OnEditingDone(wxCommandEvent& evt) {
   assert(text_ctrl_ != NULL);
-
-  editor::OptionPair* option_pair = static_cast<editor::OptionPair*>(text_ctrl_->GetClientData());
-  int value_type = option_pair->value.type();
-
-  wxString value = text_ctrl_->GetValue();
-  wxLogDebug(option_pair->key + wxT(": ") + value);
-
-  if (value_type == editor::OptionValue::kBool) {
-  }
-
-  StopEditing();
+  FinishEditing();
 }
 
 void OptionListCtrl::OnHeadPaint(wxDC& dc) {
@@ -345,7 +343,7 @@ void OptionListCtrl::OnBodyMouseLeftDown(wxMouseEvent& evt) {
   } else {
     if (old_selected_row != 0) {
       if (IsEditing()) {
-        StopEditing();
+        FinishEditing();
       }
       RefreshRow(old_selected_row);
     }
@@ -376,13 +374,34 @@ void OptionListCtrl::StartEditing(int row) {
     text_ctrl_->Show();
   }
 
+  // Save the option pair in client data so that OnEditingDone can use it.
   text_ctrl_->SetClientData(option_pair);
 
-  text_ctrl_->SetInsertionPointEnd();
+  text_ctrl_->SelectAll();
   text_ctrl_->SetFocus();
 }
 
-void OptionListCtrl::StopEditing() {
+void OptionListCtrl::FinishEditing() {
+  void* client_data = text_ctrl_->GetClientData();
+  if (client_data == NULL) {
+    return;
+  }
+
+  editor::OptionPair* option_pair = static_cast<editor::OptionPair*>(client_data);
+  int value_type = option_pair->value.type();
+
+  wxString value_str = text_ctrl_->GetValue();
+
+  if (value_type == editor::OptionValue::kBool) {
+    value_str.Trim(true).Trim(false);
+  }
+
+  if (option_pair->value.Parse(value_str)) {
+    RefreshRowByKey(option_pair->key);
+  } else {
+    wxLogDebug(wxT("Invalid option value: %s"), value_str);
+  }
+
   if (text_ctrl_ != NULL) {
     text_ctrl_->Hide();
   }
@@ -403,6 +422,16 @@ wxRect OptionListCtrl::GetRowClientRect(int row) const {
 
 void OptionListCtrl::RefreshRow(int row) {
   body_panel_->RefreshRect(GetRowClientRect(row));
+}
+
+void OptionListCtrl::RefreshRowByKey(const std::string& key) {
+  for (size_t i = 0; i < options_.size(); ++i) {
+    if (options_[i]->key == key) {
+      int row = static_cast<int>(i) + 1;
+      RefreshRow(row);
+      break;
+    }
+  }
 }
 
 int OptionListCtrl::GetColumnX(int col) const {

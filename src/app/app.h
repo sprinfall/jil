@@ -76,6 +76,9 @@ public:
     return status_fields_;
   }
 
+  // Save editor options to <user_data_dir>/ftplugin/<ft_id>/options.cfg
+  bool SaveUserEditorOptions(const wxString& ft_id, const editor::Options& options);
+
 protected:
 #if wxUSE_CMDLINE_PARSER
   // Called from OnInit() to add all supported options to the given parser.
@@ -107,12 +110,14 @@ private:
 
   wxString UserDataFile(const wxString& file) const;
   wxString UserDataFile(const wxString& dir, const wxString& file) const;
+  wxString UserDataFile(const wxString& dir, const wxString& dir2, const wxString& file) const;
 
   wxString ResourceDir(const wxString& dir) const;
   wxString ResourceDir(const wxString& dir, const wxString& dir2) const;
 
   wxString ResourceFile(const wxString& file) const;
   wxString ResourceFile(const wxString& dir, const wxString& file) const;
+  wxString ResourceFile(const wxString& dir, const wxString& dir2, const wxString& file) const;
 
   void LoadStatusFields();
 

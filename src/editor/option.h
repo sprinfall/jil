@@ -23,16 +23,32 @@ public:
   };
 
 public:
-  OptionValue() : type_(kNone) {
+  OptionValue()
+      : type_(kNone) {
   }
 
-  explicit OptionValue(bool data) : data_(data), type_(kBool) {
+  OptionValue(const OptionValue& rhs)
+      : data_(rhs.data_), type_(rhs.type_) {
   }
 
-  explicit OptionValue(int data) : data_(data), type_(kInt) {
+  // NOTE:
+  // Given overloaded contructors:
+  //   OptionValue(bool data);
+  //   OptionValue(const std::string& data);
+  //   ...
+  // OptionValue("") will "incorrectly" invoke the bool version.
+  // So don't provide overloaded constructors!
+
+  static OptionValue FromBool(bool data) {
+    return OptionValue(data, kBool);
   }
 
-  explicit OptionValue(const std::string& data) : data_(data), type_(kString) {
+  static OptionValue FromInt(int data) {
+    return OptionValue(data, kInt);
+  }
+
+  static OptionValue FromString(const std::string& data) {
+    return OptionValue(data, kString);
   }
 
   Type type() const {
@@ -54,6 +70,13 @@ public:
   }
 
   wxString ToString() const;
+
+  bool Parse(const wxString& str);
+
+private:
+  OptionValue(const boost::any& data, Type type)
+      : data_(data), type_(type) {
+  }
 
 private:
   boost::any data_;

@@ -701,6 +701,13 @@ public:
     std::wstring indent_keys = boost::join(options_->text.indent_keys, L",");
     indent_keys_text_ctrl_->SetValue(indent_keys);
 
+    option_list_ctrl_->StartBatch();
+    editor::OptionTable& indent_options = options_->text.indent_options;
+    for (size_t i = 0; i < indent_options.size(); ++i) {
+      option_list_ctrl_->AddOption(indent_options[i]);
+    }
+    option_list_ctrl_->EndBatch();
+
     return true;
   }
 
@@ -724,6 +731,12 @@ public:
       indent_keys.erase(end, indent_keys.end());
     }
     options_->text.indent_keys = indent_keys;
+
+    options_->text.indent_options.clear();
+    int indent_options_count = option_list_ctrl_->GetCount();
+    for (int i = 0; i < indent_options_count; ++i) {
+      options_->text.indent_options.push_back(*option_list_ctrl_->GetOption(i));
+    }
 
     return true;
   }
@@ -792,15 +805,6 @@ protected:
 
     option_list_ctrl_ = new OptionListCtrl();
     option_list_ctrl_->Create(this, wxID_ANY, wxSize(-1, 120));
-
-    option_list_ctrl_->StartBatch();
-
-    editor::OptionTable& indent_options = options_->text.indent_options;
-    for (size_t i = 0; i < indent_options.size(); ++i) {
-      option_list_ctrl_->AddOption(indent_options[i]);
-    }
-
-    option_list_ctrl_->EndBatch();
 
     top_vsizer->Add(option_list_ctrl_, wxSizerFlags().Expand().Border(wxALL));
   }

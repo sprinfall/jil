@@ -87,6 +87,10 @@ SeekType SeekFromName(const std::string& name);
 
 bool IsClipboardEmpty();
 
+// Create the dir fully.
+// Return true if the dir are finally OK.
+bool MakeDirFully(const wxString& dir);
+
 }  // namespace editor
 }  // namespace jil
 
