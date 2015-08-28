@@ -73,6 +73,9 @@ public:
 
   bool IsEmpty() const { return data_ == 0; }
 
+  // Convert modifiers to accelerator flags.
+  int GetAccelFlags() const;
+
   wxString ToString() const;
 
 private:

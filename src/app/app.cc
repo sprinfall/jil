@@ -64,7 +64,6 @@ static const wxString kThemeDir = wxT("theme");
 
 static const wxString kLexFile = wxT("lex.cfg");
 static const wxString kOptionsFile = wxT("options.cfg");
-static const wxString kIndentFile = wxT("indent.lua");
 static const wxString kStatusFieldsFile = wxT("status_fields.cfg");
 static const wxString kSessionFile = wxT("session.cfg");
 static const wxString kBindingFile = wxT("binding.cfg");
@@ -322,7 +321,7 @@ bool App::OnInit() {
       connection->Disconnect();
       delete connection;
     } else {
-      ErrorMsg(_("Failed to connect to the existing instance. Any modal dialogs opened?"));  // NOLINT
+      ErrorMsg(_("Failed to connect to the existing instance. Any modal dialogs opened?"));
     }
 
     delete client;
@@ -639,7 +638,7 @@ bool App::LoadTheme() {
 }
 
 void App::InitCommands() {
-  using namespace editor;  // NOLINT
+  using namespace editor;
 
   //----------------------------------------------------------------------------
 
@@ -655,14 +654,8 @@ void App::InitCommands() {
   AddTextCmd("paste", Paste, true, ID_MENU_EDIT_PASTE);
 
   AddTextCmd("auto_indent", AutoIndent, true, ID_MENU_EDIT_AUTO_INDENT);
-  AddTextCmd("increase_indent",
-             IncreaseIndent,
-             true,
-             ID_MENU_EDIT_INCREASE_INDENT);
-  AddTextCmd("decrease_indent",
-             DecreaseIndent,
-             true,
-             ID_MENU_EDIT_DECREASE_INDENT);
+  AddTextCmd("increase_indent", IncreaseIndent, true, ID_MENU_EDIT_INCREASE_INDENT);
+  AddTextCmd("decrease_indent", DecreaseIndent, true, ID_MENU_EDIT_DECREASE_INDENT);
 
   AddTextCmd("comment", Comment, true, ID_MENU_EDIT_COMMENT);
   AddTextCmd("uncomment", Uncomment, true, ID_MENU_EDIT_UNCOMMENT);
@@ -742,39 +735,28 @@ void App::InitCommands() {
   AddVoidCmd("full_screen", FullScreen, ID_MENU_VIEW_FULL_SCREEN);
 }
 
-void App::AddTextCmd(const char* name,
-                     editor::RawTextFunc func,
-                     bool change_text,
-                     int menu) {
+void App::AddTextCmd(const char* name, editor::RawTextFunc func, bool change_text, int menu) {
   using namespace editor;
   TextFunc* text_func = new TextFuncWrap(func, change_text);
   binding_->AddTextCmd(name, text_func, menu);
 }
 
-void App::AddMoveTextCmd(editor::TextUnit unit,
-                         editor::SeekType seek,
-                         int menu) {
+void App::AddMoveTextCmd(editor::TextUnit unit, editor::SeekType seek, int menu) {
   static const std::string kMovePrefix = "move.";
   AddSeekableTextCmd(kMovePrefix, editor::Move, unit, seek, menu, false);
 }
 
-void App::AddDeleteTextCmd(editor::TextUnit unit,
-                           editor::SeekType seek,
-                           int menu) {
+void App::AddDeleteTextCmd(editor::TextUnit unit, editor::SeekType seek, int menu) {
   static const std::string kDeletePrefix = "delete.";
   AddSeekableTextCmd(kDeletePrefix, editor::Delete, unit, seek, menu, true);
 }
 
-void App::AddScrollTextCmd(editor::TextUnit unit,
-                           editor::SeekType seek,
-                           int menu) {
+void App::AddScrollTextCmd(editor::TextUnit unit, editor::SeekType seek, int menu) {
   static const std::string kScrollPrefix = "scroll.";
   AddSeekableTextCmd(kScrollPrefix, editor::Scroll, unit, seek, menu, false);
 }
 
-void App::AddSelectTextCmd(editor::TextUnit unit,
-                           editor::SeekType seek,
-                           int menu) {
+void App::AddSelectTextCmd(editor::TextUnit unit, editor::SeekType seek, int menu) {
   static const std::string kSelectPrefix = "select.";
   AddSeekableTextCmd(kSelectPrefix, editor::Select, unit, seek, menu, false);
 }

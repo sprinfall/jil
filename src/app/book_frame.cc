@@ -191,6 +191,7 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
   status_bar_->SetFieldValue(editor::StatusBar::kField_Cwd, wxGetCwd(), false);
 
   LoadMenus();
+  SetAccelForVoidCmds();
 
   SetDropTarget(new FileDropTarget(this));
 
@@ -2051,7 +2052,7 @@ void BookFrame::LoadMenus() {
 #if !defined (__WXOSX__)
 
   AppendMenuItem(prefs_menu, wxID_PREFERENCES, _("Global"));
-  
+
   wxMenu* editor_menu = new wxMenu;
   prefs_menu->AppendSubMenu(editor_menu, _("Syntax Specific"));
   InitFileTypeMenu(editor_menu);
@@ -2082,6 +2083,27 @@ void BookFrame::LoadMenus() {
   //------------------------------------
 
   SetMenuBar(menu_bar);
+}
+
+void BookFrame::SetAccelForVoidCmds() {
+  std::vector<wxAcceleratorEntry> accel_entries;
+
+  size_t void_cmd_count = binding_->GetVoidCmdCount();
+  for (size_t i = 0; i < void_cmd_count; ++i) {
+    const editor::VoidCmd& void_cmd = binding_->GetVoidCmd(i);
+
+    if (void_cmd.menu != 0) {
+      if (!void_cmd.keys.empty()) {
+        for (const editor::Key& key : void_cmd.keys) {
+          int flags = key.GetAccelFlags();
+          accel_entries.push_back(wxAcceleratorEntry(flags, key.code(), void_cmd.menu));
+        }
+      }
+    }
+  }
+
+  wxAcceleratorTable accel_table(static_cast<int>(accel_entries.size()), &accel_entries[0]);
+  SetAcceleratorTable(accel_table);
 }
 
 bool BookFrame::GetFileMenuState(int menu_id, wxString* text) {

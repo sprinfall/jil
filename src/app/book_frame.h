@@ -285,6 +285,15 @@ private:
 
   void LoadMenus();
 
+  // Some void commands don't have menu items though they should always have menu IDs.
+  // A void command without menu item can only be executed by shortcut keys.
+  // When create menus, wxWidgets automatically builds and updates accelerator tables
+  // with the shortcut keys specified in the menu's label. This is a bad design though
+  // for most cases it's really convenient.
+  // This function will overwrite the accelerator table built during creating menus.
+  // TODO: Avoid building accelerator table when create menus.
+  void SetAccelForVoidCmds();
+
   bool GetFileMenuState(int menu_id, wxString* text = NULL);
   bool GetEditMenuState(int menu_id);
   bool GetViewMenuState(int menu_id, bool* check = NULL);

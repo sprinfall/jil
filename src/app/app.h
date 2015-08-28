@@ -128,24 +128,12 @@ private:
   // Init text and void commands.
   void InitCommands();
 
-  void AddTextCmd(const char* name,
-                  editor::RawTextFunc func,
-                  bool change_text,
-                  int menu);
+  void AddTextCmd(const char* name, editor::RawTextFunc func, bool change_text, int menu);
 
   void AddMoveTextCmd(editor::TextUnit unit, editor::SeekType seek, int menu);
-
-  void AddDeleteTextCmd(editor::TextUnit unit,
-                        editor::SeekType seek,
-                        int menu);
-
-  void AddScrollTextCmd(editor::TextUnit unit,
-                        editor::SeekType seek,
-                        int menu);
-
-  void AddSelectTextCmd(editor::TextUnit unit,
-                        editor::SeekType seek,
-                        int menu);
+  void AddDeleteTextCmd(editor::TextUnit unit, editor::SeekType seek, int menu);
+  void AddScrollTextCmd(editor::TextUnit unit, editor::SeekType seek, int menu);
+  void AddSelectTextCmd(editor::TextUnit unit, editor::SeekType seek, int menu);
 
   void AddSeekableTextCmd(const std::string& name_prefix,
                           editor::RawSeekableTextFunc func,

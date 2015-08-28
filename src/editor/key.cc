@@ -1,4 +1,5 @@
 #include "editor/key.h"
+#include "wx/accel.h"
 
 namespace jil {
 namespace editor {
@@ -63,9 +64,9 @@ wxString KeyCodeName(int key_code) {
     case WXK_F12:
       return wxT("F12");
     case WXK_PAGEDOWN:
-      return wxT("Page Down");
+      return wxT("PageDown");
     case WXK_PAGEUP:
-      return wxT("Page Up");
+      return wxT("PageUp");
     }
 
     return wxEmptyString;
@@ -134,6 +135,36 @@ static wxString SingleKeyName(int key_data) {
   } else {
     return modifiers_name + wxT("+") + code_name;
   }
+}
+
+int Key::GetAccelFlags() const {
+  int flags = 0;
+
+  int mod = modifiers();
+
+#if defined(__WXMAC__)
+  if ((mod & wxMOD_RAW_CONTROL) != 0) {
+    flags |= wxACCEL_RAW_CTRL;
+  }
+
+  if ((mod & wxMOD_CMD) != 0) {
+    flags |= wxACCEL_CMD;  // Or wxACCEL_CTRL
+}
+#else
+  if ((mod & wxMOD_CONTROL) != 0) {
+    flags |= wxACCEL_CTRL;
+  }
+#endif  // defined(__WXMAC__)
+
+  if ((mod & wxMOD_ALT) != 0) {
+    flags |= wxACCEL_ALT;
+  }
+
+  if ((mod & wxMOD_SHIFT) != 0) {
+    flags |= wxACCEL_SHIFT;
+  }
+
+  return flags;
 }
 
 wxString Key::ToString() const {
