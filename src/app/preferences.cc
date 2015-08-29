@@ -821,8 +821,69 @@ private:
   OptionListCtrl* option_list_ctrl_;
 };
 
-}  // namespace pref
 
+////////////////////////////////////////////////////////////////////////////////
+
+class Editor_CommentPage : public wxPanel {
+public:
+  explicit Editor_CommentPage(editor::Options* options)
+      : options_(options) {
+  }
+
+  virtual ~Editor_CommentPage() {
+  }
+
+  bool Create(wxWindow* parent, wxWindowID id = wxID_ANY) {
+    if (!wxPanel::Create(parent, id)) {
+      return false;
+    }
+
+    CreateControls();
+
+    return true;
+  }
+
+  virtual bool TransferDataToWindow() override {
+    add_space_check_box_->SetValue(options_->text.comment_add_space);
+    respect_indent_check_box_->SetValue(options_->text.comment_respect_indent);
+
+    return true;
+  }
+
+  virtual bool TransferDataFromWindow() override {
+    options_->text.comment_add_space = add_space_check_box_->GetValue();
+    options_->text.comment_respect_indent = respect_indent_check_box_->GetValue();
+
+    return true;
+  }
+
+protected:
+  void CreateControls() {
+    wxSizer* top_vsizer = new wxBoxSizer(wxVERTICAL);
+    
+    ui::StaticBox* box = new ui::StaticBox(this, wxEmptyString);
+    wxSizer* box_vsizer = new wxBoxSizer(wxVERTICAL);
+
+    add_space_check_box_ = new wxCheckBox(box, wxID_ANY, _("Add space"));
+    respect_indent_check_box_ = new wxCheckBox(box, wxID_ANY, _("Respect line indent"));
+    
+    box_vsizer->Add(add_space_check_box_, wxSizerFlags().Border(wxTOP));
+    box_vsizer->Add(respect_indent_check_box_, wxSizerFlags().Expand().Border(wxTOP));
+
+    box->SetBodySizer(box_vsizer);
+    top_vsizer->Add(box, wxSizerFlags().Expand().Border(wxALL));
+
+    SetSizerAndFit(top_vsizer);
+  }
+
+private:
+  editor::Options* options_;
+
+  wxCheckBox* add_space_check_box_;
+  wxCheckBox* respect_indent_check_box_;
+};
+
+}  // namespace pref
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -923,6 +984,7 @@ PrefEditorDialog::~PrefEditorDialog() {
 void PrefEditorDialog::AddPages() {
   notebook_->AddPage(CreateGeneralPage(), _("General"), true);
   notebook_->AddPage(CreateIndentPage(), _("Indent"), false);
+  notebook_->AddPage(CreateCommentPage(), _("Comment"), false);
 }
 
 wxWindow* PrefEditorDialog::CreateGeneralPage() {
@@ -939,6 +1001,18 @@ wxWindow* PrefEditorDialog::CreateGeneralPage() {
 
 wxWindow* PrefEditorDialog::CreateIndentPage() {
   pref::Editor_IndentPage* page = new pref::Editor_IndentPage(options_);
+
+  wxColour theme_bg_colour = notebook_->GetThemeBackgroundColour();
+  if (theme_bg_colour.IsOk()) {
+    page->SetBackgroundColour(theme_bg_colour);
+  }
+
+  page->Create(notebook_);
+  return page;
+}
+
+wxWindow* PrefEditorDialog::CreateCommentPage() {
+  pref::Editor_CommentPage* page = new pref::Editor_CommentPage(options_);
 
   wxColour theme_bg_colour = notebook_->GetThemeBackgroundColour();
   if (theme_bg_colour.IsOk()) {

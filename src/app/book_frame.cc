@@ -784,6 +784,9 @@ void BookFrame::OnGlobalPreferences(wxCommandEvent& WXUNUSED(evt)) {
     status_bar_->SetFont(options_->fonts[FONT_STATUS_BAR]);
     UpdateLayout();
   }
+
+  // Save options file.
+  wxGetApp().SaveUserGlobalOptions();
 }
 
 void BookFrame::ApplyLinePadding(int line_padding) {
@@ -853,6 +856,7 @@ void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
 
   ft_plugin->set_options(options);
 
+  // Save options file.
   wxGetApp().SaveUserEditorOptions(ft_plugin->id(), ft_plugin->options());
 }
 
@@ -2051,10 +2055,10 @@ void BookFrame::LoadMenus() {
 
 #if !defined (__WXOSX__)
 
-  AppendMenuItem(prefs_menu, wxID_PREFERENCES, _("Global"));
+  AppendMenuItem(prefs_menu, wxID_PREFERENCES, kTrPrefsGlobal);
 
   wxMenu* editor_menu = new wxMenu;
-  prefs_menu->AppendSubMenu(editor_menu, _("Syntax Specific"));
+  prefs_menu->AppendSubMenu(editor_menu, kTrPrefsEditor);
   InitFileTypeMenu(editor_menu);
 
   prefs_menu->AppendSeparator();
@@ -2313,7 +2317,8 @@ void BookFrame::SwitchStackPage(bool forward) {
 
   editor::SharedTheme theme = theme_->GetTheme(THEME_NAVIGATION_DIALOG);
 
-  NavigationDialog navigation_dialog(this, wxID_ANY, theme);
+  NavigationDialog navigation_dialog(theme);
+  navigation_dialog.Create(this, wxID_ANY);
   navigation_dialog.SetTextPages(text_pages, forward);
   navigation_dialog.ShowModal();
 

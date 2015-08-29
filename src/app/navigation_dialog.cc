@@ -9,6 +9,8 @@
 #include "editor/text_extent.h"
 #include "app/text_page.h"
 
+#define kTrTextPages _("Text Pages")
+ 
 namespace jil {
 
 static const int kMarginX = 10;
@@ -17,6 +19,8 @@ static const int kSpaceX = 10;
 static const int kSpaceY = 7;
 static const int kPaddingX = 5;
 static const int kPaddingY = 3;
+
+using editor::kNpos;
 
 BEGIN_EVENT_TABLE(NavigationDialog, wxDialog)
 EVT_PAINT         (NavigationDialog::OnPaint)
@@ -29,14 +33,21 @@ EVT_KEY_UP        (NavigationDialog::OnKeyUp)
 EVT_NAVIGATION_KEY(NavigationDialog::OnNavigationKey)
 END_EVENT_TABLE()
 
-NavigationDialog::NavigationDialog(wxWindow* parent,
-                                   wxWindowID id,
-                                   const editor::SharedTheme& theme)
-    : wxDialog(parent, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0)
-    , theme_(theme)
-    , select_index_(editor::kNpos)
+NavigationDialog::NavigationDialog(const editor::SharedTheme& theme)
+    : theme_(theme)
+    , select_index_(kNpos)
     , column_width_(180)
     , max_rows_(10) {
+}
+
+NavigationDialog::~NavigationDialog() {
+}
+
+bool NavigationDialog::Create(wxWindow* parent, wxWindowID id) {
+  if (!wxDialog::Create(parent, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0)) {
+    return false;
+  }
+
   SetBackgroundStyle(wxBG_STYLE_CUSTOM);
 
   if (theme_->GetColor(BG).IsOk()) {
@@ -45,9 +56,8 @@ NavigationDialog::NavigationDialog(wxWindow* parent,
 
   title_font_ = GetFont();
   title_font_.SetWeight(wxFONTWEIGHT_BOLD);
-}
 
-NavigationDialog::~NavigationDialog() {
+  return true;
 }
 
 int NavigationDialog::ShowModal() {
@@ -56,8 +66,7 @@ int NavigationDialog::ShowModal() {
   return wxDialog::ShowModal();
 }
 
-void NavigationDialog::SetTextPages(const std::vector<TextPage*>& text_pages,
-                                    bool forward) {
+void NavigationDialog::SetTextPages(const std::vector<TextPage*>& text_pages, bool forward) {
   assert(text_pages.size() > 1);
 
   text_pages_ = text_pages;
@@ -81,11 +90,9 @@ void NavigationDialog::OnPaint(wxPaintEvent& evt) {
   int y = kMarginY;
 
   if (select_index_ < text_pages_.size()) {
-    // Title
     dc.SetFont(title_font_);
 
-    wxString title = _("Active Files");
-    ui::DrawTextInRect(dc, title, title_rect_);
+    ui::DrawTextInRect(dc, kTrTextPages, title_rect_);
 
     // Selected file name
     dc.SetFont(GetFont());
@@ -135,7 +142,7 @@ void NavigationDialog::OnActivate(wxActivateEvent& evt) {
 void NavigationDialog::OnMouseLeftUp(wxMouseEvent& evt) {
   size_t index = GetIndexByPos(evt.GetPosition());
 
-  if (index != editor::kNpos) {
+  if (index != kNpos) {
     select_index_ = index;
     Close();
   } else {
@@ -146,7 +153,7 @@ void NavigationDialog::OnMouseLeftUp(wxMouseEvent& evt) {
 void NavigationDialog::OnMouseMotion(wxMouseEvent& evt) {
   size_t index = GetIndexByPos(evt.GetPosition());
 
-  if (index != editor::kNpos) {
+  if (index != kNpos) {
     wxSetCursor(wxCursor(wxCURSOR_HAND));
   } else {
     wxSetCursor(wxCursor(wxCURSOR_ARROW));
@@ -221,9 +228,7 @@ void NavigationDialog::AdjustSize() {
   int w = column_width_ * cols + kSpaceX * (cols - 1);
 
   // Client height without margin.
-  int h = title_h + kSpaceY +
-          name_h * max_rows_ + kSpaceY +
-          path_h;
+  int h = title_h + kSpaceY + name_h * max_rows_ + kSpaceY + path_h;
 
   SetClientSize(w + kMarginX + kMarginX, h + kMarginY + kMarginY);
 
@@ -246,7 +251,7 @@ size_t NavigationDialog::GetIndexByPos(const wxPoint& pos) const {
       return i;
     }
   }
-  return editor::kNpos;
+  return kNpos;
 }
 
 }  // namespace jil

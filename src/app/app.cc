@@ -475,6 +475,11 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
   return ft_plugin;
 }
 
+bool App::SaveUserGlobalOptions() {
+  wxString options_file = UserDataFile(kOptionsFile);
+  return SaveGlobalOptionsFile(options_file, options_);
+}
+
 bool App::SaveUserEditorOptions(const wxString& ft_id, const editor::Options& options) {
   wxString ft_options_dir = UserDataDir(kFtPluginDir, ft_id);
 

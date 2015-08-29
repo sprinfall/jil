@@ -83,14 +83,13 @@
 #define kTrViewShowSpace      _("Show White &Space")
 #define kTrViewFullScreen     _("&Full Screen")
 
+
 // For find result page.
 #define kTrEditClearAll       _("C&lear All")
 #define kTrEditGoToLocation   _("&Go To Location")
 
-#if !defined (__WXOSX__)
-#  define kTrToolsOptions     _("&Options...")
-#endif  // !defined (__WXOSX__)
-
+#define kTrPrefsGlobal        _("&Global")
+#define kTrPrefsEditor        _("&Syntax Specific")
 #define kTrToolsTheme         _("&Theme")
 
 #define kTrHelpViewOnline     _("&View Online Help")

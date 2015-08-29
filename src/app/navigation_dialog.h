@@ -24,10 +24,10 @@ public:
   };
 
 public:
-  NavigationDialog(wxWindow* parent,
-                   wxWindowID id,
-                   const editor::SharedTheme& theme);
+  explicit NavigationDialog(const editor::SharedTheme& theme);
   virtual ~NavigationDialog();
+
+  bool Create(wxWindow* parent, wxWindowID id);
 
   // Override to adjust the client size before show.
   virtual int ShowModal() override;

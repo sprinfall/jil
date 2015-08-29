@@ -17,6 +17,7 @@ class Options;
 class Options;
 
 bool LoadGlobalOptionsFile(const wxString& file, Options* options);
+bool SaveGlobalOptionsFile(const wxString& file, const Options& options);
 
 bool LoadEditorOptionsFile(const wxString& file, editor::Options* options);
 bool SaveEditorOptionsFile(const wxString& file, const editor::Options& options);

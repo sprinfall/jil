@@ -140,7 +140,29 @@ public:
   OptionTable indent_options;
 
   // Comment options.
+
+  // Add a space after the comment leader.
+  // Examples (C++):
+  // - true:
+  //   if (foo) {
+  //       // bar();
+  //   }
+  // - false:
+  //   if (foo) {
+  //       //bar();
+  //   }
   bool comment_add_space;
+
+  // Respect line indent.
+  // Examples (C++):
+  // - true:
+  //   if (foo) {
+  //       //bar();
+  //   }
+  // - false:
+  //   if (foo) {
+  //   //    bar();
+  //   }
   bool comment_respect_indent;
 };
 

@@ -70,7 +70,7 @@ static int ParseCjk(const std::string& cjk) {
     } else if (cjk_values[i] == "ct") {
       cjk_filters |= NS_FILTER_CHINESE_TRADITIONAL;
     } else if (cjk_values[i] == "c") {
-      cjk_filters |= (NS_FILTER_CHINESE_SIMPLIFIED | NS_FILTER_CHINESE_TRADITIONAL);
+      cjk_filters |= NS_FILTER_CHINESE;
     } else if (cjk_values[i] == "j") {
       cjk_filters |= NS_FILTER_JAPANESE;
     } else if (cjk_values[i] == "k") {
@@ -79,6 +79,30 @@ static int ParseCjk(const std::string& cjk) {
   }
 
   return cjk_filters;
+}
+
+static std::string CjkToStr(int cjk_filters) {
+  std::string cjk_str;
+
+  if ((cjk_filters & NS_FILTER_CHINESE) == NS_FILTER_CHINESE) {
+    cjk_str += "c";
+  }
+
+  if ((cjk_filters & NS_FILTER_JAPANESE) == NS_FILTER_JAPANESE) {
+    if (!cjk_str.empty()) {
+      cjk_str += ",";
+    }
+    cjk_str += "j";
+  }
+
+  if ((cjk_filters & NS_FILTER_KOREAN) == NS_FILTER_KOREAN) {
+    if (!cjk_str.empty()) {
+      cjk_str += ",";
+    }
+    cjk_str += "k";
+  }
+
+  return cjk_str;
 }
 
 static int AdjustCjkByLocale(int cjk_filters) {
@@ -283,6 +307,37 @@ bool LoadGlobalOptionsFile(const wxString& file, Options* options) {
   }
 
   ParseGlobalOptions(config.Root(), options);
+
+  return true;
+}
+
+bool SaveGlobalOptionsFile(const wxString& file, const Options& options) {
+  Config config;
+  Setting root_setting = config.Root();
+
+  std::string cjk_str = CjkToStr(options.cjk_filters);
+  root_setting.SetString(OPT_S_CJK, cjk_str.c_str());
+
+  root_setting.SetString(OPT_S_FILE_ENCODING, options.file_encoding.name.c_str());
+
+  root_setting.SetString(OPT_S_THEME, options.theme.ToUTF8().data());
+
+  Setting fonts_setting = root_setting.Add(OPT_G_FONTS, Setting::kGroup);
+  fonts_setting.SetFont(OPT_F_TEXT, options.fonts[FONT_TEXT]);
+  fonts_setting.SetFont(OPT_F_LINE_NR, options.fonts[FONT_LINE_NR]);
+  fonts_setting.SetFont(OPT_F_TABS, options.fonts[FONT_TABS]);
+  fonts_setting.SetFont(OPT_F_STATUS_BAR, options.fonts[FONT_STATUS_BAR]);
+
+  root_setting.SetInt(OPT_I_LINE_PADDING, options.line_padding);
+
+  root_setting.SetBool(OPT_B_SWITCH_CWD, options.switch_cwd);
+  root_setting.SetBool(OPT_B_RESTORE_FILES, options.restore_files);
+  root_setting.SetBool(OPT_B_SHOW_PATH, options.show_path);
+
+  if (!config.Save(file)) {
+    wxLogError(wxT("Failed to save options file: %s"), file);
+    return false;
+  }
 
   return true;
 }
