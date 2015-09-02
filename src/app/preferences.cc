@@ -150,6 +150,8 @@ public:
     restore_files_check_box_->SetValue(options_->restore_files);
     show_path_check_box_->SetValue(options_->show_path);
 
+    exclude_files_text_ctrl_->SetValue(options_->exclude_files);
+
     line_padding_spin_ctrl_->SetValue(options_->line_padding);
 
     return true;
@@ -165,6 +167,8 @@ public:
     options_->switch_cwd = switch_cwd_check_box_->IsChecked();
     options_->restore_files = restore_files_check_box_->IsChecked();
     options_->show_path = show_path_check_box_->IsChecked();
+
+    options_->exclude_files = exclude_files_text_ctrl_->GetValue();
 
     options_->line_padding = line_padding_spin_ctrl_->GetValue();
 
@@ -185,6 +189,9 @@ private:
 
     show_path_check_box_ = new wxCheckBox(this, wxID_ANY, _("Show file path in title bar"));
     top_vsizer->Add(show_path_check_box_, wxSizerFlags().Border(wxALL));
+
+    exclude_files_text_ctrl_ = CreateTextCtrl(this, wxID_ANY, kStrTextSize);
+    top_vsizer->Add(exclude_files_text_ctrl_, wxSizerFlags().Border(wxALL));
 
     CreateLinePaddingSection(top_vsizer);
 
@@ -325,9 +332,9 @@ private:
   wxCheckBox* restore_files_check_box_;
   wxCheckBox* show_path_check_box_;
 
-  wxSpinCtrl* line_padding_spin_ctrl_;
+  wxTextCtrl* exclude_files_text_ctrl_;
 
-  wxButton* fonts_button_;
+  wxSpinCtrl* line_padding_spin_ctrl_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

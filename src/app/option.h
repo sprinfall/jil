@@ -51,6 +51,10 @@ public:
 
   // Show file path in the title bar.
   bool show_path;
+
+  // File types not supported.
+  // "pdf,doc,..."
+  wxString exclude_files;
 };
 
 }  // namespace jil
