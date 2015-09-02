@@ -151,6 +151,17 @@ TextWindow::~TextWindow() {
   delete text_extent_;
 }
 
+void TextWindow::ReapplyTheme() {
+  assert(theme_);
+  assert(style_ != NULL);
+
+  const wxColour& normal_bg = style_->Get(Style::kNormal)->bg();
+  SetBackgroundColour(normal_bg);
+
+  line_nr_area_->SetBackgroundColour(style_->Get(Style::kNumber)->bg());
+  text_area_->SetBackgroundColour(normal_bg);
+}
+
 bool TextWindow::HasFocus() const {
   if (text_area_ != NULL && text_area_->HasFocus()) {
     return true;

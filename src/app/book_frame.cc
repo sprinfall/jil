@@ -100,8 +100,8 @@ EVT_MENU_RANGE(ID_MENU_VIEW_BEGIN, ID_MENU_VIEW_END - 1, BookFrame::OnMenuView)
 EVT_MENU_RANGE(ID_MENU_TOOLS_BEGIN, ID_MENU_TOOLS_END - 1, BookFrame::OnMenuTools)
 
 EVT_MENU(wxID_PREFERENCES, BookFrame::OnGlobalPreferences)
-EVT_MENU_RANGE(ID_MENU_PREFS_EDITOR_0, ID_MENU_PREFS_EDITOR_LAST, BookFrame::OnEditorPreferences)
-EVT_MENU_RANGE(ID_MENU_THEME_0, ID_MENU_THEME_LAST, BookFrame::OnTheme)
+EVT_MENU_RANGE(ID_MENU_PREFS_EDITOR_0, ID_MENU_PREFS_EDITOR_END - 1, BookFrame::OnEditorPreferences)
+EVT_MENU_RANGE(ID_MENU_THEME_0, ID_MENU_THEME_END - 1, BookFrame::OnTheme)
 
 EVT_MENU_RANGE(ID_MENU_HELP_BEGIN, ID_MENU_HELP_END - 1, BookFrame::OnMenuHelp)
 
@@ -109,6 +109,7 @@ EVT_MENU_RANGE(ID_MENU_HELP_BEGIN, ID_MENU_HELP_END - 1, BookFrame::OnMenuHelp)
 EVT_UPDATE_UI_RANGE(ID_MENU_FILE_BEGIN, ID_MENU_FILE_END - 1, BookFrame::OnFileUpdateUI)
 EVT_UPDATE_UI_RANGE(ID_MENU_EDIT_BEGIN, ID_MENU_EDIT_END - 1, BookFrame::OnEditUpdateUI)
 EVT_UPDATE_UI_RANGE(ID_MENU_VIEW_BEGIN, ID_MENU_VIEW_END - 1, BookFrame::OnViewUpdateUI)
+EVT_UPDATE_UI_RANGE(ID_MENU_THEME_0, ID_MENU_THEME_END - 1, BookFrame::OnThemeUpdateUI)
 
 EVT_CLOSE(BookFrame::OnClose)
 
@@ -862,6 +863,43 @@ void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
 }
 
 void BookFrame::OnTheme(wxCommandEvent& evt) {
+  wxString theme_name = wxGetApp().GetTheme(evt.GetId() - ID_MENU_THEME_0);
+  if (theme_name.IsEmpty() || theme_name == options_->theme) {
+    return;
+  }
+
+  if (!wxGetApp().ReloadTheme(theme_name)) {
+    return;
+  }
+
+  options_->theme = theme_name;
+  wxGetApp().SaveUserGlobalOptions();
+
+  // Apply theme.
+
+  std::vector<TextPage*> text_pages = text_book_->TextPages();
+  for (TextPage* text_page : text_pages) {
+    text_page->ReapplyTheme();
+  }
+  TextPage* active_text_page = text_book_->ActiveTextPage();
+  if (active_text_page != NULL) {
+    active_text_page->Refresh();
+  }
+
+  FindResultPage* fr_page = GetFindResultPage(false);
+  if (fr_page != NULL) {
+    fr_page->ReapplyTheme();
+  }
+
+  text_book_->ReapplyTheme();
+  text_book_->Refresh();
+
+  tool_book_->ReapplyTheme();
+  if (tool_book_->IsShown()) {
+    tool_book_->Refresh();
+  }
+
+  status_bar_->Refresh();
 }
 
 void BookFrame::OnQuit(wxCommandEvent& WXUNUSED(evt)) {
@@ -946,6 +984,11 @@ void BookFrame::OnViewUpdateUI(wxUpdateUIEvent& evt) {
   bool state = GetViewMenuState(evt.GetId(), &check);
   evt.Enable(state);
   evt.Check(check);
+}
+
+void BookFrame::OnThemeUpdateUI(wxUpdateUIEvent& evt) {
+  wxString theme = wxGetApp().GetTheme(evt.GetId() - ID_MENU_THEME_0);
+  evt.Check(theme == options_->theme);
 }
 
 void BookFrame::OnClose(wxCloseEvent& evt) {
@@ -2211,13 +2254,9 @@ bool BookFrame::GetMenuEnableState(int menu_id) {
 }
 
 void BookFrame::InitThemeMenu(wxMenu* theme_menu) {
-  int id = ID_MENU_THEME_0;
-  const std::list<wxString>& theme_names = wxGetApp().theme_names();
-  for (const wxString& theme_name : theme_names) {
-    AppendMenuItem(theme_menu, id++, theme_name);
-    if (id > ID_MENU_THEME_LAST) {
-      break;
-    }
+  int count = wxMin(wxGetApp().GetThemeCount(), kMaxThemes);
+  for (int i = 0; i < count; ++i) {
+    AppendMenuItem(theme_menu, ID_MENU_THEME_0 + i, wxGetApp().GetTheme(i), wxITEM_RADIO);
   }
 }
 

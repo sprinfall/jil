@@ -169,6 +169,8 @@ public:
   // NOTE: Call after Create().
   void SetTabFont(const wxFont& tab_font);
 
+  void ReapplyTheme();
+
   virtual bool HasFocus() const override;
 
   wxPanel* PageParent() const {

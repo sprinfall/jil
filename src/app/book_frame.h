@@ -179,6 +179,7 @@ protected:
   void OnFileUpdateUI(wxUpdateUIEvent& evt);
   void OnEditUpdateUI(wxUpdateUIEvent& evt);
   void OnViewUpdateUI(wxUpdateUIEvent& evt);
+  void OnThemeUpdateUI(wxUpdateUIEvent& evt);
 
   void OnClose(wxCloseEvent& evt);
 

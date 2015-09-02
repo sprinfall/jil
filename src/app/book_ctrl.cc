@@ -102,10 +102,7 @@ bool BookCtrl::Create(wxWindow* parent, wxWindowID id) {
   SetBackgroundColour(theme_->GetColor(BG));
 
   tab_area_ = new BookTabArea(this, wxID_ANY);
-
-  if (theme_->GetColor(TAB_AREA_BG).IsOk()) {
-    tab_area_->SetBackgroundColour(theme_->GetColor(TAB_AREA_BG));
-  }
+  tab_area_->SetBackgroundColour(theme_->GetColor(TAB_AREA_BG));
 
   page_area_ = new wxPanel(this, wxID_ANY);
   page_vsizer_ = new wxBoxSizer(wxVERTICAL);
@@ -127,6 +124,15 @@ void BookCtrl::SetTabFont(const wxFont& tab_font) {
   if (tab_area_->SetFont(tab_font)) {
     UpdateTabFontDetermined();
   }
+}
+
+void BookCtrl::ReapplyTheme() {
+  assert(theme_);
+
+  SetBackgroundColour(theme_->GetColor(BG));
+  tab_area_->SetBackgroundColour(theme_->GetColor(TAB_AREA_BG));
+
+  tab_area_->Refresh();
 }
 
 bool BookCtrl::HasFocus() const {

@@ -38,7 +38,7 @@ enum {
 
   // 32 themes at most.
   ID_MENU_THEME_0,
-  ID_MENU_THEME_LAST = ID_MENU_THEME_0 + 31,
+  ID_MENU_THEME_END = ID_MENU_THEME_0 + kMaxThemes,
 
   // File menu
   ID_MENU_FILE_BEGIN,
@@ -102,7 +102,7 @@ enum {
 
   // Preferences menu
   ID_MENU_PREFS_EDITOR_0,
-  ID_MENU_PREFS_EDITOR_LAST = ID_MENU_PREFS_EDITOR_0 + kMaxFileTypes,
+  ID_MENU_PREFS_EDITOR_END = ID_MENU_PREFS_EDITOR_0 + kMaxFileTypes,
 
   // Help menu
   ID_MENU_HELP_BEGIN,

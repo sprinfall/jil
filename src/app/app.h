@@ -58,9 +58,8 @@ public:
     return options_;
   }
 
-  const std::list<wxString>& theme_names() const {
-    return theme_names_;
-  }
+  int GetThemeCount() const;
+  wxString GetTheme(int index) const;
 
   const std::vector<editor::FileType*>& file_types() const {
     return file_types_;
@@ -81,6 +80,8 @@ public:
 
   // Save editor options to <user_data_dir>/ftplugin/<ft_id>/options.cfg
   bool SaveUserEditorOptions(const wxString& ft_id, const editor::Options& options);
+
+  bool ReloadTheme(const wxString& theme_name);
 
 protected:
 #if wxUSE_CMDLINE_PARSER
@@ -172,8 +173,8 @@ private:
   // Global editor options.
   editor::Options editor_options_;
 
-  // A list of theme names.
-  std::list<wxString> theme_names_;
+  // Theme names.
+  std::vector<wxString> theme_names_;
 
   editor::SharedTheme theme_;
   editor::Style* style_;

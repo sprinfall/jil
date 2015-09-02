@@ -70,7 +70,7 @@ public:
   void set_theme(const SharedTheme& theme) {
     theme_ = theme;
   }
-
+   
   virtual bool SetFont(const wxFont& font) override;
 
   void AddField(FieldId id, wxAlignment align, SizeType size_type, int size_value);

@@ -94,15 +94,24 @@ bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style)
   // Window items
 
   // Book frame
-  SharedTheme bf_theme(new Theme(0, BookFrame::COLOR_COUNT));
+  SharedTheme bf_theme = theme->GetTheme(THEME_BOOK_FRAME);
+  if (!bf_theme) {
+    bf_theme.reset(new Theme(0, BookFrame::COLOR_COUNT));
+    theme->SetTheme(THEME_BOOK_FRAME, bf_theme);
+  }
+
   Setting bf_setting = root.Get("book_frame", Setting::kGroup);
   if (bf_setting) {
     bf_theme->SetColor(BookFrame::BG, bf_setting.GetColor("bg"));
   }
-  theme->SetTheme(THEME_BOOK_FRAME, bf_theme);
 
   // Text book
-  SharedTheme tb_theme(new Theme(0, BookCtrl::COLOR_COUNT));
+  SharedTheme tb_theme = theme->GetTheme(THEME_TEXT_BOOK);
+  if (!tb_theme) {
+    tb_theme.reset(new Theme(0, BookCtrl::COLOR_COUNT));
+    theme->SetTheme(THEME_TEXT_BOOK, tb_theme);
+  }
+
   Setting tb_setting = root.Get("text_book", Setting::kGroup);
   if (tb_setting) {
     tb_theme->SetColor(BookCtrl::BG, tb_setting.GetColor("bg"));
@@ -114,20 +123,28 @@ bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style)
     tb_theme->SetColor(BookCtrl::TAB_BORDER, tb_setting.GetColor("tab_border"));
     tb_theme->SetColor(BookCtrl::ACTIVE_TAB_BORDER, tb_setting.GetColor("active_tab_border"));
   }
-  theme->SetTheme(THEME_TEXT_BOOK, tb_theme);
 
   // Text page
-  SharedTheme tp_theme(new Theme(0, TextWindow::COLORS));
+  SharedTheme tp_theme = theme->GetTheme(THEME_TEXT_PAGE);
+  if (!tp_theme) {
+    tp_theme.reset(new Theme(0, TextWindow::COLORS));
+    theme->SetTheme(THEME_TEXT_PAGE, tp_theme);
+  }
+
   Setting tp_setting = root.Get("text_page", Setting::kGroup);
   if (tp_setting) {
     tp_theme->SetColor(TextWindow::RULER, tp_setting.GetColor("ruler"));
     //tp_theme->SetColor(TextWindow::MATCHING_BG, tp_setting.GetColor("matching_bg"));
     //tp_theme->SetColor(TextWindow::MATCHING_BORDER, tp_setting.GetColor("matching_border"));
   }
-  theme->SetTheme(THEME_TEXT_PAGE, tp_theme);
 
   // Status bar
-  SharedTheme sb_theme(new Theme(0, StatusBar::COLORS));
+  SharedTheme sb_theme = theme->GetTheme(THEME_STATUS_BAR);
+  if (!sb_theme) {
+    sb_theme.reset(new Theme(0, StatusBar::COLORS));
+    theme->SetTheme(THEME_STATUS_BAR, sb_theme);
+  }
+
   Setting sb_setting = root.Get("status_bar", Setting::kGroup);
   if (sb_setting) {
     sb_theme->SetColor(StatusBar::FG, sb_setting.GetColor("fg"));
@@ -136,10 +153,14 @@ bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style)
     sb_theme->SetColor(StatusBar::BG_TOP, sb_setting.GetColor("bg_top"));
     sb_theme->SetColor(StatusBar::BG_BOTTOM, sb_setting.GetColor("bg_bottom"));
   }
-  theme->SetTheme(THEME_STATUS_BAR, sb_theme);
 
   // Navigation dialog
-  SharedTheme nd_theme(new Theme(0, NavigationDialog::COLOR_COUNT));
+  SharedTheme nd_theme = theme->GetTheme(THEME_NAVIGATION_DIALOG);
+  if (!nd_theme) {
+    nd_theme.reset(new Theme(0, NavigationDialog::COLOR_COUNT));
+    theme->SetTheme(THEME_NAVIGATION_DIALOG, nd_theme);
+  }
+
   Setting nd_setting = root.Get("navigation_dialog", Setting::kGroup);
   if (nd_setting) {
     nd_theme->SetColor(NavigationDialog::BG, nd_setting.GetColor("bg"));
@@ -148,7 +169,6 @@ bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style)
     nd_theme->SetColor(NavigationDialog::SELECT_BG, nd_setting.GetColor("select_bg"));
     nd_theme->SetColor(NavigationDialog::SELECT_BORDER, nd_setting.GetColor("select_border"));
   }
-  theme->SetTheme(THEME_NAVIGATION_DIALOG, nd_theme);
 
   //----------------------------------------------------------------------------
   // Non-lex items.
@@ -230,8 +250,8 @@ bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style)
     Setting child_setting = setting.Get("qualifier");
     if (child_setting) {
       ReadStyle(child_setting, &style_value);
-      style->Set(Lex(kLexType, kLexTypeQualifier), style_value);
     }
+    style->Set(Lex(kLexType, kLexTypeQualifier), style_value);
   }
 
   setting = root.Get("special", Setting::kGroup);

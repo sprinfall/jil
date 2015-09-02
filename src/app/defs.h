@@ -10,6 +10,9 @@
 #define wxLTR (wxLEFT|wxTOP|wxRIGHT)
 #define wxLRB (wxLEFT|wxRIGHT|wxBOTTOM)
 
+#define kMaxFileTypes 256
+#define kMaxThemes 32
+
 namespace jil {
 
 enum FindFlag {
@@ -25,8 +28,6 @@ enum FindLocation {
   kSelection,
   kLocationCount,
 };
-
-const int kMaxFileTypes = 256;
 
 // Prefix of internal file type ID.
 extern const wxString kInternalFtIdPrefix;

@@ -417,6 +417,17 @@ int App::OnExit() {
   return wxApp::OnExit();
 }
 
+int App::GetThemeCount() const {
+  return static_cast<int>(theme_names_.size());
+}
+
+wxString App::GetTheme(int index) const {
+  if (index < 0 || index >= GetThemeCount()) {
+    return wxEmptyString;
+  }
+  return theme_names_[index];
+}
+
 const editor::FileType& App::FileTypeFromExt(const wxString& ext) const {
   ExtFtMap::const_iterator it = ext_ft_map_.find(ext);
   if (it != ext_ft_map_.end()) {
@@ -489,6 +500,17 @@ bool App::SaveUserEditorOptions(const wxString& ft_id, const editor::Options& op
   }
 
   return SaveEditorOptionsFile(ft_options_dir + kOptionsFile, options);
+}
+
+bool App::ReloadTheme(const wxString& theme_name) {
+  wxString theme_file = ResourceFile(kThemeDir, theme_name + kCfgExt);
+
+  if (!LoadThemeFile(theme_file, theme_, style_)) {
+    ErrorMsg(kTrFailedToLoad + kSpaceStr + theme_file);
+    return false;
+  }
+
+  return true;
 }
 
 // Command line parsing.
