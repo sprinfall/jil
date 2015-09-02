@@ -90,7 +90,7 @@ EVT_KEYDOWN_HOOK(BookFrame::OnKeyDownHook)
 #endif  // JIL_ENABLE_LEADER_KEY
 
 EVT_MENU_RANGE(ID_MENU_FILE_BEGIN, ID_MENU_FILE_END - 1, BookFrame::OnMenuFile)
-EVT_MENU_RANGE(ID_MENU_FILE_RECENT_FILE0, ID_MENU_FILE_RECENT_FILE9, BookFrame::OnMenuFileRecentFile)
+EVT_MENU_RANGE(ID_MENU_FILE_RECENT_FILE_0, ID_MENU_FILE_RECENT_FILE_9, BookFrame::OnMenuFileRecentFile)
 
 EVT_MENU(wxID_ABOUT, BookFrame::OnAbout)
 EVT_MENU(wxID_EXIT, BookFrame::OnQuit)
@@ -101,6 +101,7 @@ EVT_MENU_RANGE(ID_MENU_TOOLS_BEGIN, ID_MENU_TOOLS_END - 1, BookFrame::OnMenuTool
 
 EVT_MENU(wxID_PREFERENCES, BookFrame::OnGlobalPreferences)
 EVT_MENU_RANGE(ID_MENU_PREFS_EDITOR_0, ID_MENU_PREFS_EDITOR_LAST, BookFrame::OnEditorPreferences)
+EVT_MENU_RANGE(ID_MENU_THEME_0, ID_MENU_THEME_LAST, BookFrame::OnTheme)
 
 EVT_MENU_RANGE(ID_MENU_HELP_BEGIN, ID_MENU_HELP_END - 1, BookFrame::OnMenuHelp)
 
@@ -724,7 +725,7 @@ void BookFrame::OnMenuFile(wxCommandEvent& evt) {
 }
 
 void BookFrame::OnMenuFileRecentFile(wxCommandEvent& evt) {
-  size_t i = evt.GetId() - ID_MENU_FILE_RECENT_FILE0;
+  size_t i = evt.GetId() - ID_MENU_FILE_RECENT_FILE_0;
   if (i < recent_files_.size()) {
     std::list<wxString>::iterator it = recent_files_.begin();
     std::advance(it, i);
@@ -746,7 +747,7 @@ void BookFrame::OnGlobalPreferences(wxCommandEvent& WXUNUSED(evt)) {
   Options old_options = *options_;
 
   PrefGlobalDialog dialog(options_);
-  dialog.Create(this, wxID_ANY, _("Preferences"));
+  dialog.Create(this, wxID_ANY, kTrOptions);
   dialog.CenterOnParent();
 
   if (dialog.ShowModal() != wxID_OK) {
@@ -844,7 +845,7 @@ void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
 
   PrefEditorDialog dialog(&options);
 
-  wxString title = _("Preferences") + wxT(" - ") + ft->name;
+  wxString title = kTrOptions + wxT(" - ") + ft->name;
   dialog.Create(this, wxID_ANY, title);
   dialog.CenterOnParent();
 
@@ -858,6 +859,9 @@ void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
 
   // Save options file.
   wxGetApp().SaveUserEditorOptions(ft_plugin->id(), ft_plugin->options());
+}
+
+void BookFrame::OnTheme(wxCommandEvent& evt) {
 }
 
 void BookFrame::OnQuit(wxCommandEvent& WXUNUSED(evt)) {
@@ -2207,7 +2211,7 @@ bool BookFrame::GetMenuEnableState(int menu_id) {
 }
 
 void BookFrame::InitThemeMenu(wxMenu* theme_menu) {
-  int id = ID_MENU_THEME_1;
+  int id = ID_MENU_THEME_0;
   const std::list<wxString>& theme_names = wxGetApp().theme_names();
   for (const wxString& theme_name : theme_names) {
     AppendMenuItem(theme_menu, id++, theme_name);
@@ -2235,7 +2239,7 @@ void BookFrame::UpdateRecentFilesMenu() {
   int id = 0;
   std::list<wxString>::iterator it = recent_files_.begin();
   for (int i = 0; it != recent_files_.end(); ++it, ++i) {
-    id = ID_MENU_FILE_RECENT_FILE0 + i;
+    id = ID_MENU_FILE_RECENT_FILE_0 + i;
     wxString label = wxString::Format(wxT("%d. "), i) + *it;
     AppendMenuItem(recent_files_menu_, id, label);
   }

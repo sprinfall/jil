@@ -37,8 +37,8 @@ enum {
   ID_REPLACE_ALL_BUTTON,
 
   // 32 themes at most.
-  ID_MENU_THEME_1,
-  ID_MENU_THEME_LAST = ID_MENU_THEME_1 + 31,
+  ID_MENU_THEME_0,
+  ID_MENU_THEME_LAST = ID_MENU_THEME_0 + 31,
 
   // File menu
   ID_MENU_FILE_BEGIN,
@@ -62,9 +62,9 @@ enum {
   ID_MENU_FILE_END,
 
   // Recent Files sub menu
-  ID_MENU_FILE_RECENT_FILE0,
+  ID_MENU_FILE_RECENT_FILE_0,
   // Recent file 1, 2, ..., 8.
-  ID_MENU_FILE_RECENT_FILE9 = ID_MENU_FILE_RECENT_FILE0 + 9,
+  ID_MENU_FILE_RECENT_FILE_9 = ID_MENU_FILE_RECENT_FILE_0 + 9,
 
   // Edit menu
   ID_MENU_EDIT_BEGIN,

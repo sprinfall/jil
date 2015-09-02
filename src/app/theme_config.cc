@@ -105,29 +105,14 @@ bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style)
   SharedTheme tb_theme(new Theme(0, BookCtrl::COLOR_COUNT));
   Setting tb_setting = root.Get("text_book", Setting::kGroup);
   if (tb_setting) {
-    tb_theme->SetColor(BookCtrl::BG,
-                       tb_setting.GetColor("bg"));
-
-    tb_theme->SetColor(BookCtrl::TAB_AREA_BG,
-                       tb_setting.GetColor("tab_area_bg"));
-
-    tb_theme->SetColor(BookCtrl::TAB_FG,
-                       tb_setting.GetColor("tab_fg"));
-
-    tb_theme->SetColor(BookCtrl::ACTIVE_TAB_FG,
-                       tb_setting.GetColor("active_tab_fg"));
-
-    tb_theme->SetColor(BookCtrl::TAB_BG,
-                       tb_setting.GetColor("tab_bg"));
-
-    tb_theme->SetColor(BookCtrl::ACTIVE_TAB_BG,
-                       tb_setting.GetColor("active_tab_bg"));
-
-    tb_theme->SetColor(BookCtrl::TAB_BORDER,
-                       tb_setting.GetColor("tab_border"));
-
-    tb_theme->SetColor(BookCtrl::ACTIVE_TAB_BORDER,
-                       tb_setting.GetColor("active_tab_border"));
+    tb_theme->SetColor(BookCtrl::BG, tb_setting.GetColor("bg"));
+    tb_theme->SetColor(BookCtrl::TAB_AREA_BG, tb_setting.GetColor("tab_area_bg"));
+    tb_theme->SetColor(BookCtrl::TAB_FG, tb_setting.GetColor("tab_fg"));
+    tb_theme->SetColor(BookCtrl::ACTIVE_TAB_FG, tb_setting.GetColor("active_tab_fg"));
+    tb_theme->SetColor(BookCtrl::TAB_BG, tb_setting.GetColor("tab_bg"));
+    tb_theme->SetColor(BookCtrl::ACTIVE_TAB_BG, tb_setting.GetColor("active_tab_bg"));
+    tb_theme->SetColor(BookCtrl::TAB_BORDER, tb_setting.GetColor("tab_border"));
+    tb_theme->SetColor(BookCtrl::ACTIVE_TAB_BORDER, tb_setting.GetColor("active_tab_border"));
   }
   theme->SetTheme(THEME_TEXT_BOOK, tb_theme);
 
@@ -136,10 +121,8 @@ bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style)
   Setting tp_setting = root.Get("text_page", Setting::kGroup);
   if (tp_setting) {
     tp_theme->SetColor(TextWindow::RULER, tp_setting.GetColor("ruler"));
-    tp_theme->SetColor(TextWindow::MATCHING_BG,
-                       tp_setting.GetColor("matching_bg"));
-    tp_theme->SetColor(TextWindow::MATCHING_BORDER,
-                       tp_setting.GetColor("matching_border"));
+    //tp_theme->SetColor(TextWindow::MATCHING_BG, tp_setting.GetColor("matching_bg"));
+    //tp_theme->SetColor(TextWindow::MATCHING_BORDER, tp_setting.GetColor("matching_border"));
   }
   theme->SetTheme(THEME_TEXT_PAGE, tp_theme);
 
@@ -148,10 +131,8 @@ bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style)
   Setting sb_setting = root.Get("status_bar", Setting::kGroup);
   if (sb_setting) {
     sb_theme->SetColor(StatusBar::FG, sb_setting.GetColor("fg"));
-    sb_theme->SetColor(StatusBar::BORDER_OUTER,
-                       sb_setting.GetColor("border_outer"));
-    sb_theme->SetColor(StatusBar::BORDER_INNER,
-                       sb_setting.GetColor("border_inner"));
+    sb_theme->SetColor(StatusBar::BORDER_OUTER, sb_setting.GetColor("border_outer"));
+    sb_theme->SetColor(StatusBar::BORDER_INNER, sb_setting.GetColor("border_inner"));
     sb_theme->SetColor(StatusBar::BG_TOP, sb_setting.GetColor("bg_top"));
     sb_theme->SetColor(StatusBar::BG_BOTTOM, sb_setting.GetColor("bg_bottom"));
   }
@@ -163,12 +144,9 @@ bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style)
   if (nd_setting) {
     nd_theme->SetColor(NavigationDialog::BG, nd_setting.GetColor("bg"));
     nd_theme->SetColor(NavigationDialog::FG, nd_setting.GetColor("fg"));
-    nd_theme->SetColor(NavigationDialog::SELECT_FG,
-                       nd_setting.GetColor("select_fg"));
-    nd_theme->SetColor(NavigationDialog::SELECT_BG,
-                       nd_setting.GetColor("select_bg"));
-    nd_theme->SetColor(NavigationDialog::SELECT_BORDER,
-                       nd_setting.GetColor("select_border"));
+    nd_theme->SetColor(NavigationDialog::SELECT_FG, nd_setting.GetColor("select_fg"));
+    nd_theme->SetColor(NavigationDialog::SELECT_BG, nd_setting.GetColor("select_bg"));
+    nd_theme->SetColor(NavigationDialog::SELECT_BORDER, nd_setting.GetColor("select_border"));
   }
   theme->SetTheme(THEME_NAVIGATION_DIALOG, nd_theme);
 

@@ -161,6 +161,8 @@ protected:
 
   void OnEditorPreferences(wxCommandEvent& evt);
 
+  void OnTheme(wxCommandEvent& evt);
+
   void OnQuit(wxCommandEvent& evt);
 
   void OnMenuFile(wxCommandEvent& evt);

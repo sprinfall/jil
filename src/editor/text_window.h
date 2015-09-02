@@ -56,9 +56,9 @@ public:
   enum ColorId {
     RULER = 0,
 
-    // Find matching results.
-    MATCHING_BG,
-    MATCHING_BORDER,
+    //// Find matching results.
+    //MATCHING_BG,
+    //MATCHING_BORDER,
 
     COLORS
   };
