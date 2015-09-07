@@ -48,38 +48,35 @@ protected:
 #define ASSERT_LINE(ln)\
   EXPECT_EQ(buffer_->GetIndent(ln), indent_cpp_(buffer_, ln));
 
-TEST(IndentCppHelperTest, IsLineMacro) {
-  FtPlugin ft_plugin(FileType(wxT("cpp"), wxT("C++")));
-  TextBufferPtr buffer(TextBuffer::Create(0, &ft_plugin, kEncoding));
+////////////////////////////////////////////////////////////////////////////////
+// Test helper function:
+//   bool cpp::IsLineMacro(const TextBuffer* buffer, Coord ln);
 
-  buffer->AppendLine(L"#define MAX_SIZE 256");
+TEST_F(IndentCppTest, IsLineMacro1) {
+  buffer_->AppendLine(L"#define MAX_SIZE 256");
 
-  EXPECT_TRUE(cpp::IsLineMacro(buffer.get(), 2));
+  EXPECT_TRUE(cpp::IsLineMacro(buffer_, 2));
 }
 
-TEST(IndentCppHelperTest, IsLineMacro2) {
-  FtPlugin ft_plugin(FileType(wxT("cpp"), wxT("C++")));
-  TextBufferPtr buffer(TextBuffer::Create(0, &ft_plugin, kEncoding));
+TEST_F(IndentCppTest, IsLineMacro2) {
+  buffer_->AppendLine(L"#define MAX_SIZE \\");
+  buffer_->AppendLine(L"    256");
 
-  buffer->AppendLine(L"#define MAX_SIZE \\");
-  buffer->AppendLine(L"    256");
-
-  EXPECT_TRUE(cpp::IsLineMacro(buffer.get(), 2));
-  EXPECT_TRUE(cpp::IsLineMacro(buffer.get(), 3));
+  EXPECT_TRUE(cpp::IsLineMacro(buffer_, 2));
+  EXPECT_TRUE(cpp::IsLineMacro(buffer_, 3));
 }
 
-TEST(IndentCppHelperTest, IsLineMacro3) {
-  FtPlugin ft_plugin(FileType(wxT("cpp"), wxT("C++")));
-  TextBufferPtr buffer(TextBuffer::Create(0, &ft_plugin, kEncoding));
+TEST_F(IndentCppTest, IsLineMacro3) {
+  buffer_->AppendLine(L"#define MAX_SIZE 256 \\");
+  buffer_->AppendLine(L"");
+  buffer_->AppendLine(L"   int i;");
 
-  buffer->AppendLine(L"#define MAX_SIZE 256 \\");
-  buffer->AppendLine(L"");
-  buffer->AppendLine(L"   int i;");
-
-  EXPECT_TRUE(cpp::IsLineMacro(buffer.get(), 2));
-  EXPECT_TRUE(cpp::IsLineMacro(buffer.get(), 3));
-  EXPECT_FALSE(cpp::IsLineMacro(buffer.get(), 4));
+  EXPECT_TRUE(cpp::IsLineMacro(buffer_, 2));
+  EXPECT_TRUE(cpp::IsLineMacro(buffer_, 3));
+  EXPECT_FALSE(cpp::IsLineMacro(buffer_, 4));
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 TEST_F(IndentCppTest, SimpleBraceBlock) {
   buffer_->AppendLine(L"int a, b, c;");
@@ -178,15 +175,14 @@ TEST_F(IndentCppTest, FunctionDef_MultiLineParams_NewLineBrace) {
   ASSERT_LINE(7);
 }
 
-//TEST_F(CppIndentTest, FunctionCall_StringParenthesis) {;
-//  buffer_->AppendLine(L"TextPoint p = buffer->UnpairedLeftKey(TextPoint(j, prev_ln),");
-//  buffer_->AppendLine(L"                                      L'(',");
-//  buffer_->AppendLine(L"                                      L')');");
-//
-//  Assert(3);
-  //ASSERT_LINE(3);
-  //ASSERT_LINE(4);
-//}
+TEST_F(IndentCppTest, FunctionCall_StringParenthesis) {
+  buffer_->AppendLine(L"TextPoint p = buffer->UnpairedLeftKey(TextPoint(j, prev_ln),");
+  buffer_->AppendLine(L"                                      L'(',");
+  buffer_->AppendLine(L"                                      L')');");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+}
 
 TEST_F(IndentCppTest, If_NoBrace) {
   buffer_->AppendLine(L"if (a > b)");

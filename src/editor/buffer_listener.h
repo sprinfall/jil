@@ -22,6 +22,7 @@ enum ChangeType {
   kFileNameChange = 2,
   kModifiedChange = 4,  // Modified state change.
   kFileFormatChange = 8,
+  kFileTypeChange = 16,
 };
 
 class LineChangeData : public LineRange {

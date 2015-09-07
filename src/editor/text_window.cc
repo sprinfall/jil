@@ -250,8 +250,7 @@ bool TextWindow::buffer_new_created() const {
 }
 
 
-void TextWindow::OnBufferLineChange(LineChangeType type,
-                                    const LineChangeData& data) {
+void TextWindow::OnBufferLineChange(LineChangeType type, const LineChangeData& data) {
   switch (type) {
   case kLineAdded:
     HandleLineAdded(data);
@@ -292,6 +291,10 @@ void TextWindow::OnBufferChange(ChangeType type) {
       PostEvent(TextWindow::kModifiedEvent);
       break;
 
+    case kFileTypeChange:
+      HandleFileTypeChange();
+      break;
+
     default:
       break;
   }
@@ -308,42 +311,13 @@ void TextWindow::Wrap(bool wrap) {
 
   view_options_.wrap = wrap;
 
-  int wrap_delta = 0;
-  bool wrap_changed = false;
-
-  if (wrap) {
-    wrap_changed = wrap_helper()->Wrap(&wrap_delta);
-  } else {
-    if (wrap_helper_ != NULL) {
-      wrap_changed = wrap_helper_->Unwrap(&wrap_delta);
-      wxDELETE(wrap_helper_);
-    }
-  }
-
-  // Virtual height might change due to the wrap change.
-  // The wrap-on virtual width is also different from the wrap-off one.
-  UpdateVirtualSize();
-
-  if (wrap_changed) {
-    text_area_->Refresh();
-    if (wrap_delta != 0) {
-      line_nr_area_->Refresh();
-    }
-  }
-
-  // Caret position might change due to the wrap change.
-  UpdateCaretPosition();
-
-  // TODO
-  //ScrollToPoint(caret_point_);
+  DoWrap();
 }
 
 void TextWindow::ShowNumber(bool show_number) {
   if (show_number != view_options_.show_number) {
     view_options_.show_number = show_number;
-    UpdateLineNrWidth();
-    LayoutAreas();
-    line_nr_area_->Refresh();
+    DoShowNumber();
   }
 }
 
@@ -977,6 +951,45 @@ WrapHelper* TextWindow::wrap_helper() const {
 }
 
 //------------------------------------------------------------------------------
+
+void TextWindow::DoWrap() {
+  int wrap_delta = 0;
+  bool wrap_changed = false;
+
+  if (view_options_.wrap) {
+    wrap_changed = wrap_helper()->Wrap(&wrap_delta);
+  } else {
+    if (wrap_helper_ != NULL) {
+      wrap_changed = wrap_helper_->Unwrap(&wrap_delta);
+      wxDELETE(wrap_helper_);
+    }
+  }
+
+  // Virtual height might change due to the wrap change.
+  // The wrap-on virtual width is also different from the wrap-off one.
+  UpdateVirtualSize();
+
+  if (wrap_changed) {
+    text_area_->Refresh();
+    if (wrap_delta != 0) {
+      line_nr_area_->Refresh();
+    }
+  }
+
+  // Caret position might change due to the wrap change.
+  UpdateCaretPosition();
+
+  // TODO
+  //ScrollToPoint(caret_point_);
+}
+
+void TextWindow::DoShowNumber() {
+  UpdateLineNrWidth();
+  LayoutAreas();
+  line_nr_area_->Refresh();
+}
+
+//------------------------------------------------------------------------------
 // Handlers for buffer and buffer line changes.
 
 void TextWindow::HandleLineUpdated(const LineChangeData& data) {
@@ -1076,6 +1089,45 @@ void TextWindow::HandleLineDeleted(const LineChangeData& data) {
     // For simplicity, just call Refresh().
     line_nr_area_->Refresh();
   }
+}
+
+void TextWindow::HandleFileTypeChange() {
+  // Update cached text options.
+  tab_stop_ = buffer_->text_options().tab_stop;
+  expand_tab_ = buffer_->text_options().expand_tab;
+
+  // Update view options.
+  ViewOptions old_view_options = view_options_;
+  view_options_ = buffer_->view_options();
+
+  // Update display.
+
+  Freeze();
+
+  if (view_options_.wrap != old_view_options.wrap) {
+    DoWrap();
+  }
+
+  if (view_options_.show_number != old_view_options.show_number) {
+    DoShowNumber();
+  }
+
+  if (view_options_.show_space != old_view_options.show_space ||
+      view_options_.rulers != old_view_options.rulers) {
+    text_area_->Refresh();
+  }
+
+  if (view_options_.show_hscrollbar != old_view_options.show_hscrollbar) {
+    wxScrollbarVisibility hsv = wxSHOW_SB_DEFAULT;
+    if (!view_options_.show_hscrollbar) {
+      hsv = wxSHOW_SB_NEVER;
+    }
+    ShowScrollbars(hsv, wxSHOW_SB_ALWAYS);
+  }
+
+  Thaw();
+
+  PostEvent(TextWindow::kFileTypeEvent);
 }
 
 //------------------------------------------------------------------------------

@@ -606,6 +606,16 @@ wxString TextBuffer::file_path(int flags, wxPathFormat format) const {
 
 //------------------------------------------------------------------------------
 
+void TextBuffer::SetFtPlugin(FtPlugin* ft_plugin) {
+  if (ft_plugin_ != ft_plugin) {
+    ft_plugin_ = ft_plugin;
+    options_ = ft_plugin->options();
+    Notify(kFileTypeChange);
+  }
+}
+
+//------------------------------------------------------------------------------
+
 OptionValue TextBuffer::GetIndentOption(const std::string& key) const {
   for (size_t i = 0; i < options_.text.indent_options.size(); ++i) {
     if (key == options_.text.indent_options[i].key) {
@@ -2931,6 +2941,15 @@ void TextBuffer::ScanLexOnLineDeleted(const LineRange& line_range) {
       Coord stop_ln = ScanLexTillQuoteEnd(line_range.first(), quote);
       wxLogDebug("  - Scan lex from line %d to %d", line_range.first(), stop_ln);
     }
+  }
+}
+
+void TextBuffer::ClearLex() {
+  for (TextLines::iterator it = lines_.begin(); it < lines_.end(); ++it) {
+    TextLine* line = *it;
+
+    line->ClearLexElems();
+    line->ClearQuoteElems();
   }
 }
 

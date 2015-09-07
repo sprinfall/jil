@@ -2,6 +2,8 @@
 #include "wx/msgdlg.h"
 #include "wx/filedlg.h"
 #include "editor/text_buffer.h"
+#include "editor/ft_plugin.h"
+#include "app/app.h"
 
 #define kTrSaveFile           _("Save File")
 #define kTrSaveFileAs         _("Save File As")
@@ -33,7 +35,7 @@ bool SaveBuffer(editor::TextBuffer* buffer, wxWindow* parent) {
 }
 
 bool SaveBufferAs(editor::TextBuffer* buffer, wxWindow* parent) {
-  wxFileDialog file_dialog(NULL,
+  wxFileDialog file_dialog(parent,
                            kTrSaveFileAs,
                            wxEmptyString,
                            buffer->file_name(),
@@ -50,6 +52,8 @@ bool SaveBufferAs(editor::TextBuffer* buffer, wxWindow* parent) {
     return false;
   }
 
+  // wxFileDialog should confirm the overwrite since we give the flag wxFD_OVERWRITE_PROMPT.
+#if 0
   if (wxFileExists(file_path)) {
     // Shouldn't be here since flag wxFD_OVERWRITE_PROMPT is used.
     // But just check it again.
@@ -61,9 +65,21 @@ bool SaveBufferAs(editor::TextBuffer* buffer, wxWindow* parent) {
       return false;
     }
   }
+#endif  // 0
 
-  // Switch buffer to the new saved file.
+  // Backup the old file type id.
+  wxString old_ft_id = buffer->ft_plugin()->id();
+
+  // Set new file path.
   buffer->set_file_path_name(file_path);
+
+  // Get the new file type from the new file ext.
+  const editor::FileType& ft = wxGetApp().FileTypeFromExt(buffer->file_ext());
+
+  // Update the ft plugin if the file type is changed.
+  if (ft.id != old_ft_id) {
+    buffer->SetFtPlugin(wxGetApp().GetFtPlugin(ft));
+  }
 
   buffer->Notify(editor::kFileNameChange);
 

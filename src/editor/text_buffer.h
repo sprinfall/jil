@@ -193,6 +193,10 @@ public:
     return ft_plugin_;
   }
 
+  // Update ft plugin.
+  // E.g., when a buffer is saved as another file type.
+  void SetFtPlugin(FtPlugin* ft_plugin);
+
   //----------------------------------------------------------------------------
   // Options
 
@@ -661,6 +665,10 @@ private:
   void ScanLexOnLineUpdated(const LineRange& line_range);
   void ScanLexOnLineAdded(const LineRange& line_range);
   void ScanLexOnLineDeleted(const LineRange& line_range);
+
+  // Clear lex for the whole buffer.
+  // TODO
+  void ClearLex();
 
   //----------------------------------------------------------------------------
   // Line length table

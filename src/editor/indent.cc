@@ -4,21 +4,23 @@
 namespace jil {
 namespace editor {
 
-bool StartWith(const TextLine* line,
-               const std::wstring& str1,
-               const std::wstring& str2,
-               bool ignore_spaces,
-               Coord* off = NULL) {
+// Return true if the line starts with str1 or str2.
+static bool StartWith(const TextLine* line,
+                      const std::wstring& str1,
+                      const std::wstring& str2,
+                      bool ignore_spaces,
+                      Coord* off = NULL) {
   return line->StartWith(str1, ignore_spaces, off) ||
          line->StartWith(str2, ignore_spaces, off);
 }
 
-bool StartWith(const TextLine* line,
-               const std::wstring& str1,
-               const std::wstring& str2,
-               const std::wstring& str3,
-               bool ignore_spaces,
-               Coord* off = NULL) {
+// Return true if the line starts with str1, str2 or str3.
+static bool StartWith(const TextLine* line,
+                      const std::wstring& str1,
+                      const std::wstring& str2,
+                      const std::wstring& str3,
+                      bool ignore_spaces,
+                      Coord* off = NULL) {
   return line->StartWith(str1, ignore_spaces, off) ||
          line->StartWith(str2, ignore_spaces, off) ||
          line->StartWith(str3, ignore_spaces, off);
@@ -65,9 +67,11 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
   // Indent options.
   bool indent_namespace = false;
   bool indent_case = false;
+  buffer->GetIndentOption("indent_namespace").As<bool>(&indent_namespace);
+  buffer->GetIndentOption("indent_case").As<bool>(&indent_case);
 
-  Coord tab_stop = buffer->text_options().tab_stop;
-  Coord shift_width = buffer->text_options().shift_width;
+  const Coord tab_stop = buffer->text_options().tab_stop;
+  const Coord shift_width = buffer->text_options().shift_width;
 
   Coord x = kInvCoord;
 

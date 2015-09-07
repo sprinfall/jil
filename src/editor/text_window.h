@@ -43,6 +43,7 @@ public:
   // Detailed event types of kTextWindowEvent.
   enum EventType {
     kEncodingEvent = 1,
+    kFileTypeEvent,
     kFileFormatEvent,
     kFileNameEvent,
     kModifiedEvent,
@@ -280,11 +281,20 @@ protected:
   WrapHelper* wrap_helper() const;
 
   //----------------------------------------------------------------------------
+  // Update display according to the current options.
+
+  void DoWrap();
+
+  void DoShowNumber();
+
+  //----------------------------------------------------------------------------
   // Handlers for buffer and buffer line changes.
 
   void HandleLineUpdated(const LineChangeData& data);
   void HandleLineAdded(const LineChangeData& data);
   void HandleLineDeleted(const LineChangeData& data);
+
+  void HandleFileTypeChange();
 
   //----------------------------------------------------------------------------
   // System event handlers.

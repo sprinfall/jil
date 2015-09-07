@@ -1157,13 +1157,17 @@ void BookFrame::OnTextWindowEvent(wxCommandEvent& evt) {
       status_bar_->SetFieldValue(StatusBar::kField_KeyStroke, wxEmptyString, true);
     }
 #endif  // JIL_ENABLE_LEADER_KEY
+  } else if (type == TextWindow::kFileTypeEvent) {
+    TextPage* text_page = ActiveTextPage();
+    if (text_page != NULL) {
+      wxString ft_name = text_page->buffer()->ft_plugin()->name();
+      status_bar_->SetFieldValue(StatusBar::kField_FileType, ft_name, true);
+    }
   } else if (type == TextWindow::kFileFormatEvent) {
     TextPage* text_page = ActiveTextPage();
     if (text_page != NULL) {
       FileFormat ff = text_page->buffer()->file_format();
-      status_bar_->SetFieldValue(StatusBar::kField_FileFormat,
-                                 FileFormatName(ff),
-                                 true);
+      status_bar_->SetFieldValue(StatusBar::kField_FileFormat, FileFormatName(ff), true);
     }
   } else if (type == TextWindow::kGetFocusEvent) {
     HandleTextWindowGetFocus(evt);
