@@ -150,8 +150,6 @@ public:
     restore_files_check_box_->SetValue(options_->restore_files);
     show_path_check_box_->SetValue(options_->show_path);
 
-    exclude_files_text_ctrl_->SetValue(options_->exclude_files);
-
     line_padding_spin_ctrl_->SetValue(options_->line_padding);
 
     return true;
@@ -167,8 +165,6 @@ public:
     options_->switch_cwd = switch_cwd_check_box_->IsChecked();
     options_->restore_files = restore_files_check_box_->IsChecked();
     options_->show_path = show_path_check_box_->IsChecked();
-
-    options_->exclude_files = exclude_files_text_ctrl_->GetValue();
 
     options_->line_padding = line_padding_spin_ctrl_->GetValue();
 
@@ -190,9 +186,6 @@ private:
     show_path_check_box_ = new wxCheckBox(this, wxID_ANY, _("Show file path in title bar"));
     top_vsizer->Add(show_path_check_box_, wxSizerFlags().Border(wxALL));
 
-    exclude_files_text_ctrl_ = CreateTextCtrl(this, wxID_ANY, kStrTextSize);
-    top_vsizer->Add(exclude_files_text_ctrl_, wxSizerFlags().Border(wxALL));
-
     CreateLinePaddingSection(top_vsizer);
 
     SetSizerAndFit(top_vsizer);
@@ -207,8 +200,7 @@ private:
 
     wxStaticText* cjk_label = new wxStaticText(box, wxID_ANY, _("Detect CJK encodings:"));
 
-    // NOTE:
-    // Don't separate Chinese to Simplified and Traditional. Keep it simple.
+    // NOTE: Don't separate Chinese to Simplified and Traditional. Keep it simple.
     c_check_box_ = new wxCheckBox(box, wxID_ANY, _("Chinese"));
     j_check_box_ = new wxCheckBox(box, wxID_ANY, _("Japanese"));
     k_check_box_ = new wxCheckBox(box, wxID_ANY, _("Korean"));
@@ -331,8 +323,6 @@ private:
   wxCheckBox* switch_cwd_check_box_;
   wxCheckBox* restore_files_check_box_;
   wxCheckBox* show_path_check_box_;
-
-  wxTextCtrl* exclude_files_text_ctrl_;
 
   wxSpinCtrl* line_padding_spin_ctrl_;
 };

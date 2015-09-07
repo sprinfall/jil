@@ -2,4 +2,4 @@
 
 namespace jil {
 
-} // namespace jil
+}  // namespace jil

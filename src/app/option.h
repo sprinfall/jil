@@ -3,8 +3,9 @@
 #pragma once
 
 #include <string>
-#include "wx/string.h"
+#include "wx/arrstr.h"
 #include "wx/font.h"
+#include "wx/string.h"
 #include "editor/defs.h"
 #include "app/defs.h"
 
@@ -14,7 +15,7 @@ namespace jil {
 const int kMinLinePadding = 1;
 const int kMaxLinePadding = 9;
 
-// Application options.
+// Global options.
 class Options {
 public:
   Options() {
@@ -51,10 +52,6 @@ public:
 
   // Show file path in the title bar.
   bool show_path;
-
-  // File types not supported.
-  // "pdf,doc,..."
-  wxString exclude_files;
 };
 
 }  // namespace jil

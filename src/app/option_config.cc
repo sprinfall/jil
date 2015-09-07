@@ -33,7 +33,6 @@ const char* const OPT_I_LINE_PADDING = "line_padding";
 const char* const OPT_B_SWITCH_CWD = "switch_cwd";
 const char* const OPT_B_RESTORE_FILES = "restore_files";
 const char* const OPT_B_SHOW_PATH = "show_path";
-const char* const OPT_S_EXCLUDE_FILES = "exclude_files";
 
 // Names of editor options.
 const char* const OPT_B_WRAP = "wrap";
@@ -293,8 +292,6 @@ static void ParseGlobalOptions(const Setting& setting, Options* options) {
 
   GetBool(setting_map, OPT_B_RESTORE_FILES, &options->restore_files);
   GetBool(setting_map, OPT_B_SHOW_PATH, &options->show_path);
-
-  GetWxString(setting_map, OPT_S_EXCLUDE_FILES, &options->exclude_files);
 }
 
 bool LoadGlobalOptionsFile(const wxString& file, Options* options) {
@@ -336,8 +333,6 @@ bool SaveGlobalOptionsFile(const wxString& file, const Options& options) {
   root_setting.SetBool(OPT_B_SWITCH_CWD, options.switch_cwd);
   root_setting.SetBool(OPT_B_RESTORE_FILES, options.restore_files);
   root_setting.SetBool(OPT_B_SHOW_PATH, options.show_path);
-
-  root_setting.SetString(OPT_S_EXCLUDE_FILES, options.exclude_files.ToUTF8().data());
 
   if (!config.Save(file)) {
     wxLogError(wxT("Failed to save options file: %s"), file);
