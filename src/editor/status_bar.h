@@ -37,10 +37,10 @@ public:
   };
 
   enum SizeType {
-    kFit,
+    kFit = 0,
     kFixedPixel,
     kFixedPercentage,
-    kStretch
+    kStretch,
   };
 
   struct FieldInfo {
@@ -57,7 +57,7 @@ public:
     // kStretch -> stretch factor
     int size_value;
 
-    // Actually size.
+    // Actual size.
     int size;
   };
 
@@ -101,6 +101,8 @@ private:
   wxRect GetFieldRect(FieldId id) const;
 
   const FieldInfo* GetFieldByPos(int pos_x) const;
+
+  const FieldInfo* GetFieldById(FieldId id) const;
 
 private:
   SharedTheme theme_;

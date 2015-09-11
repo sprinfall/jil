@@ -119,14 +119,26 @@ void StatusBar::UpdateFieldSizes() {
   }
 }
 
-void StatusBar::SetFieldValue(FieldId id,
-                              const wxString& value,
-                              bool refresh) {
+void StatusBar::SetFieldValue(FieldId id, const wxString& value, bool refresh) {
   field_values_[id] = value;
 
-  wxRect field_rect = GetFieldRect(id);
-  if (!field_rect.IsEmpty()) {
-    RefreshRect(field_rect);
+  if (!refresh) {
+    return;
+  }
+
+  const FieldInfo* field_info = GetFieldById(id);
+  if (field_info == NULL) {
+    return;
+  }
+
+  if (field_info->size_type == kFit) {
+    UpdateFieldSizes();
+    Refresh();  // Refresh all fields.
+  } else {
+    wxRect field_rect = GetFieldRect(id);
+    if (!field_rect.IsEmpty()) {
+      RefreshRect(field_rect);  // Refresh only this field.
+    }
   }
 }
 
@@ -243,15 +255,12 @@ wxString StatusBar::GetFieldValue(FieldId id) {
 
 wxRect StatusBar::GetFieldRect(FieldId id) const {
   const wxRect client_rect = GetClientRect();
-  int x = client_rect.GetLeft();
+  int x = client_rect.x;
 
   for (size_t i = 0; i < field_infos_.size(); ++i) {
     const FieldInfo& field_info = field_infos_[i];
     if (field_info.id == id) {
-      return wxRect(x,
-                    client_rect.GetTop(),
-                    field_info.size,
-                    client_rect.GetHeight());
+      return wxRect(x, client_rect.y, field_info.size, client_rect.height);
     }
     x += field_info.size;
   }
@@ -266,6 +275,15 @@ const StatusBar::FieldInfo* StatusBar::GetFieldByPos(int pos_x) const {
       return &field_infos_[i];
     }
     x += field_infos_[i].size;
+  }
+  return NULL;
+}
+
+const StatusBar::FieldInfo* StatusBar::GetFieldById(FieldId id) const {
+  for (size_t i = 0; i < field_infos_.size(); ++i) {
+    if (field_infos_[i].id == id) {
+      return &field_infos_[i];
+    }
   }
   return NULL;
 }
