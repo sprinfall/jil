@@ -122,7 +122,8 @@ public:
 
   void AddLexElem(size_t off, size_t len, Lex lex);
 
-  void ClearLexElems();
+  // Return true if there was any lex element.
+  bool ClearLexElems();
 
   const std::list<LexElem*>& lex_elems() const {
     return lex_elems_;
@@ -145,9 +146,8 @@ public:
 
   void AddQuoteElem(Quote* quote, size_t off, size_t len, QuotePart part);
 
-  void ClearQuoteElems() {
-    quote_elems_.clear();
-  }
+  // Return true if there was any quote element.
+  bool ClearQuoteElems();
 
   Quote* UnendedQuote(bool multi_line) const;
 
@@ -162,6 +162,10 @@ public:
 
   const QuoteElem* FirstUnstartedQuoteEnd() const;
   const QuoteElem* LastUnendedQuoteStart() const;
+
+  // Clear both lex elements and quote elements.
+  // Return true if there was any lex or quote element.
+  bool ClearLex();
 
 private:
   size_t id_;

@@ -337,8 +337,12 @@ void TextLine::AddLexElem(size_t off, size_t len, Lex lex) {
   lex_elems_.push_back(new LexElem(off, len, lex));
 }
 
-void TextLine::ClearLexElems() {
+bool TextLine::ClearLexElems() {
+  if (lex_elems_.empty()) {
+    return false;
+  }
   ClearContainer(&lex_elems_);
+  return true;
 }
 
 std::list<const LexElem*> TextLine::lex_elems(const CharRange& char_range) const {
@@ -456,6 +460,14 @@ bool TextLine::IsComment(Coord off) const {
 void TextLine::AddQuoteElem(Quote* quote, size_t off, size_t len, QuotePart part) {
   QuoteElem qe = { quote, CoordCast(off), CoordCast(len), part };
   quote_elems_.push_back(qe);
+}
+
+bool TextLine::ClearQuoteElems() {
+  if (quote_elems_.empty()) {
+    return false;
+  }
+  quote_elems_.clear();
+  return true;
 }
 
 Quote* TextLine::UnendedQuote(bool multi_line) const {
@@ -579,6 +591,12 @@ const QuoteElem* TextLine::LastUnendedQuoteStart() const {
   }
 
   return NULL;
+}
+
+bool TextLine::ClearLex() {
+  bool result1 = ClearLexElems();
+  bool result2 = ClearQuoteElems();
+  return result1 || result2;
 }
 
 }  // namespace editor

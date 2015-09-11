@@ -608,8 +608,23 @@ wxString TextBuffer::file_path(int flags, wxPathFormat format) const {
 
 void TextBuffer::SetFtPlugin(FtPlugin* ft_plugin) {
   if (ft_plugin_ != ft_plugin) {
+    FtPlugin* old_ft_plugin = ft_plugin_;
+
     ft_plugin_ = ft_plugin;
     options_ = ft_plugin->options();
+
+    if (ft_plugin_->IsLexAvailable()) {
+      ScanLex();
+    } else {
+      if (old_ft_plugin->IsLexAvailable()) {
+        ClearLex();
+      }
+    }
+
+    // TODO: kFileTypeChange will also trigger the refreshing. So kLineRefresh
+    // might not be necessary.
+    Notify(kLineRefresh, LineRange(1, LineCount()));
+
     Notify(kFileTypeChange);
   }
 }
@@ -2624,8 +2639,7 @@ static bool IsUnescapedBackSlash(const std::wstring& str, size_t i) {
 }
 
 void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
-  line->ClearLexElems();
-  line->ClearQuoteElems();
+  line->ClearLex();
 
   const std::wstring& line_data = line->data();
 
@@ -2946,10 +2960,7 @@ void TextBuffer::ScanLexOnLineDeleted(const LineRange& line_range) {
 
 void TextBuffer::ClearLex() {
   for (TextLines::iterator it = lines_.begin(); it < lines_.end(); ++it) {
-    TextLine* line = *it;
-
-    line->ClearLexElems();
-    line->ClearQuoteElems();
+    (*it)->ClearLex();
   }
 }
 

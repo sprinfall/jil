@@ -280,12 +280,7 @@ protected:
   // Return the wrap helper (create it if NULL).
   WrapHelper* wrap_helper() const;
 
-  //----------------------------------------------------------------------------
-  // Update display according to the current options.
-
   void DoWrap();
-
-  void DoShowNumber();
 
   //----------------------------------------------------------------------------
   // Handlers for buffer and buffer line changes.

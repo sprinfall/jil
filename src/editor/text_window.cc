@@ -317,7 +317,10 @@ void TextWindow::Wrap(bool wrap) {
 void TextWindow::ShowNumber(bool show_number) {
   if (show_number != view_options_.show_number) {
     view_options_.show_number = show_number;
-    DoShowNumber();
+
+    UpdateLineNrWidth();
+    LayoutAreas();
+    line_nr_area_->Refresh();
   }
 }
 
@@ -950,8 +953,6 @@ WrapHelper* TextWindow::wrap_helper() const {
   return wrap_helper_;
 }
 
-//------------------------------------------------------------------------------
-
 void TextWindow::DoWrap() {
   int wrap_delta = 0;
   bool wrap_changed = false;
@@ -981,12 +982,6 @@ void TextWindow::DoWrap() {
 
   // TODO
   //ScrollToPoint(caret_point_);
-}
-
-void TextWindow::DoShowNumber() {
-  UpdateLineNrWidth();
-  LayoutAreas();
-  line_nr_area_->Refresh();
 }
 
 //------------------------------------------------------------------------------
@@ -1109,7 +1104,9 @@ void TextWindow::HandleFileTypeChange() {
   }
 
   if (view_options_.show_number != old_view_options.show_number) {
-    DoShowNumber();
+    UpdateLineNrWidth();
+    LayoutAreas();
+    line_nr_area_->Refresh();
   }
 
   if (view_options_.show_space != old_view_options.show_space ||
@@ -1651,11 +1648,14 @@ void TextWindow::DrawTextLine(Renderer& renderer, const TextLine* line, int x, i
   // For calculating spaces occupied by a tab.
   Coord chars = 0;
 
+#if 0
+  // Disabled on 20150908
   if (!ft_plugin()->IsLexAvailable()) {
     Coord j = line->Length();
     DrawTextLinePiece(renderer, line_data, 0, j, Lex(), x, y, chars);
     return;
   }
+#endif  // 0
 
   int _x = x;
   int _y = y;
@@ -2723,16 +2723,13 @@ void TextWindow::UpdateVirtualSize() {
 void TextWindow::LayoutAreas() {
   const wxRect client_rect = GetClientRect();
 
-  int text_area_height = client_rect.GetHeight() -
-                         kMarginTop -
-                         kMarginBottom -
-                         kTextMarginBottom;
+  int text_area_height = client_rect.height - kMarginTop - kMarginBottom - kTextMarginBottom;
 
   line_nr_area_->SetSize(0, kMarginTop, line_nr_width_, text_area_height);
 
   text_area_->SetSize(line_nr_width_ + kTextMarginLeft,
                       kMarginTop,
-                      client_rect.GetWidth() - kTextMarginLeft - line_nr_width_,
+                      client_rect.width - kTextMarginLeft - line_nr_width_,
                       text_area_height);
 }
 
