@@ -342,22 +342,29 @@ TextBuffer* TextBuffer::Create(size_t id,
   return buffer;
 }
 
-// Read the bytes from a file, detect the encoding, then convert
-// to std::wstring.
+// Read the bytes from a file, detect the encoding, then convert to std::wstring.
 static FileError ReadFile(const wxString& file_path,
                           int cjk_filters,
                           std::wstring* text,
                           Encoding* encoding) {
-  std::string bytes;
-  int result = ReadBytes(file_path, &bytes);
-  if (result != 0) {
-    // IO Error or size limit is exceeded.
+  // If we don't use binary mode to read text files, line ending characters
+  // might be "lost".
+  FILE* file = wxFopen(file_path, wxT("rb"));
+  if (file == NULL) {
     return kIOError;
   }
 
-  if (bytes.empty()) {
-    return kEmptyError;  // Empty file
+  std::string bytes;
+
+#define READ_BUF_SIZE 1024
+  char buf[READ_BUF_SIZE];
+
+  size_t read_size = 0;
+  while ((read_size = fread(buf, 1, READ_BUF_SIZE, file)) > 0) {
+    bytes.append(buf, read_size);
   }
+
+  fclose(file);
 
   // Detect file encoding.
   CharDetector char_detector(cjk_filters);
