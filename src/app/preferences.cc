@@ -574,8 +574,8 @@ public:
 
     rulers_text_ctrl_->SetValue(JoinRulers(options_->view.rulers));
 
-    //wxString delimiters(options_->text.delimiters);
-    //delimiters_text_ctrl_->SetValue(delimiters);
+    wxString delimiters(options_->text.delimiters);
+    delimiters_text_ctrl_->SetValue(delimiters);
 
     return true;
   }
@@ -589,15 +589,18 @@ public:
     options_->view.rulers.clear();
     SplitRulers(rulers_text_ctrl_->GetValue(), options_->view.rulers);
 
-    //std::wstring delimiters = delimiters_text_ctrl_->GetValue().ToStdWstring();
-    //// Remove ' ' and '\t'.
-    //std::wstring::iterator end = std::remove(delimiters.begin(), delimiters.end(), L' ');
-    //end = std::remove(delimiters.begin(), end, L'\t');
-    //if (end != delimiters.end()) {
-    //  delimiters.erase(end, delimiters.end());
-    //}
-    //options_->text.delimiters = delimiters;
-    
+    std::wstring delimiters = delimiters_text_ctrl_->GetValue().ToStdWstring();
+
+    // Remove ' ' and '\t' and duplicate elements.
+    std::sort(delimiters.begin(), delimiters.end());  // std::unique needs this.
+    std::wstring::iterator end = std::remove(delimiters.begin(), delimiters.end(), L' ');
+    end = std::remove(delimiters.begin(), end, L'\t');
+    end = std::unique(delimiters.begin(), end);
+    if (end != delimiters.end()) {
+      delimiters.erase(end, delimiters.end());
+    }
+
+    options_->text.delimiters = delimiters;
 
     return true;
   }
