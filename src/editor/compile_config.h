@@ -7,6 +7,12 @@
 // Use C++11 features or not.
 #define JIL_USE_CPP11 0
 
+// Use relite::Regex instead of C++11 regex to scan lex for performance.
+// Scan a 2500 lines C++ source file with Release build,
+//   - C++/Boost regex: 175ms
+//   - relite::Regex: 16ms
+#define JIL_LEX_USE_RELITE 1
+
 // Underline each lex element (when wrap is off).
 // Test only.
 #define JIL_TEST_UNDERLINE_LEX_ELEMENT 0

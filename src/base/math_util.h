@@ -1,5 +1,5 @@
-#ifndef BASE_MATH_UTIL_H
-#define BASE_MATH_UTIL_H
+#ifndef BASE_MATH_UTIL_H_
+#define BASE_MATH_UTIL_H_
 #pragma once
 
 #include <cmath>
@@ -29,4 +29,4 @@ const double kRadian270 = PI_3_2;
 
 }  // namespace base
 
-#endif  // BASE_MATH_UTIL_H
+#endif  // BASE_MATH_UTIL_H_

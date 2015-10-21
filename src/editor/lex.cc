@@ -1,6 +1,10 @@
 #include "editor/lex.h"
 #include "editor/util.h"
 
+#if JIL_LEX_USE_RELITE
+#include "editor/relite.h"
+#endif  // JIL_LEX_USE_RELITE
+
 namespace jil {
 namespace editor {
 
@@ -97,10 +101,14 @@ bool RegexQuote::CreateConcreteEnd(const std::wstring& str,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Regex::Regex(const std::wstring& pattern, bool ignore_case) : re_(NULL) {
+Regex::Regex(const std::wstring& pattern, bool ignore_case)
+    : pattern_(pattern), re_(NULL) {
   assert(!pattern.empty());
 
-  pattern_ = pattern;
+#if JIL_LEX_USE_RELITE
+  re_ = new relite::Regex(pattern_, 0);
+
+#else
   if (pattern_[0] != L'^') {
     pattern_.insert(pattern_.begin(), L'^');
   }
@@ -111,6 +119,7 @@ Regex::Regex(const std::wstring& pattern, bool ignore_case) : re_(NULL) {
   }
 
   re_ = new std::wregex(pattern_, re_flags);
+#endif  // JIL_LEX_USE_RELITE
 }
 
 Regex::~Regex() {
@@ -126,6 +135,15 @@ size_t Regex::Match(const std::wstring& str, size_t off) const {
 
   assert(off < str.length());
 
+#if JIL_LEX_USE_RELITE
+  if (!re_->valid()) {
+    return off;
+  }
+
+  size_t match_off = re_->Match(str, off);
+  return match_off;
+
+#else
   std::match_results<std::wstring::const_iterator> m;
   std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
 
@@ -138,7 +156,10 @@ size_t Regex::Match(const std::wstring& str, size_t off) const {
   if (matched_length > 0) {
     return off + matched_length;
   }
+
   return off;
+
+#endif  // JIL_LEX_USE_RELITE
 }
 
 }  // namespace editor

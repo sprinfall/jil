@@ -19,7 +19,7 @@
 #define JIL_MARK_UNCLOSED_QUOTE 0
 
 #define JIL_TEST_TIME_SET_TEXT 0
-#define JIL_TEST_TIME_SCAN_LEX 0
+#define JIL_TEST_TIME_SCAN_LEX 1
 
 namespace jil {
 namespace editor {

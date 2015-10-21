@@ -2,14 +2,24 @@
 #define JIL_EDITOR_LEX_H_
 #pragma once
 
+#include "editor/compile_config.h"
+
+//#if !JIL_LEX_USE_RELITE
 #include <regex>
+//#endif
+
 #include <string>
 #include <vector>
-#include "editor/compile_config.h"
 #include "editor/defs.h"
 
 namespace jil {
 namespace editor {
+
+#if JIL_LEX_USE_RELITE
+namespace relite {
+  class Regex;
+}
+#endif  // JIL_LEX_USE_RELITE
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -277,7 +287,12 @@ public:
 private:
   Lex lex_;
   std::wstring pattern_;
+
+#if JIL_LEX_USE_RELITE
+  relite::Regex* re_;
+#else
   std::wregex* re_;
+#endif  // JIL_LEX_USE_RELITE
 };
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -15,6 +15,7 @@ set(HEADERS
     lex.h
     line_nr_area.h
     option.h
+    relite.h
     renderer.h
     selection.h
     status_bar.h
@@ -45,6 +46,7 @@ set(SRCS
     lex.cc
     line_nr_area.cc
     option.cc
+    relite.cc
     renderer.cc
     selection.cc
     status_bar.cc
@@ -69,6 +71,7 @@ if(JIL_ENABLE_UT)
     set(UT_SRCS
         action_unittest.cc
         indent_unittest.cc
+	relite_unittest.cc
         text_line_unittest.cc
         text_buffer_unittest.cc
         text_range_unittest.cc
