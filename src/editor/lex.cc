@@ -33,6 +33,10 @@ RegexQuote::RegexQuote(Lex lex, const std::wstring& start, const std::wstring& e
     , start_re_(NULL) {
   assert(!start_.empty());
 
+#if JIL_LEX_USE_RELITE
+  int re_flags = ignore_case_ ? relite::Regex::kIgnoreCase : 0;
+  start_re_ = new relite::Regex(start_, re_flags);
+#else
   if (start_[0] != L'^') {
     start_.insert(start_.begin(), L'^');
   }
@@ -43,6 +47,7 @@ RegexQuote::RegexQuote(Lex lex, const std::wstring& start, const std::wstring& e
   }
 
   start_re_ = new std::wregex(start_, re_flags);
+  #endif  // JIL_LEX_USE_RELITE
 }
 
 RegexQuote::~RegexQuote() {
@@ -54,20 +59,33 @@ RegexQuote::~RegexQuote() {
 }
 
 size_t RegexQuote::MatchStart(const std::wstring& str, size_t off, std::wstring* concrete_end) const {
+#if JIL_LEX_USE_RELITE
+  if (!start_re_->valid()) {
+    return off;
+  }
+
+  size_t match_off = start_re_->Match(str, off);
+  if (match_off > off) {
+    // TODO
+    return match_off;
+  }
+#else
   // NOTE(20140718): Using member variable doesn't improve performance.
   std::match_results<std::wstring::const_iterator> m;
-
   std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
-
   bool result = std::regex_search(str.begin() + off, str.end(), m, *start_re_, flags);
   if (result) {
     CreateConcreteEnd(str, m, concrete_end);
     return off + (m[0].second - m[0].first);
   }
+#endif  // JIL_LEX_USE_RELITE
 
   return off;
 }
 
+#if JIL_LEX_USE_RELITE
+// TODO
+#else
 bool RegexQuote::CreateConcreteEnd(const std::wstring& str,
                                    RegexQuote::MatchResult& m,
                                    std::wstring* concrete_end) const {
@@ -97,7 +115,7 @@ bool RegexQuote::CreateConcreteEnd(const std::wstring& str,
 
   return true;
 }
-
+#endif  // JIL_LEX_USE_RELITE
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -106,7 +124,8 @@ Regex::Regex(const std::wstring& pattern, bool ignore_case)
   assert(!pattern.empty());
 
 #if JIL_LEX_USE_RELITE
-  re_ = new relite::Regex(pattern_, 0);
+  int flags = ignore_case ? relite::Regex::kIgnoreCase : 0;
+  re_ = new relite::Regex(pattern_, flags);
 
 #else
   if (pattern_[0] != L'^') {

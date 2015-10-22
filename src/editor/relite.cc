@@ -1,7 +1,7 @@
 #include "editor/relite.h"
+#include <cassert>
 #include "editor/defs.h"
 #include "editor/util.h"
-#include <cassert>
 
 namespace jil {
 namespace editor {
@@ -27,32 +27,20 @@ static Repeat RepeatFromChar(wchar_t c) {
   return repeat;
 }
 
-////////////////////////////////////////////////////////////////////////////////
+// Sorted word delimiters.
+static const std::wstring kDelimiters = L"!\"#$%&'()*+,-./:;<=>?@[\\]^`{|}~";
 
-Node::~Node() {
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-Atom::Atom(Type type, wchar_t c)
-  : type_(type), c_(c) {
-}
-
-Atom::~Atom() {
-}
-
-// TODO
 static bool IsDelimiter(wchar_t c) {
   if (IsSpace(c)) {
     return true;
   }
 
-  if (c == L',' || c == L'/') {
-    return true;
-  }
-
-  return false;
+  // NOTE:
+  // According to my test, std::wstring.find() is much faster than std::binary_search.
+  return kDelimiters.find(c) != std::wstring::npos;
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 size_t Atom::Match(const std::wstring& str, size_t off) const {
   size_t m = 0;
@@ -74,7 +62,7 @@ size_t Atom::Match(const std::wstring& str, size_t off) const {
         break;
       }
     } else {
-      break;  // Not supported
+      break;
     }
   }
 
@@ -89,17 +77,17 @@ size_t Atom::Match(const std::wstring& str, size_t off) const {
     }
   }
 
-  return kNpos;  // Failed to match.
+  return kNpos;
+}
+
+bool Atom::Determinable() const {
+  if (type_ == kWildcard && repeat_.Variable()) {
+    return false;
+  }
+  return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-
-Word::Word(const std::wstring& text)
-: text_(text) {
-}
-
-Word::~Word() {
-}
 
 size_t Word::Match(const std::wstring& str, size_t off) const {
   if (SubStringEquals(str, off, text_)) {
@@ -124,49 +112,50 @@ Regex::~Regex() {
 
 size_t Regex::Match(const std::wstring& str, size_t off) const {
   size_t i = off;
+  size_t match_i = kNpos;
 
   for (size_t n = 0; n < nodes_.size(); ++n) {
     Node* node = nodes_[n];
 
-    // TODO: Refactoring
-    // If the node is .? .* or .+, skip to search the match for the next node.
-    Atom* atom = dynamic_cast<Atom*>(node);
-    if (atom != NULL &&
-        atom->type() == Atom::kWildcard &&
-        atom->repeat().Variable() &&
-        n + 1 < nodes_.size()) {
+    // If the atom is undeterminable, match the next node instead.
+    Atom* atom = node->AsAtom();
+    if (atom != NULL && !atom->Determinable() && n + 1 < nodes_.size()) {
+      // Get the index range for matching the next node.
       const Repeat& repeat = atom->repeat();
-      size_t first_i = i + repeat.min;
-      size_t last_i = repeat.max == kNpos ? kNpos : i + repeat.max;
+      size_t from = i + repeat.min;
+      size_t to = repeat.max == kNpos ? kNpos : i + repeat.max;
 
-      Node* next_node = nodes_[n + 1];
-      bool next_matched = false;
-      for (size_t k = first_i; k <= last_i && k < str.size(); ++k) {
-        size_t match_k = next_node->Match(str, k);
-        if (match_k > k && match_k != kNpos) {
-          next_matched = true;
-          ++n;
-          i = match_k;
-          break;
-        }
-      }
-
-      if (!next_matched) {
+      match_i = Match(str, from, to, nodes_[n + 1]);
+      if (match_i == kNpos) {
         return off;
+      } else {
+        ++n;
+        i = match_i;
+        continue;
       }
-
-      continue;
     }
 
-    size_t j = node->Match(str, i);
-    if (j == kNpos) {
-      return off;  // Failed to match
+    match_i = node->Match(str, i);
+    if (match_i == kNpos) {
+      return off;
+    } else {
+      i = match_i;
     }
-
-    i = j;
   }
 
   return i;
+}
+
+size_t Regex::Match(const std::wstring& str, size_t from, size_t to, const Node* node) const {
+  for (size_t i = from; i <= to && i < str.size(); ++i) {
+    size_t match_i = node->Match(str, i);
+    if (match_i > i && match_i != kNpos) {
+      //++n;
+      //i = match_i;
+      return match_i;
+    }
+  }
+  return kNpos;
 }
 
 bool Regex::Compile() {
@@ -192,7 +181,7 @@ bool Regex::Compile() {
     case L's':
       if (escaped) {  // \s
         escaped = false;
-        AddWord(word);
+        CompileWord(word);
         nodes_.push_back(new Atom(Atom::kSpace));
       } else {
         word.append(1, c);
@@ -203,7 +192,7 @@ bool Regex::Compile() {
     case L'b':
       if (escaped) {  // \b
         escaped = false;
-        AddWord(word);
+        CompileWord(word);
         nodes_.push_back(new Atom(Atom::kBound));
       } else {
         word.append(1, c);
@@ -216,7 +205,7 @@ bool Regex::Compile() {
         escaped = false;
         word.append(1, c);
       } else {
-        AddWord(word);
+        CompileWord(word);
         nodes_.push_back(new Atom(Atom::kWildcard));
       }
 
@@ -228,14 +217,14 @@ bool Regex::Compile() {
       if (escaped) {
         word.append(1, c);
       } else {
-        AddWord(word);
+        CompileWord(word);
 
-        Atom* atom = LastAsAtom();
-        if (atom == NULL) {
+        Atom* atom = nodes_.empty() ? NULL : nodes_.back()->AsAtom();
+        if (atom != NULL) {
+          atom->set_repeat(RepeatFromChar(c));
+        } else {
           return false;
         }
-
-        atom->set_repeat(RepeatFromChar(c));
       }
 
       break;
@@ -246,12 +235,12 @@ bool Regex::Compile() {
     }
   }
 
-  AddWord(word);
+  CompileWord(word);
 
   return true;
 }
 
-void Regex::AddWord(std::wstring& word) {
+void Regex::CompileWord(std::wstring& word) {
   if (word.empty()) {
     return;
   }
@@ -261,15 +250,6 @@ void Regex::AddWord(std::wstring& word) {
     nodes_.push_back(new Word(word));
   }
   word.clear();
-}
-
-
-Atom* Regex::LastAsAtom() {
-  if (nodes_.empty()) {
-    return NULL;
-  }
-  // TODO: Avoid dynamic_cast.
-  return dynamic_cast<Atom*>(nodes_.back());
 }
 
 }  // namespace relite

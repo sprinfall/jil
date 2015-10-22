@@ -19,7 +19,7 @@
 #define JIL_MARK_UNCLOSED_QUOTE 0
 
 #define JIL_TEST_TIME_SET_TEXT 0
-#define JIL_TEST_TIME_SCAN_LEX 1
+#define JIL_TEST_TIME_SCAN_LEX 0
 
 namespace jil {
 namespace editor {
@@ -157,10 +157,7 @@ while (SplitLines(text, i, &count, &step)) {
   i += step;
 }
 */
-bool SplitLines(const std::wstring& text,
-                size_t i,
-                size_t* count,
-                size_t* step) {
+bool SplitLines(const std::wstring& text, size_t i, size_t* count, size_t* step) {
   const size_t text_size = text.size();
   if (i >= text_size) {
     return false;

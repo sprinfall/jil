@@ -48,7 +48,6 @@ set(SRCS
     option.cc
     relite.cc
     renderer.cc
-    selection.cc
     status_bar.cc
     style.cc
     text_area.cc

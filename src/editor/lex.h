@@ -239,7 +239,9 @@ public:
 // The end of regex quote only supports back reference "\1".
 class RegexQuote : public Quote {
 public:
+#if !JIL_LEX_USE_RELITE
   typedef std::match_results<std::wstring::const_iterator> MatchResult;
+#endif
 
   RegexQuote(Lex lex, const std::wstring& start, const std::wstring& end, int flags);
 
@@ -255,10 +257,17 @@ public:
 private:
   void CreateRegex();
 
+#if JIL_LEX_USE_RELITE
+#else
   bool CreateConcreteEnd(const std::wstring& str, MatchResult& m, std::wstring* concrete_end) const;
+#endif
 
 private:
-  std::wregex* start_re_;
+#if JIL_LEX_USE_RELITE
+  relite::Regex*  start_re_;
+#else
+  std::wregex*    start_re_;
+#endif
 
   // Concrete quotes created from this regex quote.
   mutable std::vector<Quote*> quotes_;
@@ -289,9 +298,9 @@ private:
   std::wstring pattern_;
 
 #if JIL_LEX_USE_RELITE
-  relite::Regex* re_;
+  relite::Regex*  re_;
 #else
-  std::wregex* re_;
+  std::wregex*    re_;
 #endif  // JIL_LEX_USE_RELITE
 };
 

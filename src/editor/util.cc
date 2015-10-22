@@ -35,6 +35,7 @@ TimeIt::TimeIt(const wxString& msg) : msg_(msg) {
 
 void TimeIt::Start() {
   start_dt_ = wxDateTime::UNow();
+  msg_.Clear();
 }
 
 void TimeIt::End() {

@@ -29,11 +29,18 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 
+class Atom;
+
 class Node {
 public:
-  virtual ~Node() = 0;
+  virtual ~Node() {
+  }
 
-  // Return kNpos(-1) if failed to match.
+  virtual Atom* AsAtom() {
+    return NULL;
+  }
+
+  // Return kNpos if failed to match.
   virtual size_t Match(const std::wstring& str, size_t off) const = 0;
 };
 
@@ -42,17 +49,23 @@ public:
 class Atom : public Node {
 public:
   enum Type {
-    kNormal = 0,  // Normal charactors: 'a', 'b', 'c', etc.
+    kNormal = 0,  // a, b, c, etc.
     kWildcard,    // .
     kSpace,       // \s
     kDigit,       // \d
     kBound,       // \b
-    // ... Not supported yet!
   };
 
 public:
-  Atom(Type type, wchar_t c = 0);
-  virtual ~Atom();
+  Atom(Type type, wchar_t c = 0) : type_(type), c_(c) {
+  }
+
+  virtual ~Atom() {
+  }
+
+  virtual Atom* AsAtom() override  {
+    return this;
+  }
 
   virtual size_t Match(const std::wstring& str, size_t off) const override;
 
@@ -67,6 +80,9 @@ public:
     repeat_ = repeat;
   }
 
+  // Currently, only variable wildcards (.? .* or .+) are undeterminable.
+  bool Determinable() const;
+
 private:
   Type type_;
   wchar_t c_;
@@ -77,8 +93,11 @@ private:
 
 class Word : public Node {
 public:
-  explicit Word(const std::wstring& text);
-  virtual ~Word();
+  explicit Word(const std::wstring& text) : text_(text) {
+  }
+
+  virtual ~Word() {
+  }
 
   virtual size_t Match(const std::wstring& str, size_t off) const override;
 
@@ -107,13 +126,10 @@ public:
 
 private:
   bool Compile();
+  void CompileWord(std::wstring& word);
 
-  // TODO: Rename
-  void AddWord(std::wstring& word);
-
-  // Get last node as Atom.
-  // Return NULL is the last node is not an Atom.
-  Atom* LastAsAtom();
+  // Match the node in the given range.
+  size_t Match(const std::wstring& str, size_t from, size_t to, const Node* node) const;
 
 private:
   std::wstring pattern_;
