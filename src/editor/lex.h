@@ -4,9 +4,9 @@
 
 #include "editor/compile_config.h"
 
-//#if !JIL_LEX_USE_RELITE
+#if !JIL_LEX_USE_RELITE
 #include <regex>
-//#endif
+#endif
 
 #include <string>
 #include <vector>
@@ -17,7 +17,7 @@ namespace editor {
 
 #if JIL_LEX_USE_RELITE
 namespace relite {
-  class Regex;
+class Regex;
 }
 #endif  // JIL_LEX_USE_RELITE
 
@@ -239,12 +239,7 @@ public:
 // The end of regex quote only supports back reference "\1".
 class RegexQuote : public Quote {
 public:
-#if !JIL_LEX_USE_RELITE
-  typedef std::match_results<std::wstring::const_iterator> MatchResult;
-#endif
-
   RegexQuote(Lex lex, const std::wstring& start, const std::wstring& end, int flags);
-
   virtual ~RegexQuote();
 
   size_t MatchStart(const std::wstring& str, size_t off, std::wstring* concrete_end) const;
@@ -257,17 +252,12 @@ public:
 private:
   void CreateRegex();
 
-#if JIL_LEX_USE_RELITE
-#else
-  bool CreateConcreteEnd(const std::wstring& str, MatchResult& m, std::wstring* concrete_end) const;
-#endif
-
 private:
 #if JIL_LEX_USE_RELITE
   relite::Regex*  start_re_;
 #else
   std::wregex*    start_re_;
-#endif
+#endif  // JIL_LEX_USE_RELITE
 
   // Concrete quotes created from this regex quote.
   mutable std::vector<Quote*> quotes_;

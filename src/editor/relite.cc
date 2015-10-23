@@ -1,5 +1,6 @@
 #include "editor/relite.h"
 #include <cassert>
+#include <cwctype>
 #include "editor/defs.h"
 #include "editor/util.h"
 
@@ -9,6 +10,10 @@ namespace editor {
 namespace relite {
 
 ////////////////////////////////////////////////////////////////////////////////
+
+static inline bool WcharIcCmp(wchar_t c1, wchar_t c2) {
+  return std::towlower(c1) == std::towlower(c2);
+}
 
 static Repeat RepeatFromChar(wchar_t c) {
   Repeat repeat;
@@ -42,23 +47,31 @@ static bool IsDelimiter(wchar_t c) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-size_t Atom::Match(const std::wstring& str, size_t off) const {
+size_t Atom::Match(const std::wstring& str, size_t off, bool ignore_case) const {
   size_t m = 0;
   size_t i = off;
 
   for (; m < repeat_.max && i < str.size(); ++m, ++i) {
+    wchar_t c = str[i];
+
     if (type_ == kNormal) {
-      if (str[i] != c_) {
-        break;
+      if (!ignore_case) {
+        if (c != c_) {
+          break;
+        }
+      } else {
+        if (!WcharIcCmp(c, c_)) {
+          break;
+        }
       }
     } else if (type_ == kWildcard) {
       // Wildcard matches any charactor.
     } else if (type_ == kSpace) {
-      if (!IsSpace(str[i])) {
+      if (!IsSpace(c)) {
         break;
       }
     } else if (type_ == kBound) {
-      if (!IsDelimiter(str[i])) {
+      if (!IsDelimiter(c)) {
         break;
       }
     } else {
@@ -89,8 +102,9 @@ bool Atom::Determinable() const {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-size_t Word::Match(const std::wstring& str, size_t off) const {
-  if (SubStringEquals(str, off, text_)) {
+size_t Word::Match(const std::wstring& str, size_t off, bool ignore_case) const {
+  WcsNCmp cmp = ignore_case ? wcsnicmp : wcsncmp;
+  if (SubStringEquals(str, off, text_, cmp)) {
     return off + text_.size();
   }
   return kNpos;
@@ -110,12 +124,32 @@ Regex::~Regex() {
   nodes_.clear();
 }
 
-size_t Regex::Match(const std::wstring& str, size_t off) const {
+size_t Regex::Match(const std::wstring& str, size_t off, Sub* subs, size_t subs_count) const {
+  bool ignore_case = (flags_ & kIgnoreCase) != 0;
+
   size_t i = off;
   size_t match_i = kNpos;
 
+  bool grouped = false;
+  size_t sub_index = 0;
+
   for (size_t n = 0; n < nodes_.size(); ++n) {
     Node* node = nodes_[n];
+
+    Group* group = dynamic_cast<Group*>(node);
+    if (group != NULL) {
+      if (sub_index < subs_count) {
+        if (grouped) {
+          subs[sub_index].len = i - subs[sub_index].off;
+          grouped = false;
+          ++sub_index;
+        } else {
+          subs[sub_index].off = i;
+          grouped = true;
+        }
+      }
+      continue;
+    }
 
     // If the atom is undeterminable, match the next node instead.
     Atom* atom = node->AsAtom();
@@ -125,7 +159,7 @@ size_t Regex::Match(const std::wstring& str, size_t off) const {
       size_t from = i + repeat.min;
       size_t to = repeat.max == kNpos ? kNpos : i + repeat.max;
 
-      match_i = Match(str, from, to, nodes_[n + 1]);
+      match_i = Match(str, from, to, nodes_[n + 1], ignore_case);
       if (match_i == kNpos) {
         return off;
       } else {
@@ -135,7 +169,7 @@ size_t Regex::Match(const std::wstring& str, size_t off) const {
       }
     }
 
-    match_i = node->Match(str, i);
+    match_i = node->Match(str, i, ignore_case);
     if (match_i == kNpos) {
       return off;
     } else {
@@ -146,12 +180,14 @@ size_t Regex::Match(const std::wstring& str, size_t off) const {
   return i;
 }
 
-size_t Regex::Match(const std::wstring& str, size_t from, size_t to, const Node* node) const {
+size_t Regex::Match(const std::wstring& str,
+                    size_t from,
+                    size_t to,
+                    const Node* node,
+                    bool ignore_case) const {
   for (size_t i = from; i <= to && i < str.size(); ++i) {
-    size_t match_i = node->Match(str, i);
+    size_t match_i = node->Match(str, i, ignore_case);
     if (match_i > i && match_i != kNpos) {
-      //++n;
-      //i = match_i;
       return match_i;
     }
   }
@@ -160,6 +196,7 @@ size_t Regex::Match(const std::wstring& str, size_t from, size_t to, const Node*
 
 bool Regex::Compile() {
   bool escaped = false;
+  bool grouped = false;
   std::wstring word;
 
   const size_t size = pattern_.size();
@@ -168,71 +205,114 @@ bool Regex::Compile() {
     wchar_t c = pattern_[i];
 
     switch (c) {
-    case L'\\':
-      if (escaped) {
-        escaped = false;
-        word.append(1, c);
-      } else {
-        escaped = true;
-      }
-
-      break;
-
-    case L's':
-      if (escaped) {  // \s
-        escaped = false;
-        CompileWord(word);
-        nodes_.push_back(new Atom(Atom::kSpace));
-      } else {
-        word.append(1, c);
-      }
-
-      break;
-
-    case L'b':
-      if (escaped) {  // \b
-        escaped = false;
-        CompileWord(word);
-        nodes_.push_back(new Atom(Atom::kBound));
-      } else {
-        word.append(1, c);
-      }
-
-      break;
-
-    case L'.':
-      if (escaped) {  // \.
-        escaped = false;
-        word.append(1, c);
-      } else {
-        CompileWord(word);
-        nodes_.push_back(new Atom(Atom::kWildcard));
-      }
-
-      break;
-
-    case L'?':
-    case L'*':
-    case L'+':
-      if (escaped) {
-        word.append(1, c);
-      } else {
-        CompileWord(word);
-
-        Atom* atom = nodes_.empty() ? NULL : nodes_.back()->AsAtom();
-        if (atom != NULL) {
-          atom->set_repeat(RepeatFromChar(c));
+      case L'\\':
+        if (escaped) {
+          escaped = false;
+          word.append(1, c);
         } else {
-          return false;
+          escaped = true;
         }
-      }
 
-      break;
+        break;
 
-    default:
-      word.append(1, c);
-      break;
+      case L's':
+        if (escaped) {  // \s
+          escaped = false;
+          CompileWord(word);
+          nodes_.push_back(new Atom(Atom::kSpace));
+        } else {
+          word.append(1, c);
+        }
+
+        break;
+
+      case L'b':
+        if (escaped) {  // \b
+          escaped = false;
+          CompileWord(word);
+          nodes_.push_back(new Atom(Atom::kBound));
+        } else {
+          word.append(1, c);
+        }
+
+        break;
+
+      case L'.':
+        if (escaped) {  // \.
+          escaped = false;
+          word.append(1, c);
+        } else {
+          CompileWord(word);
+          nodes_.push_back(new Atom(Atom::kWildcard));
+        }
+
+        break;
+
+      case L'?':
+      case L'*':
+      case L'+':
+        if (escaped) {
+          escaped = false;
+          word.append(1, c);
+        } else {
+          CompileWord(word);
+
+          Atom* atom = nodes_.empty() ? NULL : nodes_.back()->AsAtom();
+          if (atom != NULL) {
+            atom->set_repeat(RepeatFromChar(c));
+          } else {
+            return false;
+          }
+        }
+
+        break;
+
+      case L'(':
+        if (escaped) {
+          escaped = false;
+          word.append(1, c);
+        } else {
+          if (grouped) {
+            return false;
+          }
+          CompileWord(word);
+          nodes_.push_back(new Group);
+          grouped = true;  // Open a new group.
+        }
+        break;
+
+      case L')':
+        if (escaped) {
+          escaped = false;
+          word.append(1, c);
+        } else {
+          if (!grouped) {
+            return false;
+          }
+          CompileWord(word);
+          nodes_.push_back(new Group);
+          grouped = false;  // Close current group.
+        }
+        break;
+
+      case L'[':
+      case L']':
+        if (escaped) {
+          escaped = false;
+          word.append(1, c);
+        } else {
+          return false;  // Not supported yet
+        }
+        break;
+
+      default:
+        word.append(1, c);
+        break;
     }
+  }
+
+  if (grouped) {  // Unclosed group.
+    return false;
   }
 
   CompileWord(word);

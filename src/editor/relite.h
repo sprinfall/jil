@@ -14,6 +14,16 @@ namespace relite {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+enum Flag {
+  kIgnoreCase = 1,
+};
+
+class Sub {
+public:
+  size_t off;
+  size_t len;
+};
+
 class Repeat {
 public:
   Repeat() : min(1), max(1) {
@@ -41,7 +51,9 @@ public:
   }
 
   // Return kNpos if failed to match.
-  virtual size_t Match(const std::wstring& str, size_t off) const = 0;
+  virtual size_t Match(const std::wstring& str,
+                       size_t off,
+                       bool ignore_case) const = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -67,7 +79,9 @@ public:
     return this;
   }
 
-  virtual size_t Match(const std::wstring& str, size_t off) const override;
+  virtual size_t Match(const std::wstring& str,
+                       size_t off,
+                       bool ignore_case) const override;
 
   Type type() const {
     return type_;
@@ -99,7 +113,9 @@ public:
   virtual ~Word() {
   }
 
-  virtual size_t Match(const std::wstring& str, size_t off) const override;
+  virtual size_t Match(const std::wstring& str,
+                       size_t off,
+                       bool ignore_case) const override;
 
 private:
   std::wstring text_;
@@ -107,12 +123,18 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class Regex {
+class Group : public Node {
 public:
-  enum Flag {
-    kIgnoreCase = 1,
-  };
+  virtual size_t Match(const std::wstring& str,
+                       size_t off,
+                       bool ignore_case) const override {
+    return off;  // Group doesn't match anything.
+  }
+};
 
+////////////////////////////////////////////////////////////////////////////////
+
+class Regex {
 public:
   Regex(const std::wstring& pattern, int flags);
   ~Regex();
@@ -122,14 +144,21 @@ public:
     return valid_;
   }
 
-  size_t Match(const std::wstring& str, size_t off) const;
+  size_t Match(const std::wstring& str,
+               size_t off,
+               Sub* subs = NULL,
+               size_t subs_count = 0) const;
 
 private:
   bool Compile();
   void CompileWord(std::wstring& word);
 
   // Match the node in the given range.
-  size_t Match(const std::wstring& str, size_t from, size_t to, const Node* node) const;
+  size_t Match(const std::wstring& str,
+               size_t from,
+               size_t to,
+               const Node* node,
+               bool ignore_case) const;
 
 private:
   std::wstring pattern_;

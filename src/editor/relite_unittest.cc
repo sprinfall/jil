@@ -66,3 +66,85 @@ TEST(LiteRegex, Match_Boundary) {
   off = regex.Match(str, 0);
   EXPECT_EQ(0, off);
 }
+
+TEST(LiteRegex, Match_SubExpression) {
+  std::wstring pattern = L"--\\[(=+)\\[";
+
+  relite::Regex regex(pattern, 0);
+
+  EXPECT_TRUE(regex.valid());
+
+  relite::Sub sub;
+
+  std::wstring str = L"--[===[";
+  size_t off = regex.Match(str, 0, &sub, 1);
+  EXPECT_EQ(str.size(), off);
+  EXPECT_EQ(3, sub.off);
+  EXPECT_EQ(3, sub.len);
+
+  off = regex.Match(str, 0);
+  EXPECT_EQ(str.size(), off);
+}
+
+TEST(LiteRegex, Match_MultiSubExpression) {
+  std::wstring pattern = L"--\\[(=+)\\[(\\*+)";
+
+  relite::Regex regex(pattern, 0);
+
+  EXPECT_TRUE(regex.valid());
+
+  std::wstring str = L"--[===[**";
+
+  {
+    relite::Sub subs[2];
+    size_t off = regex.Match(str, 0, subs, 2);
+    EXPECT_EQ(str.size(), off);
+    EXPECT_EQ(3, subs[0].off);
+    EXPECT_EQ(3, subs[0].len);
+    EXPECT_EQ(7, subs[1].off);
+    EXPECT_EQ(2, subs[1].len);
+  }
+
+  {
+    relite::Sub sub;
+    size_t off = regex.Match(str, 0, &sub, 1);
+    EXPECT_EQ(str.size(), off);
+    EXPECT_EQ(3, sub.off);
+    EXPECT_EQ(3, sub.len);
+  }
+
+  {
+    size_t off = regex.Match(str, 0);
+    EXPECT_EQ(str.size(), off);
+  }
+}
+
+TEST(LiteRegex, Match_SubExpression_Negative) {
+  {
+    relite::Regex regex(L"--\\[(=+\\[", 0);
+    EXPECT_FALSE(regex.valid());
+  }
+
+  {
+    relite::Regex regex(L"--\\[=+)\\[", 0);
+    EXPECT_FALSE(regex.valid());
+  }
+}
+
+
+TEST(LiteRegex, Match_IgnoreCase) {
+  relite::Regex regex(L"a+", relite::kIgnoreCase);
+  EXPECT_TRUE(regex.valid());
+
+  {
+    std::wstring str = L"aaa";
+    size_t off = regex.Match(str, 0);
+    EXPECT_EQ(str.size(), off);
+  }
+
+  {
+    std::wstring str = L"AAA";
+    size_t off = regex.Match(str, 0);
+    EXPECT_EQ(str.size(), off);
+  }
+}
