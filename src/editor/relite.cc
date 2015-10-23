@@ -52,29 +52,7 @@ size_t Atom::Match(const std::wstring& str, size_t off, bool ignore_case) const 
   size_t i = off;
 
   for (; m < repeat_.max && i < str.size(); ++m, ++i) {
-    wchar_t c = str[i];
-
-    if (type_ == kNormal) {
-      if (!ignore_case) {
-        if (c != c_) {
-          break;
-        }
-      } else {
-        if (!WcharIcCmp(c, c_)) {
-          break;
-        }
-      }
-    } else if (type_ == kWildcard) {
-      // Wildcard matches any charactor.
-    } else if (type_ == kSpace) {
-      if (!IsSpace(c)) {
-        break;
-      }
-    } else if (type_ == kBound) {
-      if (!IsDelimiter(c)) {
-        break;
-      }
-    } else {
+    if (!MatchChar(str[i], ignore_case)) {
       break;
     }
   }
@@ -97,6 +75,49 @@ bool Atom::Determinable() const {
   if (type_ == kWildcard && repeat_.Variable()) {
     return false;
   }
+  return true;
+}
+
+bool Atom::MatchChar(wchar_t c, bool ignore_case) const {
+  switch (type_) {
+    case kNormal:
+      if (!ignore_case) {
+        if (c != c_) {
+          return false;
+        }
+      } else {
+        if (!WcharIcCmp(c, c_)) {
+          return false;
+        }
+      }
+      break;
+
+    case kWildcard:
+      // Wildcard matches any charactor.
+      break;
+
+    case kSpace:
+      if (!IsSpace(c)) {
+        return false;
+      }
+      break;
+
+    case kDigit:
+      if (!std::iswdigit(c)) {
+        return false;
+      }
+      break;
+
+    case kBound:
+      if (!IsDelimiter(c)) {
+        return false;
+      }
+      break;
+
+    default:
+      return false;
+  }
+
   return true;
 }
 
@@ -220,6 +241,17 @@ bool Regex::Compile() {
           escaped = false;
           CompileWord(word);
           nodes_.push_back(new Atom(Atom::kSpace));
+        } else {
+          word.append(1, c);
+        }
+
+        break;
+
+      case L'd':
+        if (escaped) {  // \d
+          escaped = false;
+          CompileWord(word);
+          nodes_.push_back(new Atom(Atom::kDigit));
         } else {
           word.append(1, c);
         }

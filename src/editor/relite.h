@@ -98,6 +98,9 @@ public:
   bool Determinable() const;
 
 private:
+  bool MatchChar(wchar_t c, bool ignore_case) const;
+
+private:
   Type type_;
   wchar_t c_;
   Repeat repeat_;
