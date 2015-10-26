@@ -2728,8 +2728,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
         if (ft_plugin_->IsDelimiter(line_data[i])) {
           if (prev_le.len > 0 && prev_le.lex.IsEmpty()) {
             // Look back to check the lex of previous word.
-            // FIXME: Currently, only a single delimiter can be suffix.
-            if (ft_plugin_->MatchSuffix(line_data, i, 1, &prev_le.lex)) {
+            if (ft_plugin_->MatchNext(line_data, i, 1, &prev_le.lex)) {
               line->AddLexElem(prev_le);
             }
           }
@@ -2750,22 +2749,21 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
             break;
           }
         }
-
-        // Update the word length.
         le.len = i - le.off;
 
-        // Match anyof.
-        if (ft_plugin_->MatchAnyof(line_data, le.off, le.len, &le.lex)) {
+        // Match anyof, prefix, etc.
+        if (ft_plugin_->MatchAnyof(line_data, le.off, le.len, &le.lex) ||
+            ft_plugin_->MatchPrefix(line_data, le.off, le.len, &le.lex)) {
           line->AddLexElem(le);
           prev_le = le;
           continue;
         }
-
+         
         if (prev_le.len > 0) {
-          // Look back to check if the previous word is a lex prefix.
+          // Look back to check if the previous word.
           // FIXME: If the previous word is operators, only one single
           // operator is supported.
-          if (ft_plugin_->MatchPrefix(line_data, prev_le.off, prev_le.len, &le.lex)) {
+          if (ft_plugin_->MatchPrev(line_data, prev_le.off, prev_le.len, &le.lex)) {
             line->AddLexElem(le);
             prev_le = le;
             continue;

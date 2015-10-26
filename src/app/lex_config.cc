@@ -186,7 +186,7 @@ bool LoadLexFile(const wxString& lex_file, FtPlugin* ft_plugin) {
         flags |= kQuoteEscapeEol;
       }
 
-      if (lex_setting.GetBool("regex")) {
+      if (lex_setting.GetBool("use_regex")) {
         RegexQuote* regex_quote = new RegexQuote(lex, start, end, flags);
         ft_plugin->AddRegexQuote(regex_quote);
       } else {
@@ -209,7 +209,6 @@ bool LoadLexFile(const wxString& lex_file, FtPlugin* ft_plugin) {
     Setting regex_setting = lex_setting.Get("regex");
     if (regex_setting) {
       const char* str = regex_setting.GetString();
-      // Assume that the string is pure ascii.
       std::wstring regex_str(str, str + strlen(str));
       ft_plugin->AddRegex(lex, regex_str);
       continue;
@@ -218,18 +217,30 @@ bool LoadLexFile(const wxString& lex_file, FtPlugin* ft_plugin) {
     Setting prefix_setting = lex_setting.Get("prefix");
     if (prefix_setting) {
       const char* str = prefix_setting.GetString();
-      // Assume that the string is pure ascii.
       std::wstring prefix_str(str, str + strlen(str));
-      ft_plugin->AddPrefix(lex, prefix_str);
+
+      if (lex_setting.GetBool("use_regex")) {
+        ft_plugin->AddRegexPrefix(lex, prefix_str);
+      } else {
+        ft_plugin->AddPrefix(lex, prefix_str);
+      }
+
       continue;
     }
 
-    Setting suffix_setting = lex_setting.Get("suffix");
-    if (suffix_setting) {
-      const char* str = suffix_setting.GetString();
-      // Assume that the string is pure ascii.
-      std::wstring suffix_str(str, str + strlen(str));
-      ft_plugin->AddSuffix(lex, suffix_str);
+    Setting prev_setting = lex_setting.Get("prev");
+    if (prev_setting) {
+      const char* str = prev_setting.GetString();
+      std::wstring prev_str(str, str + strlen(str));
+      ft_plugin->AddPrev(lex, prev_str);
+      continue;
+    }
+
+    Setting next_setting = lex_setting.Get("next");
+    if (next_setting) {
+      const char* str = next_setting.GetString();
+      std::wstring next_str(str, str + strlen(str));
+      ft_plugin->AddNext(lex, next_str);
       continue;
     }
   }

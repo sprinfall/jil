@@ -86,17 +86,17 @@ public:
   void AddQuote(Quote* quote);
   void AddRegexQuote(RegexQuote* regex_quote);
 
-  // \param pattern Regex pattern, e.g., "^#\s*endif\b".
+  // \param pattern Regex pattern, e.g., "#\s*endif\b".
   void AddRegex(Lex lex, const std::wstring& pattern);
 
   void AddPrefix(Lex lex, const std::wstring& prefix);
-  void AddSuffix(Lex lex, const std::wstring& suffix);
+  void AddRegexPrefix(Lex lex, const std::wstring& pattern);
 
-  // Check if str.substr(off, count) is a anyof.
-  bool MatchAnyof(const std::wstring& str,
-                  size_t off,
-                  size_t len,
-                  Lex* lex) const;
+  void AddPrev(Lex lex, const std::wstring& prev);
+  void AddNext(Lex lex, const std::wstring& next);
+
+  // Check if str.substr(off, len) is a anyof.
+  bool MatchAnyof(const std::wstring& str, size_t off, size_t len, Lex* lex) const;
 
   // Check if any str.substr(off, x) is a quote start.
   // Return the end index of the quote start or @off if no quote start matched.
@@ -104,10 +104,13 @@ public:
 
   size_t MatchRegex(const std::wstring& str, size_t off, Lex* lex) const;
 
-  // Check if str.substr(off, count) is a lex prefix.
   bool MatchPrefix(const std::wstring& str, size_t off, size_t len, Lex* lex);
 
-  bool MatchSuffix(const std::wstring& str, size_t off, size_t len, Lex* lex);
+  // Return true if str.substr(off, len) matches any prev rules.
+  bool MatchPrev(const std::wstring& str, size_t off, size_t len, Lex* lex);
+
+  // Return true if str.substr(off, len) matches any next rules.
+  bool MatchNext(const std::wstring& str, size_t off, size_t len, Lex* lex);
 
   const LexComment& sline_comment() const {
     return sline_comment_;
@@ -156,10 +159,13 @@ private:
 
   std::vector<Regex*> regexs_;
 
-  // Normally there won't be many prefixes and suffixes. So simply use array
-  // and linear search.
   std::vector<WordLexPair> prefixes_;
-  std::vector<WordLexPair> suffixes_;
+  std::vector<Regex*> regex_prefixes_;
+
+  // Normally there won't be many prev/next rules.
+  // Simply use array and linear search.
+  std::vector<WordLexPair> prevs_;
+  std::vector<WordLexPair> nexts_;
 
   LexComment sline_comment_;
   LexComment block_comment_;

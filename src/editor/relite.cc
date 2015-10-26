@@ -35,13 +35,12 @@ static Repeat RepeatFromChar(wchar_t c) {
 // Sorted word delimiters.
 static const std::wstring kDelimiters = L"!\"#$%&'()*+,-./:;<=>?@[\\]^`{|}~";
 
+// NOTE:
+// According to test, std::wstring.find() is much faster than std::binary_search.
 static bool IsDelimiter(wchar_t c) {
   if (IsSpace(c)) {
     return true;
   }
-
-  // NOTE:
-  // According to my test, std::wstring.find() is much faster than std::binary_search.
   return kDelimiters.find(c) != std::wstring::npos;
 }
 

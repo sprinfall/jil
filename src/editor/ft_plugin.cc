@@ -33,7 +33,6 @@ FtPlugin::FtPlugin(const FileType& file_type)
     , ignore_case_(false)
     , indent_func_(NULL) {
   wcsncmp_ = wcsncmp;
-
   InitIndentFunc();
 }
 
@@ -110,9 +109,6 @@ void FtPlugin::AddQuote(Quote* quote) {
 void FtPlugin::AddRegexQuote(RegexQuote* regex_quote) {
   regex_quote->set_ignore_case(ignore_case_);
   regex_quotes_.push_back(regex_quote);
-
-  if (regex_quote->lex().major() == kLexComment) {
-  }
 }
 
 void FtPlugin::AddRegex(Lex lex, const std::wstring& pattern) {
@@ -125,8 +121,18 @@ void FtPlugin::AddPrefix(Lex lex, const std::wstring& prefix) {
   prefixes_.push_back(std::make_pair(prefix, lex));
 }
 
-void FtPlugin::AddSuffix(Lex lex, const std::wstring& suffix) {
-  suffixes_.push_back(std::make_pair(suffix, lex));
+void FtPlugin::AddRegexPrefix(Lex lex, const std::wstring& pattern) {
+  Regex* regex = new Regex(pattern, ignore_case_);
+  regex->set_lex(lex);
+  regex_prefixes_.push_back(regex);
+}
+
+void FtPlugin::AddPrev(Lex lex, const std::wstring& prev) {
+  prevs_.push_back(std::make_pair(prev, lex));
+}
+
+void FtPlugin::AddNext(Lex lex, const std::wstring& next) {
+  nexts_.push_back(std::make_pair(next, lex));
 }
 
 bool FtPlugin::MatchAnyof(const std::wstring& str,
@@ -171,9 +177,7 @@ bool FtPlugin::MatchAnyof(const std::wstring& str,
 #endif  // JIL_MATCH_WORD_WITH_HASH
 }
 
-size_t FtPlugin::MatchQuote(const std::wstring& str,
-                            size_t off,
-                            Quote** quote) const {
+size_t FtPlugin::MatchQuote(const std::wstring& str, size_t off, Quote** quote) const {
   // Firstly, match regex quotes.
   if (!regex_quotes_.empty()) {
     std::wstring concrete_end;
@@ -224,23 +228,40 @@ size_t FtPlugin::MatchRegex(const std::wstring& str, size_t off, Lex* lex) const
 
 bool FtPlugin::MatchPrefix(const std::wstring& str, size_t off, size_t len, Lex* lex) {
   for (size_t i = 0; i < prefixes_.size(); ++i) {
-    if (len == prefixes_[i].first.size() &&
-        wcsncmp_(&str[off], prefixes_[i].first.c_str(), len) == 0) {
+    const std::wstring& word = prefixes_[i].first;
+    if (len >= word.size() && wcsncmp_(&str[off], word.c_str(), word.size()) == 0) {
       *lex = prefixes_[i].second;
+      return true;
+    }
+  }
+
+  for (size_t i = 0; i < regex_prefixes_.size(); ++i) {
+    size_t matched_off = regex_prefixes_[i]->Match(str, off);
+    if (matched_off > off && matched_off <= off + len) {
+      *lex = regex_prefixes_[i]->lex();
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool FtPlugin::MatchPrev(const std::wstring& str, size_t off, size_t len, Lex* lex) {
+  for (size_t i = 0; i < prevs_.size(); ++i) {
+    if (len == prevs_[i].first.size() &&
+        wcsncmp_(&str[off], prevs_[i].first.c_str(), len) == 0) {
+      *lex = prevs_[i].second;
       return true;
     }
   }
   return false;
 }
 
-bool FtPlugin::MatchSuffix(const std::wstring& str,
-                           size_t off,
-                           size_t len,
-                           Lex* lex) {
-  for (size_t i = 0; i < suffixes_.size(); ++i) {
-    if (len == suffixes_[i].first.size() &&
-        wcsncmp_(&str[off], suffixes_[i].first.c_str(), len) == 0) {
-      *lex = suffixes_[i].second;
+bool FtPlugin::MatchNext(const std::wstring& str, size_t off, size_t len, Lex* lex) {
+  for (size_t i = 0; i < nexts_.size(); ++i) {
+    if (len == nexts_[i].first.size() &&
+        wcsncmp_(&str[off], nexts_[i].first.c_str(), len) == 0) {
+      *lex = nexts_[i].second;
       return true;
     }
   }
