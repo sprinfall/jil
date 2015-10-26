@@ -24,11 +24,20 @@ protected:
     text_options.delimiters = L"!@#%^$&*()+-=\\|/?[]{}<>,.;:'\"`~";
     ft_plugin_->set_text_options(text_options);
 
+    // Indent functions relies on these quotes.
+    // It would be better to load from the lex file instead.
+
     Quote* quote1 = new Quote(Lex(kLexComment), L"/*", L"*/", kQuoteMultiLine);
     ft_plugin_->AddQuote(quote1);
 
     Quote* quote2 = new Quote(Lex(kLexComment), L"//", L"", kQuoteEscapeEol);
     ft_plugin_->AddQuote(quote2);
+
+    Quote* quote_str = new Quote(Lex(kLexConstant, kLexConstantString), L"\"", L"\"", kQuoteEscapeEol);
+    ft_plugin_->AddQuote(quote_str);
+
+    Quote* quote_char = new Quote(Lex(kLexConstant, kLexConstantChar), L"'", L"'", 0);
+    ft_plugin_->AddQuote(quote_char);
 
     buffer_ = TextBuffer::Create(0, ft_plugin_, kEncoding);
 
@@ -187,11 +196,23 @@ TEST_F(IndentCppTest, FunctionCall_StringParenthesis) {
 TEST_F(IndentCppTest, If_NoBrace) {
   buffer_->AppendLine(L"if (a > b)");
   buffer_->AppendLine(L"    return b;");
-  //buffer_->AppendLine(L"else");
-  //buffer_->AppendLine(L"    return a;");
-  //buffer_->AppendLine(L"int i;");
+  buffer_->AppendLine(L"int i;");
 
   ASSERT_LINE(3);
+  ASSERT_LINE(4);
+}
+
+TEST_F(IndentCppTest, If_NoBrace_WithElse) {
+  buffer_->AppendLine(L"if (a > b)");
+  buffer_->AppendLine(L"    return b;");
+  buffer_->AppendLine(L"else");
+  buffer_->AppendLine(L"    return a;");
+  buffer_->AppendLine(L"int i;");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
 }
 
 TEST_F(IndentCppTest, If_OneLineConditions) {
@@ -315,7 +336,8 @@ TEST_F(IndentCppTest, Struct_Accessors) {
 }
 
 TEST_F(IndentCppTest, SwitchCase) {
-  //indent_cpp_->set_indent_case(false);
+  // TODO: Set indent option
+  //buffer_->SetIndentOption("indent_case", false);
 
   buffer_->AppendLine(L"    switch (file_format) {");
   buffer_->AppendLine(L"    case FF_WIN:");
@@ -330,11 +352,11 @@ TEST_F(IndentCppTest, SwitchCase) {
 
   ASSERT_LINE(3);
   ASSERT_LINE(4);
-  //ASSERT_LINE(5);
-  //ASSERT_LINE(6);
-  //ASSERT_LINE(7);
-  //ASSERT_LINE(8);
-  //ASSERT_LINE(9);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
+  ASSERT_LINE(7);
+  ASSERT_LINE(8);
+  ASSERT_LINE(9);
 }
 
 //TEST_F(IndentCppTest, Macro_OneLine) {
@@ -369,4 +391,24 @@ TEST_F(IndentCppTest, CommentedBlockStart) {
   buffer_->AppendLine(L"        int j;");
 
   ASSERT_LINE(3);
+}
+
+TEST_F(IndentCppTest, PairedKeyInsideComment) {
+  buffer_->AppendLine(L"void add(int a, int b, int c) {");
+  buffer_->AppendLine(L"    // {");  // This { shouldn't affect the indent of }
+  buffer_->AppendLine(L"    return a + b + c;");
+  buffer_->AppendLine(L"}");
+
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+}
+
+TEST_F(IndentCppTest, PairedKeyInsideString) {
+  buffer_->AppendLine(L"void add(int a, int b, int c) {");
+  buffer_->AppendLine(L"    const char* str = \"test {\";");  // This { shouldn't affect the indent of }
+  buffer_->AppendLine(L"    return a + b + c;");
+  buffer_->AppendLine(L"}");
+
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
 }

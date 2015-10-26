@@ -1396,14 +1396,14 @@ TextPoint TextBuffer::UnpairedLeftKey(const TextPoint& point,
                                       bool single_line) const {
   int counter = 0;
 
-  // Find in the current line.
+  // Find in current line.
   Coord y = point.y;
   const TextLine* line = Line(y);
 
   for (Coord x = point.x - 1; x >= 0; --x) {
-    if (line->Char(x) == r_key) {  // Embedded pair.
+    if (line->Char(x) == r_key && line->GetLex(x).IsEmpty()) {  // Embedded pair.
       ++counter;
-    } else if (line->Char(x) == l_key) {
+    } else if (line->Char(x) == l_key && line->GetLex(x).IsEmpty()) {
       if (counter == 0) {
         return TextPoint(x, y);
       } else {
@@ -1417,9 +1417,9 @@ TextPoint TextBuffer::UnpairedLeftKey(const TextPoint& point,
     for (--y; y > 0; --y) {
       const TextLine* line = Line(y);
       for (Coord x = line->Length() - 1; x >= 0; --x) {
-        if (line->Char(x) == r_key) {  // Embedded pair.
+        if (line->Char(x) == r_key && line->GetLex(x).IsEmpty()) {  // Embedded pair.
           ++counter;
-        } else if (line->Char(x) == l_key) {
+        } else if (line->Char(x) == l_key && line->GetLex(x).IsEmpty()) {
           if (counter == 0) {
             return TextPoint(x, y);
           } else {

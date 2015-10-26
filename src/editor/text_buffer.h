@@ -425,6 +425,7 @@ public:
   // Examples:
   //   UnpairedLeftKey(point, L'{', L'}')
   //   UnpairedLeftKey(point, L'(', L')')
+  // NOTE: The keys inside strings or comments are not taken into account.
   TextPoint UnpairedLeftKey(const TextPoint& point,
                             wchar_t l_key,
                             wchar_t r_key,
