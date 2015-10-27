@@ -34,6 +34,8 @@ set(SRCS
     find_window.h
     font_util.cc
     font_util.h
+    ft_config.cc
+    ft_config.h
     goto_dialog.cc
     goto_dialog.h
     id.h

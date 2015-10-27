@@ -1,7 +1,6 @@
 #include "app/app.h"
 
 #include <string>
-#include "boost/algorithm/string.hpp"
 
 #if defined(__WXMSW__) && defined(_DEBUG) && defined(JIL_ENABLE_VLD)
 #pragma message ("< include vld.h >")
@@ -429,7 +428,7 @@ wxString App::GetTheme(int index) const {
 }
 
 const editor::FileType& App::FileTypeFromExt(const wxString& ext) const {
-  ExtFtMap::const_iterator it = ext_ft_map_.find(ext);
+  ExtFileTypeMap::const_iterator it = ext_ft_map_.find(ext);
   if (it != ext_ft_map_.end()) {
     return *(it->second);
   }
@@ -831,59 +830,19 @@ bool App::LoadBinding() {
 }
 
 bool App::LoadFileTypes() {
-  using namespace editor;
-
   // Plain Text file type.
-  FileType* txt_ft = new FileType(kTxt, kTrPlainText);
-  file_types_.push_back(txt_ft);
-  ext_ft_map_[wxEmptyString] = txt_ft;
-  ext_ft_map_[kTxt] = txt_ft;
+  // TODO: Put it to config file.
+  editor::FileType* ft_txt = new editor::FileType(kTxt, kTrPlainText);
+  file_types_.push_back(ft_txt);
+  ext_ft_map_[wxEmptyString] = ft_txt;
+  ext_ft_map_[kTxt] = ft_txt;
 
   // Load other file types from config file.
-  wxString file_types_file = path::ResourceDir() + kFileTypesFile;
+  wxString ft_file = path::ResourceDir() + kFileTypesFile;
 
-  Config config;
-  if (!config.Load(file_types_file)) {
-    ErrorMsg(kTrFailedToLoad + kSpaceStr + file_types_file);
+  if (!LoadFtConfigFile(ft_file, ext_ft_map_, file_types_, internal_file_types_)) {
+    ErrorMsg(kTrFailedToLoad + kSpaceStr + ft_file);
     return false;
-  }
-
-  Setting root_setting = config.Root();
-
-  Setting list_setting = root_setting.Get("list");
-  if (!list_setting || list_setting.type() != Setting::kList) {
-    return false;
-  }
-
-  int count = list_setting.size();
-
-  for (int j = 0; j < count; ++j) {
-    Setting setting = list_setting.Get(j);
-
-    wxString id = wxString::FromAscii(setting.GetString("id"));
-    wxString name = wxString::FromAscii(setting.GetString("name"));
-    std::string ext = setting.GetString("ext");
-
-    FileType* ft = new FileType(id, name);
-
-    if (id.StartsWith(kInternalFtIdPrefix)) {
-      internal_file_types_.push_back(ft);
-    } else {
-      file_types_.push_back(ft);
-    }
-
-    // Map ext to file type.
-    std::vector<std::string> ext_array;
-    boost::split(ext_array, ext, boost::is_any_of(","), boost::token_compress_on);
-
-    for (size_t i = 0; i < ext_array.size(); ++i) {
-      wxString ext_key = wxString::FromAscii(ext_array[i].c_str());
-      if (ext_ft_map_.find(ext_key) == ext_ft_map_.end()) {
-        ext_ft_map_[ext_key] = ft;
-      } else {
-        wxLogError(wxT("Can't map ext [%s] to file type [%s]."), ext_key, ft->name);
-      }
-    }
   }
 
   return true;

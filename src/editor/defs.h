@@ -79,7 +79,8 @@ enum FileFormat {
 #define FF_DIAPLAY_NAME_MAC wxT("Mac OS 9 (CR, \\r)")
 
 // Example: { "cpp", "C++" }
-struct FileType {
+class FileType {
+public:
   FileType() {
   }
 

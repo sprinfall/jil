@@ -79,22 +79,18 @@ void TextBook::HandleTabMouseMiddleUp(wxMouseEvent& evt) {
   TextPage* text_page = AsTextPage((*it)->page);
 
   // If the buffer is modified, ask for save.
-  if (text_page->buffer_modified()) {
+  if (text_page != NULL && text_page->buffer_modified()) {
     int code = ConfirmSave(text_page);
-
     if (code == wxCANCEL) {
       return;  // Don't close.
     }
-
     if (code == wxYES) {
       if (!Save(text_page->buffer(), this)) {
-        // Fail or cancel to save. Don't close.
-        return;
+        return;  // Fail or cancel to save. Don't close.
       }
     }
   }
 
-  //RemovePage(text_page);
   RemovePage(it);
 }
 

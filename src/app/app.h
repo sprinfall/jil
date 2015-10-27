@@ -17,6 +17,7 @@
 #include "editor/theme.h"
 
 #include "app/config.h"
+#include "app/ft_config.h"
 #include "app/option.h"
 #include "app/session.h"
 
@@ -179,15 +180,13 @@ private:
   editor::SharedTheme theme_;
   editor::Style* style_;
 
-  std::vector<editor::FileType*> file_types_;
+  FileTypes file_types_;
 
   // The ID of internal file types always starts with "jil-".
   // Internal file types won't be displayed to the end user.
-  std::vector<editor::FileType*> internal_file_types_;
+  FileTypes internal_file_types_;
 
-  // Example: wxT("cpp") -> { "cpp", wxT("C++") }
-  typedef std::map<wxString, editor::FileType*> ExtFtMap;
-  ExtFtMap ext_ft_map_;
+  ExtFileTypeMap ext_ft_map_;
 
   std::vector<editor::FtPlugin*> ft_plugins_;
 
