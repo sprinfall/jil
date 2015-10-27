@@ -4,26 +4,80 @@
 namespace jil {
 namespace editor {
 
-// Return true if the line starts with str1 or str2.
+////////////////////////////////////////////////////////////////////////////////
+// Helpers
+
+inline
+static bool StartWith(const TextLine* line,
+                      const std::wstring& str,
+                      bool ignore_spaces,
+                      Coord* off = NULL) {
+  return line->StartWith(str, ignore_spaces, off);
+}
+
 static bool StartWith(const TextLine* line,
                       const std::wstring& str1,
                       const std::wstring& str2,
                       bool ignore_spaces,
                       Coord* off = NULL) {
-  return line->StartWith(str1, ignore_spaces, off) ||
-         line->StartWith(str2, ignore_spaces, off);
+  return StartWith(line, str1, ignore_spaces, off) ||
+         StartWith(line, str2, ignore_spaces, off);
 }
 
-// Return true if the line starts with str1, str2 or str3.
 static bool StartWith(const TextLine* line,
                       const std::wstring& str1,
                       const std::wstring& str2,
                       const std::wstring& str3,
                       bool ignore_spaces,
                       Coord* off = NULL) {
-  return line->StartWith(str1, ignore_spaces, off) ||
-         line->StartWith(str2, ignore_spaces, off) ||
-         line->StartWith(str3, ignore_spaces, off);
+  return StartWith(line, str1, str2, ignore_spaces, off) ||
+         StartWith(line, str3, ignore_spaces, off);
+}
+
+static bool StartWith(const TextLine* line,
+                      const std::wstring& str1,
+                      const std::wstring& str2,
+                      const std::wstring& str3,
+                      const std::wstring& str4,
+                      bool ignore_spaces,
+                      Coord* off = NULL) {
+  return StartWith(line, str1, str2, str3, ignore_spaces, off) ||
+         StartWith(line, str4, ignore_spaces, off);
+}
+
+inline
+static bool EndWith(const TextLine* line,
+                    const std::wstring& str,
+                    bool ignore_comments,
+                    bool ignore_spaces,
+                    Coord* off = NULL) {
+  return line->EndWith(str, ignore_comments, ignore_spaces, off);
+}
+
+static bool Match(const TextLine* line,
+                  const std::wstring& str,
+                  bool ignore_comments,
+                  bool ignore_spaces,
+                  Coord* off = NULL) {
+  Coord off1 = kInvCoord;
+  if (!StartWith(line, str, ignore_spaces, &off1)) {
+    return false;
+  }
+
+  Coord off2 = kInvCoord;
+  if (!EndWith(line, str, ignore_comments, ignore_spaces, &off2)) {
+    return false;
+  }
+
+  if (off1 != off2) {
+    return false;
+  }
+
+  if (off != NULL) {
+    *off = off1;
+  }
+
+  return true;
 }
 
 static Coord GetPrevLineIndent(const TextBuffer* buffer, Coord ln) {
@@ -34,6 +88,18 @@ static Coord GetPrevLineIndent(const TextBuffer* buffer, Coord ln) {
   return buffer->GetIndent(prev_ln);
 }
 
+static bool IsLexCommentOrString(Lex lex) {
+  if (lex.major() == kLexComment) {
+    return true;
+  }
+  if (lex == Lex(kLexConstant, kLexConstantString)) {
+    return true;
+  }
+  return false;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 Coord IndentCfg(const TextBuffer* buffer, Coord ln) {
   Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
   if (prev_ln == 0) {
@@ -43,14 +109,25 @@ Coord IndentCfg(const TextBuffer* buffer, Coord ln) {
   return buffer->GetIndent(prev_ln);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 namespace cpp {
+
+bool IsEolEscaped(TextLine* line) {
+
+}
 
 bool IsLineMacro(const TextBuffer* buffer, Coord ln) {
   for (; ln > 0; --ln) {
-    if (buffer->Line(ln)->StartWith(L'#', true)) {
+    TextLine* line = buffer->Line(ln);
+
+    Coord off = kInvCoord;
+    if (line->StartWith(L'#', true, &off) &&
+        !IsLexCommentOrString(line->GetLex(off))) {
       return true;
     }
 
+    // TODO: \ should be unescaped
     if (ln > 1 && buffer->Line(ln - 1)->EndWith(L'\\', false, false)) {
       continue;
     }
@@ -61,28 +138,42 @@ bool IsLineMacro(const TextBuffer* buffer, Coord ln) {
   return false;
 }
 
-}  // namespace cpp
+Coord PrevNonEmptyLine(const TextBuffer* buffer,
+                       Coord ln,
+                       bool skip_comment,
+                       bool skip_macro) {
+  Coord prev_ln = buffer->PrevNonEmptyLine(ln, skip_comment);
+  if (skip_macro) {
+    while (prev_ln != 0 && IsLineMacro(buffer, prev_ln)) {
+      prev_ln = buffer->PrevNonEmptyLine(ln, skip_comment);
+    }
+  }
+  return prev_ln;
+}
 
-Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
-  // Indent options.
-  bool indent_namespace = false;
-  bool indent_case = false;
-  buffer->GetIndentOption("indent_namespace").As<bool>(&indent_namespace);
-  buffer->GetIndentOption("indent_case").As<bool>(&indent_case);
-
-  const Coord tab_stop = buffer->text_options().tab_stop;
-  const Coord shift_width = buffer->text_options().shift_width;
-
-  Coord x = kInvCoord;
-
+// Determine indent by current line.
+// Return kInvCoord if failed to determine it.
+Coord IndentByCurrLine(const TextBuffer* buffer,
+                       Coord ln,
+                       Coord tab_stop,
+                       Coord shift_width) {
   const TextLine* line = buffer->Line(ln);
+
+  // TODO: Check Strings too.
+  if (line->CommentsOnly()) {
+    return kInvCoord;
+  }
 
   //----------------------------------------------------------------------------
 
   if (line->StartWith(L'#', true)) {
-    // No indent for macro definition.
-    return 0;
+    return 0;  // No indent for macro definition.
   }
+
+  if (IsLineMacro(line)) {
+  }
+
+  Coord x = kInvCoord;
 
   //----------------------------------------------------------------------------
 
@@ -100,6 +191,7 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
     }
 
     // The line with '{'.
+    // TODO: Rename temp.
     Coord temp_ln = p.y;
     const TextLine* temp_line = buffer->Line(temp_ln);
 
@@ -159,7 +251,16 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
 
   //----------------------------------------------------------------------------
 
-  // Class accessors: public, protected, private.
+  if (StartWith(line, L"else", true)) {
+    Coord prev_ln = buffer->PrevLine(ln, LineStartWith(L"else", L"if"));
+    if (prev_ln != 0) {
+      return buffer->GetIndent(prev_ln);
+    }
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+
   if (StartWith(line, L"public", L"protected", L"private", true)) {
     Coord prev_ln = buffer->PrevLine(ln, LineStartWith(L"class", L"struct"));
     if (prev_ln != 0) {
@@ -175,6 +276,10 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
     Coord temp_ln = buffer->PrevLine(ln, LineStartWith(L"switch"));
     if (temp_ln != 0) {
       indent = buffer->Line(temp_ln)->GetIndent(tab_stop);
+
+      bool indent_case = false;
+      buffer->GetIndentOption("indent_case").As<bool>(&indent_case);
+
       if (indent_case) {
         indent += shift_width;
       }
@@ -182,20 +287,29 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
     return indent;
   }
 
-  //----------------------------------------------------------------------------
+  return kInvCoord;
+}
 
-  //// The EOL of previous line is escaped.
-  //if (prev_line->EndWith(L'\\', true)) {
-  //  return prev_line->GetIndent(tab_stop) + shift_width;
-  //}
-
-  //----------------------------------------------------------------------------
-
+// Determine indent by previous line.
+// Return kInvCoord if failed to determine it.
+Coord IndentByPrevLine(const TextBuffer* buffer,
+                       Coord ln,
+                       Coord tab_stop,
+                       Coord shift_width,
+                       Coord* out_prev_ln = NULL) {
   Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
   if (prev_ln == 0) {
     return 0;
   }
+
+  if (out_prev_ln != NULL) {
+    *out_prev_ln = prev_ln;
+  }
+
   const TextLine* prev_line = buffer->Line(prev_ln);
+  Coord x = kInvCoord;
+
+  //----------------------------------------------------------------------------
 
   if (prev_line->EndWith(L'{', true, true, &x)) {
     Coord j = prev_line->LastNonSpaceChar(x);
@@ -220,7 +334,10 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
       }
     }
 
-    if (!indent_namespace) {  // Don't indent namespace.
+    bool indent_namespace = false;
+    buffer->GetIndentOption("indent_namespace").As<bool>(&indent_namespace);
+
+    if (!indent_namespace) {
       if (prev_line->StartWith(L"namespace", true)) {
         return prev_line->GetIndent(tab_stop);
       }
@@ -231,7 +348,7 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
 
   //----------------------------------------------------------------------------
 
-  //public:/protected:/private:, case label:, etc.
+  // public:, protected:, private:, case label:, etc.
   if (prev_line->EndWith(L':', true, true)) {
     return prev_line->GetIndent(tab_stop) + shift_width;
   }
@@ -261,24 +378,95 @@ Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
       temp_line = buffer->Line(p.y);
     }
 
-    if (StartWith(temp_line, L"if", L"while", L"for", true)) {
+    if (StartWith(temp_line, L"if", L"else if", L"while", L"for", true)) {
       return temp_line->GetIndent(tab_stop) + shift_width;
     }
   }
 
   //----------------------------------------------------------------------------
 
-  // By default, use the same indent as the previous line.
-  prev_ln = buffer->PrevNonEmptyLine(ln, true);
-  if (prev_ln == 0) {
-    return 0;
+  if (Match(prev_line, L"else", true, true)) {
+    return prev_line->GetIndent(tab_stop) + shift_width;
   }
 
-  prev_line = buffer->Line(prev_ln);
+  //----------------------------------------------------------------------------
 
+  //// The EOL of previous line is escaped.
+  //if (prev_line->EndWith(L'\\', true)) {
+  //  return prev_line->GetIndent(tab_stop) + shift_width;
+  //}
 
-  return prev_line->GetIndent(tab_stop);
+  return kInvCoord;
 }
+
+// Determine indent by the line before previous line.
+// Handle the cases like this:
+// if (a > b)
+//     return b;
+// else             (prev_prev_line)
+//     return a;    (prev_line)
+// int i;           (line)
+Coord IndentByPrevPrevLine(const TextBuffer* buffer, Coord prev_ln, Coord tab_stop) {
+  Coord prev_prev_ln = buffer->PrevNonEmptyLine(prev_ln, true);
+
+  if (prev_prev_ln == 0) {
+    return kInvCoord;
+  }
+
+  const TextLine* prev_prev_line = buffer->Line(prev_prev_ln);
+
+  if (StartWith(prev_prev_line, L"if", L"else if", L"while", L"for", true)) {
+    return prev_prev_line->GetIndent(tab_stop);
+  }
+
+  if (Match(prev_prev_line, L"else", true, true)) {
+    return prev_prev_line->GetIndent(tab_stop);
+  }
+
+  return kInvCoord;
+}
+
+}  // namespace cpp
+
+
+Coord IndentCpp(const TextBuffer* buffer, Coord ln) {
+  Coord tab_stop = buffer->text_options().tab_stop;
+  Coord shift_width = buffer->text_options().shift_width;
+
+  Coord indent = kInvCoord;
+  
+  indent = cpp::IndentByCurrLine(buffer, ln, tab_stop, shift_width);
+  if (indent != kInvCoord) {
+    return indent;
+  }
+
+  TextLine* line = buffer->Line(ln);
+
+  if (line->CommentsOnly()) {
+    Coord prev_ln = buffer->PrevNonEmptyLine(ln, false);
+    if (prev_ln != 0) {
+      TextLine* prev_line = buffer->Line(prev_ln);
+      if (prev_line->CommentsOnly()) {
+        return prev_line->GetIndent(tab_stop);
+      }
+    }
+  }
+
+  Coord prev_ln = kInvCoord;
+  indent = cpp::IndentByPrevLine(buffer, ln, tab_stop, shift_width, &prev_ln);
+  if (indent != kInvCoord) {
+    return indent;
+  }
+
+  assert(prev_ln != 0);
+  indent = cpp::IndentByPrevPrevLine(buffer, prev_ln, tab_stop);
+  if (indent != kInvCoord) {
+    return indent;
+  }
+
+  return buffer->Line(prev_ln)->GetIndent(tab_stop);
+}
+
 
 Coord IndentCSharp(const TextBuffer* buffer, Coord ln) {
   Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);

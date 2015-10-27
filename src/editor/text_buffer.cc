@@ -2623,25 +2623,6 @@ bool TextBuffer::MergeDeleteActions(const wxDateTime& now, DeleteAction* delete_
 //------------------------------------------------------------------------------
 // Lex
 
-// Check if the char at the given index is an unescaped \.
-// Examples:
-// "\\"[1] -> false
-// "a\"[1] -> true
-static bool IsUnescapedBackSlash(const std::wstring& str, size_t i) {
-  // Count '\' backward. It's unescaped if the number is odd.
-  size_t count = 0;
-
-  while (str[i] == L'\\') {
-    ++count;
-    if (i == 0) {
-      break;
-    }
-    --i;
-  }
-
-  return (count % 2 == 1);
-}
-
 void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
   line->ClearLex();
 

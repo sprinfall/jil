@@ -24,6 +24,12 @@ bool SubStringEquals(const std::wstring& str, size_t off, const std::wstring& su
 // Example: CountCharAfter(L"abc***d", 2, L'*') returns 3.
 Coord CountCharAfter(const std::wstring& str, Coord i, wchar_t c);
 
+// Check if the char at the given index is an unescaped \.
+// Examples:
+// "\\"[1] -> false
+// "a\"[1] -> true
+bool IsUnescapedBackSlash(const std::wstring& str, size_t i);
+
 ////////////////////////////////////////////////////////////////////////////////
 
 template <class C>

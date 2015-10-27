@@ -193,6 +193,15 @@ TEST_F(IndentCppTest, FunctionCall_StringParenthesis) {
   ASSERT_LINE(4);
 }
 
+TEST_F(IndentCppTest, If_OneLineConditions) {
+  buffer_->AppendLine(L"if (a > b) {");
+  buffer_->AppendLine(L"    return b;");
+  buffer_->AppendLine(L"}");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+}
+
 TEST_F(IndentCppTest, If_NoBrace) {
   buffer_->AppendLine(L"if (a > b)");
   buffer_->AppendLine(L"    return b;");
@@ -215,15 +224,6 @@ TEST_F(IndentCppTest, If_NoBrace_WithElse) {
   ASSERT_LINE(6);
 }
 
-TEST_F(IndentCppTest, If_OneLineConditions) {
-  buffer_->AppendLine(L"if (a > b) {");
-  buffer_->AppendLine(L"    return b;");
-  buffer_->AppendLine(L"}");
-
-  ASSERT_LINE(3);
-  ASSERT_LINE(4);
-}
-
 TEST_F(IndentCppTest, If_NoBrace_OneLine) {
   buffer_->AppendLine(L"if (a > b) return b;");
   buffer_->AppendLine(L"else return a;");
@@ -236,7 +236,37 @@ TEST_F(IndentCppTest, If_NoBrace_OneLine) {
 TEST_F(IndentCppTest, For_NoBrace) {
   buffer_->AppendLine(L"for (int i = 0; i < count; ++i)");
   buffer_->AppendLine(L"    sum += i;");
-  //buffer_->AppendLine(L"int i;");
+  buffer_->AppendLine(L"int i;");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+}
+
+TEST_F(IndentCppTest, For_MultiLine) {
+  buffer_->AppendLine(L"for (int i = 0;");
+  buffer_->AppendLine(L"     i < count;");
+  buffer_->AppendLine(L"     ++i) {");
+  buffer_->AppendLine(L"    sum += i;");
+  buffer_->AppendLine(L"}");
+
+  ASSERT_LINE(3);
+  //ASSERT_LINE(4);
+  //ASSERT_LINE(5);
+  //ASSERT_LINE(6);
+}
+
+TEST_F(IndentCppTest, While_NoBrace) {
+  buffer_->AppendLine(L"while (i < count)");
+  buffer_->AppendLine(L"    sum += i;");
+  buffer_->AppendLine(L"int i;");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+}
+
+TEST_F(IndentCppTest, While_NoBrace_OnLine) {
+  buffer_->AppendLine(L"while (i < count) sum += i;");
+  buffer_->AppendLine(L"int i;");
 
   ASSERT_LINE(3);
 }
@@ -359,32 +389,36 @@ TEST_F(IndentCppTest, SwitchCase) {
   ASSERT_LINE(9);
 }
 
-//TEST_F(IndentCppTest, Macro_OneLine) {
-//  buffer_->AppendLine(L"    int i;");
-//  buffer_->AppendLine(L"#define MAX_SIZE 256");
-//  buffer_->AppendLine(L"    int j;");
-//
-//  ASSERT_LINE(3);
-//  ASSERT_LINE(4);
-//}
+TEST_F(IndentCppTest, Macro_OneLine) {
+  buffer_->AppendLine(L"    int i;");
+  buffer_->AppendLine(L"#define MAX_SIZE 256");
+  buffer_->AppendLine(L"    int j;");
 
-//TEST_F(IndentCppTest, Macro_EolEscaped) {
-//  buffer_->AppendLine(L"        int i;");
-//  buffer_->AppendLine(L"#define MAX_SIZE \\");
-//  buffer_->AppendLine(L"    256");
-//  buffer_->AppendLine(L"        int j;");
-//
-//  Assert(3);
-//}
-//
-//TEST_F(IndentCppTest, Macro_EolEscaped2) {
-//  buffer_->AppendLine(L"        int i;");
-//  buffer_->AppendLine(L"#define MAX_SIZE 256 \\");
-//  buffer_->AppendLine(L"");
-//  buffer_->AppendLine(L"        int j;");
-//
-//  Assert(3);
-//}
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+}
+
+TEST_F(IndentCppTest, Macro_EolEscaped) {
+  buffer_->AppendLine(L"        int i;");
+  buffer_->AppendLine(L"#define MAX_SIZE \\");
+  buffer_->AppendLine(L"    256");
+  buffer_->AppendLine(L"        int j;");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+}
+
+TEST_F(IndentCppTest, Macro_EolEscaped2) {
+  buffer_->AppendLine(L"        int i;");
+  buffer_->AppendLine(L"#define MAX_SIZE 256 \\");
+  buffer_->AppendLine(L"");
+  buffer_->AppendLine(L"        int j;");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+}
 
 TEST_F(IndentCppTest, CommentedBlockStart) {
   buffer_->AppendLine(L"        int i;  // {");
@@ -411,4 +445,55 @@ TEST_F(IndentCppTest, PairedKeyInsideString) {
 
   ASSERT_LINE(4);
   ASSERT_LINE(5);
+}
+
+TEST_F(IndentCppTest, Enum) {
+  buffer_->AppendLine(L"enum WeekDay {");
+  buffer_->AppendLine(L"    kSunday = 0,");
+  buffer_->AppendLine(L"    kMonday,");
+  buffer_->AppendLine(L"    kTuesday,");
+  buffer_->AppendLine(L"}");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
+}
+
+TEST_F(IndentCppTest, Comments_1) {
+  buffer_->AppendLine(L"if (a > b) {");
+  buffer_->AppendLine(L"    // comments");
+  buffer_->AppendLine(L"    // comments");
+  buffer_->AppendLine(L"    return a,");
+  buffer_->AppendLine(L"}");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
+}
+
+TEST_F(IndentCppTest, Comments_2) {
+  buffer_->AppendLine(L" //if (a > b) {");
+  buffer_->AppendLine(L" // comments");
+  buffer_->AppendLine(L" // comments");
+  buffer_->AppendLine(L"return a,");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+}
+
+TEST_F(IndentCppTest, Comments_3) {
+  buffer_->AppendLine(L"int i;");
+  buffer_->AppendLine(L"/*if (a > b) {");
+  buffer_->AppendLine(L"comments");
+  buffer_->AppendLine(L"comments");
+  buffer_->AppendLine(L"comments*/");
+  buffer_->AppendLine(L"return a,");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
 }
