@@ -64,15 +64,15 @@ protected:
 TEST_F(IndentCppTest, IsLineMacro1) {
   buffer_->AppendLine(L"#define MAX_SIZE 256");
 
-  EXPECT_TRUE(cpp::IsLineMacro(buffer_, 2));
+  EXPECT_TRUE(cpp::IsMacro(buffer_, 2));
 }
 
 TEST_F(IndentCppTest, IsLineMacro2) {
   buffer_->AppendLine(L"#define MAX_SIZE \\");
   buffer_->AppendLine(L"    256");
 
-  EXPECT_TRUE(cpp::IsLineMacro(buffer_, 2));
-  EXPECT_TRUE(cpp::IsLineMacro(buffer_, 3));
+  EXPECT_TRUE(cpp::IsMacro(buffer_, 2));
+  EXPECT_TRUE(cpp::IsMacro(buffer_, 3));
 }
 
 TEST_F(IndentCppTest, IsLineMacro3) {
@@ -80,9 +80,9 @@ TEST_F(IndentCppTest, IsLineMacro3) {
   buffer_->AppendLine(L"");
   buffer_->AppendLine(L"   int i;");
 
-  EXPECT_TRUE(cpp::IsLineMacro(buffer_, 2));
-  EXPECT_TRUE(cpp::IsLineMacro(buffer_, 3));
-  EXPECT_FALSE(cpp::IsLineMacro(buffer_, 4));
+  EXPECT_TRUE(cpp::IsMacro(buffer_, 2));
+  EXPECT_TRUE(cpp::IsMacro(buffer_, 3));
+  EXPECT_FALSE(cpp::IsMacro(buffer_, 4));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -412,7 +412,7 @@ TEST_F(IndentCppTest, Macro_EolEscaped) {
 TEST_F(IndentCppTest, Macro_EolEscaped2) {
   buffer_->AppendLine(L"        int i;");
   buffer_->AppendLine(L"#define MAX_SIZE 256 \\");
-  buffer_->AppendLine(L"");
+  buffer_->AppendLine(L"");  // TODO
   buffer_->AppendLine(L"        int j;");
 
   ASSERT_LINE(3);

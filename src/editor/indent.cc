@@ -88,16 +88,6 @@ static Coord GetPrevLineIndent(const TextBuffer* buffer, Coord ln) {
   return buffer->GetIndent(prev_ln);
 }
 
-static bool IsLexCommentOrString(Lex lex) {
-  if (lex.major() == kLexComment) {
-    return true;
-  }
-  if (lex == Lex(kLexConstant, kLexConstantString)) {
-    return true;
-  }
-  return false;
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 
 Coord IndentCfg(const TextBuffer* buffer, Coord ln) {
@@ -113,23 +103,41 @@ Coord IndentCfg(const TextBuffer* buffer, Coord ln) {
 
 namespace cpp {
 
-bool IsEolEscaped(TextLine* line) {
-
+bool IsMacroHead(const TextLine* line) {
+  Coord off = kInvCoord;
+  if (line->StartWith(L'#', true, &off) && !line->IsCommentOrString(off)) {
+    return true;
+  }
+  return false;
 }
 
-bool IsLineMacro(const TextBuffer* buffer, Coord ln) {
-  for (; ln > 0; --ln) {
-    TextLine* line = buffer->Line(ln);
+bool IsMacroBody(const TextBuffer* buffer, Coord ln, Coord* head_ln) {
+  for (Coord prev_ln = ln - 1; prev_ln > 0; --prev_ln) {
+    const TextLine* prev_line = buffer->Line(prev_ln);
+    if (!prev_line->IsEolEscaped(true)) {
+      break;
+    }
+    if (IsMacroHead(prev_line)) {
+      *head_ln = prev_ln;
+      return true;
+    } else {
+      continue;
+    }
+  }
+  return false;
+}
 
-    Coord off = kInvCoord;
-    if (line->StartWith(L'#', true, &off) &&
-        !IsLexCommentOrString(line->GetLex(off))) {
+bool IsMacro(const TextBuffer* buffer, Coord ln) {
+  for (; ln > 0; --ln) {
+    if (IsMacroHead(buffer->Line(ln))) {
       return true;
     }
 
-    // TODO: \ should be unescaped
-    if (ln > 1 && buffer->Line(ln - 1)->EndWith(L'\\', false, false)) {
-      continue;
+    if (ln > 1) {
+      const TextLine* line = buffer->Line(ln - 1);
+      if (line->IsEolEscaped(true)) {
+        continue;
+      }
     }
 
     break;
@@ -144,8 +152,8 @@ Coord PrevNonEmptyLine(const TextBuffer* buffer,
                        bool skip_macro) {
   Coord prev_ln = buffer->PrevNonEmptyLine(ln, skip_comment);
   if (skip_macro) {
-    while (prev_ln != 0 && IsLineMacro(buffer, prev_ln)) {
-      prev_ln = buffer->PrevNonEmptyLine(ln, skip_comment);
+    while (prev_ln != 0 && IsMacro(buffer, prev_ln)) {
+      prev_ln = buffer->PrevNonEmptyLine(prev_ln, skip_comment);
     }
   }
   return prev_ln;
@@ -166,16 +174,19 @@ Coord IndentByCurrLine(const TextBuffer* buffer,
 
   //----------------------------------------------------------------------------
 
-  if (line->StartWith(L'#', true)) {
+  if (IsMacroHead(line)) {
     return 0;  // No indent for macro definition.
   }
 
-  if (IsLineMacro(line)) {
+  // TODO: Add option "indent_macro_body"
+  Coord macro_head_ln = kInvCoord;
+  if (IsMacroBody(buffer, ln, &macro_head_ln)) {
+    return buffer->Line(macro_head_ln)->GetIndent(tab_stop) + shift_width;
   }
 
-  Coord x = kInvCoord;
-
   //----------------------------------------------------------------------------
+
+  Coord x = kInvCoord;
 
   if (line->StartWith(L'}', true, &x)) {
     // If the current line starts with '}', indent the same as the line with
@@ -297,7 +308,7 @@ Coord IndentByPrevLine(const TextBuffer* buffer,
                        Coord tab_stop,
                        Coord shift_width,
                        Coord* out_prev_ln = NULL) {
-  Coord prev_ln = buffer->PrevNonEmptyLine(ln, true);
+  Coord prev_ln = PrevNonEmptyLine(buffer, ln, true, true);
   if (prev_ln == 0) {
     return 0;
   }

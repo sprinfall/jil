@@ -98,6 +98,9 @@ public:
                bool ignore_spaces,
                Coord* off = NULL) const;
 
+  // Return true if the last char is an unescaped back slash.
+  bool IsEolEscaped(bool no_comment_or_string) const;
+
   //----------------------------------------------------------------------------
 
   void InsertChar(Coord off, wchar_t c);
@@ -143,6 +146,12 @@ public:
 
   // Return true if it's comment at the given off.
   bool IsComment(Coord off) const;
+
+  // Return true if it's string at the given off.
+  bool IsString(Coord off) const;
+
+  // Return true if it's comment or string at the given off.
+  bool IsCommentOrString(Coord off) const;
 
   void AddQuoteElem(Quote* quote, size_t off, size_t len, QuotePart part);
 

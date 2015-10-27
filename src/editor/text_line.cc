@@ -200,6 +200,22 @@ bool TextLine::EndWith(const std::wstring& str,
   return false;
 }
 
+bool TextLine::IsEolEscaped(bool no_comment_or_string) const {
+  if (data_.empty()) {
+    return false;
+  }
+  size_t off = data_.size() - 1;
+  if (IsUnescapedBackSlash(data_, off)) {
+    if (no_comment_or_string) {
+      if (IsCommentOrString(off)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
 Coord TextLine::FirstNonSpaceChar(Coord off) const {
   assert(off >= 0);
 
@@ -455,6 +471,18 @@ bool TextLine::CommentsOnly() const {
 
 bool TextLine::IsComment(Coord off) const {
   return (GetLex(off).major() == kLexComment);
+}
+
+bool TextLine::IsString(Coord off) const {
+  return (GetLex(off) == Lex(kLexConstant, kLexConstantString));
+}
+
+bool TextLine::IsCommentOrString(Coord off) const {
+  Lex lex = GetLex(off);
+  if (lex.major() == kLexComment) {
+    return true;
+  }
+  return (lex == Lex(kLexConstant, kLexConstantString));
 }
 
 void TextLine::AddQuoteElem(Quote* quote, size_t off, size_t len, QuotePart part) {

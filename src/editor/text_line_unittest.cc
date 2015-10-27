@@ -124,6 +124,27 @@ TEST(TextLine, IsEmpty) {
   EXPECT_FALSE(line.IsEmpty(false));
 }
 
+TEST(TextLine, IsEolEscaped_EmptyLine) {
+  TextLine line1(0, L"");
+  EXPECT_FALSE(line1.IsEolEscaped(true));
+  EXPECT_FALSE(line1.IsEolEscaped(false));
+
+  TextLine line2(0, L"test \\");
+  EXPECT_TRUE(line2.IsEolEscaped(true));
+  EXPECT_TRUE(line2.IsEolEscaped(false));
+
+  TextLine line3(0, L"test \\ ");
+  EXPECT_FALSE(line3.IsEolEscaped(true));
+  EXPECT_FALSE(line3.IsEolEscaped(false));
+}
+
+TEST(TextLine, IsEolEscaped_EmptyLine_Comment) {
+  TextLine line1(0, L"// test \\");
+  line1.AddLexElem(0, line1.Length(), Lex(kLexComment));
+  EXPECT_FALSE(line1.IsEolEscaped(true));
+  EXPECT_TRUE(line1.IsEolEscaped(false));
+}
+
 TEST(TextLine, StartWith_Char) {
   TextLine line(0, L"");
 

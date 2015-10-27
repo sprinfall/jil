@@ -12,7 +12,7 @@ class TextBuffer;
 namespace cpp {
 
 // Return true if the line is a C++ macro definition.
-bool IsLineMacro(const TextBuffer* buffer, Coord ln);
+bool IsMacro(const TextBuffer* buffer, Coord ln);
 
 }  // namespace cpp
 
