@@ -250,6 +250,7 @@ protected:
 
   void OnTabMouseMiddleDown(wxMouseEvent& evt);
   void OnTabMouseMiddleUp(wxMouseEvent& evt);
+  virtual void HandleTabMouseMiddleUp(wxMouseEvent& evt);
 
   void OnTabMouseMotion(wxMouseEvent& evt);
 

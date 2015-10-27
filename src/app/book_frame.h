@@ -89,13 +89,6 @@ public:
 
   void FileOpen();
 
-  // Comfirm to save the modified text page.
-  // Return wxYES, wxNO or wxCANCEL.
-  int ConfirmSave(TextPage* text_page);
-
-  // Save a text buffer.
-  bool Save(editor::TextBuffer* buffer);
-
   void FileClose();
   void FileCloseAll();
   void FileCloseAllButThis();

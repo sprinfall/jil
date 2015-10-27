@@ -11,7 +11,7 @@ class TextPage;
 class TextBook : public BookCtrl {
   DECLARE_EVENT_TABLE()
 
- public:
+public:
   explicit TextBook(const editor::SharedTheme& theme);
   bool Create(wxWindow* parent, wxWindowID id);
   virtual ~TextBook();
@@ -23,7 +23,8 @@ class TextBook : public BookCtrl {
   std::vector<TextPage*> TextPages() const;
   std::vector<TextPage*> StackTextPages() const;
 
- protected:
+protected:
+  virtual void HandleTabMouseMiddleUp(wxMouseEvent& evt) override;
   virtual void HandleTabMouseLeftUp(wxMouseEvent& evt) override;
   virtual void HandleTabMouseRightUp(wxMouseEvent& evt) override;
   virtual void HandleTabMouseLeftDClick(wxMouseEvent& evt) override;

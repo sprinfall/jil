@@ -104,13 +104,13 @@ public:
 
   size_t MatchRegex(const std::wstring& str, size_t off, Lex* lex) const;
 
-  bool MatchPrefix(const std::wstring& str, size_t off, size_t len, Lex* lex);
+  bool MatchPrefix(const std::wstring& str, size_t off, size_t len, Lex* lex) const;
 
   // Return true if str.substr(off, len) matches any prev rules.
-  bool MatchPrev(const std::wstring& str, size_t off, size_t len, Lex* lex);
+  bool MatchPrev(const std::wstring& str, size_t off, size_t len, Lex* lex) const;
 
   // Return true if str.substr(off, len) matches any next rules.
-  bool MatchNext(const std::wstring& str, size_t off, size_t len, Lex* lex);
+  bool MatchNext(const std::wstring& str, size_t off, size_t len, Lex* lex) const;
 
   const LexComment& sline_comment() const {
     return sline_comment_;

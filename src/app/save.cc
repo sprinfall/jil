@@ -4,6 +4,7 @@
 #include "editor/text_buffer.h"
 #include "editor/ft_plugin.h"
 #include "app/app.h"
+#include "app/text_page.h"
 
 #define kTrSaveFile           _("Save File")
 #define kTrSaveFileAs         _("Save File As")
@@ -84,6 +85,32 @@ bool SaveBufferAs(editor::TextBuffer* buffer, wxWindow* parent) {
   buffer->Notify(editor::kFileNameChange);
 
   return SaveBuffer(buffer, parent);
+}
+
+int ConfirmSave(TextPage* text_page) {
+  editor::TextBuffer* buffer = text_page->buffer();
+
+  assert(buffer->modified());
+
+  wxString msg;
+  if (buffer->new_created()) {
+    msg = _("The file is untitled and changed, save it?");
+  } else {
+    msg = wxString::Format(_("The file (%s) has been changed, save it?"), text_page->Page_Label().c_str());
+  }
+
+  long style = wxYES | wxNO | wxCANCEL | wxYES_DEFAULT | wxICON_EXCLAMATION | wxCENTRE;
+  return wxMessageBox(msg, _("Save File"), style);
+}
+
+bool Save(editor::TextBuffer* buffer, wxWindow* parent) {
+  bool saved = false;
+  if (buffer->new_created() || buffer->read_only()) {
+    saved = SaveBufferAs(buffer, parent);
+  } else {
+    saved = SaveBuffer(buffer, parent);
+  }
+  return saved;
 }
 
 }  // namespace jil

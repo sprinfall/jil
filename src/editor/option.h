@@ -123,6 +123,7 @@ public:
   bool expand_tab;
 
   // Guess tab options from existing lines.
+  // TODO
   bool guess_tab;
 
   // Word delimiters (exluding ' ' and '\t').

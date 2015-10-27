@@ -714,12 +714,14 @@ void BookCtrl::OnTabMouseMiddleUp(wxMouseEvent& evt) {
   }
   tab_area_->ReleaseMouse();
 
-  TabList::iterator it = TabByPos(evt.GetPosition().x);
-  if (it == tabs_.end()) {
-    return;
-  }
+  HandleTabMouseMiddleUp(evt);
+}
 
-  RemovePage(it);
+void BookCtrl::HandleTabMouseMiddleUp(wxMouseEvent& evt) {
+  TabList::iterator it = TabByPos(evt.GetPosition().x);
+  if (it != tabs_.end()) {
+    RemovePage(it);
+  }
 }
 
 // Update tooltip on mouse motion.

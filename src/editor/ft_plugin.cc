@@ -226,7 +226,7 @@ size_t FtPlugin::MatchRegex(const std::wstring& str, size_t off, Lex* lex) const
   return off;
 }
 
-bool FtPlugin::MatchPrefix(const std::wstring& str, size_t off, size_t len, Lex* lex) {
+bool FtPlugin::MatchPrefix(const std::wstring& str, size_t off, size_t len, Lex* lex) const {
   for (size_t i = 0; i < prefixes_.size(); ++i) {
     const std::wstring& word = prefixes_[i].first;
     if (len >= word.size() && wcsncmp_(&str[off], word.c_str(), word.size()) == 0) {
@@ -246,7 +246,7 @@ bool FtPlugin::MatchPrefix(const std::wstring& str, size_t off, size_t len, Lex*
   return false;
 }
 
-bool FtPlugin::MatchPrev(const std::wstring& str, size_t off, size_t len, Lex* lex) {
+bool FtPlugin::MatchPrev(const std::wstring& str, size_t off, size_t len, Lex* lex) const {
   for (size_t i = 0; i < prevs_.size(); ++i) {
     if (len == prevs_[i].first.size() &&
         wcsncmp_(&str[off], prevs_[i].first.c_str(), len) == 0) {
@@ -257,7 +257,7 @@ bool FtPlugin::MatchPrev(const std::wstring& str, size_t off, size_t len, Lex* l
   return false;
 }
 
-bool FtPlugin::MatchNext(const std::wstring& str, size_t off, size_t len, Lex* lex) {
+bool FtPlugin::MatchNext(const std::wstring& str, size_t off, size_t len, Lex* lex) const {
   for (size_t i = 0; i < nexts_.size(); ++i) {
     if (len == nexts_[i].first.size() &&
         wcsncmp_(&str[off], nexts_[i].first.c_str(), len) == 0) {

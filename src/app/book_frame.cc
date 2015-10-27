@@ -353,32 +353,6 @@ void BookFrame::FileOpen() {
   }
 }
 
-int BookFrame::ConfirmSave(TextPage* text_page) {
-  editor::TextBuffer* buffer = text_page->buffer();
-
-  assert(buffer->modified());
-
-  wxString msg;
-  if (buffer->new_created()) {
-    msg = _("The file is untitled and changed, save it?");
-  } else {
-    msg = wxString::Format(_("The file (%s) has been changed, save it?"), text_page->Page_Label().c_str());
-  }
-
-  long style = wxYES|wxNO|wxCANCEL|wxYES_DEFAULT|wxICON_EXCLAMATION|wxCENTRE;
-  return wxMessageBox(msg, _("Save File"), style);
-}
-
-bool BookFrame::Save(editor::TextBuffer* buffer) {
-  bool saved = false;
-  if (buffer->new_created() || buffer->read_only()) {
-    saved = SaveBufferAs(buffer, this);
-  } else {
-    saved = SaveBuffer(buffer, this);
-  }
-  return saved;
-}
-
 void BookFrame::FileClose() {
   TextPage* text_page = text_book_->ActiveTextPage();
   if (text_page == NULL) {
@@ -394,7 +368,7 @@ void BookFrame::FileClose() {
     }
 
     if (code == wxYES) {
-      if (!Save(text_page->buffer())) {
+      if (!Save(text_page->buffer(), this)) {
         // Fail or cancel to save. Don't close.
         return;
       }
@@ -2345,7 +2319,7 @@ void BookFrame::RemoveAllPages(const TextPage* except_page) {
       }
 
       if (code == wxYES) {
-        if (!Save(text_page->buffer())) {
+        if (!Save(text_page->buffer(), this)) {
           // Fail or cancel to save.
           return;
         }

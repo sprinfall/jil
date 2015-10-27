@@ -4,6 +4,7 @@
 #include "editor/text_buffer.h"
 #include "app/i18n_strings.h"
 #include "app/id.h"
+#include "app/save.h"
 #include "app/text_page.h"
 #include "app/util.h"
 
@@ -69,6 +70,34 @@ std::vector<TextPage*> TextBook::StackTextPages() const {
   return text_pages;
 }
 
+void TextBook::HandleTabMouseMiddleUp(wxMouseEvent& evt) {
+  TabList::iterator it = TabByPos(evt.GetPosition().x);
+  if (it == tabs_.end()) {
+    return;
+  }
+
+  TextPage* text_page = AsTextPage((*it)->page);
+
+  // If the buffer is modified, ask for save.
+  if (text_page->buffer_modified()) {
+    int code = ConfirmSave(text_page);
+
+    if (code == wxCANCEL) {
+      return;  // Don't close.
+    }
+
+    if (code == wxYES) {
+      if (!Save(text_page->buffer(), this)) {
+        // Fail or cancel to save. Don't close.
+        return;
+      }
+    }
+  }
+
+  //RemovePage(text_page);
+  RemovePage(it);
+}
+
 void TextBook::HandleTabMouseLeftUp(wxMouseEvent& evt) {
   TabList::iterator it = TabByPos(evt.GetPosition().x);
   if (it == tabs_.end()) {
@@ -81,7 +110,7 @@ void TextBook::HandleTabMouseLeftUp(wxMouseEvent& evt) {
 
 void TextBook::HandleTabMouseRightUp(wxMouseEvent& evt) {
   // Add menu items according to the text page clicked.
-  // Note: If a menu item shouldn't exist in the context, don't create it.
+  // If a menu item shouldn't exist in the context, don't create it.
   wxMenu menu;
 
   BookPage* page = NULL;
