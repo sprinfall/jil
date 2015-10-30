@@ -218,6 +218,21 @@ TEST(TextBuffer, Notify) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+TEST(TextBuffer, UnpairedLeftKey) {
+  FtPlugin ft_plugin(FileType("cpp", "C++"));
+  ft_plugin.AddQuote(new Quote(kLexComment, L"//", L"", kQuoteEscapeEol));
+  ft_plugin.AddQuote(new Quote(kLexComment, L"/*", L"*/", kQuoteMultiLine));
+  ft_plugin.AddQuote(new Quote(Lex(kLexConstant, kLexConstantString), L"\"", L"\"", kQuoteEscapeEol));
+
+  TextBufferPtr buffer;
+  buffer.reset(TextBuffer::Create(0, &ft_plugin, kEncoding));
+
+  buffer->AppendLine(L"(    ");         // Line 2
+
+  TextPoint point(buffer->LineLength(2), 2);
+  EXPECT_EQ(TextPoint(0, 2), buffer->UnpairedLeftKey(point, L'(', L')', true));
+}
+
 //TEST(TextBuffer, SearchRegEx_CrossLine) {
 //  std::auto_ptr<TextBuffer> buffer(TextBuffer::Create(0, NULL, kEncoding));
 //

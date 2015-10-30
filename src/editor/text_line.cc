@@ -216,6 +216,28 @@ bool TextLine::IsEolEscaped(bool no_comment_or_string) const {
   return false;
 }
 
+Coord TextLine::UnpairedLeftKey(wchar_t l_key, wchar_t r_key, Coord off) const {
+  if (off == kInvCoord) {
+    off = Length();
+  }
+
+  int counter = 0;
+
+  for (Coord x = off - 1; x >= 0; --x) {
+    if (Char(x) == r_key && GetLex(x).IsEmpty()) {  // Embedded pair.
+      ++counter;
+    } else if (Char(x) == l_key && GetLex(x).IsEmpty()) {
+      if (counter == 0) {
+        return x;
+      } else {
+        --counter;
+      }
+    }
+  }
+
+  return kInvCoord;
+}
+
 Coord TextLine::FirstNonSpaceChar(Coord off) const {
   assert(off >= 0);
 

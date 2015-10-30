@@ -2,7 +2,19 @@ if(UNIX)
     add_definitions(-D_GLIBCXX_USE_WCHAR_T -std=c++11)
 endif()
 
+set(INDENT_HEADERS
+    indent.h
+    indent_cfg.h
+    indent_cpp.h
+    )
+set(INDENT_SRCS
+    indent.cc
+    indent_cfg.cc
+    indent_cpp.cc
+    )
+
 set(HEADERS
+    ${INDENT_HEADERS}
     binding.h
     buffer_listener.h
     compile_config.h
@@ -10,7 +22,6 @@ set(HEADERS
     action.h
     file_io.h
     ft_plugin.h
-    indent.h
     key.h
     lex.h
     line_nr_area.h
@@ -37,11 +48,11 @@ set(HEADERS
     )
 
 set(SRCS
+    ${INDENT_SRCS}
     binding.cc
     action.cc
     file_io.cc
     ft_plugin.cc
-    indent.cc
     key.cc
     lex.cc
     line_nr_area.cc
@@ -69,11 +80,12 @@ add_library(editor ${SRCS} ${HEADERS})
 if(JIL_ENABLE_UT)
     set(UT_SRCS
         action_unittest.cc
-        indent_unittest.cc
 	relite_unittest.cc
         text_line_unittest.cc
         text_buffer_unittest.cc
         text_range_unittest.cc
+        indent_cfg_unittest.cc
+        indent_cpp_unittest.cc
         )
     set(UT_TARGET_NAME editor_unittest)
     add_executable(${UT_TARGET_NAME} ${UT_SRCS})

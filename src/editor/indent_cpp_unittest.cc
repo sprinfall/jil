@@ -1,6 +1,6 @@
 #include <memory>
 #include "editor/ft_plugin.h"
-#include "editor/indent.h"
+#include "editor/indent_cpp.h"
 #include "editor/text_buffer.h"
 #include "editor/text_line.h"
 #include "editor/util.h"
@@ -61,29 +61,29 @@ protected:
 // Test helper function:
 //   bool cpp::IsLineMacro(const TextBuffer* buffer, Coord ln);
 
-TEST_F(IndentCppTest, IsLineMacro1) {
-  buffer_->AppendLine(L"#define MAX_SIZE 256");
-
-  EXPECT_TRUE(cpp::IsMacro(buffer_, 2));
-}
-
-TEST_F(IndentCppTest, IsLineMacro2) {
-  buffer_->AppendLine(L"#define MAX_SIZE \\");
-  buffer_->AppendLine(L"    256");
-
-  EXPECT_TRUE(cpp::IsMacro(buffer_, 2));
-  EXPECT_TRUE(cpp::IsMacro(buffer_, 3));
-}
-
-TEST_F(IndentCppTest, IsLineMacro3) {
-  buffer_->AppendLine(L"#define MAX_SIZE 256 \\");
-  buffer_->AppendLine(L"");
-  buffer_->AppendLine(L"   int i;");
-
-  EXPECT_TRUE(cpp::IsMacro(buffer_, 2));
-  EXPECT_TRUE(cpp::IsMacro(buffer_, 3));
-  EXPECT_FALSE(cpp::IsMacro(buffer_, 4));
-}
+//TEST_F(IndentCppTest, IsLineMacro1) {
+//  buffer_->AppendLine(L"#define MAX_SIZE 256");
+//
+//  EXPECT_TRUE(cpp::IsMacro(buffer_, 2));
+//}
+//
+//TEST_F(IndentCppTest, IsLineMacro2) {
+//  buffer_->AppendLine(L"#define MAX_SIZE \\");
+//  buffer_->AppendLine(L"    256");
+//
+//  EXPECT_TRUE(cpp::IsMacro(buffer_, 2));
+//  EXPECT_TRUE(cpp::IsMacro(buffer_, 3));
+//}
+//
+//TEST_F(IndentCppTest, IsLineMacro3) {
+//  buffer_->AppendLine(L"#define MAX_SIZE 256 \\");
+//  buffer_->AppendLine(L"");
+//  buffer_->AppendLine(L"   int i;");
+//
+//  EXPECT_TRUE(cpp::IsMacro(buffer_, 2));
+//  EXPECT_TRUE(cpp::IsMacro(buffer_, 3));
+//  EXPECT_FALSE(cpp::IsMacro(buffer_, 4));
+//}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -184,6 +184,7 @@ TEST_F(IndentCppTest, FunctionDef_MultiLineParams) {
   buffer_->AppendLine(L"void add(int a,");
   buffer_->AppendLine(L"         int b,");
   buffer_->AppendLine(L"         int c) {");
+  buffer_->AppendLine(L"    test;");
   buffer_->AppendLine(L"    return a + b + c;");
   buffer_->AppendLine(L"}");
 
@@ -191,12 +192,14 @@ TEST_F(IndentCppTest, FunctionDef_MultiLineParams) {
   ASSERT_LINE(4);
   ASSERT_LINE(5);
   ASSERT_LINE(6);
+  ASSERT_LINE(7);
 }
 
 TEST_F(IndentCppTest, FunctionDef_MultiLineParams2) {
   buffer_->AppendLine(L"\t void add(int a,");  // Note the '\t'.
   buffer_->AppendLine(L"              int b,");
   buffer_->AppendLine(L"              int c) {");
+  buffer_->AppendLine(L"         test;");
   buffer_->AppendLine(L"         return a + b + c;");
   buffer_->AppendLine(L"     }");
 
@@ -204,6 +207,7 @@ TEST_F(IndentCppTest, FunctionDef_MultiLineParams2) {
   ASSERT_LINE(4);
   ASSERT_LINE(5);
   ASSERT_LINE(6);
+  ASSERT_LINE(7);
 }
 
 TEST_F(IndentCppTest, FunctionDef_OneLineParams_NewLineBrace) {
@@ -295,12 +299,14 @@ TEST_F(IndentCppTest, For_MultiLine) {
   buffer_->AppendLine(L"     i < count;");
   buffer_->AppendLine(L"     ++i) {");
   buffer_->AppendLine(L"    sum += i;");
+  buffer_->AppendLine(L"    test;");
   buffer_->AppendLine(L"}");
 
   ASSERT_LINE(3);
-  //ASSERT_LINE(4);
-  //ASSERT_LINE(5);
-  //ASSERT_LINE(6);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
+  ASSERT_LINE(7);
 }
 
 TEST_F(IndentCppTest, While_NoBrace) {
@@ -577,7 +583,7 @@ TEST_F(IndentCppTest, Comments_3) {
   buffer_->AppendLine(L"comments");
   buffer_->AppendLine(L"comments*/");
   buffer_->AppendLine(L"return a,");
-
+   
   ASSERT_LINE(3);
   ASSERT_LINE(4);
   ASSERT_LINE(5);

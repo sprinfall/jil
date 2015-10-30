@@ -215,6 +215,9 @@ public:
   // Get extra indent option.
   OptionValue GetIndentOption(const std::string& key) const;
 
+  // Only used by unit test.
+  void SetIndentOption(const std::string& key, const OptionValue& value);
+
   //----------------------------------------------------------------------------
   // Buffer states
 
@@ -372,6 +375,9 @@ public:
 
   // Get the indent as spaces of the given line.
   Coord GetIndent(Coord ln) const;
+
+  // Get the indent as spaces of the previous non-empty line.
+  Coord GetPrevNonEmptyLineIndent(Coord ln, bool skip_comment) const;
 
   // Get the original indent string of the given line.
   std::wstring GetIndentStr(Coord ln) const;

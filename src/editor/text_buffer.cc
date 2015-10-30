@@ -26,25 +26,23 @@ namespace editor {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-namespace {
+static const TextPoint kInvPoint(-1, 0);
 
-const TextPoint kInvalidPoint(-1, 0);
-
-bool IsBracketL(wchar_t c) {
+static bool IsBracketL(wchar_t c) {
   return c == L'(' ||
          c == L'{' ||
          c == L'[' ||
          c == L'<';
 }
 
-bool IsBracketR(wchar_t c) {
+static bool IsBracketR(wchar_t c) {
   return c == L')' ||
          c == L'}' ||
          c == L']' ||
          c == L'>';
 }
 
-Bracket BracketL(wchar_t c) {
+static Bracket BracketL(wchar_t c) {
   switch (c) {
     case L'(':
       return kParenthesis;
@@ -59,7 +57,7 @@ Bracket BracketL(wchar_t c) {
   }
 }
 
-Bracket BracketR(wchar_t c) {
+static Bracket BracketR(wchar_t c) {
   switch (c) {
     case L')':
       return kParenthesis;
@@ -74,7 +72,7 @@ Bracket BracketR(wchar_t c) {
   }
 }
 
-bool IsBracketPair(wchar_t bracket_l, wchar_t bracket_r) {
+static bool IsBracketPair(wchar_t bracket_l, wchar_t bracket_r) {
   if (bracket_l == L'(') {
     return bracket_r == L')';
   }
@@ -119,7 +117,7 @@ static bool CheckBracket(wchar_t c,
   return false;
 }
 
-FileFormat CheckEol(const std::wstring& text, size_t* first_line_size) {
+static FileFormat CheckEol(const std::wstring& text, size_t* first_line_size) {
   const size_t text_size = text.size();
 
   FileFormat eol = FF_NONE;
@@ -157,7 +155,7 @@ while (SplitLines(text, i, &count, &step)) {
   i += step;
 }
 */
-bool SplitLines(const std::wstring& text, size_t i, size_t* count, size_t* step) {
+static bool SplitLines(const std::wstring& text, size_t i, size_t* count, size_t* step) {
   const size_t text_size = text.size();
   if (i >= text_size) {
     return false;
@@ -181,10 +179,7 @@ bool SplitLines(const std::wstring& text, size_t i, size_t* count, size_t* step)
   }
   return true;
 }
-
 #endif  // JIL_SPLIT_LINES_WITH_FUNC
-
-}  // namespace
 
 static std::wstring AddRegexWordBoundary(const std::wstring& str) {
   const std::wstring kBoundary = L"\\b";
@@ -636,12 +631,25 @@ void TextBuffer::SetFtPlugin(FtPlugin* ft_plugin) {
 //------------------------------------------------------------------------------
 
 OptionValue TextBuffer::GetIndentOption(const std::string& key) const {
-  for (size_t i = 0; i < options_.text.indent_options.size(); ++i) {
-    if (key == options_.text.indent_options[i].key) {
-      options_.text.indent_options[i].value;
+  const OptionTable& indent_options = options_.text.indent_options;
+  for (size_t i = 0; i < indent_options.size(); ++i) {
+    if (key == indent_options[i].key) {
+      return indent_options[i].value;
     }
   }
   return OptionValue();
+}
+
+void TextBuffer::SetIndentOption(const std::string& key, const OptionValue& value) {
+  OptionTable& indent_options = options_.text.indent_options;
+  for (size_t i = 0; i < indent_options.size(); ++i) {
+    if (key == indent_options[i].key) {
+      indent_options[i].value = value;
+      return;
+    }
+  }
+  OptionPair op = { key, value };
+  indent_options.push_back(op);
 }
 
 //------------------------------------------------------------------------------
@@ -1235,6 +1243,14 @@ Coord TextBuffer::GetIndent(Coord ln) const {
   return Line(ln)->GetIndent(options_.text.tab_stop);
 }
 
+Coord TextBuffer::GetPrevNonEmptyLineIndent(Coord ln, bool skip_comment) const {
+  Coord prev_ln = PrevNonEmptyLine(ln, true);
+  if (prev_ln != 0) {
+    return GetIndent(prev_ln);
+  }
+  return 0;
+}
+
 std::wstring TextBuffer::GetIndentStr(Coord ln) const {
   return Line(ln)->GetIndentStr();
 }
@@ -1291,7 +1307,7 @@ Coord TextBuffer::GetExpectedIndent(Coord ln) const {
 //    }
 //  }*/
 //
-//  return kInvalidPoint;
+//  return kInvPoint;
 //}
 
 TextRange TextBuffer::BracketPairOuterRange(const TextPoint& point) const {
@@ -1430,12 +1446,12 @@ TextPoint TextBuffer::UnpairedLeftKey(const TextPoint& point,
     }
   }
 
-  return kInvalidPoint;
+  return kInvPoint;
 }
 
 // TODO
 TextPoint TextBuffer::UnpairedRightKey(const TextPoint& point, wchar_t l_key, wchar_t r_key) const {
-  return kInvalidPoint;
+  return kInvPoint;
 }
 
 //----------------------------------------------------------------------------
@@ -2196,7 +2212,7 @@ TextPoint TextBuffer::UnmatchedBracketL(const TextPoint& point) const {
     }
   }
 
-  return kInvalidPoint;
+  return kInvPoint;
 }
 
 TextPoint TextBuffer::UnmatchedBracketR(const TextPoint& point) const {
@@ -2223,7 +2239,7 @@ TextPoint TextBuffer::UnmatchedBracketR(const TextPoint& point) const {
     }
   }
 
-  return kInvalidPoint;
+  return kInvPoint;
 }
 
 //------------------------------------------------------------------------------

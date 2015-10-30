@@ -277,6 +277,14 @@ TEST(TextLine, EndWith_Char) {
   EXPECT_FALSE(line.EndWith(L'}', false,  false));
 }
 
+TEST(TextLine, UnpairedLeftKey) {
+  TextLine line(0, L"(    ");
+
+  EXPECT_EQ(0, line.UnpairedLeftKey(L'(', L')'));
+  EXPECT_EQ(0, line.UnpairedLeftKey(L'(', L')', line.Length()));
+  EXPECT_EQ(0, line.UnpairedLeftKey(L'(', L')', 1));
+}
+
 TEST(TextLine, RangeLexElements) {
   TextLine line(0, L"int i = 0;");
   line.AddLexElem(0, 3, Lex(kLexType));

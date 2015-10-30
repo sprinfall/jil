@@ -101,6 +101,8 @@ public:
   // Return true if the last char is an unescaped back slash.
   bool IsEolEscaped(bool no_comment_or_string) const;
 
+  Coord UnpairedLeftKey(wchar_t l_key, wchar_t r_key, Coord off = kInvCoord) const;
+
   //----------------------------------------------------------------------------
 
   void InsertChar(Coord off, wchar_t c);

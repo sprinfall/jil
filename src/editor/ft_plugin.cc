@@ -3,6 +3,8 @@
 #include <algorithm>
 #endif
 #include "editor/indent.h"
+#include "editor/indent_cfg.h"
+#include "editor/indent_cpp.h"
 #include "editor/lex.h"
 
 namespace jil {
