@@ -69,6 +69,27 @@ public:
     }
   }
 
+  template <typename T>
+  T As() const {
+    try {
+      return boost::any_cast<T>(data_);
+    } catch (const boost::bad_any_cast&) {
+      return T();
+    }
+  }
+
+  int AsInt() const {
+    return As<int>();
+  }
+
+  std::string AsString() const {
+    return As<std::string>();
+  }
+
+  bool AsBool() const {
+    return As<bool>();
+  }
+
   wxString ToString() const;
 
   bool Parse(const wxString& str);

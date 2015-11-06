@@ -8,6 +8,10 @@
 
 #include "boost/any.hpp"
 
+extern "C" {
+#include "lua.h"
+}
+
 #include "editor/compile_config.h"
 #include "editor/text_point.h"
 #include "editor/text_range.h"
@@ -57,6 +61,9 @@ public:
 
   wchar_t Char(Coord off) const;
 
+  // Lua wrapper for: wchar_t Char(Coord off) const
+  bool Lua_IsChar(Coord off, char c) const;
+
   std::wstring Sub(Coord off, Coord count) const;
 
   std::wstring Sub(const CharRange& char_range) const {
@@ -89,6 +96,14 @@ public:
   // NOTE: ignore_spaces will be ignored if str[0] is an empty space.
   bool StartWith(const std::wstring& str, bool ignore_spaces, Coord* off = NULL) const;
 
+  // Lua CFunction version of StartWith.
+  // The parameters are different from the normal StartWith. It accepts
+  // multiple strings, and the output parameter 'off' is returned as a
+  // second value.
+  // Call it in Lua like this:
+  //   local ok, off = startWith(true, "str1", "str2", ...)
+  int Lua_StartWith(lua_State* L);
+
   // NOTE: ignore_spaces will be ignored if c is an empty space.
   bool EndWith(wchar_t c, bool ignore_comments, bool ignore_spaces, Coord* off = NULL) const;
 
@@ -98,10 +113,16 @@ public:
                bool ignore_spaces,
                Coord* off = NULL) const;
 
+  // Lua CFunction wrapper of:
+  //   bool EndWith(const std::wstring&, bool, bool, Coord*).
+  int Lua_EndWith(lua_State* L);
+
   // Return true if the last char is an unescaped back slash.
   bool IsEolEscaped(bool no_comment_or_string) const;
 
   Coord UnpairedLeftKey(wchar_t l_key, wchar_t r_key, Coord off = kInvCoord) const;
+
+  Coord Lua_getUnpairedLeftKey(char l_key, char r_key, Coord off) const;
 
   //----------------------------------------------------------------------------
 

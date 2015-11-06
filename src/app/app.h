@@ -21,6 +21,12 @@
 #include "app/option.h"
 #include "app/session.h"
 
+struct lua_State;
+
+namespace luabridge {
+class LuaRef;
+}
+
 class wxSingleInstanceChecker;
 
 // App name used for paths, config, and other places the user doesn't see.
@@ -194,6 +200,8 @@ private:
 
   // Status fields for status line.
   std::vector<editor::StatusBar::FieldInfo> status_fields_;
+
+  lua_State* lua_state_;
 };
 
 DECLARE_APP(App)

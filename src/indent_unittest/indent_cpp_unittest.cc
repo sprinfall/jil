@@ -1,9 +1,15 @@
 #include <memory>
+
+extern "C" {
+#include "lualib.h"
+}
+#include "editor/lua_proxy.h"
+
 #include "editor/ft_plugin.h"
-#include "editor/indent.h"
 #include "editor/text_buffer.h"
 #include "editor/text_line.h"
 #include "editor/util.h"
+
 #include "gtest/gtest.h"
 
 using namespace jil::editor;
@@ -15,7 +21,11 @@ static const Encoding kEncoding = EncodingFromName(ENCODING_NAME_ISO_8859_1);
 class IndentCppTest : public testing::Test {
 protected:
   virtual void SetUp() {
-    ft_plugin_ = new FtPlugin(FileType(wxT("cpp"), wxT("C++")));
+    lua_state_ = luaL_newstate();
+    luaL_openlibs(lua_state_);
+    InitLua(lua_state_);
+
+    ft_plugin_ = new FtPlugin(FileType(wxT("cpp"), wxT("C++")), lua_state_);
 
     TextOptions text_options;
     text_options.expand_tab = true;
@@ -39,50 +49,169 @@ protected:
     Quote* quote_char = new Quote(Lex(kLexConstant, kLexConstantChar), L"'", L"'", 0);
     ft_plugin_->AddQuote(quote_char);
 
-    buffer_ = TextBuffer::Create(0, ft_plugin_, kEncoding);
+    // TODO
+    // jil/build/src/editor
+    //wxString cwd = wxGetCwd();
+    wxString ftplugin_dir = "../../../data/jilfiles/ftplugin/";
+    wxString indent_file = ftplugin_dir + wxT("cpp/indent.lua");
 
-    indent_cpp_ = IndentCpp;
+    if (LoadLuaFile(lua_state_, indent_file)) {
+      luabridge::LuaRef indent_func = GetLuaValue(lua_state_, "indent");
+      ft_plugin_->set_indent_func(indent_func);
+    }
+
+    buffer_ = TextBuffer::Create(0, ft_plugin_, kEncoding);
   }
 
   virtual void TearDown() {
     delete buffer_;
     delete ft_plugin_;
+    lua_close(lua_state_);
   }
 
+  Coord GetExpectedIndent(Coord ln) {
+    const luabridge::LuaRef& indent_func = ft_plugin_->indent_func();
+    if (indent_func.isNil() || !indent_func.isFunction()) {
+      return 0;
+    }
+    return indent_func(buffer_, ln);
+  }
+
+  lua_State* lua_state_;
   FtPlugin* ft_plugin_;
   TextBuffer* buffer_;
-  IndentFunc indent_cpp_;
 };
 
 #define ASSERT_LINE(ln)\
-  EXPECT_EQ(buffer_->GetIndent(ln), indent_cpp_(buffer_, ln));
+  EXPECT_EQ(buffer_->GetIndent(ln), GetExpectedIndent(ln));
 
 ////////////////////////////////////////////////////////////////////////////////
-// Test helper function:
-//   bool cpp::IsLineMacro(const TextBuffer* buffer, Coord ln);
 
-TEST_F(IndentCppTest, IsLineMacro1) {
+TEST_F(IndentCppTest, IsMacroHead) {
+  luabridge::LuaRef is_macro_head = GetLuaValue(lua_state_, "isMacroHead");
+  if (is_macro_head.isNil() || !is_macro_head.isFunction()) {
+    EXPECT_TRUE(false);
+    return;
+  }
+
   buffer_->AppendLine(L"#define MAX_SIZE 256");
+  buffer_->AppendLine(L"");
+  buffer_->AppendLine(L"    ");
+  buffer_->AppendLine(L"int i = 1;");
 
-  EXPECT_TRUE(cpp::IsMacro(buffer_, 2));
+  EXPECT_TRUE (is_macro_head(buffer_->Line(2)).cast<bool>());
+  EXPECT_FALSE(is_macro_head(buffer_->Line(3)).cast<bool>());
+  EXPECT_FALSE(is_macro_head(buffer_->Line(4)).cast<bool>());
+  EXPECT_FALSE(is_macro_head(buffer_->Line(5)).cast<bool>());
 }
 
-TEST_F(IndentCppTest, IsLineMacro2) {
+TEST_F(IndentCppTest, IsMacroBody) {
+  luabridge::LuaRef is_macro_body = GetLuaValue(lua_state_, "isMacroBody");
+  if (is_macro_body.isNil() || !is_macro_body.isFunction()) {
+    EXPECT_TRUE(false);
+    return;
+  }
+
   buffer_->AppendLine(L"#define MAX_SIZE \\");
   buffer_->AppendLine(L"    256");
 
-  EXPECT_TRUE(cpp::IsMacro(buffer_, 2));
-  EXPECT_TRUE(cpp::IsMacro(buffer_, 3));
+  EXPECT_FALSE(is_macro_body(buffer_, 2).cast<bool>());
+  EXPECT_TRUE(is_macro_body(buffer_, 3).cast<bool>());
 }
 
-TEST_F(IndentCppTest, IsLineMacro3) {
-  buffer_->AppendLine(L"#define MAX_SIZE 256 \\");
-  buffer_->AppendLine(L"");
-  buffer_->AppendLine(L"   int i;");
+TEST_F(IndentCppTest, IsMacro) {
+  luabridge::LuaRef is_macro = GetLuaValue(lua_state_, "isMacro");
+  if (is_macro.isNil() || !is_macro.isFunction()) {
+    EXPECT_TRUE(false);
+    return;
+  }
 
-  EXPECT_TRUE(cpp::IsMacro(buffer_, 2));
-  EXPECT_TRUE(cpp::IsMacro(buffer_, 3));
-  EXPECT_FALSE(cpp::IsMacro(buffer_, 4));
+  buffer_->AppendLine(L"#define MAX_SIZE \\");
+  buffer_->AppendLine(L"    256");
+  buffer_->AppendLine(L"int i;");
+
+  EXPECT_TRUE(is_macro(buffer_, 2).cast<bool>());
+  EXPECT_TRUE(is_macro(buffer_, 3).cast<bool>());
+  EXPECT_FALSE(is_macro(buffer_, 4).cast<bool>());
+}
+
+TEST_F(IndentCppTest, GetPrevLine) {
+  // getPrevLine(buffer, ln, skip_comment, skip_macro)
+  luabridge::LuaRef get_prev_line = GetLuaValue(lua_state_, "getPrevLine");
+  if (get_prev_line.isNil() || !get_prev_line.isFunction()) {
+    EXPECT_TRUE(false);
+    return;
+  }
+
+  buffer_->AppendLine(L"    int j;");           // 2
+  buffer_->AppendLine(L"// comments");          // 3: Macro
+  buffer_->AppendLine(L"#define MAX_SIZE \\");  // 4: Macro
+  buffer_->AppendLine(L"    256");              // 5: Macro
+  buffer_->AppendLine(L"    ");                 // 6: Empty line
+  buffer_->AppendLine(L"int i;");               // 7
+
+  EXPECT_EQ(0, get_prev_line(buffer_, 2, false, false).cast<int>());
+  EXPECT_EQ(2, get_prev_line(buffer_, 3, false, false).cast<int>());
+  EXPECT_EQ(2, get_prev_line(buffer_, 3, true, true).cast<int>());
+  EXPECT_EQ(3, get_prev_line(buffer_, 4, false, false).cast<int>());
+  EXPECT_EQ(2, get_prev_line(buffer_, 4, true, false).cast<int>());
+  EXPECT_EQ(4, get_prev_line(buffer_, 5, false, false).cast<int>());
+  EXPECT_EQ(4, get_prev_line(buffer_, 5, true, false).cast<int>());
+  EXPECT_EQ(2, get_prev_line(buffer_, 5, true, true).cast<int>());
+  EXPECT_EQ(5, get_prev_line(buffer_, 6, false, false).cast<int>());
+  EXPECT_EQ(5, get_prev_line(buffer_, 6, true, false).cast<int>());
+  EXPECT_EQ(3, get_prev_line(buffer_, 6, false, true).cast<int>());
+  EXPECT_EQ(2, get_prev_line(buffer_, 6, true, true).cast<int>());
+}
+
+TEST_F(IndentCppTest, GetPrevLineIndent) {
+  // getPrevLineIndent(buffer, ln, skip_comment, skip_macro)
+  luabridge::LuaRef get_prev_line_indent = GetLuaValue(lua_state_, "getPrevLineIndent");
+  if (get_prev_line_indent.isNil() || !get_prev_line_indent.isFunction()) {
+    EXPECT_TRUE(false);
+    return;
+  }
+
+  buffer_->AppendLine(L"    int j;");           // 2
+  buffer_->AppendLine(L"  // comments");          // 3: Macro
+  buffer_->AppendLine(L" #define MAX_SIZE \\");  // 4: Macro
+  buffer_->AppendLine(L"      256");              // 5: Macro
+  buffer_->AppendLine(L"    ");                 // 6: Empty line
+  buffer_->AppendLine(L"int i;");               // 7
+
+  EXPECT_EQ(0, get_prev_line_indent(buffer_, 2, false, false).cast<int>());
+  EXPECT_EQ(4, get_prev_line_indent(buffer_, 3, false, false).cast<int>());
+  EXPECT_EQ(4, get_prev_line_indent(buffer_, 3, true, true).cast<int>());
+  EXPECT_EQ(2, get_prev_line_indent(buffer_, 4, false, false).cast<int>());
+  EXPECT_EQ(4, get_prev_line_indent(buffer_, 4, true, false).cast<int>());
+  EXPECT_EQ(1, get_prev_line_indent(buffer_, 5, false, false).cast<int>());
+  EXPECT_EQ(1, get_prev_line_indent(buffer_, 5, true, false).cast<int>());
+  EXPECT_EQ(4, get_prev_line_indent(buffer_, 5, true, true).cast<int>());
+  EXPECT_EQ(6, get_prev_line_indent(buffer_, 6, false, false).cast<int>());
+  EXPECT_EQ(6, get_prev_line_indent(buffer_, 6, true, false).cast<int>());
+  EXPECT_EQ(2, get_prev_line_indent(buffer_, 6, false, true).cast<int>());
+  EXPECT_EQ(4, get_prev_line_indent(buffer_, 6, true, true).cast<int>());
+}
+
+TEST_F(IndentCppTest, GetPrevLineStartWith) {
+  luabridge::LuaRef get_prev_line_start_with = GetLuaValue(lua_state_, "getPrevLineStartWith");
+  if (get_prev_line_start_with.isNil() || !get_prev_line_start_with.isFunction()) {
+    EXPECT_TRUE(false);
+    return;
+  }
+
+  buffer_->AppendLine(L"public:");
+  buffer_->AppendLine(L"protected:");
+  buffer_->AppendLine(L"private:");
+  buffer_->AppendLine(L"   ");
+
+  // NOTE: Use const char* instead of const wchar_t*.
+  EXPECT_EQ(2, get_prev_line_start_with(buffer_, 5, "public").cast<int>());
+  EXPECT_EQ(3, get_prev_line_start_with(buffer_, 5, "protected").cast<int>());
+  EXPECT_EQ(4, get_prev_line_start_with(buffer_, 5, "private").cast<int>());
+  EXPECT_EQ(4, get_prev_line_start_with(buffer_, 5, "public", "protected", "private").cast<int>());
+  EXPECT_EQ(4, get_prev_line_start_with(buffer_, 5, "protected", "public", "private").cast<int>());
+  EXPECT_EQ(4, get_prev_line_start_with(buffer_, 5, "private", "public", "protected").cast<int>());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -184,6 +313,7 @@ TEST_F(IndentCppTest, FunctionDef_MultiLineParams) {
   buffer_->AppendLine(L"void add(int a,");
   buffer_->AppendLine(L"         int b,");
   buffer_->AppendLine(L"         int c) {");
+  buffer_->AppendLine(L"    test;");
   buffer_->AppendLine(L"    return a + b + c;");
   buffer_->AppendLine(L"}");
 
@@ -191,12 +321,14 @@ TEST_F(IndentCppTest, FunctionDef_MultiLineParams) {
   ASSERT_LINE(4);
   ASSERT_LINE(5);
   ASSERT_LINE(6);
+  ASSERT_LINE(7);
 }
 
 TEST_F(IndentCppTest, FunctionDef_MultiLineParams2) {
   buffer_->AppendLine(L"\t void add(int a,");  // Note the '\t'.
   buffer_->AppendLine(L"              int b,");
   buffer_->AppendLine(L"              int c) {");
+  buffer_->AppendLine(L"         test;");
   buffer_->AppendLine(L"         return a + b + c;");
   buffer_->AppendLine(L"     }");
 
@@ -204,6 +336,7 @@ TEST_F(IndentCppTest, FunctionDef_MultiLineParams2) {
   ASSERT_LINE(4);
   ASSERT_LINE(5);
   ASSERT_LINE(6);
+  ASSERT_LINE(7);
 }
 
 TEST_F(IndentCppTest, FunctionDef_OneLineParams_NewLineBrace) {
@@ -295,12 +428,14 @@ TEST_F(IndentCppTest, For_MultiLine) {
   buffer_->AppendLine(L"     i < count;");
   buffer_->AppendLine(L"     ++i) {");
   buffer_->AppendLine(L"    sum += i;");
+  buffer_->AppendLine(L"    test;");
   buffer_->AppendLine(L"}");
 
   ASSERT_LINE(3);
-  //ASSERT_LINE(4);
-  //ASSERT_LINE(5);
-  //ASSERT_LINE(6);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
+  ASSERT_LINE(7);
 }
 
 TEST_F(IndentCppTest, While_NoBrace) {
@@ -577,7 +712,7 @@ TEST_F(IndentCppTest, Comments_3) {
   buffer_->AppendLine(L"comments");
   buffer_->AppendLine(L"comments*/");
   buffer_->AppendLine(L"return a,");
-
+   
   ASSERT_LINE(3);
   ASSERT_LINE(4);
   ASSERT_LINE(5);

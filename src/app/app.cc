@@ -8,6 +8,13 @@
 #pragma comment(lib, "vld")
 #endif  // __WXMSW__
 
+extern "C" {
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
+}
+#include "LuaBridge/LuaBridge.h"
+
 #include "wx/cmdline.h"
 #include "wx/dir.h"
 #include "wx/filename.h"
@@ -23,11 +30,9 @@
 
 #include "ui/color.h"
 
-#include "editor/file_io.h"
 #include "editor/ft_plugin.h"
+#include "editor/lua_proxy.h"
 #include "editor/style.h"
-#include "editor/text_buffer.h"
-#include "editor/text_line.h"
 #include "editor/text_window.h"
 #include "editor/util.h"
 
@@ -53,26 +58,27 @@ namespace jil {
 
 ////////////////////////////////////////////////////////////////////////////////
  
-static const wxChar kDotChar = wxT('.');
+static const wxChar kDotChar            = wxT('.');
 
-static const wxString kTxt = wxT("txt");
-static const wxString kCfgExt = wxT(".cfg");
+static const wxString kTxt              = wxT("txt");
+static const wxString kCfgExt           = wxT(".cfg");
 
-static const wxString kFtPluginDir = wxT("ftplugin");
-static const wxString kThemeDir = wxT("theme");
+static const wxString kFtPluginDir      = wxT("ftplugin");
+static const wxString kThemeDir         = wxT("theme");
 
-static const wxString kLexFile = wxT("lex.cfg");
-static const wxString kOptionsFile = wxT("options.cfg");
+static const wxString kLexFile          = wxT("lex.cfg");
+static const wxString kOptionsFile      = wxT("options.cfg");
+static const wxString kIndentFile       = wxT("indent.lua");
 static const wxString kStatusFieldsFile = wxT("status_fields.cfg");
-static const wxString kSessionFile = wxT("session.cfg");
-static const wxString kBindingFile = wxT("binding.cfg");
-static const wxString kFileTypesFile = wxT("file_types.cfg");
+static const wxString kSessionFile      = wxT("session.cfg");
+static const wxString kBindingFile      = wxT("binding.cfg");
+static const wxString kFileTypesFile    = wxT("file_types.cfg");
 
-static const wxString kSpaceStr = wxT(" ");
+static const wxString kSpaceStr         = wxT(" ");
 
 // For Unix, this name is used to create the domain socket.
-static const wxString kIpcService = wxT("jil_ipc_service");
-static const wxString kIpcTopic = wxT("jil_ipc_topic");
+static const wxString kIpcService       = wxT("jil_ipc_service");
+static const wxString kIpcTopic         = wxT("jil_ipc_topic");
 
 ////////////////////////////////////////////////////////////////////////////////
 // Text functions.
@@ -273,6 +279,8 @@ App::App()
     , log_file_(NULL)
     , style_(new editor::Style)
     , binding_(new editor::Binding) {
+  lua_state_ = luaL_newstate();
+  luaL_openlibs(lua_state_);
 }
 
 // If OnInit() returns false, OnExit() won't be called.
@@ -288,6 +296,8 @@ App::~App() {
   wxDELETE(server_);
   wxDELETE(instance_checker_);
 #endif  // JIL_SINGLE_INSTANCE
+
+  lua_close(lua_state_);
 }
 
 bool App::OnInit() {
@@ -378,6 +388,8 @@ bool App::OnInit() {
   // Load session.
   session_.Load(user_data_dir + kSessionFile);
 
+  editor::InitLua(lua_state_);
+
   // Create book frame.
   BookFrame* book_frame = new BookFrame(&options_, &editor_options_, &session_);
   book_frame->set_theme(theme_);
@@ -446,7 +458,7 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
     }
   }
 
-  editor::FtPlugin* ft_plugin = new editor::FtPlugin(ft);
+  editor::FtPlugin* ft_plugin = new editor::FtPlugin(ft, lua_state_);
 
   wxString ft_plugin_dir = ResourceDir(kFtPluginDir, ft_plugin->id());
   wxString ft_plugin_user_dir = UserDataDir(kFtPluginDir, ft_plugin->id());
@@ -480,6 +492,14 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
   ft_editor_options.view.max_font_size = kMaxFontSize;
 
   ft_plugin->set_options(ft_editor_options);
+
+  //----------------------------------------------------------------------------
+  // Indent
+
+  if (editor::LoadLuaFile(lua_state_, ft_plugin_dir + kIndentFile)) {
+    luabridge::LuaRef indent_func = editor::GetLuaValue(lua_state_, "indent");
+    ft_plugin->set_indent_func(indent_func);
+  }
 
   ft_plugins_.push_back(ft_plugin);
   return ft_plugin;

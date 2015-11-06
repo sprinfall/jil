@@ -95,6 +95,7 @@ set(EXTRA_LIBS
     editor
     pugixml
     uchardet
+    lua
     )
 
 if(APPLE)

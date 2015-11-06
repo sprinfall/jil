@@ -2,19 +2,7 @@ if(UNIX)
     add_definitions(-D_GLIBCXX_USE_WCHAR_T -std=c++11)
 endif()
 
-set(INDENT_HEADERS
-    indent.h
-    indent_cfg.h
-    indent_cpp.h
-    )
-set(INDENT_SRCS
-    indent.cc
-    indent_cfg.cc
-    indent_cpp.cc
-    )
-
 set(HEADERS
-    ${INDENT_HEADERS}
     binding.h
     buffer_listener.h
     compile_config.h
@@ -25,6 +13,7 @@ set(HEADERS
     key.h
     lex.h
     line_nr_area.h
+    lua_proxy.h
     option.h
     relite.h
     renderer.h
@@ -48,7 +37,6 @@ set(HEADERS
     )
 
 set(SRCS
-    ${INDENT_SRCS}
     binding.cc
     action.cc
     file_io.cc
@@ -56,6 +44,7 @@ set(SRCS
     key.cc
     lex.cc
     line_nr_area.cc
+    lua_proxy.cc
     option.cc
     relite.cc
     renderer.cc
@@ -84,12 +73,10 @@ if(JIL_ENABLE_UT)
         text_line_unittest.cc
         text_buffer_unittest.cc
         text_range_unittest.cc
-        indent_cfg_unittest.cc
-        indent_cpp_unittest.cc
         )
     set(UT_TARGET_NAME editor_unittest)
     add_executable(${UT_TARGET_NAME} ${UT_SRCS})
-    target_link_libraries(${UT_TARGET_NAME} ${wxWidgets_LIBRARIES} base editor uchardet gtest)
+    target_link_libraries(${UT_TARGET_NAME} ${wxWidgets_LIBRARIES} base editor uchardet gtest lua)
 
     add_test(${UT_TARGET_NAME} ${UT_TARGET_NAME})
 endif()

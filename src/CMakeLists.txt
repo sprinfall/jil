@@ -1,11 +1,13 @@
 if(JIL_ENABLE_UT)
     add_subdirectory(gtest)
+    add_subdirectory(indent_unittest)
 endif()
 
 if(NOT APPLE)
     add_subdirectory(libconfig)
 endif()
 
+add_subdirectory(lua)
 add_subdirectory(pugixml)
 add_subdirectory(uchardet)
 add_subdirectory(base)

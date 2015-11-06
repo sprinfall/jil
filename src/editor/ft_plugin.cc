@@ -2,9 +2,6 @@
 #if !JIL_MATCH_WORD_WITH_HASH
 #include <algorithm>
 #endif
-#include "editor/indent.h"
-#include "editor/indent_cfg.h"
-#include "editor/indent_cpp.h"
 #include "editor/lex.h"
 
 namespace jil {
@@ -28,14 +25,12 @@ inline bool operator<=(const WordLexPair& lhs, const WordLexPair& rhs) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-FtPlugin::IndentFuncMap FtPlugin::indent_funcs_;
-
-FtPlugin::FtPlugin(const FileType& file_type)
+FtPlugin::FtPlugin(const FileType& file_type, lua_State* lua_state)
     : file_type_(file_type)
+    , lua_state_(lua_state)
     , ignore_case_(false)
-    , indent_func_(NULL) {
+    , indent_func_(lua_state_) {
   wcsncmp_ = wcsncmp;
-  InitIndentFunc();
 }
 
 FtPlugin::~FtPlugin() {
@@ -285,33 +280,6 @@ bool FtPlugin::MatchIndentKey(const std::wstring& str,
   }
 
   return false;
-}
-
-void FtPlugin::InitIndentFunc() {
-  if (indent_funcs_.empty()) {
-    indent_funcs_[wxT("cfg")] = IndentCfg;
-    indent_funcs_[wxT("c")] = IndentCpp;
-    indent_funcs_[wxT("cpp")] = IndentCpp;
-    indent_funcs_[wxT("csharp")] = IndentCSharp;
-    indent_funcs_[wxT("css")] = IndentCss;
-    indent_funcs_[wxT("cue")] = IndentCue;
-    indent_funcs_[wxT("go")] = IndentGo;
-    indent_funcs_[wxT("html")] = IndentHtml;
-    indent_funcs_[wxT("java")] = IndentJava;
-    indent_funcs_[wxT("javascript")] = IndentJavaScript;
-    indent_funcs_[wxT("python")] = IndentPython;
-    indent_funcs_[wxT("ruby")] = IndentRuby;
-    indent_funcs_[wxT("txt")] = IndentTxt;
-    indent_funcs_[wxT("vb")] = IndentVB;
-    indent_funcs_[wxT("xml")] = IndentXml;
-  }
-
-  IndentFuncMap::iterator it = indent_funcs_.find(file_type_.id);
-  if (it != indent_funcs_.end()) {
-    indent_func_ = it->second;
-  } else {
-    indent_func_ = IndentTxt;
-  }
 }
 
 }  // namespace editor

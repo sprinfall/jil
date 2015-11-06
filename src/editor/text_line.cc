@@ -1,4 +1,10 @@
 #include "editor/text_line.h"
+
+extern "C" {
+#include "lauxlib.h"
+}
+#include "LuaBridge/LuaBridge.h"
+
 #include "editor/compile_config.h"
 #include "editor/text_extent.h"
 #include "editor/defs.h"
@@ -33,6 +39,10 @@ wchar_t TextLine::Char(Coord off) const {
     return LF;
   }
   return data_[off];
+}
+
+bool TextLine::Lua_IsChar(Coord off, char c) const {
+  return (c == Char(off));
 }
 
 std::wstring TextLine::Sub(Coord off, Coord count) const {
@@ -103,6 +113,33 @@ bool TextLine::StartWith(const std::wstring& str, bool ignore_spaces, Coord* off
   }
 
   return false;
+}
+
+int TextLine::Lua_StartWith(lua_State* L) {
+  int n = lua_gettop(L);  // Number of arguments
+
+  // TODO: Use lua_type(L, idx) instead.
+  if (n < 3 || !lua_isboolean(L, 2) || !lua_isstring(L, 3)) {
+    luaL_error(L, "incorrect argument");
+  }
+
+  bool ignore_spaces = lua_toboolean(L, 2) != 0;
+
+  bool result = false;
+  int off = 0;
+
+  for (int i = 3; i <= n; ++i) {
+    const char* cstr = lua_tostring(L, i);
+    std::wstring str(cstr, cstr + strlen(cstr));
+    if (StartWith(str, ignore_spaces, &off)) {
+      result = true;
+      break;
+    }
+  }
+
+  luabridge::push(L, result);
+  luabridge::push(L, off);
+  return 2;
 }
 
 bool TextLine::EndWith(wchar_t c, bool ignore_comments, bool ignore_spaces, Coord* off) const {
@@ -200,6 +237,30 @@ bool TextLine::EndWith(const std::wstring& str,
   return false;
 }
 
+int TextLine::Lua_EndWith(lua_State* L) {
+  int n = lua_gettop(L);  // Number of arguments
+
+  if (n != 4 ||
+      !lua_isstring(L, 2) ||
+      !lua_isboolean(L, 3) ||
+      !lua_isboolean(L, 4)) {
+    luaL_error(L, "incorrect argument");
+  }
+
+  const char* cstr = lua_tostring(L, 2);
+  std::wstring str(cstr, cstr + strlen(cstr));
+
+  bool ignore_comments = lua_toboolean(L, 3) != 0;
+  bool ignore_spaces = lua_toboolean(L, 4) != 0;
+
+  int off = 0;
+  bool result = EndWith(str, ignore_comments, ignore_spaces, &off);
+
+  luabridge::push(L, result);
+  luabridge::push(L, off);
+  return 2;
+}
+
 bool TextLine::IsEolEscaped(bool no_comment_or_string) const {
   if (data_.empty()) {
     return false;
@@ -236,6 +297,10 @@ Coord TextLine::UnpairedLeftKey(wchar_t l_key, wchar_t r_key, Coord off) const {
   }
 
   return kInvCoord;
+}
+
+Coord TextLine::Lua_getUnpairedLeftKey(char l_key, char r_key, Coord off) const {
+  return UnpairedLeftKey((wchar_t)l_key, (wchar_t)r_key, off);
 }
 
 Coord TextLine::FirstNonSpaceChar(Coord off) const {

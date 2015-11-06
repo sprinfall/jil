@@ -212,6 +212,14 @@ public:
     return options_.view;
   }
 
+  int tab_stop() const {
+    return options_.text.tab_stop;
+  }
+
+  int shift_width() const {
+    return options_.text.shift_width;
+  }
+
   // Get extra indent option.
   OptionValue GetIndentOption(const std::string& key) const;
 
@@ -377,7 +385,7 @@ public:
   Coord GetIndent(Coord ln) const;
 
   // Get the indent as spaces of the previous non-empty line.
-  Coord GetPrevNonEmptyLineIndent(Coord ln, bool skip_comment) const;
+  Coord GetPrevLineIndent(Coord ln, bool skip_comment) const;
 
   // Get the original indent string of the given line.
   std::wstring GetIndentStr(Coord ln) const;
@@ -436,6 +444,12 @@ public:
                             wchar_t l_key,
                             wchar_t r_key,
                             bool single_line = false) const;
+
+  // Lua wrapper for UnpairedLeftKey.
+  TextPoint Lua_UnpairedLeftKey(const TextPoint& point,
+                                char l_key,
+                                char r_key,
+                                bool single_line) const;
 
   // Find the first unpaired right key after the given point.
   // Examples:
