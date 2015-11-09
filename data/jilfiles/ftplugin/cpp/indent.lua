@@ -6,7 +6,7 @@ function match(line, str, ignore_comments, ignore_spaces)
     return false
   end
 
-  local ok2, off2 = line:endWith(str, ignore_comments, ignore_spaces)
+  local ok2, off2 = line:endWith(ignore_comments, ignore_spaces, str)
   if not ok2 then
     return false
   end
@@ -18,7 +18,7 @@ function match(line, str, ignore_comments, ignore_spaces)
   return true
 end
 
-function isMacroHead(line)
+function isPreprocHead(line)
   local ok, off = line:startWith(true, '#')
   if ok and not line:isCommentOrString(off) then
     return true
@@ -26,11 +26,11 @@ function isMacroHead(line)
   return false
 end
 
-function isMacroBody(buffer, ln)
+function isPreprocBody(buffer, ln)
   for prev_ln = ln-1, 1, -1 do
     local prev_line = buffer:getLine(prev_ln)
     if prev_line:isEolEscaped(true) then
-      if isMacroHead(prev_line) then
+      if isPreprocHead(prev_line) then
         return true
       end
     else
@@ -40,24 +40,24 @@ function isMacroBody(buffer, ln)
   return false
 end
 
-function isMacro(buffer, ln)
+function isPreproc(buffer, ln)
   local line = buffer:getLine(ln)
-  return isMacroHead(line) or isMacroBody(buffer, ln)
+  return isPreprocHead(line) or isPreprocBody(buffer, ln)
 end
 
 -- Always skip empty lines.
-function getPrevLine(buffer, ln, skip_comment, skip_macro)
+function getPrevLine(buffer, ln, skip_comment, skip_preproc)
   local prev_ln = buffer:getPrevNonEmptyLine(ln, skip_comment)
-  if skip_macro then
-    while prev_ln > 0 and isMacro(buffer, prev_ln) do
+  if skip_preproc then
+    while prev_ln > 0 and isPreproc(buffer, prev_ln) do
       prev_ln = buffer:getPrevNonEmptyLine(prev_ln, skip_comment)
     end
   end
   return prev_ln
 end
 
-function getPrevLineIndent(buffer, ln, skip_comment, skip_macro)
-  local prev_ln = getPrevLine(buffer, ln, skip_comment, skip_macro)
+function getPrevLineIndent(buffer, ln, skip_comment, skip_preproc)
+  local prev_ln = getPrevLine(buffer, ln, skip_comment, skip_preproc)
   if prev_ln ~= 0 then
     return buffer:getIndent(prev_ln)
   end
@@ -77,19 +77,19 @@ end
 function indentByCurrLine(buffer, ln)
   local line = buffer:getLine(ln)
 
-  if line:commentsOnly() then
+  if line:isCommentOnly() then
     return -1
   end
 
-  if isMacroHead(line) then
-    return 0  -- No indent for macro definition.
+  if isPreprocHead(line) then
+    return 0  -- No indent for pre-process definition.
   end
 
-  if isMacroBody(buffer, ln) then
-    if buffer:getIndentOption('indent_macro_body'):asBool() then
+  if isPreprocBody(buffer, ln) then
+    if buffer:getIndentOption('indent_preproc_body'):asBool() then
       return buffer:getShiftWidth()
     else
-      return 0  -- The same as macro head.
+      return 0  -- The same as pre-proc head.
     end
   end
 
@@ -187,7 +187,7 @@ function indentByPrevLine(buffer, ln)
 
   local prev_line = buffer:getLine(prev_ln)
 
-  local ok, x = prev_line:endWith('{', true, true)
+  local ok, x = prev_line:endWith(true, true, '{')
   if ok then
     local j = prev_line:getLastNonSpaceChar(x)
     if j == -1 then
@@ -220,7 +220,7 @@ function indentByPrevLine(buffer, ln)
   end
 
   -- public:, protected:, private:, case label:, etc.
-  if prev_line:endWith(':', true, true) then
+  if prev_line:endWith(true, true, ':') then
     return prev_line:getIndent(tabStop) + shiftWidth
   end
 
@@ -234,7 +234,7 @@ function indentByPrevLine(buffer, ln)
     return prev_line:getTabbedLength(tabStop, x + 1)
   end
 
-  ok, x = prev_line:endWith(')', true, true)
+  ok, x = prev_line:endWith(true, true, ')')
   if ok then
     local pair_line = prev_line
     local p = Point(x, prev_ln)
@@ -253,7 +253,7 @@ function indentByPrevLine(buffer, ln)
   end
 
   -- The EOL of previous line is escaped.
-  --if prev_line:endWith('\\', true) then
+  --if prev_line:endWith(true, true, '\\') then
   --  return prev_line:getIndent(tabStop) + shiftWidth
   --end
 
@@ -278,12 +278,12 @@ function indentByPrevPrevLine(buffer, prev_ln)
   local pprev_line = buffer:getLine(pprev_ln)
   if pprev_line:startWith(true, 'if', 'else if', 'while', 'for') then
     if pprev_line:getUnpairedLeftKey('(', ')', -1) == -1 then
-      if not pprev_line:endWith('{', true, true) then
+      if not pprev_line:endWith(true, true, '{') then
         return pprev_line:getIndent(tabStop)
       end
     end
   elseif match(pprev_line, 'else', true, true) then
-    if not pprev_line:endWith('{', true, true) then
+    if not pprev_line:endWith(true, true, '{') then
       return pprev_line:getIndent(tabStop)
     end
   end
@@ -298,11 +298,11 @@ function indent(buffer, ln)
   end
 
   local line = buffer:getLine(ln)
-  if line:commentsOnly() then
+  if line:isCommentOnly() then
     local prev_ln = buffer:getPrevNonEmptyLine(ln, false)
     if prev_ln ~= 0 then
       local prev_line = buffer:getLine(prev_ln)
-      if prev_line:commentsOnly() then
+      if prev_line:isCommentOnly() then
         return prev_line:getIndent(buffer:getTabStop())
       end
     end

@@ -102,10 +102,13 @@ public:
   // second value.
   // Call it in Lua like this:
   //   local ok, off = startWith(true, "str1", "str2", ...)
-  int Lua_StartWith(lua_State* L);
+  int Lua_startWith(lua_State* L);
 
   // NOTE: ignore_spaces will be ignored if c is an empty space.
-  bool EndWith(wchar_t c, bool ignore_comments, bool ignore_spaces, Coord* off = NULL) const;
+  bool EndWith(wchar_t c,
+               bool ignore_comments,
+               bool ignore_spaces,
+               Coord* off = NULL) const;
 
   // NOTE: ignore_spaces will be ignored if str[str.size()-1] is an empty space.
   bool EndWith(const std::wstring& str,
@@ -113,9 +116,9 @@ public:
                bool ignore_spaces,
                Coord* off = NULL) const;
 
-  // Lua CFunction wrapper of:
+  // Lua CFunction version of EndWith:
   //   bool EndWith(const std::wstring&, bool, bool, Coord*).
-  int Lua_EndWith(lua_State* L);
+  int Lua_endWith(lua_State* L);
 
   // Return true if the last char is an unescaped back slash.
   bool IsEolEscaped(bool no_comment_or_string) const;
@@ -162,10 +165,10 @@ public:
   Lex GetLex(Coord off) const;
 
   // Return true if this line only has spaces.
-  bool SpacesOnly() const;
+  bool IsSpaceOnly() const;
 
   // Return true if this line only has comments.
-  bool CommentsOnly() const;
+  bool IsCommentOnly() const;
 
   // Return true if it's comment at the given off.
   bool IsComment(Coord off) const;

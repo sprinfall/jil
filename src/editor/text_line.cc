@@ -115,11 +115,10 @@ bool TextLine::StartWith(const std::wstring& str, bool ignore_spaces, Coord* off
   return false;
 }
 
-int TextLine::Lua_StartWith(lua_State* L) {
+int TextLine::Lua_startWith(lua_State* L) {
   int n = lua_gettop(L);  // Number of arguments
 
-  // TODO: Use lua_type(L, idx) instead.
-  if (n < 3 || !lua_isboolean(L, 2) || !lua_isstring(L, 3)) {
+  if (n < 3 || lua_type(L, 2) != LUA_TBOOLEAN) {
     luaL_error(L, "incorrect argument");
   }
 
@@ -129,6 +128,9 @@ int TextLine::Lua_StartWith(lua_State* L) {
   int off = 0;
 
   for (int i = 3; i <= n; ++i) {
+    if (lua_type(L, i) != LUA_TSTRING) {
+      break;
+    }
     const char* cstr = lua_tostring(L, i);
     std::wstring str(cstr, cstr + strlen(cstr));
     if (StartWith(str, ignore_spaces, &off)) {
@@ -142,7 +144,10 @@ int TextLine::Lua_StartWith(lua_State* L) {
   return 2;
 }
 
-bool TextLine::EndWith(wchar_t c, bool ignore_comments, bool ignore_spaces, Coord* off) const {
+bool TextLine::EndWith(wchar_t c,
+                       bool ignore_comments,
+                       bool ignore_spaces,
+                       Coord* off) const {
   if (data_.empty()) {
     return false;
   }
@@ -237,24 +242,36 @@ bool TextLine::EndWith(const std::wstring& str,
   return false;
 }
 
-int TextLine::Lua_EndWith(lua_State* L) {
+int TextLine::Lua_endWith(lua_State* L) {
   int n = lua_gettop(L);  // Number of arguments
 
-  if (n != 4 ||
-      !lua_isstring(L, 2) ||
-      !lua_isboolean(L, 3) ||
-      !lua_isboolean(L, 4)) {
+  if (n < 4) {
     luaL_error(L, "incorrect argument");
+    //return;  // TODO
   }
 
-  const char* cstr = lua_tostring(L, 2);
-  std::wstring str(cstr, cstr + strlen(cstr));
+  if (lua_type(L, 2) != LUA_TBOOLEAN || lua_type(L, 3) != LUA_TBOOLEAN) {
+    luaL_error(L, "incorrect argument");
+    //return;  // TODO
+  }
 
-  bool ignore_comments = lua_toboolean(L, 3) != 0;
-  bool ignore_spaces = lua_toboolean(L, 4) != 0;
+  bool ignore_comments = lua_toboolean(L, 2) != 0;
+  bool ignore_spaces = lua_toboolean(L, 3) != 0;
 
+  bool result = false;
   int off = 0;
-  bool result = EndWith(str, ignore_comments, ignore_spaces, &off);
+
+  for (int i = 4; i <= n; ++i) {
+    if (lua_type(L, i) != LUA_TSTRING) {
+      break;
+    }
+    const char* cstr = lua_tostring(L, i);
+    std::wstring str(cstr, cstr + strlen(cstr));
+    if (EndWith(str, ignore_comments, ignore_spaces, &off)) {
+      result = true;
+      break;
+    }
+  }
 
   luabridge::push(L, result);
   luabridge::push(L, off);
@@ -502,7 +519,7 @@ Lex TextLine::GetLex(Coord off) const {
   return Lex();
 }
 
-bool TextLine::SpacesOnly() const {
+bool TextLine::IsSpaceOnly() const {
   if (data_.empty()) {
     return false;
   }
@@ -516,7 +533,7 @@ bool TextLine::SpacesOnly() const {
   return true;
 }
 
-bool TextLine::CommentsOnly() const {
+bool TextLine::IsCommentOnly() const {
   if (lex_elems_.empty()) {
     return false;
   }

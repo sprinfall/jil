@@ -87,9 +87,9 @@ protected:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-TEST_F(IndentCppTest, IsMacroHead) {
-  luabridge::LuaRef is_macro_head = GetLuaValue(lua_state_, "isMacroHead");
-  if (is_macro_head.isNil() || !is_macro_head.isFunction()) {
+TEST_F(IndentCppTest, IsPreprocHead) {
+  luabridge::LuaRef is_preproc_head = GetLuaValue(lua_state_, "isPreprocHead");
+  if (is_preproc_head.isNil() || !is_preproc_head.isFunction()) {
     EXPECT_TRUE(false);
     return;
   }
@@ -99,15 +99,15 @@ TEST_F(IndentCppTest, IsMacroHead) {
   buffer_->AppendLine(L"    ");
   buffer_->AppendLine(L"int i = 1;");
 
-  EXPECT_TRUE (is_macro_head(buffer_->Line(2)).cast<bool>());
-  EXPECT_FALSE(is_macro_head(buffer_->Line(3)).cast<bool>());
-  EXPECT_FALSE(is_macro_head(buffer_->Line(4)).cast<bool>());
-  EXPECT_FALSE(is_macro_head(buffer_->Line(5)).cast<bool>());
+  EXPECT_TRUE(is_preproc_head(buffer_->Line(2)).cast<bool>());
+  EXPECT_FALSE(is_preproc_head(buffer_->Line(3)).cast<bool>());
+  EXPECT_FALSE(is_preproc_head(buffer_->Line(4)).cast<bool>());
+  EXPECT_FALSE(is_preproc_head(buffer_->Line(5)).cast<bool>());
 }
 
-TEST_F(IndentCppTest, IsMacroBody) {
-  luabridge::LuaRef is_macro_body = GetLuaValue(lua_state_, "isMacroBody");
-  if (is_macro_body.isNil() || !is_macro_body.isFunction()) {
+TEST_F(IndentCppTest, IsPreprocBody) {
+  luabridge::LuaRef is_preproc_body = GetLuaValue(lua_state_, "isPreprocBody");
+  if (is_preproc_body.isNil() || !is_preproc_body.isFunction()) {
     EXPECT_TRUE(false);
     return;
   }
@@ -115,13 +115,13 @@ TEST_F(IndentCppTest, IsMacroBody) {
   buffer_->AppendLine(L"#define MAX_SIZE \\");
   buffer_->AppendLine(L"    256");
 
-  EXPECT_FALSE(is_macro_body(buffer_, 2).cast<bool>());
-  EXPECT_TRUE(is_macro_body(buffer_, 3).cast<bool>());
+  EXPECT_FALSE(is_preproc_body(buffer_, 2).cast<bool>());
+  EXPECT_TRUE(is_preproc_body(buffer_, 3).cast<bool>());
 }
 
-TEST_F(IndentCppTest, IsMacro) {
-  luabridge::LuaRef is_macro = GetLuaValue(lua_state_, "isMacro");
-  if (is_macro.isNil() || !is_macro.isFunction()) {
+TEST_F(IndentCppTest, IsPreproc) {
+  luabridge::LuaRef is_preproc = GetLuaValue(lua_state_, "isPreproc");
+  if (is_preproc.isNil() || !is_preproc.isFunction()) {
     EXPECT_TRUE(false);
     return;
   }
@@ -130,13 +130,13 @@ TEST_F(IndentCppTest, IsMacro) {
   buffer_->AppendLine(L"    256");
   buffer_->AppendLine(L"int i;");
 
-  EXPECT_TRUE(is_macro(buffer_, 2).cast<bool>());
-  EXPECT_TRUE(is_macro(buffer_, 3).cast<bool>());
-  EXPECT_FALSE(is_macro(buffer_, 4).cast<bool>());
+  EXPECT_TRUE(is_preproc(buffer_, 2).cast<bool>());
+  EXPECT_TRUE(is_preproc(buffer_, 3).cast<bool>());
+  EXPECT_FALSE(is_preproc(buffer_, 4).cast<bool>());
 }
 
 TEST_F(IndentCppTest, GetPrevLine) {
-  // getPrevLine(buffer, ln, skip_comment, skip_macro)
+  // getPrevLine(buffer, ln, skip_comment, skip_preproc)
   luabridge::LuaRef get_prev_line = GetLuaValue(lua_state_, "getPrevLine");
   if (get_prev_line.isNil() || !get_prev_line.isFunction()) {
     EXPECT_TRUE(false);
@@ -144,9 +144,9 @@ TEST_F(IndentCppTest, GetPrevLine) {
   }
 
   buffer_->AppendLine(L"    int j;");           // 2
-  buffer_->AppendLine(L"// comments");          // 3: Macro
-  buffer_->AppendLine(L"#define MAX_SIZE \\");  // 4: Macro
-  buffer_->AppendLine(L"    256");              // 5: Macro
+  buffer_->AppendLine(L"// comments");          // 3: Preproc
+  buffer_->AppendLine(L"#define MAX_SIZE \\");  // 4: Preproc
+  buffer_->AppendLine(L"    256");              // 5: Preproc
   buffer_->AppendLine(L"    ");                 // 6: Empty line
   buffer_->AppendLine(L"int i;");               // 7
 
@@ -165,19 +165,19 @@ TEST_F(IndentCppTest, GetPrevLine) {
 }
 
 TEST_F(IndentCppTest, GetPrevLineIndent) {
-  // getPrevLineIndent(buffer, ln, skip_comment, skip_macro)
+  // getPrevLineIndent(buffer, ln, skip_comment, skip_preproc)
   luabridge::LuaRef get_prev_line_indent = GetLuaValue(lua_state_, "getPrevLineIndent");
   if (get_prev_line_indent.isNil() || !get_prev_line_indent.isFunction()) {
     EXPECT_TRUE(false);
     return;
   }
 
-  buffer_->AppendLine(L"    int j;");           // 2
-  buffer_->AppendLine(L"  // comments");          // 3: Macro
-  buffer_->AppendLine(L" #define MAX_SIZE \\");  // 4: Macro
-  buffer_->AppendLine(L"      256");              // 5: Macro
-  buffer_->AppendLine(L"    ");                 // 6: Empty line
-  buffer_->AppendLine(L"int i;");               // 7
+  buffer_->AppendLine(L"    int j;");             // 2
+  buffer_->AppendLine(L"  // comments");          // 3: Preproc
+  buffer_->AppendLine(L" #define MAX_SIZE \\");   // 4: Preproc
+  buffer_->AppendLine(L"      256");              // 5: Preproc
+  buffer_->AppendLine(L"    ");                   // 6: Empty line
+  buffer_->AppendLine(L"int i;");                 // 7
 
   EXPECT_EQ(0, get_prev_line_indent(buffer_, 2, false, false).cast<int>());
   EXPECT_EQ(4, get_prev_line_indent(buffer_, 3, false, false).cast<int>());
@@ -613,7 +613,7 @@ TEST_F(IndentCppTest, Macro_NextLineIsBrace) {
 }
 
 TEST_F(IndentCppTest, Macro_EolEscaped_IndentBody) {
-  buffer_->SetIndentOption("indent_macro_body", OptionValue::FromBool(true));
+  buffer_->SetIndentOption("indent_preproc_body", OptionValue::FromBool(true));
 
   buffer_->AppendLine(L"        int i;");
   buffer_->AppendLine(L"#define MAX_SIZE \\");
@@ -626,7 +626,7 @@ TEST_F(IndentCppTest, Macro_EolEscaped_IndentBody) {
 }
 
 TEST_F(IndentCppTest, Macro_EolEscaped_DontIndentBody) {
-  buffer_->SetIndentOption("indent_macro_body", OptionValue::FromBool(false));
+  buffer_->SetIndentOption("indent_preproc_body", OptionValue::FromBool(false));
 
   buffer_->AppendLine(L"        int i;");
   buffer_->AppendLine(L"#define MAX_SIZE \\");

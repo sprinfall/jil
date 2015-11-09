@@ -29,14 +29,14 @@ void InitLua(lua_State* lua_state) {
     .addFunction("getTabbedLength", &TextLine::TabbedLength)
     .addFunction("isChar", &TextLine::Lua_IsChar)
     .addFunction("isEmpty", &TextLine::IsEmpty)
-    .addCFunction("startWith", &TextLine::Lua_StartWith)  // CFunction
-    .addCFunction("endWith", &TextLine::Lua_EndWith)  // CFunction
+    .addCFunction("startWith", &TextLine::Lua_startWith)  // CFunction
+    .addCFunction("endWith", &TextLine::Lua_endWith)  // CFunction
     .addFunction("getUnpairedLeftKey", &TextLine::Lua_getUnpairedLeftKey)
     .addFunction("getIndent", &TextLine::GetIndent)
     .addFunction("getFirstNonSpaceChar", &TextLine::FirstNonSpaceChar)
     .addFunction("getLastNonSpaceChar", &TextLine::LastNonSpaceChar)
     .addFunction("isEolEscaped", &TextLine::IsEolEscaped)
-    .addFunction("commentsOnly", &TextLine::CommentsOnly)
+    .addFunction("isCommentOnly", &TextLine::IsCommentOnly)
     .addFunction("isComment", &TextLine::IsComment)
     .addFunction("isString", &TextLine::IsString)
     .addFunction("isCommentOrString", &TextLine::IsCommentOrString)

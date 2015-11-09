@@ -719,7 +719,7 @@ Coord TextBuffer::PrevNonEmptyLine(Coord ln, bool skip_comment) const {
     const TextLine* line = Line(ln);
 
     if (!line->IsEmpty(true)) {
-      if (!skip_comment || !line->CommentsOnly()) {
+      if (!skip_comment || !line->IsCommentOnly()) {
         break;
       }
     }
