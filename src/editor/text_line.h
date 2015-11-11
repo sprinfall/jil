@@ -4,7 +4,6 @@
 
 #include <list>
 #include <string>
-#include <vector>
 
 #include "boost/any.hpp"
 
@@ -36,6 +35,7 @@ public:
   size_t id() const {
     return id_;
   }
+
   void set_id(size_t id) {
     id_ = id;
   }
@@ -52,6 +52,8 @@ public:
     extra_data_ = extra_data;
   }
 
+  //----------------------------------------------------------------------------
+
   Coord Length() const {
     return CoordCast(data_.length());
   }
@@ -61,9 +63,6 @@ public:
 
   wchar_t Char(Coord off) const;
 
-  // Lua wrapper for: wchar_t Char(Coord off) const
-  bool Lua_IsChar(Coord off, char c) const;
-
   std::wstring Sub(Coord off, Coord count) const;
 
   std::wstring Sub(const CharRange& char_range) const {
@@ -71,10 +70,43 @@ public:
   }
 
   // Return line length on failure.
-  Coord FirstNonSpaceChar(Coord off = 0) const;
+  Coord FindNonSpace(Coord off = 0) const;
 
   // Return kInvCoord on failure.
-  Coord LastNonSpaceChar(Coord off = kInvCoord) const;
+  Coord FindLastNonSpace(Coord off = kInvCoord) const;
+
+  Coord FindLastChar(wchar_t c, bool skip_comment, Coord off = kInvCoord) const;
+
+  // Return true if the line is empty.
+  // \param ignore_space A line is empty if it has only empty spaces.
+  bool IsEmpty(bool ignore_space) const;
+
+  // NOTE: ignore_space will be ignored if c is an empty space.
+  bool StartWith(wchar_t c, bool ignore_space, Coord* off = NULL) const;
+
+  // NOTE: ignore_space will be ignored if str[0] is an empty space.
+  bool StartWith(const std::wstring& str, bool ignore_space, Coord* off = NULL) const;
+
+  // NOTE: ignore_space will be ignored if c is an empty space.
+  bool EndWith(wchar_t c,
+               bool ignore_comment,
+               bool ignore_space,
+               Coord* off = NULL) const;
+
+  // NOTE: ignore_space will be ignored if str[str.size()-1] is an empty space.
+  bool EndWith(const std::wstring& str,
+               bool ignore_comment,
+               bool ignore_space,
+               Coord* off = NULL) const;
+
+  bool Equal(const std::wstring& str,
+             bool ignore_comment,
+             bool ignore_space) const;
+
+  // Return true if the last char is an unescaped back slash.
+  bool IsEolEscaped(bool no_comment_or_string) const;
+
+  Coord UnpairedLeftKey(wchar_t l_key, wchar_t r_key, Coord off = kInvCoord) const;
 
   // Return the indent as spaces.
   // Tab stop is used to expand the tabs, if any.
@@ -85,47 +117,6 @@ public:
 
   // Return the length of the original indent string.
   Coord GetIndentStrLength() const;
-
-  // Return true if the line is empty.
-  // \param ignore_spaces A line is empty if it has only empty spaces.
-  bool IsEmpty(bool ignore_spaces) const;
-
-  // NOTE: ignore_spaces will be ignored if c is an empty space.
-  bool StartWith(wchar_t c, bool ignore_spaces, Coord* off = NULL) const;
-
-  // NOTE: ignore_spaces will be ignored if str[0] is an empty space.
-  bool StartWith(const std::wstring& str, bool ignore_spaces, Coord* off = NULL) const;
-
-  // Lua CFunction version of StartWith.
-  // The parameters are different from the normal StartWith. It accepts
-  // multiple strings, and the output parameter 'off' is returned as a
-  // second value.
-  // Call it in Lua like this:
-  //   local ok, off = startWith(true, "str1", "str2", ...)
-  int Lua_startWith(lua_State* L);
-
-  // NOTE: ignore_spaces will be ignored if c is an empty space.
-  bool EndWith(wchar_t c,
-               bool ignore_comments,
-               bool ignore_spaces,
-               Coord* off = NULL) const;
-
-  // NOTE: ignore_spaces will be ignored if str[str.size()-1] is an empty space.
-  bool EndWith(const std::wstring& str,
-               bool ignore_comments,
-               bool ignore_spaces,
-               Coord* off = NULL) const;
-
-  // Lua CFunction version of EndWith:
-  //   bool EndWith(const std::wstring&, bool, bool, Coord*).
-  int Lua_endWith(lua_State* L);
-
-  // Return true if the last char is an unescaped back slash.
-  bool IsEolEscaped(bool no_comment_or_string) const;
-
-  Coord UnpairedLeftKey(wchar_t l_key, wchar_t r_key, Coord off = kInvCoord) const;
-
-  Coord Lua_getUnpairedLeftKey(char l_key, char r_key, Coord off) const;
 
   //----------------------------------------------------------------------------
 
@@ -202,6 +193,35 @@ public:
   // Return true if there was any lex or quote element.
   bool ClearLex();
 
+  //----------------------------------------------------------------------------
+  // Lua wrappers
+
+  // Lua wrapper of Char.
+  bool Lua_isChar(Coord off, char c) const;
+
+  // Lua wrapper of FindLastChar.
+  int Lua_findLastChar(char c, bool skip_comment, int off = kInvCoord) const;
+
+  // Lua CFunction wrapper of StartWith.
+  // The parameters are different from the normal StartWith. It accepts
+  // multiple strings, and the output parameter 'off' is returned as a
+  // second value.
+  // Call it in Lua like this:
+  //   local ok, off = startWith(true, "str1", "str2", ...)
+  int Lua_startWith(lua_State* L);
+
+  // Lua CFunction wrapper of EndWith:
+  //   bool EndWith(const std::wstring&, bool, bool, Coord*).
+  int Lua_endWith(lua_State* L);
+
+  // Lua wrapper of Equal:
+  bool Lua_equal(const std::string& str,
+                 bool ignore_comment,
+                 bool ignore_space) const;
+
+  // Lua wrapper of UnpairedLeftKey.
+  Coord Lua_getUnpairedLeftKey(char l_key, char r_key, Coord off) const;
+
 private:
   size_t id_;
   std::wstring data_;
@@ -214,43 +234,6 @@ private:
   // wxAny takes 24 bytes. So boost::any is prefered because it takes only
   // the same bytes as a pointer.
   boost::any extra_data_;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-class LinePred {
-public:
-  virtual bool Check(const TextLine* line) const = 0;
-};
-
-class LineStartWith : public LinePred {
-public:
-  LineStartWith(const std::wstring& str1) {
-    strs_.push_back(str1);
-  }
-
-  LineStartWith(const std::wstring& str1, const std::wstring& str2) {
-    strs_.push_back(str1);
-    strs_.push_back(str2);
-  }
-
-  LineStartWith(const std::wstring& str1, const std::wstring& str2, const std::wstring& str3) {
-    strs_.push_back(str1);
-    strs_.push_back(str2);
-    strs_.push_back(str3);
-  }
-
-  virtual bool Check(const TextLine* line) const override {
-    for (size_t i = 0; i < strs_.size(); ++i) {
-      if (line->StartWith(strs_[i], true)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-private:
-  std::vector<std::wstring> strs_;
 };
 
 }  // namespace editor

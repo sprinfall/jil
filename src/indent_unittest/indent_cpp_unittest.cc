@@ -56,7 +56,7 @@ protected:
     wxString indent_file = ftplugin_dir + wxT("cpp/indent.lua");
 
     if (LoadLuaFile(lua_state_, indent_file)) {
-      luabridge::LuaRef indent_func = GetLuaValue(lua_state_, "indent");
+      luabridge::LuaRef indent_func = GetLuaValue(lua_state_, "cpp", "indent");
       ft_plugin_->set_indent_func(indent_func);
     }
 
@@ -88,7 +88,7 @@ protected:
 ////////////////////////////////////////////////////////////////////////////////
 
 TEST_F(IndentCppTest, IsPreprocHead) {
-  luabridge::LuaRef is_preproc_head = GetLuaValue(lua_state_, "isPreprocHead");
+  luabridge::LuaRef is_preproc_head = GetLuaValue(lua_state_, "cpp", "isPreprocHead");
   if (is_preproc_head.isNil() || !is_preproc_head.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -106,7 +106,7 @@ TEST_F(IndentCppTest, IsPreprocHead) {
 }
 
 TEST_F(IndentCppTest, IsPreprocBody) {
-  luabridge::LuaRef is_preproc_body = GetLuaValue(lua_state_, "isPreprocBody");
+  luabridge::LuaRef is_preproc_body = GetLuaValue(lua_state_, "cpp", "isPreprocBody");
   if (is_preproc_body.isNil() || !is_preproc_body.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -120,7 +120,7 @@ TEST_F(IndentCppTest, IsPreprocBody) {
 }
 
 TEST_F(IndentCppTest, IsPreproc) {
-  luabridge::LuaRef is_preproc = GetLuaValue(lua_state_, "isPreproc");
+  luabridge::LuaRef is_preproc = GetLuaValue(lua_state_, "cpp", "isPreproc");
   if (is_preproc.isNil() || !is_preproc.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -137,7 +137,7 @@ TEST_F(IndentCppTest, IsPreproc) {
 
 TEST_F(IndentCppTest, GetPrevLine) {
   // getPrevLine(buffer, ln, skip_comment, skip_preproc)
-  luabridge::LuaRef get_prev_line = GetLuaValue(lua_state_, "getPrevLine");
+  luabridge::LuaRef get_prev_line = GetLuaValue(lua_state_, "cpp", "getPrevLine");
   if (get_prev_line.isNil() || !get_prev_line.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -166,7 +166,7 @@ TEST_F(IndentCppTest, GetPrevLine) {
 
 TEST_F(IndentCppTest, GetPrevLineIndent) {
   // getPrevLineIndent(buffer, ln, skip_comment, skip_preproc)
-  luabridge::LuaRef get_prev_line_indent = GetLuaValue(lua_state_, "getPrevLineIndent");
+  luabridge::LuaRef get_prev_line_indent = GetLuaValue(lua_state_, "cpp", "getPrevLineIndent");
   if (get_prev_line_indent.isNil() || !get_prev_line_indent.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -194,7 +194,7 @@ TEST_F(IndentCppTest, GetPrevLineIndent) {
 }
 
 TEST_F(IndentCppTest, GetPrevLineStartWith) {
-  luabridge::LuaRef get_prev_line_start_with = GetLuaValue(lua_state_, "getPrevLineStartWith");
+  luabridge::LuaRef get_prev_line_start_with = GetLuaValue(lua_state_, "cpp", "getPrevLineStartWith");
   if (get_prev_line_start_with.isNil() || !get_prev_line_start_with.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -213,6 +213,124 @@ TEST_F(IndentCppTest, GetPrevLineStartWith) {
   EXPECT_EQ(4, get_prev_line_start_with(buffer_, 5, "protected", "public", "private").cast<int>());
   EXPECT_EQ(4, get_prev_line_start_with(buffer_, 5, "private", "public", "protected").cast<int>());
 }
+
+TEST_F(IndentCppTest, GetBlockHead1) {
+  luabridge::LuaRef get_block_head = GetLuaValue(lua_state_, "cpp", "getBlockHead");
+  if (get_block_head.isNil() || !get_block_head.isFunction()) {
+    EXPECT_TRUE(false);
+    return;
+  }
+
+  buffer_->AppendLine(L"if (condition) {");
+
+  Coord x = buffer_->Line(2)->FindLastChar(L'{', true, -1);
+  EXPECT_EQ(2, get_block_head(buffer_, 2, x).cast<int>());
+}
+
+TEST_F(IndentCppTest, GetBlockHead2) {
+  luabridge::LuaRef get_block_head = GetLuaValue(lua_state_, "cpp", "getBlockHead");
+  if (get_block_head.isNil() || !get_block_head.isFunction()) {
+    EXPECT_TRUE(false);
+    return;
+  }
+
+  buffer_->AppendLine(L"if (condition)");
+  buffer_->AppendLine(L"{");
+
+  Coord ln = 3;
+  Coord x = buffer_->Line(ln)->FindLastChar(L'{', true, -1);
+  EXPECT_EQ(2, get_block_head(buffer_, ln, x).cast<int>());
+}
+
+TEST_F(IndentCppTest, GetBlockHead3) {
+  luabridge::LuaRef get_block_head = GetLuaValue(lua_state_, "cpp", "getBlockHead");
+  if (get_block_head.isNil() || !get_block_head.isFunction()) {
+    EXPECT_TRUE(false);
+    return;
+  }
+
+  buffer_->AppendLine(L"if (condition1 &&");
+  buffer_->AppendLine(L"    condition2)");
+  buffer_->AppendLine(L"{");
+
+  Coord ln = 4;
+  Coord x = buffer_->Line(ln)->FindLastChar(L'{', true, -1);
+
+  EXPECT_EQ(2, get_block_head(buffer_, ln, x).cast<int>());
+}
+
+TEST_F(IndentCppTest, GetBlockHead4) {
+  luabridge::LuaRef get_block_head = GetLuaValue(lua_state_, "cpp", "getBlockHead");
+  if (get_block_head.isNil() || !get_block_head.isFunction()) {
+    EXPECT_TRUE(false);
+    return;
+  }
+
+  buffer_->AppendLine(L"int i;");
+  buffer_->AppendLine(L"");
+  buffer_->AppendLine(L"{");
+
+  Coord ln = 4;
+  Coord x = buffer_->Line(ln)->FindLastChar(L'{', true, -1);
+
+  EXPECT_EQ(2, get_block_head(buffer_, ln, x).cast<int>());
+}
+
+TEST_F(IndentCppTest, GetBlockHead5) {
+  luabridge::LuaRef get_block_head = GetLuaValue(lua_state_, "cpp", "getBlockHead");
+  if (get_block_head.isNil() || !get_block_head.isFunction()) {
+    EXPECT_TRUE(false);
+    return;
+  }
+
+  buffer_->AppendLine(L"");
+  buffer_->AppendLine(L"{");
+
+  Coord ln = 3;
+  Coord x = buffer_->Line(ln)->FindLastChar(L'{', true, -1);
+
+  EXPECT_EQ(ln, get_block_head(buffer_, ln, x).cast<int>());
+}
+
+TEST_F(IndentCppTest, GetBlockHead6) {
+  luabridge::LuaRef get_block_head = GetLuaValue(lua_state_, "cpp", "getBlockHead");
+  if (get_block_head.isNil() || !get_block_head.isFunction()) {
+    EXPECT_TRUE(false);
+    return;
+  }
+
+  buffer_->AppendLine(L"if (condition1 &&");
+  buffer_->AppendLine(L"    condition2)");
+  buffer_->AppendLine(L"");
+  buffer_->AppendLine(L"  // comments");
+  buffer_->AppendLine(L"{");
+
+  Coord ln = 6;
+  Coord x = buffer_->Line(ln)->FindLastChar(L'{', true, -1);
+
+  EXPECT_EQ(2, get_block_head(buffer_, ln, x).cast<int>());
+}
+
+TEST_F(IndentCppTest, GetBlockHead7) {
+  luabridge::LuaRef get_block_head = GetLuaValue(lua_state_, "cpp", "getBlockHead");
+  if (get_block_head.isNil() || !get_block_head.isFunction()) {
+    EXPECT_TRUE(false);
+    return;
+  }
+
+  buffer_->AppendLine(L"if (condition1 &&");
+  buffer_->AppendLine(L"    condition2)");
+  buffer_->AppendLine(L"");
+  buffer_->AppendLine(L"#define MAX_PATH 256");
+  buffer_->AppendLine(L"  // comments");
+  buffer_->AppendLine(L"{");
+
+  Coord ln = 7;
+  Coord x = buffer_->Line(ln)->FindLastChar(L'{', true, -1);
+
+  EXPECT_EQ(2, get_block_head(buffer_, ln, x).cast<int>());
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -363,6 +481,37 @@ TEST_F(IndentCppTest, FunctionDef_MultiLineParams_NewLineBrace) {
   ASSERT_LINE(5);
   ASSERT_LINE(6);
   ASSERT_LINE(7);
+}
+
+TEST_F(IndentCppTest, FunctionDef_DecoratedMethod) {
+  buffer_->AppendLine(L"    int GetSomething() const {");
+  buffer_->AppendLine(L"        return something;");
+  buffer_->AppendLine(L"    }");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+}
+
+TEST_F(IndentCppTest, FunctionDef_DecoratedMethod_NewLineBrace) {
+  buffer_->AppendLine(L"    int GetSomething() const");
+  buffer_->AppendLine(L"    {");
+  buffer_->AppendLine(L"        return something;");
+  buffer_->AppendLine(L"    }");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+}
+
+TEST_F(IndentCppTest, FunctionDef_DecoratedMethod_MultiLineParams) {
+  buffer_->AppendLine(L"    virtual void CalcSomething(int param1,");
+  buffer_->AppendLine(L"                               int param2) override {");
+  buffer_->AppendLine(L"        return something;");
+  buffer_->AppendLine(L"    }");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
 }
 
 TEST_F(IndentCppTest, FunctionCall_StringParenthesis) {

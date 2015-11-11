@@ -446,7 +446,7 @@ TextRange DecreaseIndentAction::SelectionAfterExec() const {
 bool DecreaseIndentAction::DecreaseIndentLine(Coord ln) {
   TextLine* line = buffer_->Line(ln);
 
-  Coord prefix_spaces = line->FirstNonSpaceChar();
+  Coord prefix_spaces = line->FindNonSpace();
   if (prefix_spaces == 0) {
     return false;  // No indent to decrease.
   }
@@ -1042,18 +1042,18 @@ TextRange UncommentAction::TrimRange(const TextRange& range) const {
   TextLine* begin_line = buffer_->Line(point_begin.y);
   TextLine* end_line = buffer_->Line(point_end.y);
 
-  point_end.x = end_line->LastNonSpaceChar(point_end.x);
+  point_end.x = end_line->FindLastNonSpace(point_end.x);
 
   if (point_begin.y == point_end.y) {
     // Avoid to trim to an invalid text range.
     if (point_begin.x < point_end.x) {
-      point_begin.x = begin_line->FirstNonSpaceChar(point_begin.x);
+      point_begin.x = begin_line->FindNonSpace(point_begin.x);
     }
     if (point_begin.x > point_end.x) {
       point_begin.x = point_end.x;
     }
   } else {
-    point_begin.x = begin_line->FirstNonSpaceChar(point_begin.x);
+    point_begin.x = begin_line->FindNonSpace(point_begin.x);
   }
 
   return TextRange(point_begin, point_end);
@@ -1065,7 +1065,7 @@ void UncommentAction::UncommentLines(const LineRange& line_range) {
   for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
     TextLine* line = buffer_->Line(ln);
 
-    Coord x = line->FirstNonSpaceChar();
+    Coord x = line->FindNonSpace();
     if (x == line->Length()) {
       continue;
     }
@@ -1091,7 +1091,7 @@ void UncommentAction::UncommentLines(const LineRange& line_range) {
     }
 
     Coord quote_end_off = quote_end->off + quote_end->len;
-    if (line->FirstNonSpaceChar(quote_end_off) != line->Length()) {
+    if (line->FindNonSpace(quote_end_off) != line->Length()) {
       // Non-space char after the quote end.
       continue;
     }

@@ -497,7 +497,8 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
   // Indent
 
   if (editor::LoadLuaFile(lua_state_, ft_plugin_dir + kIndentFile)) {
-    luabridge::LuaRef indent_func = editor::GetLuaValue(lua_state_, "indent");
+    std::string ns = ft.id.ToStdString();
+    luabridge::LuaRef indent_func = editor::GetLuaValue(lua_state_, ns.c_str(), "indent");
     ft_plugin->set_indent_func(indent_func);
   }
 

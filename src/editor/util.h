@@ -30,6 +30,13 @@ Coord CountCharAfter(const std::wstring& str, Coord i, wchar_t c);
 // "a\"[1] -> true
 bool IsUnescapedBackSlash(const std::wstring& str, size_t i);
 
+// When luabridge::LuaException is raised from executing the function defined
+// in a lua script (e.g., indent.lua), the what() function of the exception
+// returns something like this:
+//   [string "script content goes here ..."]:256: invalid argument
+// This function extracts the line number and the message from it.
+bool ParseLuaError(const std::string& what, int* ln, std::string* msg);
+
 ////////////////////////////////////////////////////////////////////////////////
 
 template <class C>

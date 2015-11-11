@@ -27,19 +27,22 @@ void InitLua(lua_State* lua_state) {
     .beginClass<TextLine>("Line")
     .addFunction("getLength", &TextLine::Length)
     .addFunction("getTabbedLength", &TextLine::TabbedLength)
-    .addFunction("isChar", &TextLine::Lua_IsChar)
+    .addFunction("isChar", &TextLine::Lua_isChar)
     .addFunction("isEmpty", &TextLine::IsEmpty)
-    .addCFunction("startWith", &TextLine::Lua_startWith)  // CFunction
-    .addCFunction("endWith", &TextLine::Lua_endWith)  // CFunction
+    .addFunction("findNonSpace", &TextLine::FindNonSpace)
+    .addFunction("findLastNonSpace", &TextLine::FindLastNonSpace)
+    .addFunction("findLastChar", &TextLine::Lua_findLastChar)
+    .addFunction("equal", &TextLine::Lua_equal)
     .addFunction("getUnpairedLeftKey", &TextLine::Lua_getUnpairedLeftKey)
     .addFunction("getIndent", &TextLine::GetIndent)
-    .addFunction("getFirstNonSpaceChar", &TextLine::FirstNonSpaceChar)
-    .addFunction("getLastNonSpaceChar", &TextLine::LastNonSpaceChar)
     .addFunction("isEolEscaped", &TextLine::IsEolEscaped)
     .addFunction("isCommentOnly", &TextLine::IsCommentOnly)
     .addFunction("isComment", &TextLine::IsComment)
     .addFunction("isString", &TextLine::IsString)
     .addFunction("isCommentOrString", &TextLine::IsCommentOrString)
+    // CFunctions
+    .addCFunction("startWith", &TextLine::Lua_startWith)  
+    .addCFunction("endWith", &TextLine::Lua_endWith)
     .endClass()
     .beginClass<TextBuffer>("Buffer")
     .addFunction("getTabStop", &TextBuffer::tab_stop)
@@ -75,6 +78,14 @@ bool LoadLuaFile(lua_State* lua_state, const wxString& file, std::string* err_ms
 
 luabridge::LuaRef GetLuaValue(lua_State* lua_state, const char* name) {
   return luabridge::getGlobal(lua_state, name);
+}
+
+luabridge::LuaRef GetLuaValue(lua_State* lua_state, const char* ns, const char* name) {
+  luabridge::LuaRef ns_ref = luabridge::getGlobal(lua_state, ns);
+  if (!ns_ref.isNil() && ns_ref.isTable()) {
+    return ns_ref[name];
+  }
+  return luabridge::LuaRef(lua_state);
 }
 
 }  // namespace editor

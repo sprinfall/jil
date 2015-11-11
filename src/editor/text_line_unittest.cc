@@ -30,29 +30,29 @@ TEST(TextLine, Sub) {
   EXPECT_EQ(L"a b\tc", line.Sub(CharRange(0, kInvCoord)));
 }
 
-TEST(TextLine, FirstNonSpaceChar) {
+TEST(TextLine, FindNonSpace) {
   TextLine line(0, L"");
-  EXPECT_EQ(line.Length(), line.FirstNonSpaceChar(0));
+  EXPECT_EQ(line.Length(), line.FindNonSpace(0));
 
   line.InsertString(0, L"a b\tc");
-  EXPECT_EQ(0, line.FirstNonSpaceChar(0));
-  EXPECT_EQ(2, line.FirstNonSpaceChar(1));
-  EXPECT_EQ(4, line.FirstNonSpaceChar(3));
-  EXPECT_EQ(line.Length(), line.FirstNonSpaceChar(line.Length()));
-  EXPECT_EQ(line.Length(), line.FirstNonSpaceChar(line.Length() + 1));
+  EXPECT_EQ(0, line.FindNonSpace(0));
+  EXPECT_EQ(2, line.FindNonSpace(1));
+  EXPECT_EQ(4, line.FindNonSpace(3));
+  EXPECT_EQ(line.Length(), line.FindNonSpace(line.Length()));
+  EXPECT_EQ(line.Length(), line.FindNonSpace(line.Length() + 1));
 }
 
-TEST(TextLine, LastNonSpaceChar) {
+TEST(TextLine, FindLastNonSpace) {
   TextLine line(0, L"");
-  EXPECT_EQ(kInvCoord, line.LastNonSpaceChar());
+  EXPECT_EQ(kInvCoord, line.FindLastNonSpace());
 
   line.InsertString(0, L"a b\tc");
-  EXPECT_EQ(4, line.LastNonSpaceChar());
-  EXPECT_EQ(4, line.LastNonSpaceChar(line.Length()));
-  EXPECT_EQ(2, line.LastNonSpaceChar(4));
-  EXPECT_EQ(0, line.LastNonSpaceChar(2));
-  EXPECT_EQ(0, line.LastNonSpaceChar(1));
-  EXPECT_EQ(kInvCoord, line.LastNonSpaceChar(0));
+  EXPECT_EQ(4, line.FindLastNonSpace());
+  EXPECT_EQ(4, line.FindLastNonSpace(line.Length()));
+  EXPECT_EQ(2, line.FindLastNonSpace(4));
+  EXPECT_EQ(0, line.FindLastNonSpace(2));
+  EXPECT_EQ(0, line.FindLastNonSpace(1));
+  EXPECT_EQ(kInvCoord, line.FindLastNonSpace(0));
 }
 
 TEST(TextLine, GetIndentAndIndentStr) {
@@ -275,6 +275,16 @@ TEST(TextLine, EndWith_Char) {
   EXPECT_FALSE(line.EndWith(L'}', true,   false));
   EXPECT_FALSE(line.EndWith(L'}', false,  true));
   EXPECT_FALSE(line.EndWith(L'}', false,  false));
+}
+
+TEST(TextLine, Equal) {
+  TextLine line(0, L"  { // comments ");
+  line.AddLexElem(4, 12, Lex(kLexComment));
+
+  EXPECT_TRUE(line.Equal(L"{", true, true));
+  EXPECT_FALSE(line.Equal(L"{", false, true));
+  EXPECT_FALSE(line.Equal(L"{", true, false));
+  EXPECT_FALSE(line.Equal(L"{", false, false));
 }
 
 TEST(TextLine, UnpairedLeftKey) {

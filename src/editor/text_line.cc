@@ -14,6 +14,8 @@ extern "C" {
 namespace jil {
 namespace editor {
 
+//------------------------------------------------------------------------------
+
 TextLine::TextLine(size_t id, const wchar_t* data, size_t len)
     : id_(id), data_(data, len) {
 }
@@ -30,6 +32,8 @@ TextLine::~TextLine() {
   ClearContainer(&lex_elems_);
 }
 
+//------------------------------------------------------------------------------
+
 Coord TextLine::TabbedLength(int tab_stop, Coord count) const {
   return TabbedLineLength(tab_stop, data_, count);
 }
@@ -39,10 +43,6 @@ wchar_t TextLine::Char(Coord off) const {
     return LF;
   }
   return data_[off];
-}
-
-bool TextLine::Lua_IsChar(Coord off, char c) const {
-  return (c == Char(off));
 }
 
 std::wstring TextLine::Sub(Coord off, Coord count) const {
@@ -61,18 +61,60 @@ std::wstring TextLine::Sub(Coord off, Coord count) const {
   return data_.substr(off, count);
 }
 
-bool TextLine::IsEmpty(bool ignore_spaces) const {
-  if (ignore_spaces) {
+
+Coord TextLine::FindNonSpace(Coord off) const {
+  assert(off >= 0);
+
+  Coord len = Length();
+  if (off >= len) {
+    return len;
+  }
+
+  Coord i = off;
+  for (; i < len && IsSpace(data_[i]); ++i) {}
+  return i;
+}
+
+Coord TextLine::FindLastNonSpace(Coord off) const {
+  if (off == kInvCoord) {
+    off = Length();
+  }
+
+  Coord i = off - 1;
+  for (; i >= 0 && IsSpace(data_[i]); --i) {}
+  return i;  // Might be -1, i.e., kInvCoord.
+}
+
+Coord TextLine::FindLastChar(wchar_t c, bool skip_comment, Coord off) const {
+  if (off == kInvCoord) {
+    off = Length();
+  }
+
+  Coord i = off - 1;
+  for (; i >= 0; --i) {
+    if (data_[i] == c) {
+      if (skip_comment && IsComment(i)) {
+        continue;
+      }
+      break;
+    }
+  }
+
+  return i;
+}
+
+bool TextLine::IsEmpty(bool ignore_space) const {
+  if (ignore_space) {
     return data_.find_first_not_of(L" \t") == std::wstring::npos;
   } else {
     return data_.empty();
   }
 }
 
-bool TextLine::StartWith(wchar_t c, bool ignore_spaces, Coord* off) const {
+bool TextLine::StartWith(wchar_t c, bool ignore_space, Coord* off) const {
   size_t i = 0;
 
-  if (ignore_spaces && !IsSpace(c)) {
+  if (ignore_space && !IsSpace(c)) {
     for (; i < data_.size() && IsSpace(data_[i]); ++i) {}
   }
 
@@ -90,14 +132,14 @@ bool TextLine::StartWith(wchar_t c, bool ignore_spaces, Coord* off) const {
   return false;
 }
 
-bool TextLine::StartWith(const std::wstring& str, bool ignore_spaces, Coord* off) const {
+bool TextLine::StartWith(const std::wstring& str, bool ignore_space, Coord* off) const {
   if (str.size() == 1) {
-    return StartWith(str[0], ignore_spaces, off);
+    return StartWith(str[0], ignore_space, off);
   }
 
   size_t i = 0;
 
-  if (ignore_spaces && !IsSpace(str[0])) {
+  if (ignore_space && !IsSpace(str[0])) {
     for (; i < data_.size() && IsSpace(data_[i]); ++i) {}
   }
 
@@ -115,38 +157,9 @@ bool TextLine::StartWith(const std::wstring& str, bool ignore_spaces, Coord* off
   return false;
 }
 
-int TextLine::Lua_startWith(lua_State* L) {
-  int n = lua_gettop(L);  // Number of arguments
-
-  if (n < 3 || lua_type(L, 2) != LUA_TBOOLEAN) {
-    luaL_error(L, "incorrect argument");
-  }
-
-  bool ignore_spaces = lua_toboolean(L, 2) != 0;
-
-  bool result = false;
-  int off = 0;
-
-  for (int i = 3; i <= n; ++i) {
-    if (lua_type(L, i) != LUA_TSTRING) {
-      break;
-    }
-    const char* cstr = lua_tostring(L, i);
-    std::wstring str(cstr, cstr + strlen(cstr));
-    if (StartWith(str, ignore_spaces, &off)) {
-      result = true;
-      break;
-    }
-  }
-
-  luabridge::push(L, result);
-  luabridge::push(L, off);
-  return 2;
-}
-
 bool TextLine::EndWith(wchar_t c,
-                       bool ignore_comments,
-                       bool ignore_spaces,
+                       bool ignore_comment,
+                       bool ignore_space,
                        Coord* off) const {
   if (data_.empty()) {
     return false;
@@ -154,9 +167,9 @@ bool TextLine::EndWith(wchar_t c,
 
   Coord len = CoordCast(data_.size());
 
-  bool do_ignore_spaces = ignore_spaces && !IsSpace(c);
+  bool do_ignore_spaces = ignore_space && !IsSpace(c);
 
-  if (ignore_comments) {
+  if (ignore_comment) {
     std::list<LexElem*>::const_reverse_iterator it = lex_elems_.rbegin();
     for (; it != lex_elems_.rend(); ++it) {
       if (do_ignore_spaces) {
@@ -192,11 +205,11 @@ bool TextLine::EndWith(wchar_t c,
 }
 
 bool TextLine::EndWith(const std::wstring& str,
-                       bool ignore_comments,
-                       bool ignore_spaces,
+                       bool ignore_comment,
+                       bool ignore_space,
                        Coord* off) const {
   if (str.size() == 1) {
-    return EndWith(str[0], ignore_comments, ignore_spaces, off);
+    return EndWith(str[0], ignore_comment, ignore_space, off);
   }
 
   if (data_.empty()) {
@@ -205,9 +218,9 @@ bool TextLine::EndWith(const std::wstring& str,
 
   Coord len = CoordCast(data_.size());
 
-  bool do_ignore_spaces = ignore_spaces && !IsSpace(str[str.size()-1]);
+  bool do_ignore_spaces = ignore_space && !IsSpace(str[str.size()-1]);
 
-  if (ignore_comments) {
+  if (ignore_comment) {
     std::list<LexElem*>::const_reverse_iterator it = lex_elems_.rbegin();
     for (; it != lex_elems_.rend(); ++it) {
       if (do_ignore_spaces) {
@@ -242,40 +255,20 @@ bool TextLine::EndWith(const std::wstring& str,
   return false;
 }
 
-int TextLine::Lua_endWith(lua_State* L) {
-  int n = lua_gettop(L);  // Number of arguments
-
-  if (n < 4) {
-    luaL_error(L, "incorrect argument");
-    //return;  // TODO
+bool TextLine::Equal(const std::wstring& str,
+                     bool ignore_comment,
+                     bool ignore_space) const {
+  Coord off1 = kInvCoord;
+  if (!StartWith(str, ignore_space, &off1)) {
+    return false;
   }
 
-  if (lua_type(L, 2) != LUA_TBOOLEAN || lua_type(L, 3) != LUA_TBOOLEAN) {
-    luaL_error(L, "incorrect argument");
-    //return;  // TODO
+  Coord off2 = kInvCoord;
+  if (!EndWith(str, ignore_comment, ignore_space, &off2)) {
+    return false;
   }
 
-  bool ignore_comments = lua_toboolean(L, 2) != 0;
-  bool ignore_spaces = lua_toboolean(L, 3) != 0;
-
-  bool result = false;
-  int off = 0;
-
-  for (int i = 4; i <= n; ++i) {
-    if (lua_type(L, i) != LUA_TSTRING) {
-      break;
-    }
-    const char* cstr = lua_tostring(L, i);
-    std::wstring str(cstr, cstr + strlen(cstr));
-    if (EndWith(str, ignore_comments, ignore_spaces, &off)) {
-      result = true;
-      break;
-    }
-  }
-
-  luabridge::push(L, result);
-  luabridge::push(L, off);
-  return 2;
+  return off1 == off2;
 }
 
 bool TextLine::IsEolEscaped(bool no_comment_or_string) const {
@@ -316,33 +309,6 @@ Coord TextLine::UnpairedLeftKey(wchar_t l_key, wchar_t r_key, Coord off) const {
   return kInvCoord;
 }
 
-Coord TextLine::Lua_getUnpairedLeftKey(char l_key, char r_key, Coord off) const {
-  return UnpairedLeftKey((wchar_t)l_key, (wchar_t)r_key, off);
-}
-
-Coord TextLine::FirstNonSpaceChar(Coord off) const {
-  assert(off >= 0);
-
-  Coord len = Length();
-  if (off >= len) {
-    return len;
-  }
-
-  Coord i = off;
-  for (; i < len && IsSpace(data_[i]); ++i) {}
-  return i;
-}
-
-Coord TextLine::LastNonSpaceChar(Coord off) const {
-  if (off == kInvCoord) {
-    off = Length();
-  }
-
-  Coord i = off - 1;
-  for (; i >= 0 && IsSpace(data_[i]); --i) {}
-  return i;  // Might be -1, i.e., kInvCoord.
-}
-
 Coord TextLine::GetIndent(int tab_stop) const {
   Coord spaces = 0;
 
@@ -363,7 +329,7 @@ Coord TextLine::GetIndent(int tab_stop) const {
 }
 
 std::wstring TextLine::GetIndentStr() const {
-  Coord i = FirstNonSpaceChar();
+  Coord i = FindNonSpace();
 
   if (i == 0) {
     return L"";
@@ -375,8 +341,10 @@ std::wstring TextLine::GetIndentStr() const {
 }
 
 Coord TextLine::GetIndentStrLength() const {
-  return FirstNonSpaceChar();
+  return FindNonSpace();
 }
+
+//------------------------------------------------------------------------------
 
 void TextLine::InsertChar(Coord off, wchar_t c) {
   data_.insert(off, 1, c);
@@ -729,6 +697,93 @@ bool TextLine::ClearLex() {
   bool result1 = ClearLexElems();
   bool result2 = ClearQuoteElems();
   return result1 || result2;
+}
+
+//------------------------------------------------------------------------------
+// Lua wrappers
+
+bool TextLine::Lua_isChar(Coord off, char c) const {
+  return (c == Char(off));
+}
+
+int TextLine::Lua_findLastChar(char c, bool skip_comment, int off) const {
+  return FindLastChar(wchar_t(c), skip_comment, off);
+}
+
+int TextLine::Lua_startWith(lua_State* L) {
+  int n = lua_gettop(L);  // Number of arguments
+
+  if (n < 3 || lua_type(L, 2) != LUA_TBOOLEAN) {
+    luaL_error(L, "incorrect argument");
+  }
+
+  bool ignore_space = lua_toboolean(L, 2) != 0;
+
+  bool result = false;
+  int off = 0;
+
+  for (int i = 3; i <= n; ++i) {
+    if (lua_type(L, i) != LUA_TSTRING) {
+      break;
+    }
+    const char* cstr = lua_tostring(L, i);
+    std::wstring str(cstr, cstr + strlen(cstr));
+    if (StartWith(str, ignore_space, &off)) {
+      result = true;
+      break;
+    }
+  }
+
+  luabridge::push(L, result);
+  luabridge::push(L, off);
+  return 2;
+}
+
+int TextLine::Lua_endWith(lua_State* L) {
+  int n = lua_gettop(L);  // Number of arguments
+
+  if (n < 4) {
+    luaL_error(L, "incorrect argument");
+    //return;  // TODO
+  }
+
+  if (lua_type(L, 2) != LUA_TBOOLEAN || lua_type(L, 3) != LUA_TBOOLEAN) {
+    luaL_error(L, "incorrect argument");
+    //return;  // TODO
+  }
+
+  bool ignore_comment = lua_toboolean(L, 2) != 0;
+  bool ignore_space = lua_toboolean(L, 3) != 0;
+
+  bool result = false;
+  int off = 0;
+
+  for (int i = 4; i <= n; ++i) {
+    if (lua_type(L, i) != LUA_TSTRING) {
+      break;
+    }
+    const char* cstr = lua_tostring(L, i);
+    std::wstring str(cstr, cstr + strlen(cstr));
+    if (EndWith(str, ignore_comment, ignore_space, &off)) {
+      result = true;
+      break;
+    }
+  }
+
+  luabridge::push(L, result);
+  luabridge::push(L, off);
+  return 2;
+}
+
+bool TextLine::Lua_equal(const std::string& str,
+                         bool ignore_comment,
+                         bool ignore_space) const {
+  std::wstring wstr(str.begin(), str.end());
+  return Equal(wstr, ignore_comment, ignore_space);
+}
+
+Coord TextLine::Lua_getUnpairedLeftKey(char l_key, char r_key, Coord off) const {
+  return UnpairedLeftKey((wchar_t)l_key, (wchar_t)r_key, off);
 }
 
 }  // namespace editor

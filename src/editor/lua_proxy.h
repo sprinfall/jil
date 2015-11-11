@@ -18,7 +18,11 @@ void InitLua(lua_State* lua_state);
 
 bool LoadLuaFile(lua_State* lua_state, const wxString& file, std::string* err_msg = NULL);
 
+// Get global lua value with the given name.
 luabridge::LuaRef GetLuaValue(lua_State* lua_state, const char* name);
+
+// Get lua value with the given name under the global table 'ns'.
+luabridge::LuaRef GetLuaValue(lua_State* lua_state, const char* ns, const char* name);
 
 }  // namespace editor
 }  // namespace jil

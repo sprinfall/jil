@@ -1215,7 +1215,7 @@ void TextWindow::InsertChar(const TextPoint& point,
   // Check if the word (or words, a indent key could be multiple words, e.g.,
   // "End If" in VB) before the caret is an indent key or not.
   if (!line->IsEmpty(true)) {
-    Coord off = line->FirstNonSpaceChar();
+    Coord off = line->FindNonSpace();
     if (off < caret_point_.x) {
       Coord len = caret_point_.x - off;
       if (ft_plugin()->MatchIndentKey(line->data(), off, len)) {

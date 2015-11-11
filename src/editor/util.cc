@@ -2,6 +2,7 @@
 #include "wx/clipbrd.h"
 #include "wx/filename.h"
 #include "wx/intl.h"
+#include "base/string_util.h"
 
 namespace jil {
 namespace editor {
@@ -41,6 +42,30 @@ bool IsUnescapedBackSlash(const std::wstring& str, size_t i) {
   }
 
   return (count % 2 == 1);
+}
+
+bool ParseLuaError(const std::string& what, int* ln, std::string* msg) {
+  size_t p1 = what.find_last_of(':');
+  if (p1 == std::string::npos) {
+    return false;
+  }
+
+  *msg = what.substr(p1 + 2);  // +2 for ': '
+
+  if (p1 == 0) {
+    return false;
+  }
+  --p1;
+
+  size_t p2 = what.find_last_of(':', p1);
+  if (p2 == std::string::npos) {
+    return false;
+  }
+
+  std::string ln_str = what.substr(p2 + 1, p1 - p2 - 1);
+  *ln = base::LexicalCast<int>(ln_str, 0);
+
+  return (*ln != 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

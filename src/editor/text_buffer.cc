@@ -728,33 +728,6 @@ Coord TextBuffer::PrevNonEmptyLine(Coord ln, bool skip_comment) const {
   return ln;
 }
 
-Coord TextBuffer::PrevLine(Coord ln, const LinePred& pred) const {
-  assert(ln > 0);
-
-  for (--ln; ln > 0; --ln) {
-    if (pred.Check(Line(ln))) {
-      break;
-    }
-  }
-
-  return ln;
-}
-
-Coord TextBuffer::PrevLine(Coord ln, const LinePred& pred1, const LinePred& pred2) const {
-  assert(ln > 0);
-
-  const TextLine* line = NULL;
-
-  for (--ln; ln > 0; --ln) {
-    line = Line(ln);
-    if (pred1.Check(line) && pred2.Check(line)) {
-      break;
-    }
-  }
-
-  return ln;
-}
-
 const std::wstring& TextBuffer::LineData(Coord ln) const {
   return Line(ln)->data();
 }
@@ -1262,15 +1235,17 @@ Coord TextBuffer::GetIndentStrLength(Coord ln) const {
 Coord TextBuffer::GetExpectedIndent(Coord ln) const {
   const luabridge::LuaRef& indent_func = ft_plugin_->indent_func();
   if (!indent_func.isNil() && indent_func.isFunction()) {
-    return indent_func(this, ln);
-  } else {
-    // By default, indent the same as the previous line.
-    Coord prev_ln = PrevNonEmptyLine(ln, true);
-    if (prev_ln == 0) {
-      return 0;
+    try {
+      return indent_func(this, ln);
+    } catch (const luabridge::LuaException& e) {
+      int ln = 0;
+      std::string msg;
+      if (ParseLuaError(e.what(), &ln, &msg)) {
+        ft_plugin_->AddLuaIndentError(ln, msg);
+      }
     }
-    return GetIndent(prev_ln);
   }
+  return GetPrevLineIndent(ln, false);
 }
 
 //------------------------------------------------------------------------------
@@ -2329,7 +2304,7 @@ TextPoint TextBuffer::SeekNextWord(const TextPoint& point) {
       end_point = point;
     } else {
       end_point.y = point.y + 1;
-      end_point.x = Line(end_point.y)->FirstNonSpaceChar();
+      end_point.x = Line(end_point.y)->FindNonSpace();
     }
   } else {  // point.x < line_length
     size_t i = WordEnd(point, true);

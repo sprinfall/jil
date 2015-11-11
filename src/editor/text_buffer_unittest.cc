@@ -147,24 +147,6 @@ TEST(TextBuffer, PrevNonEmptyLine) {
   EXPECT_EQ(9, buffer->PrevNonEmptyLine(11, false));
 }
 
-TEST(TextBuffer, PrevLine) {
-  FtPlugin ft_plugin(FileType("cpp", "C++"));
-  ft_plugin.AddQuote(new Quote(kLexComment, L"//", L"", kQuoteEscapeEol));
-  ft_plugin.AddQuote(new Quote(kLexComment, L"/*", L"*/", kQuoteMultiLine));
-
-  TextBufferPtr buffer;
-  buffer.reset(TextBuffer::Create(0, &ft_plugin, kEncoding));
-
-  buffer->AppendLine(L"    class {");         // Line 2
-  buffer->AppendLine(L"");                    // Empty line
-  buffer->AppendLine(L"  \t");                // Empty line
-  buffer->AppendLine(L"// line comments");
-  buffer->AppendLine(L"  \t// line comments");
-  buffer->AppendLine(L"    public:");
-
-  EXPECT_EQ(2, buffer->PrevLine(7, LineStartWith(L"class")));
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 
 // Helper buffer listener to test notify.

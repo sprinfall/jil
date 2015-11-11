@@ -267,6 +267,14 @@ bool FtPlugin::MatchNext(const std::wstring& str, size_t off, size_t len, Lex* l
 
 //------------------------------------------------------------------------------
 
+// TODO: If it's a new error, display in status bar.
+void FtPlugin::AddLuaIndentError(int ln, const std::string& msg) {
+  std::map<int, std::string>::const_iterator it = lua_indent_errors_.find(ln);
+  if (it == lua_indent_errors_.end()) {
+    lua_indent_errors_[ln] = msg;
+  }
+}
+
 bool FtPlugin::MatchIndentKey(const std::wstring& str,
                               size_t off,
                               size_t len) const {

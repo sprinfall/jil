@@ -259,12 +259,6 @@ public:
   // \param skip_comment Skip comment lines.
   Coord PrevNonEmptyLine(Coord ln, bool skip_comment) const;
 
-  // Return the previous line matching the predicate.
-  Coord PrevLine(Coord ln, const LinePred& pred) const;
-
-  // Return the previous line matching the two predicates.
-  Coord PrevLine(Coord ln, const LinePred& pred1, const LinePred& pred2) const;
-
   const std::wstring& LineData(Coord ln) const;
 
   // Return the char at the given point.

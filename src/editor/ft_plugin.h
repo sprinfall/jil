@@ -136,6 +136,9 @@ public:
     indent_func_ = indent_func;
   }
 
+  // Add an error when execute the lua indent function.
+  void AddLuaIndentError(int ln, const std::string& msg);
+
   bool MatchIndentKey(const std::wstring& str, size_t off, size_t len) const;
 
 private:
@@ -145,6 +148,10 @@ private:
 
   // Indent function for this file type.
   luabridge::LuaRef indent_func_;
+
+  // Errors occurred in the Lua indent script.
+  // line number -> error message
+  std::map<int, std::string> lua_indent_errors_;
 
   // Options specific to this file type.
   Options options_;
