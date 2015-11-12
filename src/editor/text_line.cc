@@ -744,12 +744,10 @@ int TextLine::Lua_endWith(lua_State* L) {
 
   if (n < 4) {
     luaL_error(L, "incorrect argument");
-    //return;  // TODO
   }
 
   if (lua_type(L, 2) != LUA_TBOOLEAN || lua_type(L, 3) != LUA_TBOOLEAN) {
     luaL_error(L, "incorrect argument");
-    //return;  // TODO
   }
 
   bool ignore_comment = lua_toboolean(L, 2) != 0;

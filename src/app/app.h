@@ -6,9 +6,14 @@
 #include <map>
 #include <vector>
 
+#include "app/compile_config.h"
+
 #include "wx/app.h"
 #include "wx/arrstr.h"
-#include "wx/ipc.h"
+
+#if JIL_SINGLE_INSTANCE
+#  include "wx/ipc.h"  // wxServer
+#endif
 
 #include "editor/defs.h"
 #include "editor/option.h"
@@ -27,7 +32,9 @@ namespace luabridge {
 class LuaRef;
 }
 
+#if JIL_SINGLE_INSTANCE
 class wxSingleInstanceChecker;
+#endif
 
 // App name used for paths, config, and other places the user doesn't see.
 #if defined (__WXMSW__) || defined (__WXMAC__)
@@ -130,6 +137,10 @@ private:
   wxString ResourceFile(const wxString& dir, const wxString& file) const;
   wxString ResourceFile(const wxString& dir, const wxString& dir2, const wxString& file) const;
 
+#if JIL_SINGLE_INSTANCE
+  bool InitIpc();
+#endif
+
   void LoadStatusFields();
 
   void LoadOptions();
@@ -163,10 +174,12 @@ private:
   void LoadLex(editor::FtPlugin* ft_plugin);
 
 private:
+  FILE* log_file_;
+
+#if JIL_SINGLE_INSTANCE
   wxSingleInstanceChecker* instance_checker_;
   wxServer* server_;
-
-  FILE* log_file_;
+#endif  // JIL_SINGLE_INSTANCE
 
   // Files specified via command line argument.
   // TODO: Avoid this.

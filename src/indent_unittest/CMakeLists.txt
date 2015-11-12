@@ -1,6 +1,7 @@
 # Unit test
 if(JIL_ENABLE_UT)
     set(UT_SRCS
+        indent_c_unittest.cc
         indent_cfg_unittest.cc
         indent_cpp_unittest.cc
         )

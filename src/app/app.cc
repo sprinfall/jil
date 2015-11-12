@@ -39,7 +39,6 @@ extern "C" {
 #include "app/binding_config.h"
 #include "app/book_ctrl.h"
 #include "app/book_frame.h"
-#include "app/compile_config.h"
 #include "app/font_util.h"
 #include "app/goto_dialog.h"
 #include "app/i18n_strings.h"
@@ -274,9 +273,11 @@ class Client : public wxClient {
 IMPLEMENT_APP_NO_MAIN(App)
 
 App::App()
-    : instance_checker_(NULL)
+    : log_file_(NULL)
+#if JIL_SINGLE_INSTANCE
+    , instance_checker_(NULL)
     , server_(NULL)
-    , log_file_(NULL)
+#endif  // JIL_SINGLE_INSTANCE
     , style_(new editor::Style)
     , binding_(new editor::Binding) {
   lua_state_ = luaL_newstate();
@@ -306,34 +307,7 @@ bool App::OnInit() {
   }
 
 #if JIL_SINGLE_INSTANCE
-  // Single instance check and the communication between two instances.
-
-  const wxString kInstanceName = wxString(kAppName) + wxT("-") + wxGetUserId();
-  instance_checker_ = new wxSingleInstanceChecker(kInstanceName);
-
-  if (!instance_checker_->IsAnotherRunning()) {
-    server_ = new Server;
-    if (!server_->Create(kIpcService)) {
-      wxDELETE(server_);
-      ErrorMsg(_("Failed to create an IPC service!"));
-      return false;
-    }
-  } else {
-    // Another instance is running.
-    // Connect to it and send it any file name before exiting.
-    Client* client = new Client;
-
-    wxConnectionBase* connection = client->MakeConnection(wxT("localhost"), kIpcService, kIpcTopic);
-    if (connection != NULL) {
-      // Ask the other instance to open a file or raise itself.
-      connection->Execute(wxJoin(cmdline_files_, wxT(';')));
-      connection->Disconnect();
-      delete connection;
-    } else {
-      ErrorMsg(_("Failed to connect to the existing instance. Any modal dialogs opened?"));
-    }
-
-    delete client;
+  if (!InitIpc()) {
     return false;
   }
 #endif  // JIL_SINGLE_INSTANCE
@@ -359,17 +333,12 @@ bool App::OnInit() {
     wxMkdir(user_data_dir, 777);
   }
 
-#ifdef __WXMSW__
-#  ifndef __WXDEBUG__
-
   // Set log target to file.
+  // TODO: Add timestamp to file name.
   wxString log_file_path = UserDataFile(wxT("log.txt"));
   log_file_ = wxFopen(log_file_path, "w+");
   wxLog* default_log = wxLog::SetActiveTarget(new wxLogStderr(log_file_));
   delete default_log;
-
-#  endif  // __WXDEBUG__
-#endif  // __WXMSW__
 
   LoadStatusFields();
 
@@ -496,10 +465,15 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
   //----------------------------------------------------------------------------
   // Indent
 
-  if (editor::LoadLuaFile(lua_state_, ft_plugin_dir + kIndentFile)) {
+  WorkingDirSwitcher wd_switcher(ft_plugin_dir);
+
+  std::string err_msg;
+  if (editor::LoadLuaFile(lua_state_, kIndentFile + "test", &err_msg)) {
     std::string ns = ft.id.ToStdString();
     luabridge::LuaRef indent_func = editor::GetLuaValue(lua_state_, ns.c_str(), "indent");
     ft_plugin->set_indent_func(indent_func);
+  } else {
+    // TODO: Log
   }
 
   ft_plugins_.push_back(ft_plugin);
@@ -611,6 +585,38 @@ wxString App::ResourceFile(const wxString& dir, const wxString& file) const {
 
 wxString App::ResourceFile(const wxString& dir, const wxString& dir2, const wxString& file) const {
   return ResourceDir(dir, dir2) + file;
+}
+
+bool App::InitIpc() {
+  const wxString kInstanceName = wxString(kAppName) + wxT("-") + wxGetUserId();
+  instance_checker_ = new wxSingleInstanceChecker(kInstanceName);
+
+  if (!instance_checker_->IsAnotherRunning()) {
+    server_ = new Server;
+    if (!server_->Create(kIpcService)) {
+      wxDELETE(server_);
+      ErrorMsg(_("Failed to create an IPC service!"));
+      return false;
+    }
+    return true;
+  }
+
+  // Another instance is running.
+  // Connect to it and send it any file name before exiting.
+  Client* client = new Client;
+
+  wxConnectionBase* connection = client->MakeConnection(wxT("localhost"), kIpcService, kIpcTopic);
+  if (connection != NULL) {
+    // Ask the other instance to open a file or raise itself.
+    connection->Execute(wxJoin(cmdline_files_, wxT(';')));
+    connection->Disconnect();
+    delete connection;
+  } else {
+    ErrorMsg(_("Failed to connect to the existing instance. Any modal dialogs opened?"));
+  }
+
+  delete client;
+  return false;
 }
 
 void App::LoadStatusFields() {

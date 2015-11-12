@@ -40,7 +40,6 @@ void InitLua(lua_State* lua_state) {
     .addFunction("isComment", &TextLine::IsComment)
     .addFunction("isString", &TextLine::IsString)
     .addFunction("isCommentOrString", &TextLine::IsCommentOrString)
-    // CFunctions
     .addCFunction("startWith", &TextLine::Lua_startWith)  
     .addCFunction("endWith", &TextLine::Lua_endWith)
     .endClass()
@@ -54,7 +53,7 @@ void InitLua(lua_State* lua_state) {
     .addFunction("getPrevNonEmptyLine", &TextBuffer::PrevNonEmptyLine)
     .addFunction("getUnpairedLeftKey", &TextBuffer::Lua_UnpairedLeftKey)
     .endClass();
-}
+} 
  
 bool LoadLuaFile(lua_State* lua_state, const wxString& file, std::string* err_msg) {
   std::string bytes;

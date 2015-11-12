@@ -1,5 +1,4 @@
 -- Indent function for C++
--- Last update: 2015-11-11
 
 -- All functions are defined under this "namespace" to avoid conflict
 -- among different file types.
