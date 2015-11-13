@@ -331,6 +331,19 @@ TEST_F(IndentCppTest, GetBlockHead7) {
   EXPECT_EQ(2, get_block_head(buffer_, ln, x).cast<int>());
 }
 
+TEST_F(IndentCppTest, GetBlockHead8) {
+  luabridge::LuaRef get_block_head = GetLuaValue(lua_state_, "cpp", "getBlockHead");
+  if (get_block_head.isNil() || !get_block_head.isFunction()) {
+    EXPECT_TRUE(false);
+    return;
+  }
+
+  buffer_->AppendLine(L"if (condition1 &&");
+  buffer_->AppendLine(L"    condition2)  // comments");
+  buffer_->AppendLine(L"{");
+
+  EXPECT_EQ(2, get_block_head(buffer_, 4, 0).cast<int>());
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -468,10 +481,36 @@ TEST_F(IndentCppTest, FunctionDef_OneLineParams_NewLineBrace) {
   ASSERT_LINE(5);
 }
 
+TEST_F(IndentCppTest, FunctionDef_OneLineParams_NewLineBrace_Comment) {
+  buffer_->AppendLine(L"void add(int a, int b, int c)  // comment");
+  buffer_->AppendLine(L"{");
+  buffer_->AppendLine(L"    return a + b + c;");
+  buffer_->AppendLine(L"}");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+}
+
 TEST_F(IndentCppTest, FunctionDef_MultiLineParams_NewLineBrace) {
   buffer_->AppendLine(L"void add(int a,");
   buffer_->AppendLine(L"         int b,");
   buffer_->AppendLine(L"         int c)");
+  buffer_->AppendLine(L"{");
+  buffer_->AppendLine(L"    return a + b + c;");
+  buffer_->AppendLine(L"}");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
+  ASSERT_LINE(7);
+}
+
+TEST_F(IndentCppTest, FunctionDef_MultiLineParams_NewLineBrace_Comment) {
+  buffer_->AppendLine(L"void add(int a,");
+  buffer_->AppendLine(L"         int b,");
+  buffer_->AppendLine(L"         int c)  // comment");
   buffer_->AppendLine(L"{");
   buffer_->AppendLine(L"    return a + b + c;");
   buffer_->AppendLine(L"}");
@@ -685,6 +724,25 @@ TEST_F(IndentCppTest, Struct_Accessors) {
   buffer_->AppendLine(L"    protected:");
   buffer_->AppendLine(L"        A();");
   buffer_->AppendLine(L"    private:");
+  buffer_->AppendLine(L"        int count_;");
+  buffer_->AppendLine(L"    };");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
+  ASSERT_LINE(7);
+  ASSERT_LINE(8);
+  ASSERT_LINE(9);
+}
+
+TEST_F(IndentCppTest, Class_Accessors_Negative1) {
+  buffer_->AppendLine(L"    class A {");
+  buffer_->AppendLine(L"    public :");
+  buffer_->AppendLine(L"        ~A();");
+  buffer_->AppendLine(L"    protected  :");
+  buffer_->AppendLine(L"        A();");
+  buffer_->AppendLine(L"    private\t:");
   buffer_->AppendLine(L"        int count_;");
   buffer_->AppendLine(L"    };");
 

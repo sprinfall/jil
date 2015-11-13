@@ -55,7 +55,9 @@ void InitLua(lua_State* lua_state) {
     .endClass();
 } 
  
-bool LoadLuaFile(lua_State* lua_state, const wxString& file, std::string* err_msg) {
+bool LoadLuaFile(lua_State* lua_state,
+                 const wxString& file,
+                 std::string* lua_error) {
   std::string bytes;
   if (ReadBytes(file, &bytes) != 0) {
     return false;
@@ -63,10 +65,10 @@ bool LoadLuaFile(lua_State* lua_state, const wxString& file, std::string* err_ms
 
   int err = luaL_dostring(lua_state, bytes.c_str());
   if (err != LUA_OK) {
-    if (err_msg != NULL) {
+    if (lua_error != NULL) {
       // Get the error message from stack top.
       if (lua_gettop(lua_state) != 0) {
-        *err_msg = lua_tostring(lua_state, -1);
+        *lua_error = lua_tostring(lua_state, -1);
       }
     }
     return false;

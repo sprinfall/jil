@@ -467,13 +467,20 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
 
   WorkingDirSwitcher wd_switcher(ft_plugin_dir);
 
-  std::string err_msg;
-  if (editor::LoadLuaFile(lua_state_, kIndentFile + "test", &err_msg)) {
+  std::string lua_error;
+  if (editor::LoadLuaFile(lua_state_, kIndentFile, &lua_error)) {
     std::string ns = ft.id.ToStdString();
     luabridge::LuaRef indent_func = editor::GetLuaValue(lua_state_, ns.c_str(), "indent");
     ft_plugin->set_indent_func(indent_func);
   } else {
-    // TODO: Log
+    if (!lua_error.empty()) {
+      int ln = 0;
+      std::string msg;
+      if (editor::ParseLuaError(lua_error, &ln, &msg)) {
+        // TODO
+      }
+      // TODO: Show to user
+    }
   }
 
   ft_plugins_.push_back(ft_plugin);

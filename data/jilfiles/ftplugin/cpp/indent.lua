@@ -87,20 +87,17 @@ cpp.getBlockHead = function(buffer, curr_ln, x)
     end
   end
 
-  if line:isChar(j, ')') then
+  local k = line:findLastChar(')', true, j+1)
+  if k ~= -1 then
     -- The char before '{' is ')', find the line with the paired '('.
-    local p = Point(j, ln)  -- ')'
+    local p = Point(k, ln)  -- ')'
     p = buffer:getUnpairedLeftKey(p, '(', ')')
     if p:valid() then
       return p.y
     end
   end
 
-  -- The char before '{' is not ')'.
   return ln
-
---  local k = line:findLastChar(')', true, j+1)
---  if k ~= -1 then
 end
 
 -- Check the current line to determine the indent.
