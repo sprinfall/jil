@@ -43,6 +43,8 @@ set(SRCS
     i18n_util.h
     lex_config.cc
     lex_config.h
+    log.cc
+    log.h
     navigation_dialog.cc
     navigation_dialog.h
     option.cc
@@ -61,6 +63,8 @@ set(SRCS
     skin.h
     splitter.cc
     splitter.h
+    status_bar.cc
+    status_bar.h
     status_fields_config.cc
     status_fields_config.h
     text_book.cc

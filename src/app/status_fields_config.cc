@@ -5,7 +5,7 @@ namespace jil {
 
 namespace {
 
-editor::StatusBar::FieldId ParseFieldId(const std::string& field_id_str) {
+StatusBar::FieldId ParseFieldId(const std::string& field_id_str) {
   using namespace editor;
 
   static const std::string kFieldIds[StatusBar::kField_Count] = {
@@ -42,7 +42,7 @@ wxAlignment ParseFieldAlign(const std::string& align_str) {
 }
 
 bool ParseFieldSizeType(const std::string& size_type_str,
-                        editor::StatusBar::SizeType& size_type) {
+                        StatusBar::SizeType& size_type) {
   using namespace editor;
 
   if (size_type_str == "fit") {
@@ -61,7 +61,7 @@ bool ParseFieldSizeType(const std::string& size_type_str,
 }
 
 bool ParseStatusField(Setting field_setting,
-                      editor::StatusBar::FieldInfo* field_info) {
+                      StatusBar::FieldInfo* field_info) {
   using namespace editor;
 
   field_info->id = ParseFieldId(field_setting.GetString("id"));
@@ -93,7 +93,7 @@ bool ParseStatusField(Setting field_setting,
 }  // namespace
 
 bool ParseStatusFields(Setting fields_setting, FieldInfos* field_infos) {
-  editor::StatusBar::FieldInfo field_info;
+  StatusBar::FieldInfo field_info;
 
   const int length = fields_setting.size();
 

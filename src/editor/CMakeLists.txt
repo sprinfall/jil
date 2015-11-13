@@ -18,7 +18,6 @@ set(HEADERS
     relite.h
     renderer.h
     selection.h
-    status_bar.h
     style.h
     text_area.h
     text_buffer.h
@@ -48,7 +47,6 @@ set(SRCS
     option.cc
     relite.cc
     renderer.cc
-    status_bar.cc
     style.cc
     text_area.cc
     text_buffer.cc

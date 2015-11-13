@@ -8,12 +8,12 @@
 #include "editor/lex.h"
 #include "editor/style.h"
 #include "editor/text_window.h"
-#include "editor/status_bar.h"
 #include "app/navigation_dialog.h"
 #include "app/defs.h"
 #include "app/config.h"
 #include "app/book_ctrl.h"
 #include "app/book_frame.h"
+#include "app/status_bar.h"
 
 namespace jil {
 

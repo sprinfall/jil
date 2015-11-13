@@ -5,14 +5,14 @@
 // Parse status bar fields.
 
 #include <vector>
-#include "editor/status_bar.h"
 #include "app/config.h"
+#include "app/status_bar.h"
 
 class wxString;
 
 namespace jil {
 
-typedef std::vector<editor::StatusBar::FieldInfo> FieldInfos;
+typedef std::vector<StatusBar::FieldInfo> FieldInfos;
 
 bool ParseStatusFields(Setting fields_setting, FieldInfos* field_infos);
 

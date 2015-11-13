@@ -17,7 +17,6 @@
 
 #include "editor/defs.h"
 #include "editor/option.h"
-#include "editor/status_bar.h"
 #include "editor/text_func.h"
 #include "editor/theme.h"
 
@@ -25,6 +24,7 @@
 #include "app/ft_config.h"
 #include "app/option.h"
 #include "app/session.h"
+#include "app/status_bar.h"
 
 struct lua_State;
 
@@ -85,7 +85,7 @@ public:
   // If the ft plugin doesn't exist, it will be created.
   editor::FtPlugin* GetFtPlugin(const editor::FileType& ft);
 
-  const std::vector<editor::StatusBar::FieldInfo>& status_fields() const {
+  const std::vector<StatusBar::FieldInfo>& status_fields() const {
     return status_fields_;
   }
 
@@ -212,7 +212,7 @@ private:
   editor::Binding* binding_;
 
   // Status fields for status line.
-  std::vector<editor::StatusBar::FieldInfo> status_fields_;
+  std::vector<StatusBar::FieldInfo> status_fields_;
 
   lua_State* lua_state_;
 };

@@ -21,7 +21,6 @@ namespace editor {
 class Binding;
 class FtPlugin;
 class Options;
-class StatusBar;
 class Style;
 class TextBuffer;
 class TextPoint;
@@ -37,6 +36,7 @@ class FindWindowEvent;
 class Session;
 class Splitter;
 class SplitNode;
+class StatusBar;
 class TextBook;
 class TextPage;
 class ToolBook;
@@ -355,7 +355,7 @@ private:
   // See BookPage::Page_Type().
   wxString page_type_;
 
-  editor::StatusBar* status_bar_;
+  StatusBar* status_bar_;
 
   editor::Style* style_;
   editor::SharedTheme theme_;

@@ -1,4 +1,4 @@
-#include "editor/status_bar.h"
+#include "app/status_bar.h"
 #include "wx/dcbuffer.h"
 #include "wx/menu.h"
 #include "wx/log.h"
@@ -9,7 +9,6 @@
 #include "editor/text_buffer.h"
 
 namespace jil {
-namespace editor {
 
 BEGIN_EVENT_TABLE(StatusBar, wxPanel)
 EVT_PAINT     (StatusBar::OnPaint)
@@ -221,7 +220,7 @@ void StatusBar::OnPaint(wxPaintEvent& evt) {
 void StatusBar::OnSize(wxSizeEvent& evt) {
   evt.Skip();
 
-  if (GetClientSize().x < kUnreadyWindowSize) {
+  if (GetClientSize().x < editor::kUnreadyWindowSize) {
     return;
   }
 
@@ -292,5 +291,4 @@ const StatusBar::FieldInfo* StatusBar::GetFieldById(FieldId id) const {
 
 DEFINE_EVENT_TYPE(kEvtStatusFieldClick);
 
-}  // namespace editor
 }  // namespace jil

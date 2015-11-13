@@ -1,5 +1,5 @@
-#ifndef JIL_EDITOR_STATUS_BAR_H_
-#define JIL_EDITOR_STATUS_BAR_H_
+#ifndef JIL_STATUS_BAR_H_
+#define JIL_STATUS_BAR_H_
 #pragma once
 
 #include <vector>
@@ -7,7 +7,6 @@
 #include "editor/theme.h"
 
 namespace jil {
-namespace editor {
 
 class StatusBar : public wxPanel {
   DECLARE_EVENT_TABLE()
@@ -67,7 +66,7 @@ public:
 
   bool Create(wxWindow* parent, wxWindowID id);
 
-  void set_theme(const SharedTheme& theme) {
+  void set_theme(const editor::SharedTheme& theme) {
     theme_ = theme;
   }
    
@@ -105,7 +104,7 @@ private:
   const FieldInfo* GetFieldById(FieldId id) const;
 
 private:
-  SharedTheme theme_;
+  editor::SharedTheme theme_;
 
   std::vector<FieldInfo> field_infos_;
 
@@ -121,11 +120,10 @@ BEGIN_DECLARE_EVENT_TYPES()
 DECLARE_EVENT_TYPE(kEvtStatusFieldClick, 0)
 END_DECLARE_EVENT_TYPES()
 
-}  // namespace editor
 }  // namespace jil
 
 #define EVT_STATUS_FIELD_CLICK(id, func)\
-  DECLARE_EVENT_TABLE_ENTRY(::jil::editor::kEvtStatusFieldClick, id, -1, \
+  DECLARE_EVENT_TABLE_ENTRY(::jil::kEvtStatusFieldClick, id, -1, \
   wxCommandEventHandler(func), (wxObject*)NULL),
 
-#endif  // JIL_EDITOR_STATUS_BAR_H_
+#endif  // JIL_STATUS_BAR_H_

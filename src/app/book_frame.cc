@@ -34,7 +34,6 @@
 #include "editor/text_buffer.h"
 #include "editor/ft_plugin.h"
 #include "editor/text_window.h"
-#include "editor/status_bar.h"
 
 #include "app/app.h"
 #include "app/compile_config.h"
@@ -49,6 +48,7 @@
 #include "app/session.h"
 #include "app/skin.h"
 #include "app/splitter.h"
+#include "app/status_bar.h"
 #include "app/text_page.h"
 #include "app/text_book.h"
 #include "app/tool_book.h"
@@ -182,7 +182,7 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
   splitter_->SetSplitRoot(split_root);
 
   // Create status line.
-  status_bar_ = new editor::StatusBar;
+  status_bar_ = new StatusBar;
   status_bar_->set_theme(theme_->GetTheme(THEME_STATUS_BAR));
   status_bar_->SetFields(wxGetApp().status_fields());
 
@@ -190,7 +190,7 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
 
   status_bar_->SetFont(options_->fonts[FONT_STATUS_BAR]);
 
-  status_bar_->SetFieldValue(editor::StatusBar::kField_Cwd, wxGetCwd(), false);
+  status_bar_->SetFieldValue(StatusBar::kField_Cwd, wxGetCwd(), false);
 
   LoadMenus();
   SetAccelForVoidCmds();
