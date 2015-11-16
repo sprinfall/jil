@@ -23,6 +23,7 @@ protected:
   virtual void SetUp() {
     lua_state_ = luaL_newstate();
     luaL_openlibs(lua_state_);
+    InitLua(lua_state_);
 
     ft_plugin_ = new FtPlugin(FileType(wxT("cfg"), wxT("Config")), lua_state_);
 
@@ -51,8 +52,9 @@ protected:
     wxString ftplugin_dir = "../../../data/jilfiles/ftplugin/";
     wxString indent_file = ftplugin_dir + wxT("cfg/indent.lua");
 
-    if (LoadLuaFile(lua_state_, indent_file)) {
-      luabridge::LuaRef indent_func = GetLuaValue(lua_state_, "indent");
+    std::string err;
+    if (LoadLuaFile(lua_state_, indent_file, &err)) {
+      luabridge::LuaRef indent_func = GetLuaValue(lua_state_, "cfg", "indent");
       ft_plugin_->set_indent_func(indent_func);
     }
 
@@ -82,81 +84,81 @@ protected:
   EXPECT_EQ(buffer_->GetIndent(ln), GetExpectedIndent(ln));
 
 ////////////////////////////////////////////////////////////////////////////////
-//
-//TEST_F(IndentCfgTest, Group) {
-//  buffer_->AppendLine(L"{");
-//  buffer_->AppendLine(L"    id = \"identifier\";");
-//  buffer_->AppendLine(L"    next = \":\";");
-//  buffer_->AppendLine(L"}");
-//
-//  ASSERT_LINE(3);
-//  ASSERT_LINE(4);
-//  ASSERT_LINE(5);
-//}
-//
-//TEST_F(IndentCfgTest, NamedGroup) {
-//  buffer_->AppendLine(L"indent = {");
-//  buffer_->AppendLine(L"    indent_namespace = true;");
-//  buffer_->AppendLine(L"    indent_case = false;");
-//  buffer_->AppendLine(L"    indent_macro_body = true;");
-//  buffer_->AppendLine(L"}");
-//
-//  ASSERT_LINE(3);
-//  ASSERT_LINE(4);
-//  ASSERT_LINE(5);
-//  ASSERT_LINE(6);
-//}
-//
-//TEST_F(IndentCfgTest, Array) {
-//  buffer_->AppendLine(L"indent_keys = [");
-//  buffer_->AppendLine(L"    \"{\",");
-//  buffer_->AppendLine(L"    \"}\"");
-//  buffer_->AppendLine(L"];");
-//
-//  ASSERT_LINE(3);
-//  ASSERT_LINE(4);
-//  ASSERT_LINE(5);
-//}
-//
-//TEST_F(IndentCfgTest, List) {
-//  buffer_->AppendLine(L"rect = (");
-//  buffer_->AppendLine(L"    0,");
-//  buffer_->AppendLine(L"    0,");
-//  buffer_->AppendLine(L"    0,");
-//  buffer_->AppendLine(L"    0");
-//  buffer_->AppendLine(L")");
-//
-//  ASSERT_LINE(3);
-//  ASSERT_LINE(4);
-//  ASSERT_LINE(5);
-//  ASSERT_LINE(6);
-//  ASSERT_LINE(7);
-//}
-//
-//TEST_F(IndentCfgTest, AssignOperator1) {
-//  buffer_->AppendLine(L"indent_keys = ");
-//  buffer_->AppendLine(L"[");
-//  buffer_->AppendLine(L"    \"{\",");
-//  buffer_->AppendLine(L"    \"}\"");
-//  buffer_->AppendLine(L"];");
-//
-//  ASSERT_LINE(3);
-//  ASSERT_LINE(4);
-//  ASSERT_LINE(5);
-//  ASSERT_LINE(6);
-//}
-//
-//TEST_F(IndentCfgTest, AssignOperator2) {
-//  buffer_->AppendLine(L"indent = ");
-//  buffer_->AppendLine(L"{");
-//  buffer_->AppendLine(L"    indent_namespace = true;");
-//  buffer_->AppendLine(L"    indent_case = false;");
-//  buffer_->AppendLine(L"    indent_macro_body = true;");
-//  buffer_->AppendLine(L"}");
-//
-//  ASSERT_LINE(3);
-//  ASSERT_LINE(4);
-//  ASSERT_LINE(5);
-//  ASSERT_LINE(6);
-//  ASSERT_LINE(7);
-//}
+
+TEST_F(IndentCfgTest, Group) {
+  buffer_->AppendLine(L"{");
+  buffer_->AppendLine(L"    id = \"identifier\";");
+  buffer_->AppendLine(L"    next = \":\";");
+  buffer_->AppendLine(L"}");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+}
+
+TEST_F(IndentCfgTest, NamedGroup) {
+  buffer_->AppendLine(L"indent = {");
+  buffer_->AppendLine(L"    indent_namespace = true;");
+  buffer_->AppendLine(L"    indent_case = false;");
+  buffer_->AppendLine(L"    indent_macro_body = true;");
+  buffer_->AppendLine(L"}");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
+}
+
+TEST_F(IndentCfgTest, Array) {
+  buffer_->AppendLine(L"indent_keys = [");
+  buffer_->AppendLine(L"    \"{\",");
+  buffer_->AppendLine(L"    \"}\"");
+  buffer_->AppendLine(L"];");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+}
+
+TEST_F(IndentCfgTest, List) {
+  buffer_->AppendLine(L"rect = (");
+  buffer_->AppendLine(L"    0,");
+  buffer_->AppendLine(L"    0,");
+  buffer_->AppendLine(L"    0,");
+  buffer_->AppendLine(L"    0");
+  buffer_->AppendLine(L")");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
+  ASSERT_LINE(7);
+}
+
+TEST_F(IndentCfgTest, AssignOperator1) {
+  buffer_->AppendLine(L"indent_keys = ");
+  buffer_->AppendLine(L"[");
+  buffer_->AppendLine(L"    \"{\",");
+  buffer_->AppendLine(L"    \"}\"");
+  buffer_->AppendLine(L"];");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
+}
+
+TEST_F(IndentCfgTest, AssignOperator2) {
+  buffer_->AppendLine(L"indent = ");
+  buffer_->AppendLine(L"{");
+  buffer_->AppendLine(L"    indent_namespace = true;");
+  buffer_->AppendLine(L"    indent_case = false;");
+  buffer_->AppendLine(L"    indent_macro_body = true;");
+  buffer_->AppendLine(L"}");
+
+  ASSERT_LINE(3);
+  ASSERT_LINE(4);
+  ASSERT_LINE(5);
+  ASSERT_LINE(6);
+  ASSERT_LINE(7);
+}

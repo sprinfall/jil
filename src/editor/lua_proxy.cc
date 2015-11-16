@@ -50,6 +50,7 @@ void InitLua(lua_State* lua_state) {
     .addFunction("getLineCount", &TextBuffer::LineCount)
     .addFunction("getLine", &TextBuffer::Line)
     .addFunction("getIndent", &TextBuffer::GetIndent)
+    .addFunction("getPrevLineIndent", &TextBuffer::GetPrevLineIndent)
     .addFunction("getPrevNonEmptyLine", &TextBuffer::PrevNonEmptyLine)
     .addFunction("getUnpairedLeftKey", &TextBuffer::Lua_UnpairedLeftKey)
     .endClass();

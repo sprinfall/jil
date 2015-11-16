@@ -55,7 +55,8 @@ protected:
     wxString ftplugin_dir = "../../../data/jilfiles/ftplugin/";
     wxString indent_file = ftplugin_dir + wxT("cpp/indent.lua");
 
-    if (LoadLuaFile(lua_state_, indent_file)) {
+    std::string err;
+    if (LoadLuaFile(lua_state_, indent_file, &err)) {
       luabridge::LuaRef indent_func = GetLuaValue(lua_state_, "cpp", "indent");
       ft_plugin_->set_indent_func(indent_func);
     }
