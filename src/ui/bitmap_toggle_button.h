@@ -4,7 +4,7 @@
 
 // A replacement of wxBitmapToggleButton.
 
-#include "wx/control.h"
+#include "ui/button_base.h"
 #include "wx/tglbtn.h"  // For wxEVT_TOGGLEBUTTON, etc.
 #include "wx/bitmap.h"
 
@@ -16,21 +16,18 @@ namespace ui {
 //   Event type: wxEVT_TOGGLEBUTTON
 //   Macro: EVT_TOGGLEBUTTON(id, func)
 
-class BitmapToggleButton : public wxControl {
-  DECLARE_EVENT_TABLE()
+class BitmapToggleButton : public ButtonBase {
+  DECLARE_CLASS(BitmapToggleButton)
+  DECLARE_NO_COPY_CLASS(BitmapToggleButton)
 
 public:
-  BitmapToggleButton(wxWindow* parent, wxWindowID id);
+  explicit BitmapToggleButton(SharedButtonStyle style);
   virtual ~BitmapToggleButton();
 
-  virtual bool Enable(bool enable) override;
+  bool Create(wxWindow* parent, wxWindowID id);
 
-  virtual bool AcceptsFocus() const override {
-    return accept_focus_;
-  }
-
-  void set_accept_focus(bool accept_focus) {
-    accept_focus_ = accept_focus;
+  void set_user_best_size(const wxSize& user_best_size) {
+    user_best_size_ = user_best_size;
   }
 
   // Switch toggle state.
@@ -46,32 +43,23 @@ public:
     Refresh();
   }
 
-  void SetBitmaps(const wxBitmap& bitmap,
-                  const wxBitmap& toggle_bitmap,
-                  const wxBitmap& disabled_bitmap = wxNullBitmap,
-                  const wxBitmap& disabled_toggle_bitmap = wxNullBitmap) {
+  void SetBitmap(const wxBitmap& bitmap) {
     bitmap_ = bitmap;
-    toggle_bitmap_ = toggle_bitmap;
-    disabled_bitmap_ = disabled_bitmap;
-    disabled_toggle_bitmap_ = disabled_toggle_bitmap;
   }
 
 protected:
   virtual wxSize DoGetBestSize() const override;
 
-  void OnPaint(wxPaintEvent& evt);
+  virtual ButtonStyle::State GetState() override;
 
-  void OnLeftDown(wxMouseEvent& evt);
-  void OnLeftUp(wxMouseEvent& evt);
+  virtual void DrawForeground(wxDC& dc, ButtonStyle::State state) override;
+
+  virtual void PostEvent() override;
 
 private:
-  bool accept_focus_;
+  wxSize user_best_size_;
   bool toggle_;
-
   wxBitmap bitmap_;
-  wxBitmap toggle_bitmap_;
-  wxBitmap disabled_bitmap_;
-  wxBitmap disabled_toggle_bitmap_;
 };
 
 }  // namespace ui

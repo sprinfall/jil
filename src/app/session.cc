@@ -7,7 +7,7 @@
 #include "app/util.h"
 
 #define BOOK_FRAME        "book_frame"
-#define FIND_WINDOW       "find_window"
+#define FIND_PANEL        "find_panel"
 #define RECT              "rect"
 #define MAXIMIZED         "maximized"
 
@@ -121,23 +121,21 @@ bool Session::Load(const wxString& file) {
   //----------------------------------------------------------------------------
   // Find window
 
-  Setting fw_setting = root_setting.Get(FIND_WINDOW, Setting::kGroup);
-  if (fw_setting) {
-    GetRect(fw_setting, RECT, &find_window_rect_);
+  Setting fp_setting = root_setting.Get(FIND_PANEL, Setting::kGroup);
+  if (fp_setting) {
+    GetStringArray(fp_setting, FIND_STRINGS, &find_strings_);
+    GetStringArray(fp_setting, REPLACE_STRINGS, &replace_strings_);
 
-    GetStringArray(fw_setting, FIND_STRINGS, &find_strings_);
-    GetStringArray(fw_setting, REPLACE_STRINGS, &replace_strings_);
+    find_flags_ = SetBit(find_flags_, kFind_UseRegex, fp_setting.GetBool(USE_REGEX));
+    find_flags_ = SetBit(find_flags_, kFind_CaseSensitive, fp_setting.GetBool(CASE_SENSITIVE));
+    find_flags_ = SetBit(find_flags_, kFind_MatchWord, fp_setting.GetBool(MATCH_WORD));
 
-    find_flags_ = SetBit(find_flags_, kFind_UseRegex, fw_setting.GetBool(USE_REGEX));
-    find_flags_ = SetBit(find_flags_, kFind_CaseSensitive, fw_setting.GetBool(CASE_SENSITIVE));
-    find_flags_ = SetBit(find_flags_, kFind_MatchWord, fw_setting.GetBool(MATCH_WORD));
-
-    int location = fw_setting.GetInt(LOCATION);
+    int location = fp_setting.GetInt(LOCATION);
     if (location >= 0 && location < kLocationCount) {
       find_location_ = static_cast<FindLocation>(location);
     }
 
-    show_options_ = fw_setting.GetBool();
+    show_options_ = fp_setting.GetBool();
   }
 
   //----------------------------------------------------------------------------
@@ -192,21 +190,17 @@ bool Session::Save(const wxString& file) {
   //----------------------------------------------------------------------------
   // Find window
 
-  Setting fw_setting = root_setting.Add(FIND_WINDOW, Setting::kGroup);
+  Setting fp_setting = root_setting.Add(FIND_PANEL, Setting::kGroup);
 
-  if (!find_window_rect_.IsEmpty()) {
-    SetRect(fw_setting, RECT, find_window_rect_);
-  }
+  SetStringArray(fp_setting, FIND_STRINGS, find_strings_);
+  SetStringArray(fp_setting, REPLACE_STRINGS, replace_strings_);
 
-  SetStringArray(fw_setting, FIND_STRINGS, find_strings_);
-  SetStringArray(fw_setting, REPLACE_STRINGS, replace_strings_);
+  fp_setting.SetInt(LOCATION, find_location_);
 
-  fw_setting.SetInt(LOCATION, find_location_);
-
-  fw_setting.SetBool(SHOW_OPTIONS, show_options_);
-  fw_setting.SetBool(USE_REGEX, GetBit(find_flags_, kFind_UseRegex));
-  fw_setting.SetBool(CASE_SENSITIVE, GetBit(find_flags_, kFind_CaseSensitive));
-  fw_setting.SetBool(MATCH_WORD, GetBit(find_flags_, kFind_MatchWord));
+  fp_setting.SetBool(SHOW_OPTIONS, show_options_);
+  fp_setting.SetBool(USE_REGEX, GetBit(find_flags_, kFind_UseRegex));
+  fp_setting.SetBool(CASE_SENSITIVE, GetBit(find_flags_, kFind_CaseSensitive));
+  fp_setting.SetBool(MATCH_WORD, GetBit(find_flags_, kFind_MatchWord));
 
   //----------------------------------------------------------------------------
   // Split tree

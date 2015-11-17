@@ -45,14 +45,7 @@ public:
   }
 
   //----------------------------------------------------------------------------
-  // Find window
-
-  wxRect find_window_rect() const {
-    return find_window_rect_;
-  }
-  void set_find_window_rect(const wxRect& rect) {
-    find_window_rect_ = rect;
-  }
+  // Find panel
 
   void set_find_history_limit_(size_t find_history_limit) {
     find_history_limit_ = find_history_limit;
@@ -151,8 +144,6 @@ private:
 private:
   wxRect book_frame_rect_;
   bool book_frame_maximized_;
-
-  wxRect find_window_rect_;
 
   std::list<wxString> find_strings_;
   std::list<wxString> replace_strings_;

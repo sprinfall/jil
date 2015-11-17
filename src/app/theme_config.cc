@@ -13,6 +13,7 @@
 #include "app/config.h"
 #include "app/book_ctrl.h"
 #include "app/book_frame.h"
+#include "app/find_panel.h"
 #include "app/status_bar.h"
 
 namespace jil {
@@ -73,6 +74,32 @@ static void ReadStyle(Setting parent,
   if (setting) {
     ReadStyle(setting, style_value);
   }
+}
+
+static SharedTheme GetButtonTheme(Setting button_setting) {
+  assert(button_setting);
+
+  const char* kButtonParts[] = {
+    "fg", "bg1", "bg2", "bg3", "border_outer", "border_inner"
+  };
+  const char* kButtonStates[] = {
+    "normal", "hover", "pressed", "pressed_hover", "disabled"
+  };
+
+  SharedTheme button_theme(new Theme(ui::ButtonStyle::PARTS));
+
+  for (int part = 0; part < ui::ButtonStyle::PARTS; ++part) {
+    Setting fg_setting = button_setting.Get(kButtonParts[part], Setting::kGroup);
+    if (fg_setting) {
+      SharedTheme part_theme(new Theme(0, ui::ButtonStyle::STATES));
+      for (int state = 0; state < ui::ButtonStyle::STATES; ++state) {
+        part_theme->SetColor(state, fg_setting.GetColor(kButtonStates[state]));
+      }
+      button_theme->SetTheme(part, part_theme);
+    }
+  }
+
+  return button_theme;
 }
 
 // TODO: Error handling
@@ -137,6 +164,24 @@ bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style)
     //tp_theme->SetColor(TextWindow::MATCHING_BG, tp_setting.GetColor("matching_bg"));
     //tp_theme->SetColor(TextWindow::MATCHING_BORDER, tp_setting.GetColor("matching_border"));
   }
+
+  // Find panel
+  SharedTheme fp_theme(new Theme(FindPanel::THEMES, FindPanel::COLORS));
+  Setting fp_setting = root.Get("find_panel", Setting::kGroup);
+  if (fp_setting) {
+    fp_theme->SetColor(FindPanel::BG_TOP, fp_setting.GetColor("bg_top"));
+    fp_theme->SetColor(FindPanel::BG_BOTTOM, fp_setting.GetColor("bg_bottom"));
+    fp_theme->SetColor(FindPanel::BORDER_OUTER,
+                       fp_setting.GetColor("border_outer"));
+    fp_theme->SetColor(FindPanel::BORDER_INNER,
+                       fp_setting.GetColor("border_inner"));
+
+    Setting button_setting = fp_setting.Get("button", Setting::kGroup);
+    if (button_setting) {
+      fp_theme->SetTheme(FindPanel::BUTTON, GetButtonTheme(button_setting));
+    }
+  }
+  theme->SetTheme(THEME_FIND_PANEL, fp_theme);
 
   // Status bar
   SharedTheme sb_theme = theme->GetTheme(THEME_STATUS_BAR);

@@ -31,8 +31,8 @@ class TextWindow;
 class BookCtrl;
 class BookPage;
 class FindResultPage;
-class FindWindow;
-class FindWindowEvent;
+class FindPanel;
+class FindPanelEvent;
 class Session;
 class Splitter;
 class SplitNode;
@@ -136,12 +136,9 @@ protected:
   void OnActivate(wxActivateEvent& evt);
 #endif  // JIL_MULTIPLE_WINDOW
 
-#if JIL_ENABLE_LEADER_KEY
   void OnKeyDownHook(wxKeyEvent& evt);
-
   // Return true if the event is handled.
   bool HandleKeyDownHook(wxKeyEvent& evt);
-#endif  // JIL_ENABLE_LEADER_KEY
 
   void OnAbout(wxCommandEvent& evt);
   void ShowAboutWindow();
@@ -211,14 +208,17 @@ protected:
   void OnStatusEncodingMenu(wxCommandEvent& evt);
   void OnStatusFileFormatMenu(wxCommandEvent& evt);
 
-  // Return find window if it's shown.
-  ::jil::FindWindow* GetFindWindow() const;
+  // Return find panel if it's shown.
+  FindPanel* GetFindPanel() const;
 
-  // \param find_window_mode See FindWindow::ViewMode
-  void ShowFindWindow(int find_window_mode);
+  // \param mode See FindPanel::Mode
+  void ShowFindPanel(int mode);
 
-  // Handle find window events.
-  void OnFindWindowEvent(FindWindowEvent& evt);
+  // Close find panel, update layout, etc.
+  void CloseFindPanel();
+
+  // Handle find panel events.
+  void OnFindPanelEvent(FindPanelEvent& evt);
 
   // Get find result page, create it if necessary.
   FindResultPage* GetFindResultPage(bool create);
@@ -356,6 +356,8 @@ private:
   wxString page_type_;
 
   StatusBar* status_bar_;
+
+  FindPanel* find_panel_;
 
   editor::Style* style_;
   editor::SharedTheme theme_;
