@@ -1,95 +1,40 @@
-#include <memory>
-
-extern "C" {
-#include "lualib.h"
-}
-#include "editor/lua_proxy.h"
-
-#include "editor/ft_plugin.h"
-#include "editor/text_buffer.h"
-#include "editor/text_line.h"
-#include "editor/util.h"
-
-#include "gtest/gtest.h"
+#include "indent_unittest/indent_test_base.h"
 
 using namespace jil::editor;
 
-typedef std::auto_ptr<TextBuffer> TextBufferPtr;
+class IndentTest_Cpp : public IndentTestBase {
+public:
+  static void SetUpTestCase() {
+    FileType ft(wxT("cpp"), wxT("C++"));
+    StaticSetUp(ft);
 
-static const Encoding kEncoding = EncodingFromName(ENCODING_NAME_ISO_8859_1);
+    SetTextOptions(true, 4, 4);
+    AddQuotes();
+  }
 
-class IndentCppTest : public testing::Test {
-protected:
-  virtual void SetUp() {
-    lua_state_ = luaL_newstate();
-    luaL_openlibs(lua_state_);
-    InitLua(lua_state_);
+  static void TearDownTestCase() {
+    StaticTearDown();
+  }
 
-    ft_plugin_ = new FtPlugin(FileType(wxT("cpp"), wxT("C++")), lua_state_);
+  static void AddQuotes() {
+    Quote* quote_comment1 = new Quote(Lex(kLexComment), L"/*", L"*/", kQuoteMultiLine);
+    ft_plugin->AddQuote(quote_comment1);
 
-    TextOptions text_options;
-    text_options.expand_tab = true;
-    text_options.tab_stop = 4;
-    text_options.shift_width = 4;
-    text_options.delimiters = L"!@#%^$&*()+-=\\|/?[]{}<>,.;:'\"`~";
-    ft_plugin_->set_text_options(text_options);
-
-    // Indent functions relies on these quotes.
-    // It would be better to load from the lex file instead.
-
-    Quote* quote1 = new Quote(Lex(kLexComment), L"/*", L"*/", kQuoteMultiLine);
-    ft_plugin_->AddQuote(quote1);
-
-    Quote* quote2 = new Quote(Lex(kLexComment), L"//", L"", kQuoteEscapeEol);
-    ft_plugin_->AddQuote(quote2);
+    Quote* quote_comment2 = new Quote(Lex(kLexComment), L"//", L"", kQuoteEscapeEol);
+    ft_plugin->AddQuote(quote_comment2);
 
     Quote* quote_str = new Quote(Lex(kLexConstant, kLexConstantString), L"\"", L"\"", kQuoteEscapeEol);
-    ft_plugin_->AddQuote(quote_str);
+    ft_plugin->AddQuote(quote_str);
 
     Quote* quote_char = new Quote(Lex(kLexConstant, kLexConstantChar), L"'", L"'", 0);
-    ft_plugin_->AddQuote(quote_char);
-
-    // TODO
-    // jil/build/src/editor
-    //wxString cwd = wxGetCwd();
-    wxString ftplugin_dir = "../../../data/jilfiles/ftplugin/";
-    wxString indent_file = ftplugin_dir + wxT("cpp/indent.lua");
-
-    std::string err;
-    if (LoadLuaFile(lua_state_, indent_file, &err)) {
-      luabridge::LuaRef indent_func = GetLuaValue(lua_state_, "cpp", "indent");
-      ft_plugin_->set_indent_func(indent_func);
-    }
-
-    buffer_ = TextBuffer::Create(0, ft_plugin_, kEncoding);
+    ft_plugin->AddQuote(quote_char);
   }
-
-  virtual void TearDown() {
-    delete buffer_;
-    delete ft_plugin_;
-    lua_close(lua_state_);
-  }
-
-  Coord GetExpectedIndent(Coord ln) {
-    const luabridge::LuaRef& indent_func = ft_plugin_->indent_func();
-    if (indent_func.isNil() || !indent_func.isFunction()) {
-      return 0;
-    }
-    return indent_func(buffer_, ln);
-  }
-
-  lua_State* lua_state_;
-  FtPlugin* ft_plugin_;
-  TextBuffer* buffer_;
 };
-
-#define ASSERT_LINE(ln)\
-  EXPECT_EQ(buffer_->GetIndent(ln), GetExpectedIndent(ln));
 
 ////////////////////////////////////////////////////////////////////////////////
 
-TEST_F(IndentCppTest, IsPreprocHead) {
-  luabridge::LuaRef is_preproc_head = GetLuaValue(lua_state_, "cpp", "isPreprocHead");
+TEST_F(IndentTest_Cpp, IsPreprocHead) {
+  luabridge::LuaRef is_preproc_head = GetLuaValue(lua_state, "cpp", "isPreprocHead");
   if (is_preproc_head.isNil() || !is_preproc_head.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -106,8 +51,8 @@ TEST_F(IndentCppTest, IsPreprocHead) {
   EXPECT_FALSE(is_preproc_head(buffer_->Line(5)).cast<bool>());
 }
 
-TEST_F(IndentCppTest, IsPreprocBody) {
-  luabridge::LuaRef is_preproc_body = GetLuaValue(lua_state_, "cpp", "isPreprocBody");
+TEST_F(IndentTest_Cpp, IsPreprocBody) {
+  luabridge::LuaRef is_preproc_body = GetLuaValue(lua_state, "cpp", "isPreprocBody");
   if (is_preproc_body.isNil() || !is_preproc_body.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -120,8 +65,8 @@ TEST_F(IndentCppTest, IsPreprocBody) {
   EXPECT_TRUE(is_preproc_body(buffer_, 3).cast<bool>());
 }
 
-TEST_F(IndentCppTest, IsPreproc) {
-  luabridge::LuaRef is_preproc = GetLuaValue(lua_state_, "cpp", "isPreproc");
+TEST_F(IndentTest_Cpp, IsPreproc) {
+  luabridge::LuaRef is_preproc = GetLuaValue(lua_state, "cpp", "isPreproc");
   if (is_preproc.isNil() || !is_preproc.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -136,9 +81,9 @@ TEST_F(IndentCppTest, IsPreproc) {
   EXPECT_FALSE(is_preproc(buffer_, 4).cast<bool>());
 }
 
-TEST_F(IndentCppTest, GetPrevLine) {
+TEST_F(IndentTest_Cpp, GetPrevLine) {
   // getPrevLine(buffer, ln, skip_comment, skip_preproc)
-  luabridge::LuaRef get_prev_line = GetLuaValue(lua_state_, "cpp", "getPrevLine");
+  luabridge::LuaRef get_prev_line = GetLuaValue(lua_state, "cpp", "getPrevLine");
   if (get_prev_line.isNil() || !get_prev_line.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -165,9 +110,9 @@ TEST_F(IndentCppTest, GetPrevLine) {
   EXPECT_EQ(2, get_prev_line(buffer_, 6, true, true).cast<int>());
 }
 
-TEST_F(IndentCppTest, GetPrevLineIndent) {
+TEST_F(IndentTest_Cpp, GetPrevLineIndent) {
   // getPrevLineIndent(buffer, ln, skip_comment, skip_preproc)
-  luabridge::LuaRef get_prev_line_indent = GetLuaValue(lua_state_, "cpp", "getPrevLineIndent");
+  luabridge::LuaRef get_prev_line_indent = GetLuaValue(lua_state, "cpp", "getPrevLineIndent");
   if (get_prev_line_indent.isNil() || !get_prev_line_indent.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -194,8 +139,8 @@ TEST_F(IndentCppTest, GetPrevLineIndent) {
   EXPECT_EQ(4, get_prev_line_indent(buffer_, 6, true, true).cast<int>());
 }
 
-TEST_F(IndentCppTest, GetPrevLineStartWith) {
-  luabridge::LuaRef get_prev_line_start_with = GetLuaValue(lua_state_, "cpp", "getPrevLineStartWith");
+TEST_F(IndentTest_Cpp, GetPrevLineStartWith) {
+  luabridge::LuaRef get_prev_line_start_with = GetLuaValue(lua_state, "cpp", "getPrevLineStartWith");
   if (get_prev_line_start_with.isNil() || !get_prev_line_start_with.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -215,8 +160,8 @@ TEST_F(IndentCppTest, GetPrevLineStartWith) {
   EXPECT_EQ(4, get_prev_line_start_with(buffer_, 5, "private", "public", "protected").cast<int>());
 }
 
-TEST_F(IndentCppTest, GetBlockHead1) {
-  luabridge::LuaRef get_block_head = GetLuaValue(lua_state_, "cpp", "getBlockHead");
+TEST_F(IndentTest_Cpp, GetBlockHead1) {
+  luabridge::LuaRef get_block_head = GetLuaValue(lua_state, "cpp", "getBlockHead");
   if (get_block_head.isNil() || !get_block_head.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -228,8 +173,8 @@ TEST_F(IndentCppTest, GetBlockHead1) {
   EXPECT_EQ(2, get_block_head(buffer_, 2, x).cast<int>());
 }
 
-TEST_F(IndentCppTest, GetBlockHead2) {
-  luabridge::LuaRef get_block_head = GetLuaValue(lua_state_, "cpp", "getBlockHead");
+TEST_F(IndentTest_Cpp, GetBlockHead2) {
+  luabridge::LuaRef get_block_head = GetLuaValue(lua_state, "cpp", "getBlockHead");
   if (get_block_head.isNil() || !get_block_head.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -243,8 +188,8 @@ TEST_F(IndentCppTest, GetBlockHead2) {
   EXPECT_EQ(2, get_block_head(buffer_, ln, x).cast<int>());
 }
 
-TEST_F(IndentCppTest, GetBlockHead3) {
-  luabridge::LuaRef get_block_head = GetLuaValue(lua_state_, "cpp", "getBlockHead");
+TEST_F(IndentTest_Cpp, GetBlockHead3) {
+  luabridge::LuaRef get_block_head = GetLuaValue(lua_state, "cpp", "getBlockHead");
   if (get_block_head.isNil() || !get_block_head.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -260,8 +205,8 @@ TEST_F(IndentCppTest, GetBlockHead3) {
   EXPECT_EQ(2, get_block_head(buffer_, ln, x).cast<int>());
 }
 
-TEST_F(IndentCppTest, GetBlockHead4) {
-  luabridge::LuaRef get_block_head = GetLuaValue(lua_state_, "cpp", "getBlockHead");
+TEST_F(IndentTest_Cpp, GetBlockHead4) {
+  luabridge::LuaRef get_block_head = GetLuaValue(lua_state, "cpp", "getBlockHead");
   if (get_block_head.isNil() || !get_block_head.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -277,8 +222,8 @@ TEST_F(IndentCppTest, GetBlockHead4) {
   EXPECT_EQ(2, get_block_head(buffer_, ln, x).cast<int>());
 }
 
-TEST_F(IndentCppTest, GetBlockHead5) {
-  luabridge::LuaRef get_block_head = GetLuaValue(lua_state_, "cpp", "getBlockHead");
+TEST_F(IndentTest_Cpp, GetBlockHead5) {
+  luabridge::LuaRef get_block_head = GetLuaValue(lua_state, "cpp", "getBlockHead");
   if (get_block_head.isNil() || !get_block_head.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -293,8 +238,8 @@ TEST_F(IndentCppTest, GetBlockHead5) {
   EXPECT_EQ(ln, get_block_head(buffer_, ln, x).cast<int>());
 }
 
-TEST_F(IndentCppTest, GetBlockHead6) {
-  luabridge::LuaRef get_block_head = GetLuaValue(lua_state_, "cpp", "getBlockHead");
+TEST_F(IndentTest_Cpp, GetBlockHead6) {
+  luabridge::LuaRef get_block_head = GetLuaValue(lua_state, "cpp", "getBlockHead");
   if (get_block_head.isNil() || !get_block_head.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -312,8 +257,8 @@ TEST_F(IndentCppTest, GetBlockHead6) {
   EXPECT_EQ(2, get_block_head(buffer_, ln, x).cast<int>());
 }
 
-TEST_F(IndentCppTest, GetBlockHead7) {
-  luabridge::LuaRef get_block_head = GetLuaValue(lua_state_, "cpp", "getBlockHead");
+TEST_F(IndentTest_Cpp, GetBlockHead7) {
+  luabridge::LuaRef get_block_head = GetLuaValue(lua_state, "cpp", "getBlockHead");
   if (get_block_head.isNil() || !get_block_head.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -332,8 +277,8 @@ TEST_F(IndentCppTest, GetBlockHead7) {
   EXPECT_EQ(2, get_block_head(buffer_, ln, x).cast<int>());
 }
 
-TEST_F(IndentCppTest, GetBlockHead8) {
-  luabridge::LuaRef get_block_head = GetLuaValue(lua_state_, "cpp", "getBlockHead");
+TEST_F(IndentTest_Cpp, GetBlockHead8) {
+  luabridge::LuaRef get_block_head = GetLuaValue(lua_state, "cpp", "getBlockHead");
   if (get_block_head.isNil() || !get_block_head.isFunction()) {
     EXPECT_TRUE(false);
     return;
@@ -348,7 +293,7 @@ TEST_F(IndentCppTest, GetBlockHead8) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-TEST_F(IndentCppTest, Namespace_Indent) {
+TEST_F(IndentTest_Cpp, Namespace_Indent) {
   buffer_->SetIndentOption("indent_namespace", OptionValue::FromBool(true));
 
   buffer_->AppendLine(L"namespace {");
@@ -359,7 +304,7 @@ TEST_F(IndentCppTest, Namespace_Indent) {
   ASSERT_LINE(4);
 }
 
-TEST_F(IndentCppTest, Namespace_DontIndent) {
+TEST_F(IndentTest_Cpp, Namespace_DontIndent) {
   buffer_->SetIndentOption("indent_namespace", OptionValue::FromBool(false));
 
   buffer_->AppendLine(L"namespace {");
@@ -370,7 +315,7 @@ TEST_F(IndentCppTest, Namespace_DontIndent) {
   ASSERT_LINE(4);
 }
 
-TEST_F(IndentCppTest, Namespace_NewLineBrace_Indent) {
+TEST_F(IndentTest_Cpp, Namespace_NewLineBrace_Indent) {
   buffer_->SetIndentOption("indent_namespace", OptionValue::FromBool(true));
 
   buffer_->AppendLine(L"namespace");
@@ -383,7 +328,7 @@ TEST_F(IndentCppTest, Namespace_NewLineBrace_Indent) {
   ASSERT_LINE(5);
 }
 
-TEST_F(IndentCppTest, Namespace_NewLineBrace_DontIndent) {
+TEST_F(IndentTest_Cpp, Namespace_NewLineBrace_DontIndent) {
   buffer_->SetIndentOption("indent_namespace", OptionValue::FromBool(false));
 
   buffer_->AppendLine(L"namespace");
@@ -396,7 +341,7 @@ TEST_F(IndentCppTest, Namespace_NewLineBrace_DontIndent) {
   ASSERT_LINE(5);
 }
 
-TEST_F(IndentCppTest, SimpleBraceBlock) {
+TEST_F(IndentTest_Cpp, SimpleBraceBlock) {
   buffer_->AppendLine(L"int a, b, c;");
   buffer_->AppendLine(L"{");
   buffer_->AppendLine(L"    int sum = a + b + c;");
@@ -407,7 +352,7 @@ TEST_F(IndentCppTest, SimpleBraceBlock) {
   ASSERT_LINE(5);
 }
 
-TEST_F(IndentCppTest, SimpleBraceBlock_EmptyBody) {
+TEST_F(IndentTest_Cpp, SimpleBraceBlock_EmptyBody) {
   buffer_->AppendLine(L"int a, b, c;");
   buffer_->AppendLine(L"{");
   buffer_->AppendLine(L"}");
@@ -416,14 +361,14 @@ TEST_F(IndentCppTest, SimpleBraceBlock_EmptyBody) {
   ASSERT_LINE(4);
 }
 
-TEST_F(IndentCppTest, FunctionDef_EmptyBody) {
+TEST_F(IndentTest_Cpp, FunctionDef_EmptyBody) {
   buffer_->AppendLine(L"void None() {");
   buffer_->AppendLine(L"}");
 
   ASSERT_LINE(3);
 }
 
-TEST_F(IndentCppTest, FunctionDef_EmptyBody_NewLineBrace) {
+TEST_F(IndentTest_Cpp, FunctionDef_EmptyBody_NewLineBrace) {
   buffer_->AppendLine(L"void None()");
   buffer_->AppendLine(L"{");
   buffer_->AppendLine(L"}");
@@ -432,7 +377,7 @@ TEST_F(IndentCppTest, FunctionDef_EmptyBody_NewLineBrace) {
   ASSERT_LINE(4);
 }
 
-TEST_F(IndentCppTest, FunctionDef_OneLineParams) {
+TEST_F(IndentTest_Cpp, FunctionDef_OneLineParams) {
   buffer_->AppendLine(L"void add(int a, int b, int c) {");
   buffer_->AppendLine(L"    return a + b + c;");
   buffer_->AppendLine(L"}");
@@ -441,7 +386,7 @@ TEST_F(IndentCppTest, FunctionDef_OneLineParams) {
   ASSERT_LINE(4);
 }
 
-TEST_F(IndentCppTest, FunctionDef_MultiLineParams) {
+TEST_F(IndentTest_Cpp, FunctionDef_MultiLineParams) {
   buffer_->AppendLine(L"void add(int a,");
   buffer_->AppendLine(L"         int b,");
   buffer_->AppendLine(L"         int c) {");
@@ -456,7 +401,7 @@ TEST_F(IndentCppTest, FunctionDef_MultiLineParams) {
   ASSERT_LINE(7);
 }
 
-TEST_F(IndentCppTest, FunctionDef_MultiLineParams2) {
+TEST_F(IndentTest_Cpp, FunctionDef_MultiLineParams2) {
   buffer_->AppendLine(L"\t void add(int a,");  // Note the '\t'.
   buffer_->AppendLine(L"              int b,");
   buffer_->AppendLine(L"              int c) {");
@@ -471,7 +416,7 @@ TEST_F(IndentCppTest, FunctionDef_MultiLineParams2) {
   ASSERT_LINE(7);
 }
 
-TEST_F(IndentCppTest, FunctionDef_OneLineParams_NewLineBrace) {
+TEST_F(IndentTest_Cpp, FunctionDef_OneLineParams_NewLineBrace) {
   buffer_->AppendLine(L"void add(int a, int b, int c)");
   buffer_->AppendLine(L"{");
   buffer_->AppendLine(L"    return a + b + c;");
@@ -482,7 +427,7 @@ TEST_F(IndentCppTest, FunctionDef_OneLineParams_NewLineBrace) {
   ASSERT_LINE(5);
 }
 
-TEST_F(IndentCppTest, FunctionDef_OneLineParams_NewLineBrace_Comment) {
+TEST_F(IndentTest_Cpp, FunctionDef_OneLineParams_NewLineBrace_Comment) {
   buffer_->AppendLine(L"void add(int a, int b, int c)  // comment");
   buffer_->AppendLine(L"{");
   buffer_->AppendLine(L"    return a + b + c;");
@@ -493,7 +438,7 @@ TEST_F(IndentCppTest, FunctionDef_OneLineParams_NewLineBrace_Comment) {
   ASSERT_LINE(5);
 }
 
-TEST_F(IndentCppTest, FunctionDef_MultiLineParams_NewLineBrace) {
+TEST_F(IndentTest_Cpp, FunctionDef_MultiLineParams_NewLineBrace) {
   buffer_->AppendLine(L"void add(int a,");
   buffer_->AppendLine(L"         int b,");
   buffer_->AppendLine(L"         int c)");
@@ -508,7 +453,7 @@ TEST_F(IndentCppTest, FunctionDef_MultiLineParams_NewLineBrace) {
   ASSERT_LINE(7);
 }
 
-TEST_F(IndentCppTest, FunctionDef_MultiLineParams_NewLineBrace_Comment) {
+TEST_F(IndentTest_Cpp, FunctionDef_MultiLineParams_NewLineBrace_Comment) {
   buffer_->AppendLine(L"void add(int a,");
   buffer_->AppendLine(L"         int b,");
   buffer_->AppendLine(L"         int c)  // comment");
@@ -523,7 +468,7 @@ TEST_F(IndentCppTest, FunctionDef_MultiLineParams_NewLineBrace_Comment) {
   ASSERT_LINE(7);
 }
 
-TEST_F(IndentCppTest, FunctionDef_DecoratedMethod) {
+TEST_F(IndentTest_Cpp, FunctionDef_DecoratedMethod) {
   buffer_->AppendLine(L"    int GetSomething() const {");
   buffer_->AppendLine(L"        return something;");
   buffer_->AppendLine(L"    }");
@@ -532,7 +477,7 @@ TEST_F(IndentCppTest, FunctionDef_DecoratedMethod) {
   ASSERT_LINE(4);
 }
 
-TEST_F(IndentCppTest, FunctionDef_DecoratedMethod_NewLineBrace) {
+TEST_F(IndentTest_Cpp, FunctionDef_DecoratedMethod_NewLineBrace) {
   buffer_->AppendLine(L"    int GetSomething() const");
   buffer_->AppendLine(L"    {");
   buffer_->AppendLine(L"        return something;");
@@ -543,7 +488,7 @@ TEST_F(IndentCppTest, FunctionDef_DecoratedMethod_NewLineBrace) {
   ASSERT_LINE(5);
 }
 
-TEST_F(IndentCppTest, FunctionDef_DecoratedMethod_MultiLineParams) {
+TEST_F(IndentTest_Cpp, FunctionDef_DecoratedMethod_MultiLineParams) {
   buffer_->AppendLine(L"    virtual void CalcSomething(int param1,");
   buffer_->AppendLine(L"                               int param2) override {");
   buffer_->AppendLine(L"        return something;");
@@ -554,7 +499,7 @@ TEST_F(IndentCppTest, FunctionDef_DecoratedMethod_MultiLineParams) {
   ASSERT_LINE(5);
 }
 
-TEST_F(IndentCppTest, FunctionCall_StringParenthesis) {
+TEST_F(IndentTest_Cpp, FunctionCall_StringParenthesis) {
   buffer_->AppendLine(L"TextPoint p = buffer->UnpairedLeftKey(TextPoint(j, prev_ln),");
   buffer_->AppendLine(L"                                      L'(',");
   buffer_->AppendLine(L"                                      L')');");
@@ -563,7 +508,7 @@ TEST_F(IndentCppTest, FunctionCall_StringParenthesis) {
   ASSERT_LINE(4);
 }
 
-TEST_F(IndentCppTest, If_OneLineConditions) {
+TEST_F(IndentTest_Cpp, If_OneLineConditions) {
   buffer_->AppendLine(L"if (a > b) {");
   buffer_->AppendLine(L"    return b;");
   buffer_->AppendLine(L"}");
@@ -572,7 +517,7 @@ TEST_F(IndentCppTest, If_OneLineConditions) {
   ASSERT_LINE(4);
 }
 
-TEST_F(IndentCppTest, If_NoBrace) {
+TEST_F(IndentTest_Cpp, If_NoBrace) {
   buffer_->AppendLine(L"if (a > b)");
   buffer_->AppendLine(L"    return b;");
   buffer_->AppendLine(L"int i;");
@@ -581,7 +526,7 @@ TEST_F(IndentCppTest, If_NoBrace) {
   ASSERT_LINE(4);
 }
 
-TEST_F(IndentCppTest, If_NoBrace_WithElse) {
+TEST_F(IndentTest_Cpp, If_NoBrace_WithElse) {
   buffer_->AppendLine(L"if (a > b)");
   buffer_->AppendLine(L"    return b;");
   buffer_->AppendLine(L"else");
@@ -594,7 +539,7 @@ TEST_F(IndentCppTest, If_NoBrace_WithElse) {
   ASSERT_LINE(6);
 }
 
-TEST_F(IndentCppTest, If_NoBrace_OneLine) {
+TEST_F(IndentTest_Cpp, If_NoBrace_OneLine) {
   buffer_->AppendLine(L"if (a > b) return b;");
   buffer_->AppendLine(L"else return a;");
   buffer_->AppendLine(L"int i;");
@@ -603,7 +548,7 @@ TEST_F(IndentCppTest, If_NoBrace_OneLine) {
   ASSERT_LINE(4);
 }
 
-TEST_F(IndentCppTest, For_NoBrace) {
+TEST_F(IndentTest_Cpp, For_NoBrace) {
   buffer_->AppendLine(L"for (int i = 0; i < count; ++i)");
   buffer_->AppendLine(L"    sum += i;");
   buffer_->AppendLine(L"int i;");
@@ -612,7 +557,7 @@ TEST_F(IndentCppTest, For_NoBrace) {
   ASSERT_LINE(4);
 }
 
-TEST_F(IndentCppTest, For_MultiLine) {
+TEST_F(IndentTest_Cpp, For_MultiLine) {
   buffer_->AppendLine(L"for (int i = 0;");
   buffer_->AppendLine(L"     i < count;");
   buffer_->AppendLine(L"     ++i) {");
@@ -627,7 +572,7 @@ TEST_F(IndentCppTest, For_MultiLine) {
   ASSERT_LINE(7);
 }
 
-TEST_F(IndentCppTest, While_NoBrace) {
+TEST_F(IndentTest_Cpp, While_NoBrace) {
   buffer_->AppendLine(L"while (i < count)");
   buffer_->AppendLine(L"    sum += i;");
   buffer_->AppendLine(L"int i;");
@@ -636,14 +581,14 @@ TEST_F(IndentCppTest, While_NoBrace) {
   ASSERT_LINE(4);
 }
 
-TEST_F(IndentCppTest, While_NoBrace_OnLine) {
+TEST_F(IndentTest_Cpp, While_NoBrace_OnLine) {
   buffer_->AppendLine(L"while (i < count) sum += i;");
   buffer_->AppendLine(L"int i;");
 
   ASSERT_LINE(3);
 }
 
-TEST_F(IndentCppTest, Class) {
+TEST_F(IndentTest_Cpp, Class) {
   buffer_->AppendLine(L"    class A {");
   buffer_->AppendLine(L"        int count_;");
   buffer_->AppendLine(L"    };");
@@ -652,28 +597,28 @@ TEST_F(IndentCppTest, Class) {
   ASSERT_LINE(4);
 }
 
-TEST_F(IndentCppTest, Class_PublicAccessor) {
+TEST_F(IndentTest_Cpp, Class_PublicAccessor) {
   buffer_->AppendLine(L"    class A {");
   buffer_->AppendLine(L"    public:");
 
   ASSERT_LINE(3);
 }
 
-TEST_F(IndentCppTest, Class_ProtectedAccessor) {
+TEST_F(IndentTest_Cpp, Class_ProtectedAccessor) {
   buffer_->AppendLine(L"    class A {");
   buffer_->AppendLine(L"    protected:");
 
   ASSERT_LINE(3);
 }
 
-TEST_F(IndentCppTest, Class_PrivateAccessor) {
+TEST_F(IndentTest_Cpp, Class_PrivateAccessor) {
   buffer_->AppendLine(L"    class A {");
   buffer_->AppendLine(L"    private:");
 
   ASSERT_LINE(3);
 }
 
-TEST_F(IndentCppTest, Class_EmptyAccessors) {
+TEST_F(IndentTest_Cpp, Class_EmptyAccessors) {
   buffer_->AppendLine(L"    class A {");
   buffer_->AppendLine(L"    public:");
   buffer_->AppendLine(L"    protected:");
@@ -686,7 +631,7 @@ TEST_F(IndentCppTest, Class_EmptyAccessors) {
   ASSERT_LINE(6);
 }
 
-TEST_F(IndentCppTest, Class_Accessors) {
+TEST_F(IndentTest_Cpp, Class_Accessors) {
   buffer_->AppendLine(L"    class A {");
   buffer_->AppendLine(L"    public:");
   buffer_->AppendLine(L"        ~A();");
@@ -705,7 +650,7 @@ TEST_F(IndentCppTest, Class_Accessors) {
   ASSERT_LINE(9);
 }
 
-TEST_F(IndentCppTest, Struct_EmptyAccessors) {
+TEST_F(IndentTest_Cpp, Struct_EmptyAccessors) {
   buffer_->AppendLine(L"    struct A {");
   buffer_->AppendLine(L"    public:");
   buffer_->AppendLine(L"    protected:");
@@ -718,7 +663,7 @@ TEST_F(IndentCppTest, Struct_EmptyAccessors) {
   ASSERT_LINE(6);
 }
 
-TEST_F(IndentCppTest, Struct_Accessors) {
+TEST_F(IndentTest_Cpp, Struct_Accessors) {
   buffer_->AppendLine(L"    struct A {");
   buffer_->AppendLine(L"    public:");
   buffer_->AppendLine(L"        ~A();");
@@ -737,7 +682,7 @@ TEST_F(IndentCppTest, Struct_Accessors) {
   ASSERT_LINE(9);
 }
 
-TEST_F(IndentCppTest, Class_Accessors_Negative1) {
+TEST_F(IndentTest_Cpp, Class_Accessors_Negative1) {
   buffer_->AppendLine(L"    class A {");
   buffer_->AppendLine(L"    public :");
   buffer_->AppendLine(L"        ~A();");
@@ -756,7 +701,7 @@ TEST_F(IndentCppTest, Class_Accessors_Negative1) {
   ASSERT_LINE(9);
 }
 
-TEST_F(IndentCppTest, SwitchCase_IndentCase) {
+TEST_F(IndentTest_Cpp, SwitchCase_IndentCase) {
   buffer_->SetIndentOption("indent_case", OptionValue::FromBool(true));
 
   buffer_->AppendLine(L"    switch (file_format) {");
@@ -779,7 +724,7 @@ TEST_F(IndentCppTest, SwitchCase_IndentCase) {
   ASSERT_LINE(9);
 }
 
-TEST_F(IndentCppTest, SwitchCase_DontIndentCase) {
+TEST_F(IndentTest_Cpp, SwitchCase_DontIndentCase) {
   buffer_->SetIndentOption("indent_case", OptionValue::FromBool(false));
 
   buffer_->AppendLine(L"    switch (file_format) {");
@@ -802,7 +747,7 @@ TEST_F(IndentCppTest, SwitchCase_DontIndentCase) {
   ASSERT_LINE(9);
 }
 
-TEST_F(IndentCppTest, Macro_OneLine) {
+TEST_F(IndentTest_Cpp, Macro_OneLine) {
   buffer_->AppendLine(L"    int i;");
   buffer_->AppendLine(L"#define MAX_SIZE 256");
   buffer_->AppendLine(L"    int j;");
@@ -811,7 +756,7 @@ TEST_F(IndentCppTest, Macro_OneLine) {
   ASSERT_LINE(4);
 }
 
-TEST_F(IndentCppTest, Macro_NextLineIsBrace) {
+TEST_F(IndentTest_Cpp, Macro_NextLineIsBrace) {
   buffer_->AppendLine(L"    int i;");
   buffer_->AppendLine(L"#define MAX_SIZE 256");
   buffer_->AppendLine(L"    {");
@@ -820,7 +765,7 @@ TEST_F(IndentCppTest, Macro_NextLineIsBrace) {
   ASSERT_LINE(4);
 }
 
-TEST_F(IndentCppTest, Macro_EolEscaped_IndentBody) {
+TEST_F(IndentTest_Cpp, Macro_EolEscaped_IndentBody) {
   buffer_->SetIndentOption("indent_preproc_body", OptionValue::FromBool(true));
 
   buffer_->AppendLine(L"        int i;");
@@ -833,7 +778,7 @@ TEST_F(IndentCppTest, Macro_EolEscaped_IndentBody) {
   ASSERT_LINE(5);
 }
 
-TEST_F(IndentCppTest, Macro_EolEscaped_DontIndentBody) {
+TEST_F(IndentTest_Cpp, Macro_EolEscaped_DontIndentBody) {
   buffer_->SetIndentOption("indent_preproc_body", OptionValue::FromBool(false));
 
   buffer_->AppendLine(L"        int i;");
@@ -847,14 +792,14 @@ TEST_F(IndentCppTest, Macro_EolEscaped_DontIndentBody) {
 }
 
 
-TEST_F(IndentCppTest, CommentedBlockStart) {
+TEST_F(IndentTest_Cpp, CommentedBlockStart) {
   buffer_->AppendLine(L"        int i;  // {");
   buffer_->AppendLine(L"        int j;");
 
   ASSERT_LINE(3);
 }
 
-TEST_F(IndentCppTest, PairedKeyInsideComment) {
+TEST_F(IndentTest_Cpp, PairedKeyInsideComment) {
   buffer_->AppendLine(L"void add(int a, int b, int c) {");
   buffer_->AppendLine(L"    // {");  // This { shouldn't affect the indent of }
   buffer_->AppendLine(L"    return a + b + c;");
@@ -865,7 +810,7 @@ TEST_F(IndentCppTest, PairedKeyInsideComment) {
   ASSERT_LINE(5);
 }
 
-TEST_F(IndentCppTest, PairedKeyInsideString) {
+TEST_F(IndentTest_Cpp, PairedKeyInsideString) {
   buffer_->AppendLine(L"void add(int a, int b, int c) {");
   buffer_->AppendLine(L"    const char* str = \"test {\";");  // This { shouldn't affect the indent of }
   buffer_->AppendLine(L"    return a + b + c;");
@@ -876,7 +821,7 @@ TEST_F(IndentCppTest, PairedKeyInsideString) {
   ASSERT_LINE(5);
 }
 
-TEST_F(IndentCppTest, Enum) {
+TEST_F(IndentTest_Cpp, Enum) {
   buffer_->AppendLine(L"enum WeekDay {");
   buffer_->AppendLine(L"    kSunday = 0,");
   buffer_->AppendLine(L"    kMonday,");
@@ -889,7 +834,7 @@ TEST_F(IndentCppTest, Enum) {
   ASSERT_LINE(6);
 }
 
-TEST_F(IndentCppTest, Comments_1) {
+TEST_F(IndentTest_Cpp, Comments_1) {
   buffer_->AppendLine(L"if (a > b) {");
   buffer_->AppendLine(L"    // comments");
   buffer_->AppendLine(L"    // comments");
@@ -902,7 +847,7 @@ TEST_F(IndentCppTest, Comments_1) {
   ASSERT_LINE(6);
 }
 
-TEST_F(IndentCppTest, Comments_2) {
+TEST_F(IndentTest_Cpp, Comments_2) {
   buffer_->AppendLine(L" //if (a > b) {");
   buffer_->AppendLine(L" // comments");
   buffer_->AppendLine(L" // comments");
@@ -913,7 +858,7 @@ TEST_F(IndentCppTest, Comments_2) {
   ASSERT_LINE(5);
 }
 
-TEST_F(IndentCppTest, Comments_3) {
+TEST_F(IndentTest_Cpp, Comments_3) {
   buffer_->AppendLine(L"int i;");
   buffer_->AppendLine(L"/*if (a > b) {");
   buffer_->AppendLine(L"comments");
