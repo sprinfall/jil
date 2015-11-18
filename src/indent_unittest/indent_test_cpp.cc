@@ -650,6 +650,28 @@ TEST_F(IndentTest_Cpp, Class_Accessors) {
   ASSERT_LINE(9);
 }
 
+TEST_F(IndentTest_Cpp, Class_Accessors_Comment) {
+  buffer_->AppendLine(L"    class A {");
+  buffer_->AppendLine(L"    /*");
+  buffer_->AppendLine(L"        class B {");
+  buffer_->AppendLine(L"    */");
+  buffer_->AppendLine(L"    public:");
+  buffer_->AppendLine(L"        ~A();");
+  buffer_->AppendLine(L"    protected:");
+  buffer_->AppendLine(L"        A();");
+  buffer_->AppendLine(L"    private:");
+  buffer_->AppendLine(L"        int count_;");
+  buffer_->AppendLine(L"    };");
+
+  ASSERT_LINE(6);
+  ASSERT_LINE(7);
+  ASSERT_LINE(8);
+  ASSERT_LINE(9);
+  ASSERT_LINE(10);
+  ASSERT_LINE(11);
+  ASSERT_LINE(12);
+}
+
 TEST_F(IndentTest_Cpp, Struct_EmptyAccessors) {
   buffer_->AppendLine(L"    struct A {");
   buffer_->AppendLine(L"    public:");
@@ -745,6 +767,32 @@ TEST_F(IndentTest_Cpp, SwitchCase_DontIndentCase) {
   ASSERT_LINE(7);
   ASSERT_LINE(8);
   ASSERT_LINE(9);
+}
+
+TEST_F(IndentTest_Cpp, SwitchCase_Comment) {
+  buffer_->SetIndentOption("indent_case", OptionValue::FromBool(false));
+
+  buffer_->AppendLine(L"    switch (file_format) {");
+  buffer_->AppendLine(L"    /* ");
+  buffer_->AppendLine(L"        switch ");
+  buffer_->AppendLine(L"    */ ");
+  buffer_->AppendLine(L"    case FF_WIN:");
+  buffer_->AppendLine(L"        return L\"\r\n\";");
+  buffer_->AppendLine(L"    case FF_UNIX:");
+  buffer_->AppendLine(L"        return L\"\n\";");
+  buffer_->AppendLine(L"    case FF_MAC:");
+  buffer_->AppendLine(L"        return L\"\r\";");
+  buffer_->AppendLine(L"    default:");
+  buffer_->AppendLine(L"        return L\"\";");
+  buffer_->AppendLine(L"    }");
+
+  ASSERT_LINE(6);
+  ASSERT_LINE(7);
+  ASSERT_LINE(8);
+  ASSERT_LINE(9);
+  ASSERT_LINE(10);
+  ASSERT_LINE(11);
+  ASSERT_LINE(12);
 }
 
 TEST_F(IndentTest_Cpp, Macro_OneLine) {

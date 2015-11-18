@@ -163,27 +163,23 @@ cpp.indentByCurrLine = function(buffer, ln)
   end
 
   if line:startWith(true, 'case', 'default') then
-    local indent_size = 0
     local prev_ln = cpp.getPrevLineStartWith(buffer, ln, 'switch')
     if prev_ln ~= 0 then
-      indent_size = buffer:getIndent(prev_ln)
+      local indent_size = buffer:getIndent(prev_ln)
       if buffer:getIndentOption('indent_case'):asBool() then
         indent_size = indent_size + buffer:getShiftWidth()
       end
+      return indent_size
+    else
+      return buffer:getPrevLineIndent(ln, true)
     end
-    return indent_size
   end
 
   return -1
 end
 
 -- Check the previous line to determine the indent.
-cpp.indentByPrevLine = function(buffer, ln)
-  local prev_ln = cpp.getPrevLine(buffer, ln, true, true)
-  if prev_ln == 0 then
-    return 0
-  end
-
+cpp.indentByPrevLine = function(buffer, ln, prev_ln)
   local tabStop = buffer:getTabStop()
   local shiftWidth = buffer:getShiftWidth()
 
@@ -254,12 +250,7 @@ end
 -- else             (prev_prev_line)
 --     return a;    (prev_line)
 -- int i;           (line)
-cpp.indentByPrevPrevLine = function(buffer, prev_ln)
-  local pprev_ln = buffer:getPrevNonEmptyLine(prev_ln, true)
-  if pprev_ln == 0 then
-    return -1
-  end
-
+cpp.indentByPrevPrevLine = function(buffer, prev_ln, pprev_ln)
   local tabStop = buffer:getTabStop()
 
   local pprev_line = buffer:getLine(pprev_ln)
@@ -296,15 +287,22 @@ cpp.indent = function(buffer, ln)
     end
   end
 
-  indent_size = cpp.indentByPrevLine(buffer, ln)
+  local prev_ln = cpp.getPrevLine(buffer, ln, true, true)
+  if prev_ln == 0 then
+    return 0
+  end
+
+  indent_size = cpp.indentByPrevLine(buffer, ln, prev_ln)
   if indent_size ~= -1 then
     return indent_size
   end
 
-  local prev_ln = cpp.getPrevLine(buffer, ln, true, true)
-  indent_size = cpp.indentByPrevPrevLine(buffer, prev_ln)
-  if indent_size ~= -1 then
-    return indent_size
+  local pprev_ln = buffer:getPrevNonEmptyLine(prev_ln, true)
+  if pprev_ln ~= 0 then
+    indent_size = cpp.indentByPrevPrevLine(buffer, prev_ln, pprev_ln)
+    if indent_size ~= -1 then
+      return indent_size
+    end
   end
 
   return buffer:getIndent(prev_ln)
