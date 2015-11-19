@@ -570,7 +570,7 @@ TextPoint AutoIndentLineAction::CaretPointAfterExec() const {
 
   // TODO
   if (buffer_->IsLineEmpty(ln_, true)) {
-    return caret_point_ + TextPoint(buffer_->text_options().shift_width, 0);
+    return caret_point_ + TextPoint(buffer_->tab_stop(), 0);
   }
 
   Coord delta = CoordCast(new_indent_str_.size()) -

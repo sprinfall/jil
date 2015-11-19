@@ -216,10 +216,6 @@ public:
     return options_.text.tab_stop;
   }
 
-  int shift_width() const {
-    return options_.text.shift_width;
-  }
-
   // Get extra indent option.
   OptionValue GetIndentOption(const std::string& key) const;
 

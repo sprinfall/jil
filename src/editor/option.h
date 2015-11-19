@@ -125,7 +125,6 @@ public:
   }
 
   void Init() {
-    shift_width = 4;
     tab_stop = 4;
     expand_tab = true;
     guess_tab = true;
@@ -133,9 +132,6 @@ public:
     comment_add_space = true;
     comment_respect_indent = true;
   }
-
-  // The number of spaces to increase indent.
-  int shift_width;
 
   // The number of spaces a tab occupies.
   int tab_stop;

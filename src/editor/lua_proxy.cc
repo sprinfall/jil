@@ -45,7 +45,6 @@ void InitLua(lua_State* lua_state) {
     .endClass()
     .beginClass<TextBuffer>("Buffer")
     .addFunction("getTabStop", &TextBuffer::tab_stop)
-    .addFunction("getShiftWidth", &TextBuffer::shift_width)
     .addFunction("getIndentOption", &TextBuffer::GetIndentOption)
     .addFunction("getLineCount", &TextBuffer::LineCount)
     .addFunction("getLine", &TextBuffer::Line)

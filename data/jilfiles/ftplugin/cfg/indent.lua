@@ -34,12 +34,11 @@ cfg.indentByPrevLine = function(buffer, ln)
     return 0
   end
 
-  local tabStop = buffer:getTabStop()
-  local shiftWidth = buffer:getShiftWidth()
+  local tab_stop = buffer:getTabStop()
 
   local prev_line = buffer:getLine(prev_ln)
   if prev_line:endWith(true, true, '{', '(', '[') then
-    return prev_line:getIndent(tabStop) + shiftWidth
+    return prev_line:getIndent(tab_stop) + tab_stop
   end
 
   return -1

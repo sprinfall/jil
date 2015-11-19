@@ -14,12 +14,11 @@ void IndentTestBase::LoadLua() {
   InitLua(lua_state);
 }
 
-void IndentTestBase::SetTextOptions(bool expand_tab, int tab_stop, int shift_width) {
+void IndentTestBase::SetTextOptions(bool expand_tab, int tab_stop) {
   TextOptions text_options;
 
   text_options.expand_tab = expand_tab;
   text_options.tab_stop = tab_stop;
-  text_options.shift_width = shift_width;
 
   text_options.delimiters = L"!@#%^$&*()+-=\\|/?[]{}<>,.;:'\"`~";
 

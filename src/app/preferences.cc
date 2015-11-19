@@ -694,7 +694,6 @@ public:
 
   virtual bool TransferDataToWindow() override {
     tab_stop_text_ctrl_->SetValue(IntToStr(options_->text.tab_stop));
-    shift_width_text_ctrl_->SetValue(IntToStr(options_->text.shift_width));
     expand_tab_check_box_->SetValue(options_->text.expand_tab);
     guess_check_box_->SetValue(options_->text.guess_tab);
 
@@ -715,9 +714,6 @@ public:
     int tab_stop = StrToInt(tab_stop_text_ctrl_->GetValue());
     options_->text.tab_stop = ValidateInt(tab_stop, editor::kMinTabStop, editor::kMaxTabStop);
    
-    int shift_width = StrToInt(shift_width_text_ctrl_->GetValue());
-    options_->text.shift_width = ValidateInt(shift_width, editor::kMinTabStop, editor::kMaxTabStop);
-
     options_->text.expand_tab = expand_tab_check_box_->GetValue();
     options_->text.guess_tab = guess_check_box_->GetValue();
 
@@ -775,9 +771,6 @@ protected:
 
     tab_stop_text_ctrl_ = CreateTextCtrl(box, wxID_ANY, kNumTextSize, validator);
 
-    wxStaticText* shift_width_label = new wxStaticText(box, wxID_ANY, _("Shift width:"));
-    shift_width_text_ctrl_ = CreateTextCtrl(box, wxID_ANY, kNumTextSize, validator);
-
     expand_tab_check_box_ = new wxCheckBox(box, wxID_ANY, _("Expand tabs"));
 
     guess_check_box_ = new wxCheckBox(box, wxID_ANY, _("Guess from existing lines"));
@@ -787,13 +780,11 @@ protected:
       hsizer->Add(tab_stop_label, wxSizerFlags().Center());
       hsizer->Add(tab_stop_text_ctrl_, wxSizerFlags().Center().Border(wxLR));
       hsizer->AddStretchSpacer(1);
-      hsizer->Add(shift_width_label, wxSizerFlags().Center().Border(wxLEFT));
-      hsizer->Add(shift_width_text_ctrl_, wxSizerFlags().Center().Border(wxLEFT));
+      hsizer->Add(expand_tab_check_box_, wxSizerFlags().Center().Border(wxLEFT));
 
       box_vsizer->Add(hsizer, wxSizerFlags().Expand());
     }
 
-    box_vsizer->Add(expand_tab_check_box_, wxSizerFlags().Border(wxTOP));
     box_vsizer->Add(guess_check_box_, wxSizerFlags().Expand().Border(wxTOP));
 
     box->SetBodySizer(box_vsizer);
@@ -813,7 +804,6 @@ private:
   editor::Options* options_;
 
   wxTextCtrl* tab_stop_text_ctrl_;
-  wxTextCtrl* shift_width_text_ctrl_;
   wxCheckBox* expand_tab_check_box_;
   wxCheckBox* guess_check_box_;
   wxTextCtrl* indent_keys_text_ctrl_;

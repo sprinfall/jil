@@ -36,7 +36,6 @@ const char* const OPT_B_SHOW_PATH = "show_path";
 
 // Names of editor options.
 const char* const OPT_B_WRAP = "wrap";
-const char* const OPT_I_SHIFT_WIDTH = "shift_width";
 const char* const OPT_I_TAB_STOP = "tab_stop";
 const char* const OPT_B_EXPAND_TAB = "expand_tab";
 const char* const OPT_B_GUESS_TAB = "guess_tab";
@@ -352,7 +351,6 @@ static void ParseEditorOptions(const Setting& setting, editor::Options* options)
   //----------------------------------------------------------------------------
   // Text options
 
-  GetInt(setting_map, OPT_I_SHIFT_WIDTH, &options->text.shift_width);
   GetInt(setting_map, OPT_I_TAB_STOP, &options->text.tab_stop);
   GetBool(setting_map, OPT_B_EXPAND_TAB, &options->text.expand_tab);
   GetBool(setting_map, OPT_S_DELIMITERS, &options->text.guess_tab);
@@ -449,7 +447,6 @@ bool SaveEditorOptionsFile(const wxString& file, const editor::Options& options)
   //----------------------------------------------------------------------------
   // Text options
 
-  root_setting.SetInt(OPT_I_SHIFT_WIDTH, options.text.shift_width);
   root_setting.SetInt(OPT_I_TAB_STOP, options.text.tab_stop);
   root_setting.SetBool(OPT_B_EXPAND_TAB, options.text.expand_tab);
   root_setting.SetBool(OPT_S_DELIMITERS, options.text.guess_tab);

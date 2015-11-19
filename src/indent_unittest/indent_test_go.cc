@@ -8,7 +8,7 @@ public:
     FileType ft(wxT("go"), wxT("Go"));
     StaticSetUp(ft);
 
-    SetTextOptions(true, 4, 4);
+    SetTextOptions(true, 4);
     AddQuotes();
   }
 

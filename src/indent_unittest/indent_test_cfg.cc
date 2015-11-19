@@ -8,7 +8,7 @@ public:
     FileType ft(wxT("cfg"), wxT("Config"));
     StaticSetUp(ft);
 
-    SetTextOptions(true, 4, 4);
+    SetTextOptions(true, 4);
     AddQuotes();
   }
 

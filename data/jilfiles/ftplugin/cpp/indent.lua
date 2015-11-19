@@ -114,7 +114,7 @@ cpp.indentByCurrLine = function(buffer, ln)
 
   if cpp.isPreprocBody(buffer, ln) then
     if buffer:getIndentOption('indent_preproc_body'):asBool() then
-      return buffer:getShiftWidth()
+      return buffer:getTabStop()
     else
       return 0  -- The same as pre-proc head.
     end
@@ -167,7 +167,7 @@ cpp.indentByCurrLine = function(buffer, ln)
     if prev_ln ~= 0 then
       local indent_size = buffer:getIndent(prev_ln)
       if buffer:getIndentOption('indent_case'):asBool() then
-        indent_size = indent_size + buffer:getShiftWidth()
+        indent_size = indent_size + buffer:getTabStop()
       end
       return indent_size
     else
@@ -180,8 +180,7 @@ end
 
 -- Check the previous line to determine the indent.
 cpp.indentByPrevLine = function(buffer, ln, prev_ln)
-  local tabStop = buffer:getTabStop()
-  local shiftWidth = buffer:getShiftWidth()
+  local tab_stop = buffer:getTabStop()
 
   local prev_line = buffer:getLine(prev_ln)
 
@@ -195,16 +194,16 @@ cpp.indentByPrevLine = function(buffer, ln, prev_ln)
 
     if not buffer:getIndentOption('indent_namespace'):asBool() then
       if prev_line:startWith(true, true, 'namespace') then
-        return prev_line:getIndent(tabStop)
+        return prev_line:getIndent(tab_stop)
       end
     end
 
-    return prev_line:getIndent(tabStop) + shiftWidth
+    return prev_line:getIndent(tab_stop) + tab_stop
   end
 
   -- public:, protected:, private:, case label:, etc.
   if prev_line:endWith(true, true, ':') then
-    return prev_line:getIndent(tabStop) + shiftWidth
+    return prev_line:getIndent(tab_stop) + tab_stop
   end
 
   -- Handle multi-line if, for and function parameters.
@@ -214,7 +213,7 @@ cpp.indentByPrevLine = function(buffer, ln, prev_ln)
   x = prev_line:getUnpairedLeftKey('(', ')', -1)
   if x ~= -1 then
     -- Indent the same as the first non-space char after the '('.
-    return prev_line:getTabbedLength(tabStop, x + 1)
+    return prev_line:getTabbedLength(tab_stop, x + 1)
   end
 
   ok, x = prev_line:endWith(true, true, ')')
@@ -227,17 +226,17 @@ cpp.indentByPrevLine = function(buffer, ln, prev_ln)
     end
 
     if pair_line:startWith(true, true, 'if', 'else if', 'while', 'for') then
-      return pair_line:getIndent(tabStop) + shiftWidth
+      return pair_line:getIndent(tab_stop) + tab_stop
     end
   end
 
   if prev_line:equal('else', true, true) then
-    return prev_line:getIndent(tabStop) + shiftWidth
+    return prev_line:getIndent(tab_stop) + tab_stop
   end
 
   -- The EOL of previous line is escaped.
   --if prev_line:endWith(true, true, '\\') then
-  --  return prev_line:getIndent(tabStop) + shiftWidth
+  --  return prev_line:getIndent(tab_stop) + tab_stop
   --end
 
   return -1
@@ -251,18 +250,18 @@ end
 --     return a;    (prev_line)
 -- int i;           (line)
 cpp.indentByPrevPrevLine = function(buffer, prev_ln, pprev_ln)
-  local tabStop = buffer:getTabStop()
+  local tab_stop = buffer:getTabStop()
 
   local pprev_line = buffer:getLine(pprev_ln)
   if pprev_line:startWith(true, true, 'if', 'else if', 'while', 'for') then
     if pprev_line:getUnpairedLeftKey('(', ')', -1) == -1 then
       if not pprev_line:endWith(true, true, '{') then
-        return pprev_line:getIndent(tabStop)
+        return pprev_line:getIndent(tab_stop)
       end
     end
   elseif pprev_line:equal('else', true, true) then
     if not pprev_line:endWith(true, true, '{') then
-      return pprev_line:getIndent(tabStop)
+      return pprev_line:getIndent(tab_stop)
     end
   end
 

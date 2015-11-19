@@ -20,7 +20,7 @@ extern "C" {
 class IndentTestBase : public testing::Test {
 protected:
   static void LoadLua();
-  static void SetTextOptions(bool expand_tab, int tab_stop, int shift_width);
+  static void SetTextOptions(bool expand_tab, int tab_stop);
   static void LoadIndentFunc(const wxString& ft_id);
 
   // Call this in SetUpTestCase() of sub-class.

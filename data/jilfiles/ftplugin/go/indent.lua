@@ -49,12 +49,12 @@ go.indentByCurrLine = function(buffer, ln)
 end
 
 go.indentByPrevLine = function(buffer, ln, prev_ln)
-  local tabStop = buffer:getTabStop()
+  local tab_stop = buffer:getTabStop()
 
   local prev_line = buffer:getLine(prev_ln)
 
   if prev_line:endWith(true, true, '{', '(', ':') then
-    return prev_line:getIndent(tabStop) + tabStop
+    return prev_line:getIndent(tab_stop) + tab_stop
   end
 
   return -1
