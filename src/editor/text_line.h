@@ -75,17 +75,25 @@ public:
   // Return kInvCoord on failure.
   Coord FindLastNonSpace(Coord off = kInvCoord) const;
 
-  Coord FindLastChar(wchar_t c, bool skip_comment, Coord off = kInvCoord) const;
+  Coord FindLastChar(wchar_t c,
+                     bool ignore_comment,
+                     Coord off = kInvCoord) const;
 
   // Return true if the line is empty.
   // \param ignore_space A line is empty if it has only empty spaces.
   bool IsEmpty(bool ignore_space) const;
 
   // NOTE: ignore_space will be ignored if c is an empty space.
-  bool StartWith(wchar_t c, bool ignore_space, Coord* off = NULL) const;
+  bool StartWith(wchar_t c,
+                 bool ignore_comment,
+                 bool ignore_space,
+                 Coord* off = NULL) const;
 
   // NOTE: ignore_space will be ignored if str[0] is an empty space.
-  bool StartWith(const std::wstring& str, bool ignore_space, Coord* off = NULL) const;
+  bool StartWith(const std::wstring& str,
+                 bool ignore_comment,
+                 bool ignore_space,
+                 Coord* off = NULL) const;
 
   // NOTE: ignore_space will be ignored if c is an empty space.
   bool EndWith(wchar_t c,
@@ -106,7 +114,9 @@ public:
   // Return true if the last char is an unescaped back slash.
   bool IsEolEscaped(bool no_comment_or_string) const;
 
-  Coord UnpairedLeftKey(wchar_t l_key, wchar_t r_key, Coord off = kInvCoord) const;
+  Coord UnpairedLeftKey(wchar_t l_key,
+                        wchar_t r_key,
+                        Coord off = kInvCoord) const;
 
   // Return the indent as spaces.
   // Tab stop is used to expand the tabs, if any.
@@ -200,7 +210,7 @@ public:
   bool Lua_isChar(Coord off, char c) const;
 
   // Lua wrapper of FindLastChar.
-  int Lua_findLastChar(char c, bool skip_comment, int off = kInvCoord) const;
+  int Lua_findLastChar(char c, bool ignore_comment, int off = kInvCoord) const;
 
   // Lua CFunction wrapper of StartWith.
   // The parameters are different from the normal StartWith. It accepts

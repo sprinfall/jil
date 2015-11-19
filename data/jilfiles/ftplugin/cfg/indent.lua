@@ -13,7 +13,7 @@ cfg.indentByCurrLine = function(buffer, ln)
   local r_keys = { '}', ')', ']' }
 
   for i = 1, 3 do
-    local ok, x = line:startWith(true, r_keys[i])
+    local ok, x = line:startWith(true, true, r_keys[i])
     if ok then
       local p = Point(x, ln)
       p = buffer:getUnpairedLeftKey(p, l_keys[i], r_keys[i])

@@ -6,7 +6,7 @@ go = go or {}
 go.getPrevLineStartWith = function(buffer, ln, ...)
   for prev_ln = ln-1, 1, -1 do
     local prev_line = buffer:getLine(prev_ln)
-    if prev_line:startWith(true, ...) then
+    if prev_line:startWith(true, true, ...) then
       return prev_ln
     end
   end
@@ -24,7 +24,7 @@ go.indentByCurrLine = function(buffer, ln)
   local r_keys = { '}', ')' }
 
   for i = 1, 2 do
-    local ok, x = line:startWith(true, r_keys[i])
+    local ok, x = line:startWith(true, true, r_keys[i])
     if ok then
       local p = Point(x, ln)
       p = buffer:getUnpairedLeftKey(p, l_keys[i], r_keys[i])
@@ -36,7 +36,7 @@ go.indentByCurrLine = function(buffer, ln)
     end
   end
 
-  if line:startWith(true, 'case', 'default') then
+  if line:startWith(true, true, 'case', 'default') then
     local prev_ln = go.getPrevLineStartWith(buffer, ln, 'switch')
     if prev_ln ~= 0 then
       return buffer:getIndent(prev_ln)

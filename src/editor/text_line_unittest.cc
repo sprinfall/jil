@@ -148,46 +148,59 @@ TEST(TextLine, IsEolEscaped_EmptyLine_Comment) {
 TEST(TextLine, StartWith_Char) {
   TextLine line(0, L"");
 
-  EXPECT_FALSE(line.StartWith(L'a', true));
-  EXPECT_FALSE(line.StartWith(L'a', false));
+  EXPECT_FALSE(line.StartWith(L'a', true, true));
+  EXPECT_FALSE(line.StartWith(L'a', true, false));
+  EXPECT_FALSE(line.StartWith(L'a', false, true));
+  EXPECT_FALSE(line.StartWith(L'a', false, false));
 
   line.Clear();
   line.Append(L" \t");
 
+  // If the char is space, parameter ignore_space will be ignored.
+
   Coord off = kInvCoord;
-  EXPECT_TRUE(line.StartWith(L' ', true, &off));
+  EXPECT_TRUE(line.StartWith(L' ', false, true, &off));
   EXPECT_EQ(0, off);
   off = kInvCoord;
-  EXPECT_TRUE(line.StartWith(L' ', false, &off));
+  EXPECT_TRUE(line.StartWith(L' ', false, false, &off));
   EXPECT_EQ(0, off);
 
   line.Clear();
   line.Append(L"\t ");
 
   off = kInvCoord;
-  EXPECT_TRUE(line.StartWith(L'\t', true, &off));
+  EXPECT_TRUE(line.StartWith(L'\t', false, true, &off));
   EXPECT_EQ(0, off);
   off = kInvCoord;
-  EXPECT_TRUE(line.StartWith(L'\t', false, &off));
+  EXPECT_TRUE(line.StartWith(L'\t', false, false, &off));
   EXPECT_EQ(0, off);
 
   line.Clear();
   line.Append(L"\t test");
 
   off = kInvCoord;
-  EXPECT_TRUE(line.StartWith(L't', true, &off));
+  EXPECT_TRUE(line.StartWith(L't', false, true, &off));
   EXPECT_EQ(2, off);
-  EXPECT_FALSE(line.StartWith(L't', false));
+  EXPECT_FALSE(line.StartWith(L't', false, false));
 
   line.Clear();
   line.Append(L"test");
 
   off = kInvCoord;
-  EXPECT_TRUE(line.StartWith(L't', true, &off));
+  EXPECT_TRUE(line.StartWith(L't', false, true, &off));
   EXPECT_EQ(0, off);
   off = kInvCoord;
-  EXPECT_TRUE(line.StartWith(L't', false, &off));
+  EXPECT_TRUE(line.StartWith(L't', false, false, &off));
   EXPECT_EQ(0, off);
+
+  line.ClearLexElems();
+  line.Append(L"// comments");
+  line.AddLexElem(0, line.Length(), Lex(kLexComment));
+
+  off = kInvCoord;
+  EXPECT_TRUE(line.StartWith(L'/', false, false, &off));
+  EXPECT_EQ(0, off);
+  EXPECT_TRUE(line.StartWith(L'/', true, false));
 }
 
 TEST(TextLine, EndWith_Char) {

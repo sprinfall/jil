@@ -85,7 +85,7 @@ Coord TextLine::FindLastNonSpace(Coord off) const {
   return i;  // Might be -1, i.e., kInvCoord.
 }
 
-Coord TextLine::FindLastChar(wchar_t c, bool skip_comment, Coord off) const {
+Coord TextLine::FindLastChar(wchar_t c, bool ignore_comment, Coord off) const {
   if (off == kInvCoord) {
     off = Length();
   }
@@ -93,7 +93,7 @@ Coord TextLine::FindLastChar(wchar_t c, bool skip_comment, Coord off) const {
   Coord i = off - 1;
   for (; i >= 0; --i) {
     if (data_[i] == c) {
-      if (skip_comment && IsComment(i)) {
+      if (ignore_comment && IsComment(i)) {
         continue;
       }
       break;
@@ -111,7 +111,10 @@ bool TextLine::IsEmpty(bool ignore_space) const {
   }
 }
 
-bool TextLine::StartWith(wchar_t c, bool ignore_space, Coord* off) const {
+bool TextLine::StartWith(wchar_t c,
+                         bool ignore_comment,
+                         bool ignore_space,
+                         Coord* off) const {
   size_t i = 0;
 
   if (ignore_space && !IsSpace(c)) {
@@ -123,18 +126,25 @@ bool TextLine::StartWith(wchar_t c, bool ignore_space, Coord* off) const {
   }
 
   if (data_[i] == c) {
-    if (off != NULL) {
-      *off = CoordCast(i);
+    if (ignore_comment && IsComment(i)) {
+      return false;
+    } else {
+      if (off != NULL) {
+        *off = CoordCast(i);
+      }
+      return true;
     }
-    return true;
   }
 
   return false;
 }
 
-bool TextLine::StartWith(const std::wstring& str, bool ignore_space, Coord* off) const {
+bool TextLine::StartWith(const std::wstring& str,
+                         bool ignore_comment,
+                         bool ignore_space,
+                         Coord* off) const {
   if (str.size() == 1) {
-    return StartWith(str[0], ignore_space, off);
+    return StartWith(str[0], ignore_comment, ignore_space, off);
   }
 
   size_t i = 0;
@@ -148,10 +158,14 @@ bool TextLine::StartWith(const std::wstring& str, bool ignore_space, Coord* off)
   }
 
   if (wcsncmp(&data_[i], &str[0], str.size()) == 0) {
-    if (off != NULL) {
-      *off = CoordCast(i);
+    if (ignore_comment && IsComment(i)) {
+      return false;
+    } else {
+      if (off != NULL) {
+        *off = CoordCast(i);
+      }
+      return true;
     }
-    return true;
   }
 
   return false;
@@ -259,7 +273,7 @@ bool TextLine::Equal(const std::wstring& str,
                      bool ignore_comment,
                      bool ignore_space) const {
   Coord off1 = kInvCoord;
-  if (!StartWith(str, ignore_space, &off1)) {
+  if (!StartWith(str, ignore_comment, ignore_space, &off1)) {
     return false;
   }
 
@@ -706,29 +720,34 @@ bool TextLine::Lua_isChar(Coord off, char c) const {
   return (c == Char(off));
 }
 
-int TextLine::Lua_findLastChar(char c, bool skip_comment, int off) const {
-  return FindLastChar(wchar_t(c), skip_comment, off);
+int TextLine::Lua_findLastChar(char c, bool ignore_comment, int off) const {
+  return FindLastChar(wchar_t(c), ignore_comment, off);
 }
 
 int TextLine::Lua_startWith(lua_State* L) {
   int n = lua_gettop(L);  // Number of arguments
 
-  if (n < 3 || lua_type(L, 2) != LUA_TBOOLEAN) {
+  if (n < 4) {
     luaL_error(L, "incorrect argument");
   }
 
-  bool ignore_space = lua_toboolean(L, 2) != 0;
+  if (lua_type(L, 2) != LUA_TBOOLEAN || lua_type(L, 3) != LUA_TBOOLEAN) {
+    luaL_error(L, "incorrect argument");
+  }
+
+  bool ignore_comment = lua_toboolean(L, 2) != 0;
+  bool ignore_space = lua_toboolean(L, 3) != 0;
 
   bool result = false;
   int off = 0;
 
-  for (int i = 3; i <= n; ++i) {
+  for (int i = 4; i <= n; ++i) {
     if (lua_type(L, i) != LUA_TSTRING) {
       break;
     }
     const char* cstr = lua_tostring(L, i);
     std::wstring str(cstr, cstr + strlen(cstr));
-    if (StartWith(str, ignore_space, &off)) {
+    if (StartWith(str, ignore_comment, ignore_space, &off)) {
       result = true;
       break;
     }

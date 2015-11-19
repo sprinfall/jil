@@ -5,7 +5,7 @@
 cpp = cpp or {}
 
 cpp.isPreprocHead = function(line)
-  local ok, off = line:startWith(true, '#')
+  local ok, off = line:startWith(true, true, '#')
   if ok and not line:isCommentOrString(off) then
     return true
   end
@@ -57,7 +57,7 @@ end
 cpp.getPrevLineStartWith = function(buffer, ln, ...)
   for prev_ln = ln-1, 1, -1 do
     local prev_line = buffer:getLine(prev_ln)
-    if prev_line:startWith(true, ...) then
+    if prev_line:startWith(true, true, ...) then
       return prev_ln
     end
   end
@@ -120,7 +120,7 @@ cpp.indentByCurrLine = function(buffer, ln)
     end
   end
 
-  local ok, x = line:startWith(true, '}')
+  local ok, x = line:startWith(true, true, '}')
   if ok then
     -- Try to find '{'.
     local p = Point(x, ln)  -- '}'
@@ -135,7 +135,7 @@ cpp.indentByCurrLine = function(buffer, ln)
     end
   end
 
-  if line:startWith(true, '{') then
+  if line:startWith(true, true, '{') then
     local head_ln = cpp.getBlockHead(buffer, ln, 0)
     if head_ln == ln then
       return 0
@@ -144,7 +144,7 @@ cpp.indentByCurrLine = function(buffer, ln)
     end
   end
 
-  if line:startWith(true, 'else') then
+  if line:startWith(true, true, 'else') then
     local prev_ln = cpp.getPrevLineStartWith(buffer, ln, 'else', 'if')
     if prev_ln ~= 0 then
       return buffer:getIndent(prev_ln)
@@ -153,7 +153,7 @@ cpp.indentByCurrLine = function(buffer, ln)
     end
   end
 
-  if line:startWith(true, 'public', 'protected', 'private') then
+  if line:startWith(true, true, 'public', 'protected', 'private') then
     local prev_ln = cpp.getPrevLineStartWith(buffer, ln, 'class', 'struct')
     if prev_ln ~= 0 then
       return buffer:getIndent(prev_ln)
@@ -162,7 +162,7 @@ cpp.indentByCurrLine = function(buffer, ln)
     end
   end
 
-  if line:startWith(true, 'case', 'default') then
+  if line:startWith(true, true, 'case', 'default') then
     local prev_ln = cpp.getPrevLineStartWith(buffer, ln, 'switch')
     if prev_ln ~= 0 then
       local indent_size = buffer:getIndent(prev_ln)
@@ -194,7 +194,7 @@ cpp.indentByPrevLine = function(buffer, ln, prev_ln)
     end
 
     if not buffer:getIndentOption('indent_namespace'):asBool() then
-      if prev_line:startWith(true, 'namespace') then
+      if prev_line:startWith(true, true, 'namespace') then
         return prev_line:getIndent(tabStop)
       end
     end
@@ -226,7 +226,7 @@ cpp.indentByPrevLine = function(buffer, ln, prev_ln)
       pair_line = buffer:getLine(p.y)
     end
 
-    if pair_line:startWith(true, 'if', 'else if', 'while', 'for') then
+    if pair_line:startWith(true, true, 'if', 'else if', 'while', 'for') then
       return pair_line:getIndent(tabStop) + shiftWidth
     end
   end
@@ -254,7 +254,7 @@ cpp.indentByPrevPrevLine = function(buffer, prev_ln, pprev_ln)
   local tabStop = buffer:getTabStop()
 
   local pprev_line = buffer:getLine(pprev_ln)
-  if pprev_line:startWith(true, 'if', 'else if', 'while', 'for') then
+  if pprev_line:startWith(true, true, 'if', 'else if', 'while', 'for') then
     if pprev_line:getUnpairedLeftKey('(', ')', -1) == -1 then
       if not pprev_line:endWith(true, true, '{') then
         return pprev_line:getIndent(tabStop)
