@@ -168,9 +168,6 @@ public:
   // Return true if this line only has spaces.
   bool IsSpaceOnly() const;
 
-  // Return true if this line only has comments.
-  bool IsCommentOnly() const;
-
   // Return true if it's comment at the given off.
   bool IsComment(Coord off) const;
 
@@ -179,6 +176,16 @@ public:
 
   // Return true if it's comment or string at the given off.
   bool IsCommentOrString(Coord off) const;
+
+  // Return true if this line only has comments.
+  bool IsCommentOnly() const;
+
+  // Return true if this line only has strings.
+  bool IsStringOnly() const;
+
+  // Return true if this line only has the given lex elements.
+  // Used by IsCommentOnly and IsStringOnly.
+  bool IsLexOnly(Lex lex) const;
 
   void AddQuoteElem(Quote* quote, size_t off, size_t len, QuotePart part);
 

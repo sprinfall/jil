@@ -515,7 +515,31 @@ bool TextLine::IsSpaceOnly() const {
   return true;
 }
 
+bool TextLine::IsComment(Coord off) const {
+  return (GetLex(off).major() == kLexComment);
+}
+
+bool TextLine::IsString(Coord off) const {
+  return (GetLex(off) == Lex(kLexConstant, kLexConstantString));
+}
+
+bool TextLine::IsCommentOrString(Coord off) const {
+  Lex lex = GetLex(off);
+  if (lex.major() == kLexComment) {
+    return true;
+  }
+  return (lex == Lex(kLexConstant, kLexConstantString));
+}
+
 bool TextLine::IsCommentOnly() const {
+  return IsLexOnly(Lex(kLexComment));
+}
+
+bool TextLine::IsStringOnly() const {
+  return IsLexOnly(Lex(kLexConstant, kLexConstantString));
+}
+
+bool TextLine::IsLexOnly(Lex lex) const {
   if (lex_elems_.empty()) {
     return false;
   }
@@ -526,7 +550,7 @@ bool TextLine::IsCommentOnly() const {
   for (; it != lex_elems_.end(); ++it) {
     const LexElem* le = *it;
 
-    if (le->lex != kLexComment) {
+    if (le->lex != lex) {
       return false;
     }
 
@@ -553,22 +577,6 @@ bool TextLine::IsCommentOnly() const {
   }
 
   return true;
-}
-
-bool TextLine::IsComment(Coord off) const {
-  return (GetLex(off).major() == kLexComment);
-}
-
-bool TextLine::IsString(Coord off) const {
-  return (GetLex(off) == Lex(kLexConstant, kLexConstantString));
-}
-
-bool TextLine::IsCommentOrString(Coord off) const {
-  Lex lex = GetLex(off);
-  if (lex.major() == kLexComment) {
-    return true;
-  }
-  return (lex == Lex(kLexConstant, kLexConstantString));
 }
 
 void TextLine::AddQuoteElem(Quote* quote, size_t off, size_t len, QuotePart part) {

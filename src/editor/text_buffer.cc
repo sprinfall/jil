@@ -416,19 +416,19 @@ static FileError ReadFile(const wxString& file_path,
 
 // static
 TextBuffer* TextBuffer::Create(size_t id,
-                               const wxFileName& file_name_object,
+                               const wxFileName& fn_object,
                                FtPlugin* ft_plugin,
                                int cjk_filters,
                                const Encoding& file_encoding) {
   std::wstring text;
   Encoding encoding;
 
-  int error = ReadFile(file_name_object.GetFullPath(), cjk_filters, &text, &encoding);
+  int error = ReadFile(fn_object.GetFullPath(), cjk_filters, &text, &encoding);
 
   if (error == kEmptyError) {
     // The file is empty.
     TextBuffer* buffer = Create(id, ft_plugin, file_encoding);
-    buffer->set_file_name_object(file_name_object);
+    buffer->set_file_name_object(fn_object);
     return buffer;
   }
 
@@ -447,7 +447,7 @@ TextBuffer* TextBuffer::Create(size_t id,
     buffer->SetText(text);
   }
 
-  buffer->set_file_name_object(file_name_object);
+  buffer->set_file_name_object(fn_object);
 
   return buffer;
 }
@@ -629,6 +629,46 @@ void TextBuffer::SetFtPlugin(FtPlugin* ft_plugin) {
 }
 
 //------------------------------------------------------------------------------
+// Options
+
+bool TextBuffer::GuessTabOptions(TabOptions* tab_options) const {
+  const luabridge::LuaRef& indent_func = ft_plugin_->indent_func();
+  if (indent_func.isNil() || !indent_func.isFunction()) {
+    return GuessTabOptionsWithoutFunc(tab_options);
+  }
+
+  Coord ln = 2;
+  Coord prev_ln = 1;
+
+  Coord count = LineCount();
+
+  for (; ln < count; ++ln) {
+    TextLine* line = Line(ln);
+
+    if (line->IsEmpty(true)) {
+      continue;
+    }
+
+    if (line->IsCommentOnly() || line->IsStringOnly()) {
+      continue;
+    }
+
+    TextLine* prev_line = Line(prev_ln);
+
+    int tab_stop = options_.text.tab_stop;
+    if (GetExpectedIndent(ln) == prev_line->GetIndent(tab_stop) + tab_stop) {
+      // According to indent function, this line is expected to increase the
+      // indent by one tab stop.
+      if (GetTabOptions(line, prev_line, tab_options)) {
+        return true;
+      }
+    }
+
+    prev_ln = ln;
+  }
+
+  return false;
+}
 
 OptionValue TextBuffer::GetIndentOption(const std::string& key) const {
   const OptionTable& indent_options = options_.text.indent_options;
@@ -1785,6 +1825,61 @@ void TextBuffer::SetText(const std::wstring& text) {
     DoAppendLine(time_it.result_msg().ToStdWstring());
 #endif  // JIL_TEST_TIME_SCAN_LEX
   }
+}
+
+//------------------------------------------------------------------------------
+// Options
+
+bool TextBuffer::GuessTabOptionsWithoutFunc(TabOptions* tab_options) const {
+  Coord count = LineCount();
+
+  Coord ln = 2;
+  Coord prev_ln = 1;
+
+  for (; ln < count; ++ln) {
+    TextLine* line = Line(ln);
+
+    if (line->IsEmpty(true)) {
+      continue;
+    }
+
+    if (GetTabOptions(line, Line(prev_ln), tab_options)) {
+      return true;
+    }
+
+    prev_ln = ln;
+  }
+
+  return false;
+}
+
+bool TextBuffer::GetTabOptions(const TextLine* line,
+                               const TextLine* prev_line,
+                               TabOptions* tab_options) const {
+  if (line->GetIndentStrLength() > prev_line->GetIndentStrLength()) {
+    std::wstring indent_str = line->GetIndentStr();
+    std::wstring prev_indent_str = prev_line->GetIndentStr();
+
+    if (indent_str.size() > prev_indent_str.size()) {
+      IndentType indent_type = GetIndentType(indent_str);
+
+      if (indent_type != kMixedIndent) {
+        if (prev_indent_str.empty() ||
+            indent_type == GetIndentType(prev_indent_str)) {
+          tab_options->expand_tab = indent_type == kSpaceIndent;
+
+          // If tab is not expanded, we can't determine the tab stop.
+          if (tab_options->expand_tab) {
+            tab_options->tab_stop = indent_str.size() - prev_indent_str.size();
+          }
+
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
 }
 
 //------------------------------------------------------------------------------

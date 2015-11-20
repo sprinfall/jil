@@ -140,7 +140,6 @@ public:
   bool expand_tab;
 
   // Guess tab options from existing lines.
-  // TODO
   bool guess_tab;
 
   // Word delimiters (exluding ' ' and '\t').
@@ -225,6 +224,16 @@ class Options {
 public:
   TextOptions text;
   ViewOptions view;
+};
+
+class TabOptions {
+public:
+  TabOptions(int _tab_stop = 0, bool _expand_tab = false)
+      : tab_stop(_tab_stop), expand_tab(_expand_tab) {
+  }
+
+  int tab_stop;
+  bool expand_tab;
 };
 
 }  // namespace editor

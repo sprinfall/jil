@@ -30,6 +30,12 @@ Coord CountCharAfter(const std::wstring& str, Coord i, wchar_t c);
 // "a\"[1] -> true
 bool IsUnescapedBackSlash(const std::wstring& str, size_t i);
 
+// Examples:
+// "\t\t" -> kTabIndent
+// "    " -> kSpaceIndent
+// Others -> kMixedIndent
+IndentType GetIndentType(const std::wstring& indent_str);
+
 // When luabridge::LuaException is raised from executing the function defined
 // in a lua script (e.g., indent.lua), the what() function of the exception
 // returns something like this:

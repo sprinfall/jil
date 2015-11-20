@@ -113,6 +113,12 @@ const wchar_t kTabChar = L'\t';
 const wchar_t kSpaceChar = L' ';
 const wchar_t kNilChar = L'\0';
 
+enum IndentType {
+  kTabIndent,
+  kSpaceIndent,
+  kMixedIndent,
+};
+
 // Jil uses Mozilla 'uchardet' to detect file encoding.
 // Uchardet supports the following character sets:
 // - ISO-8859-2 (European languages)

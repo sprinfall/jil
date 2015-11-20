@@ -32,6 +32,48 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+// Test TextBuffer::GuessTabOptions with indent function.
+
+// See editor_unittest.text_buffer_unittest.cc for testing
+// TextBuffer::GuessTabOptions WITHOUT indent function.
+
+TEST_F(IndentTest_Cpp, GuessTabOptions1) {
+  buffer_->AppendLine(L"if (a > b) {");
+  buffer_->AppendLine(L"    return b;");
+  buffer_->AppendLine(L"}");
+
+  TabOptions tab_options(0, false);
+  bool result = buffer_->GuessTabOptions(&tab_options);
+  EXPECT_TRUE(result);
+  EXPECT_TRUE(tab_options.expand_tab);
+  EXPECT_EQ(4, tab_options.tab_stop);
+}
+
+TEST_F(IndentTest_Cpp, GuessTabOptions2) {
+  buffer_->AppendLine(L"if (a > b) {");
+  buffer_->AppendLine(L"  return b;");
+  buffer_->AppendLine(L"}");
+
+  TabOptions tab_options(0, false);
+  bool result = buffer_->GuessTabOptions(&tab_options);
+  EXPECT_TRUE(result);
+  EXPECT_TRUE(tab_options.expand_tab);
+  EXPECT_EQ(2, tab_options.tab_stop);
+}
+
+TEST_F(IndentTest_Cpp, GuessTabOptions3) {
+  buffer_->AppendLine(L"if (a > b) {");
+  buffer_->AppendLine(L"\treturn b;");
+  buffer_->AppendLine(L"}");
+
+  TabOptions tab_options(0, false);
+  bool result = buffer_->GuessTabOptions(&tab_options);
+  EXPECT_TRUE(result);
+  EXPECT_FALSE(tab_options.expand_tab);
+  EXPECT_EQ(0, tab_options.tab_stop);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 TEST_F(IndentTest_Cpp, IsPreprocHead) {
   luabridge::LuaRef is_preproc_head = GetLuaValue(lua_state, "cpp", "isPreprocHead");

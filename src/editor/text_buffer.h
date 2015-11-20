@@ -119,7 +119,7 @@ public:
 
   // Create a text buffer for the given file.
   static TextBuffer* Create(size_t id,
-                            const wxFileName& file_name_object,
+                            const wxFileName& fn_object,
                             FtPlugin* ft_plugin,
                             int cjk_filters,
                             const Encoding& file_encoding);
@@ -215,6 +215,9 @@ public:
   int tab_stop() const {
     return options_.text.tab_stop;
   }
+
+  // Guess tab options from existing lines.
+  bool GuessTabOptions(TabOptions* tab_options) const;
 
   // Get extra indent option.
   OptionValue GetIndentOption(const std::string& key) const;
@@ -488,6 +491,15 @@ private:
   TextBuffer(size_t id, FtPlugin* ft_plugin);
 
   void SetText(const std::wstring& text);
+
+  //----------------------------------------------------------------------------
+  // Options
+
+  bool GuessTabOptionsWithoutFunc(TabOptions* tab_options) const;
+
+  bool GetTabOptions(const TextLine* line,
+                     const TextLine* prev_line,
+                     TabOptions* tab_options) const;
 
   //----------------------------------------------------------------------------
   // Notify-free line operations.

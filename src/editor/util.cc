@@ -44,6 +44,22 @@ bool IsUnescapedBackSlash(const std::wstring& str, size_t i) {
   return (count % 2 == 1);
 }
 
+IndentType GetIndentType(const std::wstring& indent_str) {
+  assert(!indent_str.empty());
+
+  for (size_t i = 1; i < indent_str.size(); ++i) {
+    if (indent_str[i] != indent_str[0]) {
+      return kMixedIndent;
+    }
+  }
+
+  if (indent_str[0] == kTabChar) {
+    return kTabIndent;
+  } else {
+    return kSpaceIndent;
+  }
+}
+
 bool ParseLuaError(const std::string& what, int* ln, std::string* msg) {
   size_t p1 = what.find_last_of(':');
   if (p1 == std::string::npos) {
