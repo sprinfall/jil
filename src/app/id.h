@@ -34,8 +34,8 @@ enum {
   ID_REPLACE_ALL_BUTTON,
 
   // 32 themes at most.
-  ID_MENU_THEME_0,
-  ID_MENU_THEME_END = ID_MENU_THEME_0 + kMaxThemes,
+  ID_MENU_THEME_BEGIN,
+  ID_MENU_THEME_END = ID_MENU_THEME_BEGIN + kMaxThemes,
 
   // File menu
   ID_MENU_FILE_BEGIN,
@@ -98,8 +98,8 @@ enum {
   ID_MENU_TOOLS_END,
 
   // Preferences menu
-  ID_MENU_PREFS_EDITOR_0,
-  ID_MENU_PREFS_EDITOR_END = ID_MENU_PREFS_EDITOR_0 + kMaxFileTypes,
+  ID_MENU_PREFS_EDITOR_BEGIN,
+  ID_MENU_PREFS_EDITOR_END = ID_MENU_PREFS_EDITOR_BEGIN + kMaxFileTypes,
 
   // Help menu
   ID_MENU_HELP_BEGIN,
@@ -143,6 +143,11 @@ enum {
   ID_MENU_FILE_FORMAT_LF,
   ID_MENU_FILE_FORMAT_CR,
   ID_MENU_FILE_FORMAT_END,
+
+  // File type menu on status bar.
+  ID_MENU_FILE_TYPE_BEGIN,
+  ID_MENU_FILE_TYPE_END = ID_MENU_FILE_TYPE_BEGIN + kMaxFileTypes,
+
 };
 
 }  // namespace jil

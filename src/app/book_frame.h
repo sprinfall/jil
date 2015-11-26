@@ -215,10 +215,12 @@ protected:
   void PopupStatusTabOptionsMenu();
   void PopupStatusEncodingMenu();
   void PopupStatusFileFormatMenu();
+  void PopupStatusFileTypeMenu();
 
   void OnStatusTabOptionsMenu(wxCommandEvent& evt);
   void OnStatusEncodingMenu(wxCommandEvent& evt);
   void OnStatusFileFormatMenu(wxCommandEvent& evt);
+  void OnStatusFileTypeMenu(wxCommandEvent& evt);
 
   void UpdateStatusIndentOptionsField(TextPage* text_page);
 
@@ -312,7 +314,7 @@ private:
   // Add installed themes to the theme menu.
   void InitThemeMenu(wxMenu* theme_menu);
 
-  void InitFileTypeMenu(wxMenu* ft_menu);
+  void InitFileTypeMenu(wxMenu* ft_menu, int id_begin);
 
   // Clear and recreate the items for Recent Files menu.
   void UpdateRecentFilesMenu();

@@ -98,8 +98,8 @@ EVT_MENU_RANGE(ID_MENU_VIEW_BEGIN, ID_MENU_VIEW_END - 1, BookFrame::OnMenuView)
 EVT_MENU_RANGE(ID_MENU_TOOLS_BEGIN, ID_MENU_TOOLS_END - 1, BookFrame::OnMenuTools)
 
 EVT_MENU(wxID_PREFERENCES, BookFrame::OnGlobalPreferences)
-EVT_MENU_RANGE(ID_MENU_PREFS_EDITOR_0, ID_MENU_PREFS_EDITOR_END - 1, BookFrame::OnEditorPreferences)
-EVT_MENU_RANGE(ID_MENU_THEME_0, ID_MENU_THEME_END - 1, BookFrame::OnTheme)
+EVT_MENU_RANGE(ID_MENU_PREFS_EDITOR_BEGIN, ID_MENU_PREFS_EDITOR_END - 1, BookFrame::OnEditorPreferences)
+EVT_MENU_RANGE(ID_MENU_THEME_BEGIN, ID_MENU_THEME_END - 1, BookFrame::OnTheme)
 
 EVT_MENU_RANGE(ID_MENU_HELP_BEGIN, ID_MENU_HELP_END - 1, BookFrame::OnMenuHelp)
 
@@ -107,7 +107,7 @@ EVT_MENU_RANGE(ID_MENU_HELP_BEGIN, ID_MENU_HELP_END - 1, BookFrame::OnMenuHelp)
 EVT_UPDATE_UI_RANGE(ID_MENU_FILE_BEGIN, ID_MENU_FILE_END - 1, BookFrame::OnFileUpdateUI)
 EVT_UPDATE_UI_RANGE(ID_MENU_EDIT_BEGIN, ID_MENU_EDIT_END - 1, BookFrame::OnEditUpdateUI)
 EVT_UPDATE_UI_RANGE(ID_MENU_VIEW_BEGIN, ID_MENU_VIEW_END - 1, BookFrame::OnViewUpdateUI)
-EVT_UPDATE_UI_RANGE(ID_MENU_THEME_0, ID_MENU_THEME_END - 1, BookFrame::OnThemeUpdateUI)
+EVT_UPDATE_UI_RANGE(ID_MENU_THEME_BEGIN, ID_MENU_THEME_END - 1, BookFrame::OnThemeUpdateUI)
 
 EVT_CLOSE(BookFrame::OnClose)
 
@@ -119,6 +119,7 @@ EVT_STATUS_FIELD_CLICK(ID_STATUS_BAR, BookFrame::OnStatusFieldClick)
 EVT_MENU_RANGE(ID_MENU_INDENT_BEGIN, ID_MENU_INDENT_END - 1, BookFrame::OnStatusTabOptionsMenu)
 EVT_MENU_RANGE(ID_MENU_ENCODING_BEGIN, ID_MENU_ENCODING_END - 1, BookFrame::OnStatusEncodingMenu)
 EVT_MENU_RANGE(ID_MENU_FILE_FORMAT_BEGIN, ID_MENU_FILE_FORMAT_END - 1, BookFrame::OnStatusFileFormatMenu)
+EVT_MENU_RANGE(ID_MENU_FILE_TYPE_BEGIN, ID_MENU_FILE_TYPE_END - 1, BookFrame::OnStatusFileTypeMenu)
 
 EVT_FIND_PANEL(ID_FIND_PANEL, BookFrame::OnFindPanelEvent)
 
@@ -836,16 +837,13 @@ void BookFrame::ApplyLineNrFont(const wxFont& font) {
 void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
   // Get the file type.
   const std::vector<editor::FileType*>& file_types = wxGetApp().file_types();
-  int index = evt.GetId() - ID_MENU_PREFS_EDITOR_0;
+  int index = evt.GetId() - ID_MENU_PREFS_EDITOR_BEGIN;
   if (index < 0 || index >= static_cast<int>(file_types.size())) {
     return;
   }
 
   editor::FileType* ft = file_types[index];
   editor::FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(*ft);
-  if (ft_plugin == NULL) {
-    return;
-  }
 
   // Copy the options.
   editor::Options options = ft_plugin->options();
@@ -869,7 +867,7 @@ void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
 }
 
 void BookFrame::OnTheme(wxCommandEvent& evt) {
-  wxString theme_name = wxGetApp().GetTheme(evt.GetId() - ID_MENU_THEME_0);
+  wxString theme_name = wxGetApp().GetTheme(evt.GetId() - ID_MENU_THEME_BEGIN);
   if (theme_name.IsEmpty() || theme_name == options_->theme) {
     return;
   }
@@ -993,7 +991,7 @@ void BookFrame::OnViewUpdateUI(wxUpdateUIEvent& evt) {
 }
 
 void BookFrame::OnThemeUpdateUI(wxUpdateUIEvent& evt) {
-  wxString theme = wxGetApp().GetTheme(evt.GetId() - ID_MENU_THEME_0);
+  wxString theme = wxGetApp().GetTheme(evt.GetId() - ID_MENU_THEME_BEGIN);
   evt.Check(theme == options_->theme);
 }
 
@@ -1324,6 +1322,10 @@ void BookFrame::OnStatusFieldClick(wxCommandEvent& evt) {
       PopupStatusFileFormatMenu();
       break;
 
+    case StatusBar::kField_FileType:
+      PopupStatusFileTypeMenu();
+      break;
+
     default:
       break;
   }
@@ -1432,6 +1434,12 @@ void BookFrame::PopupStatusFileFormatMenu() {
   PopupMenu(&menu, ScreenToClient(wxGetMousePosition()));
 }
 
+void BookFrame::PopupStatusFileTypeMenu() {
+  wxMenu menu;
+  InitFileTypeMenu(&menu, ID_MENU_FILE_TYPE_BEGIN);
+  PopupMenu(&menu, ScreenToClient(wxGetMousePosition()));
+}
+
 void BookFrame::OnStatusTabOptionsMenu(wxCommandEvent& evt) {
   int menu_id = evt.GetId();
 
@@ -1506,6 +1514,27 @@ void BookFrame::OnStatusFileFormatMenu(wxCommandEvent& evt) {
 
   if (ff != FF_NONE) {
     active_page->SetFileFormat(ff);
+  }
+}
+
+void BookFrame::OnStatusFileTypeMenu(wxCommandEvent& evt) {
+  // Get the file type.
+  const std::vector<editor::FileType*>& file_types = wxGetApp().file_types();
+  int index = evt.GetId() - ID_MENU_FILE_TYPE_BEGIN;
+  if (index < 0 || index >= static_cast<int>(file_types.size())) {
+    return;
+  }
+
+  // Update the file type plugin of the current buffer.
+
+  editor::TextBuffer* buffer = ActiveBuffer();
+  if (buffer == NULL) {
+    return;
+  }
+
+  editor::FileType* ft = file_types[index];
+  if (ft->id != buffer->ft_plugin()->id()) {
+    buffer->SetFtPlugin(wxGetApp().GetFtPlugin(*ft));
   }
 }
 
@@ -2187,7 +2216,7 @@ void BookFrame::LoadMenus() {
 
   wxMenu* editor_menu = new wxMenu;
   prefs_menu->AppendSubMenu(editor_menu, kTrPrefsEditor);
-  InitFileTypeMenu(editor_menu);
+  InitFileTypeMenu(editor_menu, ID_MENU_PREFS_EDITOR_BEGIN);
 
   prefs_menu->AppendSeparator();
 
@@ -2337,15 +2366,15 @@ bool BookFrame::GetMenuEnableState(int menu_id) {
 void BookFrame::InitThemeMenu(wxMenu* theme_menu) {
   int count = wxMin(wxGetApp().GetThemeCount(), kMaxThemes);
   for (int i = 0; i < count; ++i) {
-    AppendMenuItem(theme_menu, ID_MENU_THEME_0 + i, wxGetApp().GetTheme(i), wxITEM_RADIO);
+    AppendMenuItem(theme_menu, ID_MENU_THEME_BEGIN + i, wxGetApp().GetTheme(i), wxITEM_RADIO);
   }
 }
 
-void BookFrame::InitFileTypeMenu(wxMenu* ft_menu) {
+void BookFrame::InitFileTypeMenu(wxMenu* ft_menu, int id_begin) {
   const std::vector<editor::FileType*>& file_types = wxGetApp().file_types();
   int count = wxMin(static_cast<int>(file_types.size()), kMaxFileTypes);
   for (int i = 0; i < count; ++i) {
-    AppendMenuItem(ft_menu, ID_MENU_PREFS_EDITOR_0 + i, file_types[i]->name);
+    AppendMenuItem(ft_menu, id_begin + i, file_types[i]->name);
   }
 }
 
