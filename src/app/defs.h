@@ -29,11 +29,15 @@ enum FindLocation {
   kLocationCount,
 };
 
-// Prefix of internal file type ID.
+// Prefix of all internal file type IDs.
 extern const wxString kInternalFtIdPrefix;
 
 // Internal file type IDs.
 extern const wxString kFtId_FindResult;
+
+// Plain Text file type ID.
+// Please use kTrPlainText as file type name.
+extern const wxString kTxtFtId;
 
 // Extra data for each line in the find result buffer.
 // Saved in TextLine.extra_data_.

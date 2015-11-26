@@ -3,13 +3,12 @@
 
 namespace jil {
 
-namespace {
-
-StatusBar::FieldId ParseFieldId(const std::string& field_id_str) {
+static StatusBar::FieldId ParseFieldId(const std::string& field_id_str) {
   using namespace editor;
 
   static const std::string kFieldIds[StatusBar::kField_Count] = {
     "cwd",
+    "tab_options",
     "encoding",
     "file_format",
     "file_type",
@@ -29,7 +28,7 @@ StatusBar::FieldId ParseFieldId(const std::string& field_id_str) {
   return StatusBar::kField_Count;
 }
 
-wxAlignment ParseFieldAlign(const std::string& align_str) {
+static wxAlignment ParseFieldAlign(const std::string& align_str) {
   if (align_str == "left") {
     return wxALIGN_LEFT;
   } else if (align_str == "right") {
@@ -41,18 +40,18 @@ wxAlignment ParseFieldAlign(const std::string& align_str) {
   }
 }
 
-bool ParseFieldSizeType(const std::string& size_type_str,
-                        StatusBar::SizeType& size_type) {
+static bool ParseFieldSizeType(const std::string& size_type_str,
+                               StatusBar::SizeType& size_type) {
   using namespace editor;
 
   if (size_type_str == "fit") {
     size_type = StatusBar::kFit;
   } else if (size_type_str == "stretch") {
     size_type = StatusBar::kStretch;
-  } else if (size_type_str == "fixed_pixel") {
-    size_type = StatusBar::kFixedPixel;
-  } else if (size_type_str == "fixed_percentage") {
-    size_type = StatusBar::kFixedPercentage;
+  } else if (size_type_str == "fixed") {
+    size_type = StatusBar::kFixed;
+  } else if (size_type_str == "percentage") {
+    size_type = StatusBar::kPercentage;
   } else {
     return false;
   }
@@ -60,8 +59,8 @@ bool ParseFieldSizeType(const std::string& size_type_str,
   return true;
 }
 
-bool ParseStatusField(Setting field_setting,
-                      StatusBar::FieldInfo* field_info) {
+static bool ParseStatusField(Setting field_setting,
+                             StatusBar::FieldInfo* field_info) {
   using namespace editor;
 
   field_info->id = ParseFieldId(field_setting.GetString("id"));
@@ -76,21 +75,21 @@ bool ParseStatusField(Setting field_setting,
     return false;
   }
 
-  field_info->size_value = field_setting.GetInt("size");
+  field_info->size_value = field_setting.GetInt("size_value");
   if (field_info->size_value < 0) {
     return false;
   }
   if (field_info->size_value == 0) {
-    if (field_info->size_value == StatusBar::kFixedPixel ||
-        field_info->size_value == StatusBar::kFixedPercentage) {
+    if (field_info->size_value == StatusBar::kFixed ||
+        field_info->size_value == StatusBar::kPercentage) {
       return false;
     }
   }
 
+  field_info->min_size = field_setting.GetInt("min_size");
+
   return true;
 }
-
-}  // namespace
 
 bool ParseStatusFields(Setting fields_setting, FieldInfos* field_infos) {
   StatusBar::FieldInfo field_info;

@@ -10,7 +10,7 @@ using namespace jil::editor;
 typedef std::auto_ptr<TextBuffer> TextBufferPtr;
 
 static const FileType kFtTxt("txt", "Text");
-static const Encoding kEncoding = EncodingFromName(ENCODING_NAME_ISO_8859_1);
+static const Encoding kEncoding = GetEncodingById(ENCODING_ISO_8859_1);
 
 TEST(TextBuffer, CharIterator) {
   FtPlugin ft_plugin(kFtTxt);
@@ -124,6 +124,8 @@ TEST(TextBuffer, Create_WithText) {
   EXPECT_EQ(L"", buffer->LineData(3));
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 TEST(TextBuffer, PrevNonEmptyLine) {
   FtPlugin ft_plugin(FileType("cpp", "C++"));
   ft_plugin.AddQuote(new Quote(kLexComment, L"//", L"", kQuoteEscapeEol));
@@ -145,6 +147,64 @@ TEST(TextBuffer, PrevNonEmptyLine) {
 
   EXPECT_EQ(3, buffer->PrevNonEmptyLine(11, true));
   EXPECT_EQ(9, buffer->PrevNonEmptyLine(11, false));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Test TextBuffer::GuessTabOptions WITHOUT indent function.
+
+TEST(TextBuffer, GuessTabOptions1) {
+  FtPlugin ft_plugin(kFtTxt);
+  TextBufferPtr buffer;
+
+  buffer.reset(TextBuffer::Create(0, &ft_plugin, kEncoding));
+
+  buffer->AppendLine(L"if (a > b) {");
+  buffer->AppendLine(L"    return b;");
+  buffer->AppendLine(L"}");
+
+  TabOptions tab_options(0, false);
+  bool result = buffer->GuessTabOptions(&tab_options);
+
+  EXPECT_TRUE(result);
+  EXPECT_TRUE(tab_options.expand_tab);
+  EXPECT_EQ(4, tab_options.tab_stop);
+}
+
+TEST(TextBuffer, GuessTabOptions2) {
+  FtPlugin ft_plugin(kFtTxt);
+  TextBufferPtr buffer;
+
+  buffer.reset(TextBuffer::Create(0, &ft_plugin, kEncoding));
+
+  buffer->AppendLine(L"if (a > b) {");
+  buffer->AppendLine(L"  return b;");
+  buffer->AppendLine(L"}");
+
+  TabOptions tab_options(0, false);
+  bool result = buffer->GuessTabOptions(&tab_options);
+
+  EXPECT_TRUE(result);
+  EXPECT_TRUE(tab_options.expand_tab);
+  EXPECT_EQ(2, tab_options.tab_stop);
+}
+
+TEST(TextBuffer, GuessTabOptions3) {
+  FtPlugin ft_plugin(kFtTxt);
+  TextBufferPtr buffer;
+
+  buffer.reset(TextBuffer::Create(0, &ft_plugin, kEncoding));
+
+  buffer->AppendLine(L"if (a > b) {");
+  buffer->AppendLine(L"\treturn b;");
+  buffer->AppendLine(L"}");
+
+  TabOptions tab_options(0, false);
+  bool result = buffer->GuessTabOptions(&tab_options);
+
+  EXPECT_TRUE(result);
+  EXPECT_FALSE(tab_options.expand_tab);
+  EXPECT_EQ(0, tab_options.tab_stop);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

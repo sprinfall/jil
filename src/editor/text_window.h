@@ -48,6 +48,7 @@ public:
     kFileNameEvent,
     kModifiedEvent,
     kCaretEvent,
+    kTabOptionsEvent,
 #if JIL_ENABLE_LEADER_KEY
     kLeaderKeyEvent,
 #endif
@@ -136,6 +137,16 @@ public:
   }
 
   const TextOptions& text_options() const;
+
+  int tab_stop() const {
+    return tab_stop_;
+  }
+  bool expand_tab() const {
+    return expand_tab_;
+  }
+
+  void SetTabStop(int tab_stop);
+  void SetExpandTab(bool expand_tab);
 
   // Wrap or unwrap lines.
   void Wrap(bool wrap);
@@ -290,6 +301,7 @@ protected:
   void HandleLineDeleted(const LineChangeData& data);
 
   void HandleFileTypeChange();
+  void HandleTabOptionsChange();
 
   //----------------------------------------------------------------------------
   // System event handlers.

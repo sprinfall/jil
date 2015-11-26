@@ -295,6 +295,9 @@ void TextWindow::OnBufferChange(ChangeType type) {
       HandleFileTypeChange();
       break;
 
+    case kTabOptionsChange:
+      HandleTabOptionsChange();
+
     default:
       break;
   }
@@ -302,6 +305,16 @@ void TextWindow::OnBufferChange(ChangeType type) {
 
 const TextOptions& TextWindow::text_options() const {
   return buffer_->text_options();
+}
+
+void TextWindow::SetTabStop(int tab_stop) {
+  tab_stop_ = tab_stop;
+  buffer_->set_tab_stop(tab_stop);
+}
+
+void TextWindow::SetExpandTab(bool expand_tab) {
+  expand_tab_ = expand_tab;
+  buffer_->set_expand_tab(expand_tab);
 }
 
 void TextWindow::Wrap(bool wrap) {
@@ -1125,6 +1138,18 @@ void TextWindow::HandleFileTypeChange() {
   Thaw();
 
   PostEvent(TextWindow::kFileTypeEvent);
+}
+
+void TextWindow::HandleTabOptionsChange() {
+  if (tab_stop_ != buffer_->text_options().tab_stop) {
+    tab_stop_ = buffer_->text_options().tab_stop;
+    // TODO: Handle wrap, caret position, etc.
+    text_area_->Refresh();
+  }
+
+  expand_tab_ = buffer_->text_options().expand_tab;
+
+  PostEvent(TextWindow::kTabOptionsEvent);
 }
 
 //------------------------------------------------------------------------------

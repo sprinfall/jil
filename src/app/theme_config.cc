@@ -197,6 +197,7 @@ bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style)
     sb_theme->SetColor(StatusBar::BORDER_INNER, sb_setting.GetColor("border_inner"));
     sb_theme->SetColor(StatusBar::BG_TOP, sb_setting.GetColor("bg_top"));
     sb_theme->SetColor(StatusBar::BG_BOTTOM, sb_setting.GetColor("bg_bottom"));
+    sb_theme->SetColor(StatusBar::SEPARATOR, sb_setting.GetColor("separator"));
   }
 
   // Navigation dialog

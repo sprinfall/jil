@@ -150,60 +150,42 @@ enum IndentType {
 // ISO-2022: http://en.wikipedia.org/wiki/ISO/IEC_2022
 // EUC: http://en.wikipedia.org/wiki/Extended_Unix_Code
 
-// Here's a list of all supported encodings with names in lower case:
-const std::string ENCODING_NAME_UTF8 = "utf-8";
-const std::string ENCODING_NAME_UTF8_BOM = "utf-8 bom";
-const std::string ENCODING_NAME_UTF16_BE = "utf-16be";
-const std::string ENCODING_NAME_UTF16_LE = "utf-16le";
-const std::string ENCODING_NAME_GB18030 = "gb18030";
-const std::string ENCODING_NAME_BIG5 = "big5";
-const std::string ENCODING_NAME_SHIFT_JIS = "shift_jis";
-const std::string ENCODING_NAME_EUC_JP = "euc-jp";
-const std::string ENCODING_NAME_KOI8_R = "koi8-r";
-const std::string ENCODING_NAME_ISO_8859_1 = "iso-8859-1";  // Special case
-const std::string ENCODING_NAME_ISO_8859_2 = "iso-8859-2";
-const std::string ENCODING_NAME_ISO_8859_5 = "iso-8859-5";
-const std::string ENCODING_NAME_ISO_8859_7 = "iso-8859-7";
-const std::string ENCODING_NAME_TIS_620 = "tis-620";
-const std::string ENCODING_NAME_WINDOWS_1250 = "windows-1250";
-const std::string ENCODING_NAME_WINDOWS_1251 = "windows-1251";
-const std::string ENCODING_NAME_WINDOWS_1253 = "windows-1253";
-const std::string ENCODING_NAME_X_MAC_CYRILLIC = "x-mac-cyrillic";
-
-// Encoding display names.
-// Define display names with MACRO because most of them have to be translated.
-#define ENCODING_DISPLAY_NAME_UTF8 wxT("UTF-8")
-#define ENCODING_DISPLAY_NAME_UTF8_BOM wxT("UTF-8 BOM")
-#define ENCODING_DISPLAY_NAME_UTF16_BE wxT("UTF-16 BE")
-#define ENCODING_DISPLAY_NAME_UTF16_LE wxT("UTF-16 LE")
-#define ENCODING_DISPLAY_NAME_GB18030 _("Chinese (GB18030)")
-#define ENCODING_DISPLAY_NAME_BIG5 _("Chinese (Big5)")
-#define ENCODING_DISPLAY_NAME_SHIFT_JIS _("Japanese (Shift-JIS)")
-#define ENCODING_DISPLAY_NAME_EUC_JP _("Japanese (EUC-JP)")
-#define ENCODING_DISPLAY_NAME_KOI8_R _("Cyrillic (KOI8-R)")
-#define ENCODING_DISPLAY_NAME_ISO_8859_1 _("Western (ISO 8859-1)")
-#define ENCODING_DISPLAY_NAME_ISO_8859_2 _("Central European (ISO 8859-2)")
-#define ENCODING_DISPLAY_NAME_ISO_8859_5 _("Cyrillic (ISO 8859-5)")
-#define ENCODING_DISPLAY_NAME_ISO_8859_7 _("Greek (ISO 8859-7)")
-#define ENCODING_DISPLAY_NAME_TIS_620 _("Thai (TIS 620)")
-#define ENCODING_DISPLAY_NAME_WINDOWS_1250 _("Central European (Windows 1250)")
-#define ENCODING_DISPLAY_NAME_WINDOWS_1251 _("Cyrillic (Windows 1251)")
-#define ENCODING_DISPLAY_NAME_WINDOWS_1253 _("Greek (Windows 1253)")
-#define ENCODING_DISPLAY_NAME_X_MAC_CYRILLIC _("Cyrillic (Mac)")
+enum EncodingId {
+  ENCODING_UTF8 = 0,
+  ENCODING_UTF8_BOM,
+  ENCODING_UTF16_BE,
+  ENCODING_UTF16_LE,
+  ENCODING_GB18030,
+  ENCODING_BIG5,
+  ENCODING_SHIFT_JIS,
+  ENCODING_EUC_JP,
+  ENCODING_KOI8_R,
+  ENCODING_ISO_8859_1,
+  ENCODING_ISO_8859_2,
+  ENCODING_ISO_8859_5,
+  ENCODING_ISO_8859_7,
+  ENCODING_TIS_620,
+  ENCODING_WINDOWS_1250,
+  ENCODING_WINDOWS_1251,
+  ENCODING_WINDOWS_1253,
+  ENCODING_MAC_CYRILLIC,
+  ENCODING_COUNT
+};
 
 struct Encoding {
+  EncodingId id;
   wxFontEncoding value;
-  std::string name;
-  wxString display_name;
+  std::string name;         // E.g., "utf-8"
+  wxString display_name;    // E.g., "UTF-8"
 };
 
 // NOTE: Name is the unique identifier.
 inline bool operator==(const Encoding& lhs, const Encoding& rhs) {
-  return (lhs.name == rhs.name);
+  return (lhs.id == rhs.id);
 }
 
 inline bool operator!=(const Encoding& lhs, const Encoding& rhs) {
-  return (lhs.name != rhs.name);
+  return (lhs.id != rhs.id);
 }
 
 // BOM bytes.

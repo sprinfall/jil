@@ -12,7 +12,7 @@ using namespace jil::editor;
 typedef std::auto_ptr<TextBuffer> TextBufferPtr;
 
 static const FileType kFtTxt("txt", "Text");
-static const Encoding kEncoding = EncodingFromName(ENCODING_NAME_ISO_8859_1);
+static const Encoding kEncoding = GetEncodingById(ENCODING_ISO_8859_1);
 
 ////////////////////////////////////////////////////////////////////////////////
 // InsertCharAction

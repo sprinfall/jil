@@ -5,6 +5,7 @@
 #include <string>
 #include "wx/filefn.h"
 #include "wx/string.h"
+#include "editor/defs.h"
 
 class wxMenu;
 class wxWindow;
@@ -65,6 +66,8 @@ inline int SetBit(int flags, int bit, bool state) {
 
 // Delete all items of the menu.
 void ClearMenuItems(wxMenu* menu);
+
+wxString GetEncodingDisplayName(editor::EncodingId enc_id);
 
 }  // namespace jil
 

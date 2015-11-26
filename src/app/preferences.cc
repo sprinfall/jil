@@ -22,11 +22,13 @@
 
 #include "editor/defs.h"
 #include "editor/option.h"
+#include "editor/util.h"
 
 #include "app/defs.h"
 #include "app/font_util.h"
 #include "app/option.h"
 #include "app/option_list_ctrl.h"
+#include "app/util.h"
 
 namespace jil {
 
@@ -109,9 +111,9 @@ enum Id {
   ID_FONT_FIXED_WIDTH_ONLY_CHECKBOX,
   ID_FONT_RESET_BUTTON,
 
-  ID_TAB_STOP_CTRL,
-  ID_SHIFT_WIDTH_CTRL,
+  ID_TAB_STOP_TEXTCTRL,
   ID_EXPAND_TAB_CHECKBOX,
+  ID_GUESS_CHECKBOX,
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -256,47 +258,20 @@ private:
   }
 
   void InitFileEncodingTable() {
-    editor::Encoding encoding;
+    using namespace editor;
 
-    encoding.value = wxFONTENCODING_ISO8859_1;
-    encoding.name = editor::ENCODING_NAME_ISO_8859_1;
-    encoding.display_name = ENCODING_DISPLAY_NAME_ISO_8859_1;
-    file_encodings_.push_back(encoding);
-
-    encoding.value = wxFONTENCODING_UTF8;
-    encoding.name = editor::ENCODING_NAME_UTF8;
-    encoding.display_name = ENCODING_DISPLAY_NAME_UTF8;
-    file_encodings_.push_back(encoding);
-
-    encoding.value = wxFONTENCODING_UTF8;
-    encoding.name = editor::ENCODING_NAME_UTF8_BOM;
-    encoding.display_name = ENCODING_DISPLAY_NAME_UTF8_BOM;
-    file_encodings_.push_back(encoding);
-
-    encoding.value = wxFONTENCODING_UTF16BE;
-    encoding.name = editor::ENCODING_NAME_UTF16_BE;
-    encoding.display_name = ENCODING_DISPLAY_NAME_UTF16_BE;
-    file_encodings_.push_back(encoding);
-
-    encoding.value = wxFONTENCODING_UTF16LE;
-    encoding.name = editor::ENCODING_NAME_UTF16_LE;
-    encoding.display_name = ENCODING_DISPLAY_NAME_UTF16_LE;
-    file_encodings_.push_back(encoding);
-
-    encoding.value = wxFONTENCODING_GB2312;
-    encoding.name = editor::ENCODING_NAME_GB18030;
-    encoding.display_name = ENCODING_DISPLAY_NAME_GB18030;
-    file_encodings_.push_back(encoding);
-
-    encoding.value = wxFONTENCODING_BIG5;
-    encoding.name = editor::ENCODING_NAME_BIG5;
-    encoding.display_name = ENCODING_DISPLAY_NAME_BIG5;
-    file_encodings_.push_back(encoding);
+    file_encodings_.push_back(GetEncodingById(ENCODING_ISO_8859_1));
+    file_encodings_.push_back(GetEncodingById(ENCODING_UTF8));
+    file_encodings_.push_back(GetEncodingById(ENCODING_UTF8_BOM));
+    file_encodings_.push_back(GetEncodingById(ENCODING_UTF16_BE));
+    file_encodings_.push_back(GetEncodingById(ENCODING_UTF16_LE));
+    file_encodings_.push_back(GetEncodingById(ENCODING_GB18030));
+    file_encodings_.push_back(GetEncodingById(ENCODING_BIG5));
   }
-
+   
   void InitFileEncodingComboBox(wxComboBox* combo_box) {
     for (editor::Encoding& encoding : file_encodings_) {
-      combo_box->Append(encoding.display_name);
+      combo_box->Append(GetEncodingDisplayName(encoding.id));
     }
   }
 
@@ -769,11 +744,11 @@ protected:
     validator.SetMin(editor::kMinTabStop);
     validator.SetMax(editor::kMaxTabStop);
 
-    tab_stop_text_ctrl_ = CreateTextCtrl(box, wxID_ANY, kNumTextSize, validator);
+    tab_stop_text_ctrl_ = CreateTextCtrl(box, ID_TAB_STOP_TEXTCTRL, kNumTextSize, validator);
 
-    expand_tab_check_box_ = new wxCheckBox(box, wxID_ANY, _("Expand tabs"));
+    expand_tab_check_box_ = new wxCheckBox(box, ID_EXPAND_TAB_CHECKBOX, _("Expand tabs"));
 
-    guess_check_box_ = new wxCheckBox(box, wxID_ANY, _("Guess from existing lines"));
+    guess_check_box_ = new wxCheckBox(box, ID_GUESS_CHECKBOX, _("Guess from existing lines"));
 
     {
       wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);

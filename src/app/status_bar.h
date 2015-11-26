@@ -18,11 +18,13 @@ public:
     BORDER_INNER,
     BG_TOP,
     BG_BOTTOM,
+    SEPARATOR,
     COLORS,
   };
 
   enum FieldId {
     kField_Cwd = 0,
+    kField_TabOptions,
     kField_Encoding,
     kField_FileFormat,
     kField_FileType,
@@ -37,8 +39,8 @@ public:
 
   enum SizeType {
     kFit = 0,
-    kFixedPixel,
-    kFixedPercentage,
+    kFixed,
+    kPercentage,
     kStretch,
   };
 
@@ -50,13 +52,18 @@ public:
     SizeType size_type;
 
     // For different size types, different meanings of size value:
-    // kFit -> padding
-    // kFixedPixel -> pixels
-    // kFixedPercentage -> % x 100
-    // kStretch -> stretch factor
+    // kFit         -> extra padding
+    // kFixed       -> fixed size in char
+    // kPercentage  -> (% * 100)
+    // kStretch     -> stretch factor
     int size_value;
 
-    // Actual size.
+    // Minimal size.
+    // Usually specified when size_type is kFit.
+    // The meaning is also determined by size type.
+    int min_size;
+
+    // Actual size in pixel.
     int size;
   };
 
@@ -107,10 +114,9 @@ private:
   editor::SharedTheme theme_;
 
   std::vector<FieldInfo> field_infos_;
-
   wxString field_values_[kField_Count];
 
-  int char_height_;
+  wxSize char_size_;
   wxSize padding_;
 };
 

@@ -215,6 +215,18 @@ public:
   int tab_stop() const {
     return options_.text.tab_stop;
   }
+  void set_tab_stop(int tab_stop) {
+    options_.text.tab_stop = tab_stop;
+  }
+
+  bool expand_tab() const {
+    return options_.text.expand_tab;
+  }
+  void set_expand_tab(bool expand_tab) {
+    options_.text.expand_tab = expand_tab;
+  }
+
+  void SetTabOptions(const TabOptions& tab_options, bool notify);
 
   // Guess tab options from existing lines.
   bool GuessTabOptions(TabOptions* tab_options) const;

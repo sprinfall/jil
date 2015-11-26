@@ -185,11 +185,20 @@ protected:
   // Update status fields according to active text page.
   void UpdateStatusFields();
 
+  // Update status fields with the given text page.
+  void UpdateStatusCaret(TextPage* page, bool refresh);
+  void UpdateStatusTabOptions(TextPage* page, bool refresh);
+  void UpdateStatusEncoding(TextPage* page, bool refresh);
+  void UpdateStatusFileFormat(TextPage* page, bool refresh);
+  void UpdateStatusFileType(TextPage* page, bool refresh);
+
   // Update title with the file path of the active text page.
   void UpdateTitleWithPath();
 
   // Example: "3/120, 27"
-  wxString FormatCaretString(TextPage* page) const;
+  wxString GetStatusCaretString(TextPage* page) const;
+  // Example: "Tab: 4"
+  wxString GetStatusTabOptionsString(TextPage* page) const;
 
   // Handle events from text window.
   void OnTextWindowEvent(wxCommandEvent& evt);
@@ -202,11 +211,16 @@ protected:
 
   // Status field event handler.
   void OnStatusFieldClick(wxCommandEvent& evt);
-  void PopupEncodingMenu();
-  void PopupFileFormatMenu();
 
+  void PopupStatusTabOptionsMenu();
+  void PopupStatusEncodingMenu();
+  void PopupStatusFileFormatMenu();
+
+  void OnStatusTabOptionsMenu(wxCommandEvent& evt);
   void OnStatusEncodingMenu(wxCommandEvent& evt);
   void OnStatusFileFormatMenu(wxCommandEvent& evt);
+
+  void UpdateStatusIndentOptionsField(TextPage* text_page);
 
   // Return find panel if it's shown.
   FindPanel* GetFindPanel() const;

@@ -369,7 +369,7 @@ static FileError ReadFile(const wxString& file_path,
     return kEncodingError;
   }
 
-  *encoding = EncodingFromName(encoding_name);
+  *encoding = GetEncodingByName(encoding_name);
 
   const char* bom = NULL;
   bool conv_need_delete = true;
@@ -481,7 +481,7 @@ FileError TextBuffer::SaveFile() {
 
   // Convert back to bytes with the original encoding.
 
-  const char* new_file_encoding = NULL;
+  EncodingId new_file_encoding = ENCODING_COUNT;
 
   const char* bom = NULL;
   bool conv_need_delete = true;
@@ -491,7 +491,7 @@ FileError TextBuffer::SaveFile() {
     conv = &wxConvUTF8;
     conv_need_delete = false;
     bom = NULL;
-    new_file_encoding = "uft-8";
+    new_file_encoding = ENCODING_UTF8;
   }
 
   // Get the size in bytes.
@@ -519,7 +519,7 @@ FileError TextBuffer::SaveFile() {
     }
 
     bom = NULL;  // UTF-8 without BOM
-    new_file_encoding = "uft-8";
+    new_file_encoding = ENCODING_UTF8;
   }
 
   // Allocate buffer for the bytes.
@@ -543,8 +543,8 @@ FileError TextBuffer::SaveFile() {
     return kIOError;
   }
 
-  if (new_file_encoding != NULL) {
-    file_encoding_ = EncodingFromName(new_file_encoding);
+  if (new_file_encoding != ENCODING_COUNT) {
+    file_encoding_ = GetEncodingById(new_file_encoding);
     Notify(kEncodingChange);
   }
 
@@ -630,6 +630,24 @@ void TextBuffer::SetFtPlugin(FtPlugin* ft_plugin) {
 
 //------------------------------------------------------------------------------
 // Options
+
+void TextBuffer::SetTabOptions(const TabOptions& tab_options, bool notify) {
+  bool changed = false;
+
+  if (options_.text.tab_stop != tab_options.tab_stop) {
+    options_.text.tab_stop = tab_options.tab_stop;
+    changed = true;
+  }
+
+  if (options_.text.expand_tab != tab_options.expand_tab) {
+    options_.text.expand_tab = tab_options.expand_tab;
+    changed = true;
+  }
+
+  if (changed && notify) {
+    Notify(kTabOptionsChange);
+  }
+}
 
 bool TextBuffer::GuessTabOptions(TabOptions* tab_options) const {
   const luabridge::LuaRef& indent_func = ft_plugin_->indent_func();

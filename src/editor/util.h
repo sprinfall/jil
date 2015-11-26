@@ -87,12 +87,14 @@ wxString RectString(const wxRect& rect);
 
 ////////////////////////////////////////////////////////////////////////////////
 
+const Encoding& GetEncodingById(EncodingId id);
+
+Encoding GetEncodingByName(const std::string& name);
+
 const wxString& FileFormatName(FileFormat ff);
 
-Encoding EncodingFromName(const std::string& name);
-
 // Returns EOL string from file format.
-std::wstring GetEol(FileFormat file_format);
+std::wstring GetEol(FileFormat ff);
 
 ////////////////////////////////////////////////////////////////////////////////
 

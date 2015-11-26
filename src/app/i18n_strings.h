@@ -6,6 +6,29 @@
 #include "wx/string.h"
 #include "app/compile_config.h"
 
+// Encoding names.
+#define TR_ENCODING_UTF8             wxT("UTF-8")
+#define TR_ENCODING_UTF8_BOM         wxT("UTF-8 BOM")
+#define TR_ENCODING_UTF16_BE         wxT("UTF-16 BE")
+#define TR_ENCODING_UTF16_LE         wxT("UTF-16 LE")
+#define TR_ENCODING_GB18030          _("Chinese (GB18030)")
+#define TR_ENCODING_BIG5             _("Chinese (Big5)")
+#define TR_ENCODING_SHIFT_JIS        _("Japanese (Shift-JIS)")
+#define TR_ENCODING_EUC_JP           _("Japanese (EUC-JP)")
+#define TR_ENCODING_KOI8_R           _("Cyrillic (KOI8-R)")
+#define TR_ENCODING_ISO_8859_1       _("Western (ISO 8859-1)")
+#define TR_ENCODING_ISO_8859_2       _("Central European (ISO 8859-2)")
+#define TR_ENCODING_ISO_8859_5       _("Cyrillic (ISO 8859-5)")
+#define TR_ENCODING_ISO_8859_7       _("Greek (ISO 8859-7)")
+#define TR_ENCODING_TIS_620          _("Thai (TIS 620)")
+#define TR_ENCODING_WINDOWS_1250     _("Central European (Windows 1250)")
+#define TR_ENCODING_WINDOWS_1251     _("Cyrillic (Windows 1251)")
+#define TR_ENCODING_WINDOWS_1253     _("Greek (Windows 1253)")
+#define TR_ENCODING_MAC_CYRILLIC     _("Cyrillic (Mac)")
+
+// Plain text file type name.
+#define kTrPlainText          _("Plain Text")
+
 #define kTrError              _("Error")
 #define kTrWarning            _("Warning")
 

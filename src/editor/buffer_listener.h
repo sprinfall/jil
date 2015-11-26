@@ -18,11 +18,13 @@ enum LineChangeType {
 };
 
 enum ChangeType {
-  kEncodingChange = 1,
-  kFileNameChange = 2,
-  kModifiedChange = 4,  // Modified state change.
-  kFileFormatChange = 8,
-  kFileTypeChange = 16,
+  kEncodingChange       = 1,
+  kFileNameChange       = 1 << 1,
+  // Modified state change.
+  kModifiedChange       = 1 << 2,
+  kFileFormatChange     = 1 << 3,
+  kFileTypeChange       = 1 << 4,
+  kTabOptionsChange     = 1 << 5,
 };
 
 class LineChangeData : public LineRange {

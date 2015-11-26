@@ -10,14 +10,15 @@
 
 namespace jil {
 
+DEFINE_EVENT_TYPE(kEvtStatusFieldClick);
+
 BEGIN_EVENT_TABLE(StatusBar, wxPanel)
 EVT_PAINT     (StatusBar::OnPaint)
 EVT_SIZE      (StatusBar::OnSize)
 EVT_LEFT_DOWN (StatusBar::OnMouseLeftDown)
 END_EVENT_TABLE()
 
-StatusBar::StatusBar()
-    : char_height_(0) {
+StatusBar::StatusBar() {
 }
 
 StatusBar::~StatusBar() {
@@ -67,15 +68,24 @@ void StatusBar::UpdateFieldSizes() {
     switch (field_info.size_type) {
       case kFit:
         GetTextExtent(GetFieldValue(field_info.id), &field_info.size, NULL);
-        field_info.size += field_info.size_value;
-        field_info.size += padding_.x + padding_.x;
+
+        field_info.size += padding_.x + padding_.x;  // Only for this size type.
+        field_info.size += field_info.size_value;  // Extra padding.
+
+        if (field_info.min_size > 0) {
+          int min_pixels = char_size_.x * field_info.min_size;
+          if (field_info.size < min_pixels) {
+            field_info.size = min_pixels;
+          }
+        }
+
         break;
 
-      case kFixedPixel:
-        field_info.size = field_info.size_value;
+      case kFixed:
+        field_info.size = char_size_.x * field_info.size_value;
         break;
 
-      case kFixedPercentage:
+      case kPercentage:
         field_info.size = field_info.size_value * client_size / 100;
         break;
 
@@ -148,7 +158,7 @@ void StatusBar::ClearFieldValues() {
 }
 
 wxSize StatusBar::DoGetBestSize() const {
-  return wxSize(-1, char_height_ + padding_.y + padding_.y);
+  return wxSize(-1, char_size_.y + padding_.y + padding_.y);
 }
 
 void StatusBar::OnPaint(wxPaintEvent& evt) {
@@ -181,6 +191,7 @@ void StatusBar::OnPaint(wxPaintEvent& evt) {
   dc.SetBrush(*wxTRANSPARENT_BRUSH);
   dc.SetFont(GetFont());
   dc.SetTextForeground(theme_->GetColor(FG));
+  dc.SetPen(wxPen(theme_->GetColor(SEPARATOR)));
 
   int x = rect.GetLeft();
 
@@ -213,6 +224,12 @@ void StatusBar::OnPaint(wxPaintEvent& evt) {
     int flags = field_info.align | wxALIGN_CENTER_VERTICAL;
     dc.DrawLabel(label, field_rect, flags);
 
+    // Separator
+    if (i != 0) {
+      int sep_y = field_rect.y + padding_.y;
+      dc.DrawLine(x, sep_y, x, sep_y + char_size_.y);
+    }
+
     x += field_info.size;
   }
 }
@@ -241,11 +258,11 @@ void StatusBar::OnMouseLeftDown(wxMouseEvent& evt) {
 }
 
 void StatusBar::UpdateFontDetermined() {
-  char_height_ = GetCharHeight();
+  char_size_.x = GetCharWidth();
+  char_size_.y = GetCharHeight();
 
   // Determine padding by char width.
-  int char_width = GetCharWidth();
-  padding_.Set(char_width, char_width / 2 + 1);
+  padding_.Set(char_size_.x, char_size_.x / 2 + 1);
 }
 
 wxString StatusBar::GetFieldValue(FieldId id) {
@@ -286,9 +303,5 @@ const StatusBar::FieldInfo* StatusBar::GetFieldById(FieldId id) const {
   }
   return NULL;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-
-DEFINE_EVENT_TYPE(kEvtStatusFieldClick);
 
 }  // namespace jil

@@ -116,7 +116,7 @@ EVT_TEXT_WINDOW(wxID_ANY, BookFrame::OnTextWindowEvent)
 
 // Status bar.
 EVT_STATUS_FIELD_CLICK(ID_STATUS_BAR, BookFrame::OnStatusFieldClick)
-// Encoding menu event from status bar.
+EVT_MENU_RANGE(ID_MENU_INDENT_BEGIN, ID_MENU_INDENT_END - 1, BookFrame::OnStatusTabOptionsMenu)
 EVT_MENU_RANGE(ID_MENU_ENCODING_BEGIN, ID_MENU_ENCODING_END - 1, BookFrame::OnStatusEncodingMenu)
 EVT_MENU_RANGE(ID_MENU_FILE_FORMAT_BEGIN, ID_MENU_FILE_FORMAT_END - 1, BookFrame::OnStatusFileFormatMenu)
 
@@ -305,7 +305,10 @@ void BookFrame::RestoreOpenedFiles() {
 void BookFrame::FileNew() {
   using namespace editor;
 
-  FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(FileType());
+  // TODO: Let the user choose file type.
+  FileType txt_ft(kTxtFtId, kTrPlainText);
+
+  FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(txt_ft);
   TextBuffer* buffer = TextBuffer::Create(NewBufferId(), ft_plugin, options_->file_encoding);
 
   TextPage* text_page = CreateTextPage(buffer, text_book_->PageParent(), wxID_ANY);
@@ -1077,38 +1080,60 @@ void BookFrame::OnToolBookPageChange(wxCommandEvent& evt) {
 }
 
 void BookFrame::UpdateStatusFields() {
-  using namespace editor;
-
   TextPage* text_page = text_book_->ActiveTextPage();
 
   if (text_page == NULL) {
     status_bar_->ClearFieldValues();
   } else {
     // Update field values.
-    TextBuffer* buffer = text_page->buffer();
+    editor::TextBuffer* buffer = text_page->buffer();
 
+    // TODO: Don't update the field if it's not shown.
     if (options_->switch_cwd && !buffer->new_created()) {
       wxString cwd = buffer->file_path(wxPATH_GET_VOLUME, wxPATH_NATIVE);
       wxSetWorkingDirectory(cwd);
       status_bar_->SetFieldValue(StatusBar::kField_Cwd, cwd, false);
     }
 
-    status_bar_->SetFieldValue(StatusBar::kField_Encoding,
-                               buffer->file_encoding().display_name,
-                               false);
-    status_bar_->SetFieldValue(StatusBar::kField_FileFormat,
-                               FileFormatName(buffer->file_format()),
-                               false);
-    status_bar_->SetFieldValue(StatusBar::kField_FileType,
-                               buffer->ft_plugin()->name(),
-                               false);
-    status_bar_->SetFieldValue(StatusBar::kField_Caret,
-                               FormatCaretString(text_page),
-                               false);
+    UpdateStatusCaret(text_page, false);
+    UpdateStatusTabOptions(text_page, false);
+    UpdateStatusEncoding(text_page, false);
+    UpdateStatusFileFormat(text_page, false);
+    UpdateStatusFileType(text_page, false);
   }
 
   status_bar_->UpdateFieldSizes();
   status_bar_->Refresh();
+}
+
+void BookFrame::UpdateStatusCaret(TextPage* page, bool refresh) {
+  status_bar_->SetFieldValue(StatusBar::kField_Caret,
+                             GetStatusCaretString(page),
+                             refresh);
+}
+
+void BookFrame::UpdateStatusTabOptions(TextPage* page, bool refresh) {
+  status_bar_->SetFieldValue(StatusBar::kField_TabOptions,
+                             GetStatusTabOptionsString(page),
+                             refresh);
+}
+
+void BookFrame::UpdateStatusEncoding(TextPage* page, bool refresh) {
+  status_bar_->SetFieldValue(StatusBar::kField_Encoding,
+                             page->buffer()->file_encoding().display_name,
+                             refresh);
+}
+
+void BookFrame::UpdateStatusFileFormat(TextPage* page, bool refresh) {
+  status_bar_->SetFieldValue(StatusBar::kField_FileFormat,
+                             editor::FileFormatName(page->buffer()->file_format()),
+                             refresh);
+}
+
+void BookFrame::UpdateStatusFileType(TextPage* page, bool refresh) {
+  status_bar_->SetFieldValue(StatusBar::kField_FileType,
+                             page->buffer()->ft_plugin()->name(),
+                             refresh);
 }
 
 void BookFrame::UpdateTitleWithPath() {
@@ -1121,9 +1146,15 @@ void BookFrame::UpdateTitleWithPath() {
   }
 }
 
-wxString BookFrame::FormatCaretString(TextPage* page) const {
+wxString BookFrame::GetStatusCaretString(TextPage* page) const {
   wxString format = kTrLine + wxT(" %d, ") + kTrColumn + wxT(" %d");
   return wxString::Format(format, page->caret_point().y, page->caret_point().x);
+}
+
+wxString BookFrame::GetStatusTabOptionsString(TextPage* page) const {
+  wxString indent_str = page->expand_tab() ? _("Space") : _("Tab");
+  indent_str += wxString::Format(wxT(" / %d"), page->tab_stop());
+  return indent_str;
 }
 
 // Update status bar according to the event.
@@ -1132,47 +1163,43 @@ void BookFrame::OnTextWindowEvent(wxCommandEvent& evt) {
 
   int type = evt.GetInt();
 
-  if (type == TextWindow::kEncodingEvent) {
-    wxString encoding;
+  if (type == TextWindow::kGetFocusEvent) {
+    HandleTextWindowGetFocus(evt);
+    return;
+  }
 
-    TextPage* text_page = ActiveTextPage();
-    if (text_page != NULL) {
-      encoding = text_page->buffer()->file_encoding().display_name;
-    }
-
-    status_bar_->SetFieldValue(StatusBar::kField_Encoding, encoding, false);
-    status_bar_->UpdateFieldSizes();
-    status_bar_->Refresh();
-
-  } else if (type == TextWindow::kCaretEvent) {
-    TextPage* text_page = ActiveTextPage();
-    if (text_page != NULL) {
-      status_bar_->SetFieldValue(StatusBar::kField_Caret,
-                                 FormatCaretString(text_page),
-                                 true);
-    }
 #if JIL_ENABLE_LEADER_KEY
-  } else if (type == TextWindow::kLeaderKeyEvent) {
+  if (type == TextWindow::kLeaderKeyEvent) {
     // Leader key is reset by the text window.
     if (leader_key_.IsEmpty()) {  // Must be empty but just check it.
       status_bar_->SetFieldValue(StatusBar::kField_KeyStroke, wxEmptyString, true);
     }
-#endif  // JIL_ENABLE_LEADER_KEY
-  } else if (type == TextWindow::kFileTypeEvent) {
-    TextPage* text_page = ActiveTextPage();
-    if (text_page != NULL) {
-      wxString ft_name = text_page->buffer()->ft_plugin()->name();
-      status_bar_->SetFieldValue(StatusBar::kField_FileType, ft_name, true);
-    }
-  } else if (type == TextWindow::kFileFormatEvent) {
-    TextPage* text_page = ActiveTextPage();
-    if (text_page != NULL) {
-      FileFormat ff = text_page->buffer()->file_format();
-      status_bar_->SetFieldValue(StatusBar::kField_FileFormat, FileFormatName(ff), true);
-    }
-  } else if (type == TextWindow::kGetFocusEvent) {
-    HandleTextWindowGetFocus(evt);
   }
+#endif  // JIL_ENABLE_LEADER_KEY
+
+  TextPage* text_page = ActiveTextPage();
+  if (text_page == NULL) {
+    return;
+  }
+
+  // Caret event is very frequently, so avoid updating field sizes.
+  if (type == TextWindow::kCaretEvent) {
+    UpdateStatusCaret(text_page, true);
+    return;
+  }
+
+  if (type == TextWindow::kEncodingEvent) {
+    UpdateStatusEncoding(text_page, false);
+  } else if (type == TextWindow::kFileTypeEvent) {
+    UpdateStatusFileType(text_page, false);
+  } else if (type == TextWindow::kFileFormatEvent) {
+    UpdateStatusFileFormat(text_page, false);
+  } else if (type == TextWindow::kTabOptionsEvent) {
+    UpdateStatusTabOptions(text_page, false);
+  }
+
+  status_bar_->UpdateFieldSizes();
+  status_bar_->Refresh();
 }
 
 // Update menus according to the focused text window.
@@ -1277,27 +1304,60 @@ void BookFrame::OnFindResultPageEvent(wxCommandEvent& evt) {
 }
 
 void BookFrame::OnStatusFieldClick(wxCommandEvent& evt) {
-  using namespace editor;
-
-  TextBuffer* active_buffer = ActiveBuffer();
-  if (active_buffer == NULL) {
+  editor::TextBuffer* buffer = ActiveBuffer();
+  if (buffer == NULL) {
     return;
   }
 
   int field_id = evt.GetInt();
 
   switch (field_id) {
-  case StatusBar::kField_Encoding:
-    PopupEncodingMenu();
-    break;
+    case StatusBar::kField_TabOptions:
+      PopupStatusTabOptionsMenu();
+      break;
 
-  case StatusBar::kField_FileFormat:
-    PopupFileFormatMenu();
-    break;
+    case StatusBar::kField_Encoding:
+      PopupStatusEncodingMenu();
+      break;
 
-  default:
-    break;
+    case StatusBar::kField_FileFormat:
+      PopupStatusFileFormatMenu();
+      break;
+
+    default:
+      break;
   }
+}
+
+void BookFrame::PopupStatusTabOptionsMenu() {
+  TextPage* text_page = ActiveTextPage();
+  if (text_page == NULL) {
+    return;
+  }
+
+  wxMenu menu;
+
+  menu.AppendCheckItem(ID_MENU_EXPAND_TAB, _("Expand Tabs"));
+  menu.AppendSeparator();
+
+  int ts = editor::kMinTabStop;
+  int ts_menu_id = ID_MENU_TAB_STOP_0;
+  for (; ts < editor::kMaxTabStop; ++ts, ++ts_menu_id) {
+    wxString label = wxString::Format(wxT("Tab Stop: %d"), ts);
+    menu.AppendCheckItem(ts_menu_id, label);
+  }
+
+  menu.AppendSeparator();
+  menu.Append(ID_MENU_GUESS_TAB_OPTIONS, _("Guess From Existing Lines"));
+
+  if (text_page->expand_tab()) {
+    menu.Check(ID_MENU_EXPAND_TAB, true);
+  }
+
+  int curr_ts_menu_id = ID_MENU_TAB_STOP_0 + (text_page->tab_stop() - editor::kMinTabStop);
+  menu.Check(curr_ts_menu_id, true);
+
+  PopupMenu(&menu, ScreenToClient(wxGetMousePosition()));
 }
 
 static bool IsTraditionalChinese(int lang) {
@@ -1308,7 +1368,7 @@ static bool IsTraditionalChinese(int lang) {
 // Use sub-menus to simplified the first level menu items.
 // Dynamically adjust the first level menu items according to
 // the current locale.
-void BookFrame::PopupEncodingMenu() {
+void BookFrame::PopupStatusEncodingMenu() {
   wxLocale locale;
   locale.Init();
   int lang = locale.GetLanguage();
@@ -1316,55 +1376,55 @@ void BookFrame::PopupEncodingMenu() {
   wxMenu menu;
 
   // UNICODE encodings.
-  menu.Append(ID_MENU_ENCODING_UTF8, ENCODING_DISPLAY_NAME_UTF8);
-  menu.Append(ID_MENU_ENCODING_UTF8_BOM, ENCODING_DISPLAY_NAME_UTF8_BOM);
-  menu.Append(ID_MENU_ENCODING_UTF16_BE, ENCODING_DISPLAY_NAME_UTF16_BE);
-  menu.Append(ID_MENU_ENCODING_UTF16_LE, ENCODING_DISPLAY_NAME_UTF16_LE);
+  menu.Append(ID_MENU_ENCODING_UTF8, TR_ENCODING_UTF8);
+  menu.Append(ID_MENU_ENCODING_UTF8_BOM, TR_ENCODING_UTF8_BOM);
+  menu.Append(ID_MENU_ENCODING_UTF16_BE, TR_ENCODING_UTF16_BE);
+  menu.Append(ID_MENU_ENCODING_UTF16_LE, TR_ENCODING_UTF16_LE);
 
   // Language specific encodings.
   if (lang == wxLANGUAGE_CHINESE_SIMPLIFIED) {
-    menu.Append(ID_MENU_ENCODING_GB18030, ENCODING_DISPLAY_NAME_GB18030);
+    menu.Append(ID_MENU_ENCODING_GB18030, TR_ENCODING_GB18030);
   } else if (IsTraditionalChinese(lang)) {
-    menu.Append(ID_MENU_ENCODING_BIG5, ENCODING_DISPLAY_NAME_BIG5);
+    menu.Append(ID_MENU_ENCODING_BIG5, TR_ENCODING_BIG5);
   } else if (lang == wxLANGUAGE_JAPANESE) {
-    menu.Append(ID_MENU_ENCODING_SHIFT_JIS, ENCODING_DISPLAY_NAME_SHIFT_JIS);
-    menu.Append(ID_MENU_ENCODING_EUC_JP, ENCODING_DISPLAY_NAME_EUC_JP);
+    menu.Append(ID_MENU_ENCODING_SHIFT_JIS, TR_ENCODING_SHIFT_JIS);
+    menu.Append(ID_MENU_ENCODING_EUC_JP, TR_ENCODING_EUC_JP);
   }
 
   wxMenu* sub_menu = new wxMenu;
 
-  sub_menu->Append(ID_MENU_ENCODING_ISO_8859_1, ENCODING_DISPLAY_NAME_ISO_8859_1);
-  sub_menu->Append(ID_MENU_ENCODING_WINDOWS_1250, ENCODING_DISPLAY_NAME_WINDOWS_1250);
-  sub_menu->Append(ID_MENU_ENCODING_ISO_8859_2, ENCODING_DISPLAY_NAME_ISO_8859_2);
+  sub_menu->Append(ID_MENU_ENCODING_ISO_8859_1, TR_ENCODING_ISO_8859_1);
+  sub_menu->Append(ID_MENU_ENCODING_WINDOWS_1250, TR_ENCODING_WINDOWS_1250);
+  sub_menu->Append(ID_MENU_ENCODING_ISO_8859_2, TR_ENCODING_ISO_8859_2);
 
   if (lang != wxLANGUAGE_CHINESE_SIMPLIFIED) {
-    sub_menu->Append(ID_MENU_ENCODING_GB18030, ENCODING_DISPLAY_NAME_GB18030);
+    sub_menu->Append(ID_MENU_ENCODING_GB18030, TR_ENCODING_GB18030);
   }
   if (!IsTraditionalChinese(lang)) {
-    sub_menu->Append(ID_MENU_ENCODING_BIG5, ENCODING_DISPLAY_NAME_BIG5);
+    sub_menu->Append(ID_MENU_ENCODING_BIG5, TR_ENCODING_BIG5);
   }
 
   if (lang != wxLANGUAGE_JAPANESE) {
-    sub_menu->Append(ID_MENU_ENCODING_SHIFT_JIS, ENCODING_DISPLAY_NAME_SHIFT_JIS);
-    sub_menu->Append(ID_MENU_ENCODING_EUC_JP, ENCODING_DISPLAY_NAME_EUC_JP);
+    sub_menu->Append(ID_MENU_ENCODING_SHIFT_JIS, TR_ENCODING_SHIFT_JIS);
+    sub_menu->Append(ID_MENU_ENCODING_EUC_JP, TR_ENCODING_EUC_JP);
   }
 
-  sub_menu->Append(ID_MENU_ENCODING_TIS_620, ENCODING_DISPLAY_NAME_TIS_620);
+  sub_menu->Append(ID_MENU_ENCODING_TIS_620, TR_ENCODING_TIS_620);
 
-  sub_menu->Append(ID_MENU_ENCODING_ISO_8859_5, ENCODING_DISPLAY_NAME_ISO_8859_5);
-  sub_menu->Append(ID_MENU_ENCODING_KOI8_R, ENCODING_DISPLAY_NAME_KOI8_R);
-  sub_menu->Append(ID_MENU_ENCODING_MAC_CYRILLIC, ENCODING_DISPLAY_NAME_X_MAC_CYRILLIC);
-  sub_menu->Append(ID_MENU_ENCODING_WINDOWS_1251, ENCODING_DISPLAY_NAME_WINDOWS_1251);
+  sub_menu->Append(ID_MENU_ENCODING_ISO_8859_5, TR_ENCODING_ISO_8859_5);
+  sub_menu->Append(ID_MENU_ENCODING_KOI8_R, TR_ENCODING_KOI8_R);
+  sub_menu->Append(ID_MENU_ENCODING_MAC_CYRILLIC, TR_ENCODING_MAC_CYRILLIC);
+  sub_menu->Append(ID_MENU_ENCODING_WINDOWS_1251, TR_ENCODING_WINDOWS_1251);
 
-  sub_menu->Append(ID_MENU_ENCODING_ISO_8859_7, ENCODING_DISPLAY_NAME_ISO_8859_7);
-  sub_menu->Append(ID_MENU_ENCODING_WINDOWS_1253, ENCODING_DISPLAY_NAME_WINDOWS_1253);
+  sub_menu->Append(ID_MENU_ENCODING_ISO_8859_7, TR_ENCODING_ISO_8859_7);
+  sub_menu->Append(ID_MENU_ENCODING_WINDOWS_1253, TR_ENCODING_WINDOWS_1253);
 
   menu.AppendSubMenu(sub_menu, kTrOthers);
 
   PopupMenu(&menu, ScreenToClient(wxGetMousePosition()));
 }
 
-void BookFrame::PopupFileFormatMenu() {
+void BookFrame::PopupStatusFileFormatMenu() {
   wxMenu menu;
   menu.Append(ID_MENU_FILE_FORMAT_WIN, FF_DIAPLAY_NAME_WIN);
   menu.Append(ID_MENU_FILE_FORMAT_UNIX, FF_DIAPLAY_NAME_UNIX);
@@ -1372,45 +1432,52 @@ void BookFrame::PopupFileFormatMenu() {
   PopupMenu(&menu, ScreenToClient(wxGetMousePosition()));
 }
 
-void BookFrame::OnStatusEncodingMenu(wxCommandEvent& evt) {
-  using namespace editor;
+void BookFrame::OnStatusTabOptionsMenu(wxCommandEvent& evt) {
+  int menu_id = evt.GetId();
 
-  TextBuffer* active_buffer = ActiveBuffer();
-  if (active_buffer == NULL) {
+  editor::TextBuffer* buffer = ActiveBuffer();
+  if (buffer == NULL) {
     return;
   }
 
-  // NOTE: Keep consistent with enum EncodingMenuId.
-  static const std::string kEncodingNames[] = {
-    ENCODING_NAME_UTF8,
-    ENCODING_NAME_UTF8_BOM,
-    ENCODING_NAME_UTF16_BE,
-    ENCODING_NAME_UTF16_LE,
-    ENCODING_NAME_GB18030,
-    ENCODING_NAME_BIG5,
-    ENCODING_NAME_SHIFT_JIS,
-    ENCODING_NAME_EUC_JP,
-    ENCODING_NAME_KOI8_R,
-    ENCODING_NAME_ISO_8859_1,
-    ENCODING_NAME_ISO_8859_2,
-    ENCODING_NAME_ISO_8859_5,
-    ENCODING_NAME_ISO_8859_7,
-    ENCODING_NAME_TIS_620,
-    ENCODING_NAME_WINDOWS_1250,
-    ENCODING_NAME_WINDOWS_1251,
-    ENCODING_NAME_WINDOWS_1253,
-    ENCODING_NAME_X_MAC_CYRILLIC,
-  };
+  if (menu_id == ID_MENU_EXPAND_TAB) {
+    buffer->set_expand_tab(evt.IsChecked());
+    buffer->Notify(editor::kTabOptionsChange);
+    return;
+  }
+
+  if (menu_id >= ID_MENU_TAB_STOP_0 && menu_id <= ID_MENU_TAB_STOP_8) {
+    int tab_stop = editor::kMinTabStop + (menu_id - ID_MENU_TAB_STOP_0);
+    buffer->set_tab_stop(tab_stop);
+    buffer->Notify(editor::kTabOptionsChange);
+    return;
+  }
+
+  if (menu_id == ID_MENU_GUESS_TAB_OPTIONS) {
+    editor::TabOptions tab_options;
+    if (buffer->GuessTabOptions(&tab_options)) {
+      buffer->SetTabOptions(tab_options, true);
+    }
+    return;
+  }
+}
+
+void BookFrame::OnStatusEncodingMenu(wxCommandEvent& evt) {
+  editor::TextBuffer* buffer = ActiveBuffer();
+  if (buffer == NULL) {
+    return;
+  }
 
   int index = evt.GetId() - ID_MENU_ENCODING_BEGIN;
-  if (index >= (sizeof(kEncodingNames) / sizeof(std::string))) {
+  if (index < 0 || index >= editor::ENCODING_COUNT) {
     return;
   }
 
-  Encoding encoding = EncodingFromName(kEncodingNames[index]);
+  editor::EncodingId enc_id = static_cast<editor::EncodingId>(index);
+  const editor::Encoding& encoding = editor::GetEncodingById(enc_id);
 
-  active_buffer->set_file_encoding(encoding);
-  active_buffer->Notify(kEncodingChange);
+  buffer->set_file_encoding(encoding);
+  buffer->Notify(editor::kEncodingChange);
 }
 
 void BookFrame::OnStatusFileFormatMenu(wxCommandEvent& evt) {

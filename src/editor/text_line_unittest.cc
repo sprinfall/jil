@@ -193,6 +193,7 @@ TEST(TextLine, StartWith_Char) {
   EXPECT_TRUE(line.StartWith(L't', false, false, &off));
   EXPECT_EQ(0, off);
 
+  line.Clear();
   line.ClearLexElems();
   line.Append(L"// comments");
   line.AddLexElem(0, line.Length(), Lex(kLexComment));
@@ -200,7 +201,7 @@ TEST(TextLine, StartWith_Char) {
   off = kInvCoord;
   EXPECT_TRUE(line.StartWith(L'/', false, false, &off));
   EXPECT_EQ(0, off);
-  EXPECT_TRUE(line.StartWith(L'/', true, false));
+  EXPECT_FALSE(line.StartWith(L'/', true, false));
 }
 
 TEST(TextLine, EndWith_Char) {

@@ -8,5 +8,7 @@ const wxString kInternalFtIdPrefix = wxT("jil-");
 // Format: "jil-xxx_yyy_zzz"
 const wxString kFtId_FindResult = wxT("jil-find_result");
 
+const wxString kTxtFtId = wxT("txt");
+
 }  // namespace jil
 

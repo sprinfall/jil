@@ -49,17 +49,15 @@ extern "C" {
 #include "app/theme_config.h"
 #include "app/util.h"
 
-#define kTrPlainText _("Plain Text")
-
 IMPLEMENT_WXWIN_MAIN
 
 namespace jil {
 
 ////////////////////////////////////////////////////////////////////////////////
  
-static const wxChar kDotChar            = wxT('.');
+static const wxChar   kDotChar            = wxT('.');
+static const wxString kSpaceStr           = wxT(" ");
 
-static const wxString kTxt              = wxT("txt");
 static const wxString kCfgExt           = wxT(".cfg");
 
 static const wxString kFtPluginDir      = wxT("ftplugin");
@@ -72,8 +70,6 @@ static const wxString kStatusFieldsFile = wxT("status_fields.cfg");
 static const wxString kSessionFile      = wxT("session.cfg");
 static const wxString kBindingFile      = wxT("binding.cfg");
 static const wxString kFileTypesFile    = wxT("file_types.cfg");
-
-static const wxString kSpaceStr         = wxT(" ");
 
 // For Unix, this name is used to create the domain socket.
 static const wxString kIpcService       = wxT("jil_ipc_service");
@@ -415,7 +411,7 @@ const editor::FileType& App::FileTypeFromExt(const wxString& ext) const {
   }
 
   // Unsupported ext, use Plain Text file type.
-  it = ext_ft_map_.find(kTxt);
+  it = ext_ft_map_.find(kTxtFtId);
   assert(it != ext_ft_map_.end());
   return *(it->second);
 }
@@ -865,11 +861,11 @@ bool App::LoadBinding() {
 
 bool App::LoadFileTypes() {
   // Plain Text file type.
-  // TODO: Put it to config file.
-  editor::FileType* ft_txt = new editor::FileType(kTxt, kTrPlainText);
+  editor::FileType* ft_txt = new editor::FileType(kTxtFtId, kTrPlainText);
   file_types_.push_back(ft_txt);
+  // Files without extension name are considered as Plain Text file.
   ext_ft_map_[wxEmptyString] = ft_txt;
-  ext_ft_map_[kTxt] = ft_txt;
+  ext_ft_map_[kTxtFtId] = ft_txt;
 
   // Load other file types from config file.
   wxString ft_file = path::ResourceDir() + kFileTypesFile;

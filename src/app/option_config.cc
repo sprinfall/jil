@@ -268,9 +268,9 @@ static void ParseGlobalOptions(const Setting& setting, Options* options) {
   std::string fenc_str;
   GetString(setting_map, OPT_S_FILE_ENCODING, &fenc_str);
   if (fenc_str.empty()) {
-    fenc_str = editor::ENCODING_NAME_UTF8;
+    fenc_str = "utf-8";
   }
-  options->file_encoding = editor::EncodingFromName(fenc_str);
+  options->file_encoding = editor::GetEncodingByName(fenc_str);
 
   // Fonts
   Setting fonts_setting = GetSetting(setting_map, OPT_G_FONTS, Setting::kGroup);

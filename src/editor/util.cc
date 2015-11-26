@@ -112,6 +112,49 @@ wxString RectString(const wxRect& rect) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+static const Encoding kEncodings[ENCODING_COUNT] = {
+  { ENCODING_UTF8,            wxFONTENCODING_UTF8,          "utf-8",          "UTF-8"         },
+  { ENCODING_UTF8_BOM,        wxFONTENCODING_UTF8,          "utf-8 bom",      "UTF-8 BOM"     },
+  { ENCODING_UTF16_BE,        wxFONTENCODING_UTF16BE,       "utf-16be",       "UTF-16 BE"     },
+  { ENCODING_UTF16_LE,        wxFONTENCODING_UTF16LE,       "utf-16le",       "UTF-16 LE"     },
+
+  // NOTE: wxWidgets (libiconv) doesn't provide wxFONTENCODING_GB18030,
+  // but wxFONTENCODING_GB2312 works.
+  { ENCODING_GB18030,         wxFONTENCODING_GB2312,        "gb18030",        "GB18030" },
+
+  { ENCODING_BIG5,            wxFONTENCODING_BIG5,          "big5",           "Big5"          },
+  { ENCODING_SHIFT_JIS,       wxFONTENCODING_SHIFT_JIS,     "shift_jis",      "Shift-JIS"     },
+  { ENCODING_EUC_JP,          wxFONTENCODING_EUC_JP,        "euc-jp",         "EUC-JP"        },
+  { ENCODING_KOI8_R,          wxFONTENCODING_KOI8,          "koi8-r",         "KOI8-R"        },
+  { ENCODING_ISO_8859_1,      wxFONTENCODING_ISO8859_1,     "iso-8859-1",     "ISO 8859-1"    },
+  { ENCODING_ISO_8859_2,      wxFONTENCODING_ISO8859_2,     "iso-8859-2",     "ISO 8859-2"    },
+  { ENCODING_ISO_8859_5,      wxFONTENCODING_ISO8859_5,     "iso-8859-5",     "ISO 8859-5"    },
+  { ENCODING_ISO_8859_7,      wxFONTENCODING_ISO8859_7,     "iso-8859-7",     "ISO 8859-7"    },
+  { ENCODING_TIS_620,         wxFONTENCODING_ISO8859_11,    "tis-620",        "TIS 620"       },
+  { ENCODING_WINDOWS_1250,    wxFONTENCODING_CP1250,        "windows-1250",   "Windows 1250"  },
+  { ENCODING_WINDOWS_1251,    wxFONTENCODING_CP1251,        "windows-1251",   "Windows 1251"  },
+  { ENCODING_WINDOWS_1253,    wxFONTENCODING_CP1253,        "windows-1253",   "Windows 1253"  },
+  { ENCODING_MAC_CYRILLIC,    wxFONTENCODING_MACCYRILLIC,   "x-mac-cyrillic", "Mac Cyrillic" },
+};
+
+const Encoding& GetEncodingById(EncodingId id) {
+  return kEncodings[id];
+}
+
+Encoding GetEncodingByName(const std::string& name) {
+  if (name.empty()) {
+    return kEncodings[ENCODING_ISO_8859_1];
+  }
+
+  for (int i = 0; i < ENCODING_COUNT; ++i) {
+    if (kEncodings[i].name == name) {
+      return kEncodings[i];
+    }
+  }
+
+  return Encoding();
+}
+
 const wxString& FileFormatName(FileFormat ff) {
   static const wxString kFileFormatNames[4] = {
     wxEmptyString,
@@ -122,73 +165,8 @@ const wxString& FileFormatName(FileFormat ff) {
   return kFileFormatNames[ff];
 }
 
-Encoding EncodingFromName(const std::string& name) {
-  Encoding encoding;
-
-  if (name.empty() || name == ENCODING_NAME_ISO_8859_1) {
-    encoding.value = wxFONTENCODING_ISO8859_1;
-    encoding.display_name = ENCODING_DISPLAY_NAME_ISO_8859_1;
-  } else if (name == ENCODING_NAME_UTF8) {
-    encoding.value = wxFONTENCODING_UTF8;
-    encoding.display_name = ENCODING_DISPLAY_NAME_UTF8;
-  } else if (name == ENCODING_NAME_UTF8_BOM) {
-    encoding.value = wxFONTENCODING_UTF8;
-    encoding.display_name = ENCODING_DISPLAY_NAME_UTF8_BOM;
-  } else if (name == ENCODING_NAME_UTF16_BE) {
-    encoding.value = wxFONTENCODING_UTF16BE;
-    encoding.display_name = ENCODING_DISPLAY_NAME_UTF16_BE;
-  } else if (name == ENCODING_NAME_UTF16_LE) {
-    encoding.value = wxFONTENCODING_UTF16LE;
-    encoding.display_name = ENCODING_DISPLAY_NAME_UTF16_LE;
-  } else if (name == ENCODING_NAME_GB18030) {
-    // NOTE: wxWidgets (libiconv) doesn't provide wxFONTENCODING_GB18030,
-    // but wxFONTENCODING_GB2312 works.
-    encoding.value = wxFONTENCODING_GB2312;
-    encoding.display_name = ENCODING_DISPLAY_NAME_GB18030;
-  } else if (name == ENCODING_NAME_BIG5) {
-    encoding.value = wxFONTENCODING_BIG5;
-    encoding.display_name = ENCODING_DISPLAY_NAME_BIG5;
-  } else if (name == ENCODING_NAME_SHIFT_JIS) {
-    encoding.value = wxFONTENCODING_SHIFT_JIS;
-    encoding.display_name = ENCODING_DISPLAY_NAME_SHIFT_JIS;
-  } else if (name == ENCODING_NAME_EUC_JP) {
-    encoding.value = wxFONTENCODING_EUC_JP;
-    encoding.display_name = ENCODING_DISPLAY_NAME_EUC_JP;
-  } else if (name == ENCODING_NAME_KOI8_R) {
-    encoding.value = wxFONTENCODING_KOI8;
-    encoding.display_name = ENCODING_DISPLAY_NAME_KOI8_R;
-  } else if (name == ENCODING_NAME_ISO_8859_2) {
-    encoding.value = wxFONTENCODING_ISO8859_2;
-    encoding.display_name = ENCODING_DISPLAY_NAME_ISO_8859_2;
-  } else if (name == ENCODING_NAME_ISO_8859_5) {
-    encoding.value = wxFONTENCODING_ISO8859_5;
-    encoding.display_name = ENCODING_DISPLAY_NAME_ISO_8859_5;
-  } else if (name == ENCODING_NAME_ISO_8859_7) {
-    encoding.value = wxFONTENCODING_ISO8859_7;
-    encoding.display_name = ENCODING_DISPLAY_NAME_ISO_8859_7;
-  } else if (name == ENCODING_NAME_TIS_620) {
-    encoding.value = wxFONTENCODING_ISO8859_11;
-    encoding.display_name = ENCODING_DISPLAY_NAME_TIS_620;
-  } else if (name == ENCODING_NAME_WINDOWS_1250) {
-    encoding.value = wxFONTENCODING_CP1250;
-    encoding.display_name = ENCODING_DISPLAY_NAME_WINDOWS_1250;
-  } else if (name == ENCODING_NAME_WINDOWS_1251) {
-    encoding.value = wxFONTENCODING_CP1251;
-    encoding.display_name = ENCODING_DISPLAY_NAME_WINDOWS_1251;
-  } else if (name == ENCODING_NAME_WINDOWS_1253) {
-    encoding.value = wxFONTENCODING_CP1253;
-    encoding.display_name = ENCODING_DISPLAY_NAME_WINDOWS_1253;
-  } else if (name == ENCODING_NAME_X_MAC_CYRILLIC) {
-    encoding.value = wxFONTENCODING_MACCYRILLIC;
-    encoding.display_name = ENCODING_DISPLAY_NAME_X_MAC_CYRILLIC;
-  }
-
-  encoding.name = name;
-  return encoding;
-}
-
-std::wstring GetEol(FileFormat file_format) {
-  switch (file_format) {
+std::wstring GetEol(FileFormat ff) {
+  switch (ff) {
     case FF_WIN:
       return L"\r\n";
     case FF_UNIX:
