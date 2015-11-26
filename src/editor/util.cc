@@ -155,23 +155,13 @@ Encoding GetEncodingByName(const std::string& name) {
   return Encoding();
 }
 
-const wxString& FileFormatName(FileFormat ff) {
-  static const wxString kFileFormatNames[4] = {
-    wxEmptyString,
-    wxT("Win"),
-    wxT("Unix"),
-    wxT("Mac"),
-  };
-  return kFileFormatNames[ff];
-}
-
 std::wstring GetEol(FileFormat ff) {
   switch (ff) {
-    case FF_WIN:
+    case FF_CRLF:
       return L"\r\n";
-    case FF_UNIX:
+    case FF_LF:
       return L"\n";
-    case FF_MAC:
+    case FF_CR:
       return L"\r";
     default:
       return L"";

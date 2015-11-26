@@ -85,4 +85,14 @@ wxString GetEncodingDisplayName(editor::EncodingId enc_id) {
   return kDisplayNames[enc_id];
 }
 
+wxString GetFileFormatName(editor::FileFormat ff) {
+  static const wxString kFileFormatNames[4] = {
+    wxEmptyString,
+    wxT("CRLF"),
+    wxT("LF"),
+    wxT("CR"),
+  };
+  return kFileFormatNames[ff];
+}
+
 } // namespace jil

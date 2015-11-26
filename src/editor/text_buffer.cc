@@ -126,13 +126,13 @@ static FileFormat CheckEol(const std::wstring& text, size_t* first_line_size) {
   for (; i < text_size; ++i) {
     if (text[i] == CR) {
       if (i + 1 < text_size && text[i + 1] == LF) {
-        eol = FF_WIN;
+        eol = FF_CRLF;
       } else {
-        eol = FF_MAC;
+        eol = FF_CR;
       }
       break;
     } else if (text[i] == LF) {
-      eol = FF_UNIX;
+      eol = FF_LF;
       break;
     }
   }
@@ -1770,7 +1770,7 @@ void TextBuffer::SetText(const std::wstring& text) {
     // Add the first line here, add the left lines later.
     DoAppendLine(&text[0], first_line_size);  // Avoid copy via substr()
     i += first_line_size;  // Skip the first line.
-    i += ff == FF_WIN ? 2 : 1;  // Skip the EOL
+    i += ff == FF_CRLF ? 2 : 1;  // Skip the EOL
 
     // Overwrite the default file format.
     file_format_ = ff;

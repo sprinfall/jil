@@ -91,8 +91,6 @@ const Encoding& GetEncodingById(EncodingId id);
 
 Encoding GetEncodingByName(const std::string& name);
 
-const wxString& FileFormatName(FileFormat ff);
-
 // Returns EOL string from file format.
 std::wstring GetEol(FileFormat ff);
 

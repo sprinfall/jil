@@ -69,14 +69,10 @@ enum Mode {
 // See http://en.wikipedia.org/wiki/Newline
 enum FileFormat {
   FF_NONE = 0,
-  FF_WIN,   // Windows, Dos
-  FF_UNIX,  // Unix, Mac OS X
-  FF_MAC,   // Mac OS 9
+  FF_CRLF,    // Windows, Dos
+  FF_LF,      // Unix, Mac OS X
+  FF_CR,      // Mac OS 9
 };
-
-#define FF_DIAPLAY_NAME_WIN wxT("Windows (CRLF, \\r\\n)")
-#define FF_DIAPLAY_NAME_UNIX wxT("Unix (LF, \\n)")
-#define FF_DIAPLAY_NAME_MAC wxT("Mac OS 9 (CR, \\r)")
 
 // Example: { "cpp", "C++" }
 class FileType {
@@ -100,9 +96,9 @@ enum FileError {
 };
 
 #if defined (__WXMSW__)
-#  define FF_DEFAULT FF_WIN
+#  define FF_DEFAULT FF_CRLF
 #else
-#  define FF_DEFAULT FF_UNIX
+#  define FF_DEFAULT FF_LF
 #endif
 
 const wchar_t LF = L'\n';  // 0x0A

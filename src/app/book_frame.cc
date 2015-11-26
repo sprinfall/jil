@@ -1126,7 +1126,7 @@ void BookFrame::UpdateStatusEncoding(TextPage* page, bool refresh) {
 
 void BookFrame::UpdateStatusFileFormat(TextPage* page, bool refresh) {
   status_bar_->SetFieldValue(StatusBar::kField_FileFormat,
-                             editor::FileFormatName(page->buffer()->file_format()),
+                             GetFileFormatName(page->buffer()->file_format()),
                              refresh);
 }
 
@@ -1153,7 +1153,7 @@ wxString BookFrame::GetStatusCaretString(TextPage* page) const {
 
 wxString BookFrame::GetStatusTabOptionsString(TextPage* page) const {
   wxString indent_str = page->expand_tab() ? _("Space") : _("Tab");
-  indent_str += wxString::Format(wxT(" / %d"), page->tab_stop());
+  indent_str += wxString::Format(wxT(" - %d"), page->tab_stop());
   return indent_str;
 }
 
@@ -1426,9 +1426,9 @@ void BookFrame::PopupStatusEncodingMenu() {
 
 void BookFrame::PopupStatusFileFormatMenu() {
   wxMenu menu;
-  menu.Append(ID_MENU_FILE_FORMAT_WIN, FF_DIAPLAY_NAME_WIN);
-  menu.Append(ID_MENU_FILE_FORMAT_UNIX, FF_DIAPLAY_NAME_UNIX);
-  menu.Append(ID_MENU_FILE_FORMAT_MAC, FF_DIAPLAY_NAME_MAC);
+  menu.Append(ID_MENU_FILE_FORMAT_CRLF, FF_DIAPLAY_NAME_CRLF);
+  menu.Append(ID_MENU_FILE_FORMAT_LF, FF_DIAPLAY_NAME_LF);
+  menu.Append(ID_MENU_FILE_FORMAT_CR, FF_DIAPLAY_NAME_CR);
   PopupMenu(&menu, ScreenToClient(wxGetMousePosition()));
 }
 
@@ -1491,16 +1491,16 @@ void BookFrame::OnStatusFileFormatMenu(wxCommandEvent& evt) {
   FileFormat ff = FF_NONE;
 
   switch (evt.GetId()) {
-  case ID_MENU_FILE_FORMAT_WIN:
-    ff = FF_WIN;
+  case ID_MENU_FILE_FORMAT_CRLF:
+    ff = FF_CRLF;
     break;
 
-  case ID_MENU_FILE_FORMAT_UNIX:
-    ff = FF_UNIX;
+  case ID_MENU_FILE_FORMAT_LF:
+    ff = FF_LF;
     break;
 
-  case ID_MENU_FILE_FORMAT_MAC:
-    ff = FF_MAC;
+  case ID_MENU_FILE_FORMAT_CR:
+    ff = FF_CR;
     break;
   }
 

@@ -13,6 +13,11 @@
 #define kMaxFileTypes 256
 #define kMaxThemes 32
 
+// File format display names (e.g., in the file format menu).
+#define FF_DIAPLAY_NAME_CRLF wxT("Windows (CRLF, \\r\\n)")
+#define FF_DIAPLAY_NAME_LF wxT("Unix (LF, \\n)")
+#define FF_DIAPLAY_NAME_CR wxT("Mac OS 9 (CR, \\r)")
+
 namespace jil {
 
 enum FindFlag {
