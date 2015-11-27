@@ -835,15 +835,15 @@ void BookFrame::ApplyLineNrFont(const wxFont& font) {
 }
 
 void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
-  // Get the file type.
-  const std::vector<editor::FileType*>& file_types = wxGetApp().file_types();
+  App& app = wxGetApp();
+
   int index = evt.GetId() - ID_MENU_PREFS_EDITOR_BEGIN;
-  if (index < 0 || index >= static_cast<int>(file_types.size())) {
+  if (index < 0 || index >= app.GetFileTypeCount()) {
     return;
   }
 
-  editor::FileType* ft = file_types[index];
-  editor::FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(*ft);
+  const editor::FileType* ft = app.GetFileType(index);
+  editor::FtPlugin* ft_plugin = app.GetFtPlugin(*ft);
 
   // Copy the options.
   editor::Options options = ft_plugin->options();
@@ -863,21 +863,24 @@ void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
   ft_plugin->set_options(options);
 
   // Save options file.
-  wxGetApp().SaveUserEditorOptions(ft_plugin->id(), ft_plugin->options());
+  app.SaveUserEditorOptions(ft_plugin->id(), ft_plugin->options());
 }
 
 void BookFrame::OnTheme(wxCommandEvent& evt) {
-  wxString theme_name = wxGetApp().GetTheme(evt.GetId() - ID_MENU_THEME_BEGIN);
-  if (theme_name.IsEmpty() || theme_name == options_->theme) {
+  App& app = wxGetApp();
+
+  int index = evt.GetId() - ID_MENU_THEME_BEGIN;
+  wxString theme_name = app.GetTheme(index);
+  if (theme_name == options_->theme) {
     return;
   }
 
-  if (!wxGetApp().ReloadTheme(theme_name)) {
+  if (!app.ReloadTheme(theme_name)) {
     return;
   }
 
   options_->theme = theme_name;
-  wxGetApp().SaveUserGlobalOptions();
+  app.SaveUserGlobalOptions();
 
   // Apply theme.
 
@@ -991,7 +994,8 @@ void BookFrame::OnViewUpdateUI(wxUpdateUIEvent& evt) {
 }
 
 void BookFrame::OnThemeUpdateUI(wxUpdateUIEvent& evt) {
-  wxString theme = wxGetApp().GetTheme(evt.GetId() - ID_MENU_THEME_BEGIN);
+  int index = evt.GetId() - ID_MENU_THEME_BEGIN;
+  wxString theme = wxGetApp().GetTheme(index);
   evt.Check(theme == options_->theme);
 }
 
@@ -1518,10 +1522,10 @@ void BookFrame::OnStatusFileFormatMenu(wxCommandEvent& evt) {
 }
 
 void BookFrame::OnStatusFileTypeMenu(wxCommandEvent& evt) {
-  // Get the file type.
-  const std::vector<editor::FileType*>& file_types = wxGetApp().file_types();
+  App& app = wxGetApp();
+
   int index = evt.GetId() - ID_MENU_FILE_TYPE_BEGIN;
-  if (index < 0 || index >= static_cast<int>(file_types.size())) {
+  if (index < 0 || index >= app.GetFileTypeCount()) {
     return;
   }
 
@@ -1530,11 +1534,11 @@ void BookFrame::OnStatusFileTypeMenu(wxCommandEvent& evt) {
   editor::TextBuffer* buffer = ActiveBuffer();
   if (buffer == NULL) {
     return;
-  }
+  } 
 
-  editor::FileType* ft = file_types[index];
+  const editor::FileType* ft = app.GetFileType(index);
   if (ft->id != buffer->ft_plugin()->id()) {
-    buffer->SetFtPlugin(wxGetApp().GetFtPlugin(*ft));
+    buffer->SetFtPlugin(app.GetFtPlugin(*ft));
   }
 }
 
@@ -2364,17 +2368,18 @@ bool BookFrame::GetMenuEnableState(int menu_id) {
 }
 
 void BookFrame::InitThemeMenu(wxMenu* theme_menu) {
-  int count = wxMin(wxGetApp().GetThemeCount(), kMaxThemes);
+  App& app = wxGetApp();
+  int count = wxMin(app.GetThemeCount(), kMaxThemes);
   for (int i = 0; i < count; ++i) {
-    AppendMenuItem(theme_menu, ID_MENU_THEME_BEGIN + i, wxGetApp().GetTheme(i), wxITEM_RADIO);
+    AppendMenuItem(theme_menu, ID_MENU_THEME_BEGIN + i, app.GetTheme(i), wxITEM_RADIO);
   }
 }
 
 void BookFrame::InitFileTypeMenu(wxMenu* ft_menu, int id_begin) {
-  const std::vector<editor::FileType*>& file_types = wxGetApp().file_types();
-  int count = wxMin(static_cast<int>(file_types.size()), kMaxFileTypes);
+  App& app = wxGetApp();
+  int count = wxMin(app.GetFileTypeCount(), kMaxFileTypes);
   for (int i = 0; i < count; ++i) {
-    AppendMenuItem(ft_menu, id_begin + i, file_types[i]->name);
+    AppendMenuItem(ft_menu, id_begin + i, app.GetFileType(i)->name);
   }
 }
 

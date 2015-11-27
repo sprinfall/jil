@@ -75,9 +75,8 @@ public:
   int GetThemeCount() const;
   wxString GetTheme(int index) const;
 
-  const std::vector<editor::FileType*>& file_types() const {
-    return file_types_;
-  }
+  int GetFileTypeCount() const;
+  const editor::FileType* GetFileType(int index) const;
 
   const editor::FileType& FileTypeFromExt(const wxString& ext) const;
 

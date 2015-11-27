@@ -398,10 +398,17 @@ int App::GetThemeCount() const {
 }
 
 wxString App::GetTheme(int index) const {
-  if (index < 0 || index >= GetThemeCount()) {
-    return wxEmptyString;
-  }
+  assert(index >= 0 && index < GetThemeCount());
   return theme_names_[index];
+}
+
+int App::GetFileTypeCount() const {
+  return static_cast<int>(file_types_.size());
+}
+
+const editor::FileType* App::GetFileType(int index) const {
+  assert(index >= 0 && index < GetFileTypeCount());
+  return file_types_[index];
 }
 
 const editor::FileType& App::FileTypeFromExt(const wxString& ext) const {
