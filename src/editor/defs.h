@@ -110,9 +110,16 @@ const wchar_t kSpaceChar = L' ';
 const wchar_t kNilChar = L'\0';
 
 enum IndentType {
+  kNoIndent = 0,
   kTabIndent,
   kSpaceIndent,
   kMixedIndent,
+};
+
+// Indent properties.
+struct IndentProp {
+  Coord length;  // Indent string length.
+  IndentType type;
 };
 
 // Jil uses Mozilla 'uchardet' to detect file encoding.

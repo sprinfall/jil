@@ -780,6 +780,13 @@ void TextWindow::AutoIndent(Coord ln) {
   Exec(aila);
 }
 
+void TextWindow::Retab() {
+  RetabAction* retab_action = new RetabAction(buffer_);
+  retab_action->set_caret_point(caret_point_);
+  retab_action->set_update_caret(true);
+  Exec(retab_action);
+}
+
 //------------------------------------------------------------------------------
 
 void TextWindow::UpdateCaretPoint(const TextPoint& point, bool line_step, bool scroll, bool vspace) {

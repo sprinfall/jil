@@ -258,6 +258,8 @@ public:
 
   void AutoIndent(Coord ln);
 
+  void Retab();
+
   //----------------------------------------------------------------------------
   // Set new caret point and update caret position.
   // \param point The new caret point.

@@ -537,13 +537,43 @@ private:
   void Delete(const TextPoint& point, Coord count);
 
 private:
+  // The lines to refresh might be just a subset of the whole line range.
   LineRange refresh_line_range_;
 
+  // Change info: { line number, old indent string }
   typedef std::pair<TextPoint, std::wstring> ChangeInfo;
   std::list<ChangeInfo> change_infos_;
 
   TextPoint point_begin_delta_;
   TextPoint point_end_delta_;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Convert indentation to spaces or tabs according to the current tab options.
+// TODO: Support to retab only the selected range of text?
+class RetabAction : public Action {
+public:
+  RetabAction(TextBuffer* buffer);
+  virtual ~RetabAction();
+
+  virtual void Exec() override;
+  virtual void Undo() override;
+
+  virtual TextPoint CaretPointAfterExec() const override;
+
+private:
+  void ToSpaces(Coord ln, int tab_stop);
+  void ToTabs(Coord ln, int tab_stop);
+
+  void UpdateRefreshLineRange(Coord ln);
+
+private:
+  LineRange refresh_line_range_;
+
+  // Change info: { line number, old indent string }
+  typedef std::pair<Coord, std::wstring> ChangeInfo;
+  std::list<ChangeInfo> change_infos_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

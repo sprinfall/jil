@@ -128,6 +128,9 @@ public:
   // Return the length of the original indent string.
   Coord GetIndentStrLength() const;
 
+  // Return indent properties.
+  IndentProp GetIndentProp() const;
+
   //----------------------------------------------------------------------------
 
   void InsertChar(Coord off, wchar_t c);

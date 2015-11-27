@@ -107,11 +107,12 @@ enum {
   ID_MENU_HELP_END,
 
   // Indent menu on status bar.
-  ID_MENU_INDENT_BEGIN,
+  ID_MENU_INDENT_BEGIN,  // TODO: Rename
   ID_MENU_EXPAND_TAB = ID_MENU_INDENT_BEGIN,
   ID_MENU_TAB_STOP_0,
   ID_MENU_TAB_STOP_8 = ID_MENU_TAB_STOP_0 + 7,
   ID_MENU_GUESS_TAB_OPTIONS,
+  ID_MENU_RETAB,
   ID_MENU_INDENT_END,
 
   // Encoding menu on status bar.

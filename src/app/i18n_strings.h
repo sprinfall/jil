@@ -137,4 +137,10 @@
 #define kTrRClickClearAll           _("Clear All")
 #define kTrRClickGoToLocation       _("Go To Location")
 
+// Tab Options menu on status bar.
+#define kTrExpandTabs               _("Expand Tabs")
+#define kTrTabStop                  _("Tab Stop")
+#define kTrGuessTabOptions          _("Guess Tab Options")
+#define kTrRetab                    _("Retab")
+
 #endif  // JIL_I18N_STRINGS_H_

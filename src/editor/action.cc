@@ -550,8 +550,7 @@ void AutoIndentLineAction::Undo() {
   buffer_->FreezeNotify();
 
   if (!new_indent_str_.empty()) {
-    buffer_->DeleteString(TextPoint(0, ln_),
-                          CoordCast(new_indent_str_.size()));
+    buffer_->DeleteString(TextPoint(0, ln_), CoordCast(new_indent_str_.size()));
   }
 
   if (!old_indent_str_.empty()) {
@@ -957,6 +956,8 @@ void UncommentAction::Exec() {
   refresh_line_range_.Set(kInvCoord, 0);
   change_infos_.clear();
 
+  effective_ = false;  // Reset
+
   // Copy the range to avoid changing it.
   TextRange range = range_;
 
@@ -993,7 +994,9 @@ void UncommentAction::Exec() {
         Delete(quote_info.start_point, quote_info.start_len);
 
         buffer_->ThawNotify();
-        buffer_->Notify(kLineUpdated, refresh_line_range_);
+        if (!refresh_line_range_.IsEmpty()) {
+          buffer_->Notify(kLineUpdated, refresh_line_range_);
+        }
 
         return;
       }
@@ -1014,7 +1017,9 @@ void UncommentAction::Undo() {
   }
 
   buffer_->ThawNotify();
-  buffer_->Notify(kLineUpdated, refresh_line_range_);
+  if (!refresh_line_range_.IsEmpty()) {
+    buffer_->Notify(kLineUpdated, refresh_line_range_);
+  }
 }
 
 TextPoint UncommentAction::CaretPointAfterExec() const {
@@ -1106,7 +1111,9 @@ void UncommentAction::UncommentLines(const LineRange& line_range) {
   }
 
   buffer_->ThawNotify();
-  buffer_->Notify(kLineUpdated, refresh_line_range_);
+  if (!refresh_line_range_.IsEmpty()) {
+    buffer_->Notify(kLineUpdated, refresh_line_range_);
+  }
 }
 
 void UncommentAction::Delete(const TextPoint& point, Coord count) {
@@ -1156,6 +1163,144 @@ void UncommentAction::Delete(const TextPoint& point, Coord count) {
         point_end_delta_.Set(point.x - range_.point_end().x, 0);
       }
     }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+RetabAction::RetabAction(TextBuffer* buffer)
+    : Action(buffer, TextPoint())
+    , refresh_line_range_(kInvCoord, 0) {
+}
+
+RetabAction::~RetabAction() {
+}
+
+void RetabAction::Exec() {
+  refresh_line_range_.Set(kInvCoord, 0);
+  change_infos_.clear();
+
+  effective_ = false;  // Reset
+
+  buffer_->FreezeNotify();
+
+  int tab_stop = buffer_->tab_stop();
+  Coord line_count = buffer_->LineCount();
+
+  if (buffer_->expand_tab()) {
+    for (Coord ln = 1; ln <= line_count; ++ln) {
+      ToSpaces(ln, tab_stop);
+    }
+  } else {
+    for (Coord ln = 1; ln <= line_count; ++ln) {
+      ToTabs(ln, tab_stop);
+    }
+  }
+
+  buffer_->ThawNotify();
+  if (!refresh_line_range_.IsEmpty()) {
+    buffer_->Notify(kLineUpdated, refresh_line_range_);
+  }
+}
+
+void RetabAction::Undo() {
+  buffer_->FreezeNotify();
+
+  TextLine* line = NULL;
+  for (ChangeInfo& ci : change_infos_) {
+    line = buffer_->Line(ci.first);
+    line->DeleteString(0, line->GetIndentStrLength());
+    line->InsertString(0, ci.second);
+  }
+
+  buffer_->ThawNotify();
+  if (!refresh_line_range_.IsEmpty()) {
+    buffer_->Notify(kLineUpdated, refresh_line_range_);
+  }
+}
+
+TextPoint RetabAction::CaretPointAfterExec() const {
+  TextPoint p = caret_point_;
+  TextLine* line = buffer_->Line(p.y);
+  if (p.x > line->Length()) {
+    p.x = line->Length();
+  }
+  return p;
+}
+
+void RetabAction::ToSpaces(Coord ln, int tab_stop) {
+  TextLine* line = buffer_->Line(ln);
+
+  IndentProp indent = line->GetIndentProp();
+  if (indent.length == 0 || indent.type == kSpaceIndent) {
+    return;
+  }
+
+  Coord expanded_length = 0;
+
+  for (Coord x = 0; x < indent.length; ++x) {
+    if (line->Char(x) == kTabChar) {
+      expanded_length += tab_stop - (expanded_length % tab_stop);
+    } else {
+      ++expanded_length;
+    }
+  }
+
+  std::wstring str;
+  line->DeleteString(0, indent.length, &str);
+  line->InsertString(0, std::wstring(expanded_length, L' '));
+
+  change_infos_.push_back(std::make_pair(ln, str));
+
+  if (!effective_) {
+    effective_ = true;
+  }
+
+  UpdateRefreshLineRange(ln);
+}
+
+void RetabAction::ToTabs(Coord ln, int tab_stop) {
+  TextLine* line = buffer_->Line(ln);
+
+  IndentProp indent = line->GetIndentProp();
+  if (indent.length == 0 || indent.type == kTabIndent) {
+    return;
+  }
+
+  int indent_size = line->GetIndent(tab_stop);
+
+  int tabs = indent_size / tab_stop;
+  int spaces = indent_size % tab_stop;
+
+  std::wstring new_indent_str;
+  if (tabs > 0) {
+    new_indent_str.append(tabs, kTabChar);
+  }
+  if (spaces > 0) {
+    new_indent_str.append(spaces, kSpaceChar);
+  }
+
+  std::wstring old_indent_str;
+  line->DeleteString(0, indent.length, &old_indent_str);
+  line->InsertString(0, new_indent_str);
+
+  change_infos_.push_back(std::make_pair(ln, old_indent_str));
+
+  if (!effective_) {
+    effective_ = true;
+  }
+
+  UpdateRefreshLineRange(ln);
+}
+
+void RetabAction::UpdateRefreshLineRange(Coord ln) {
+  if (refresh_line_range_.first() == kInvCoord ||
+      refresh_line_range_.first() > ln) {
+    refresh_line_range_.set_first(ln);
+  }
+
+  if (refresh_line_range_.last() < ln) {
+    refresh_line_range_.set_last(ln);
   }
 }
 

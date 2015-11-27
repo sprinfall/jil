@@ -1874,27 +1874,26 @@ bool TextBuffer::GuessTabOptionsWithoutFunc(TabOptions* tab_options) const {
 bool TextBuffer::GetTabOptions(const TextLine* line,
                                const TextLine* prev_line,
                                TabOptions* tab_options) const {
-  if (line->GetIndentStrLength() > prev_line->GetIndentStrLength()) {
-    std::wstring indent_str = line->GetIndentStr();
-    std::wstring prev_indent_str = prev_line->GetIndentStr();
+  IndentProp ip = line->GetIndentProp();
+  IndentProp prev_ip = prev_line->GetIndentProp();
 
-    if (indent_str.size() > prev_indent_str.size()) {
-      IndentType indent_type = GetIndentType(indent_str);
+  if (ip.length <= prev_ip.length) {
+    return false;
+  }
 
-      if (indent_type != kMixedIndent) {
-        if (prev_indent_str.empty() ||
-            indent_type == GetIndentType(prev_indent_str)) {
-          tab_options->expand_tab = indent_type == kSpaceIndent;
+  if (ip.type == kMixedIndent) {
+    return false;
+  }
 
-          // If tab is not expanded, we can't determine the tab stop.
-          if (tab_options->expand_tab) {
-            tab_options->tab_stop = indent_str.size() - prev_indent_str.size();
-          }
+  if (prev_ip.length == 0 || prev_ip.type == ip.type) {
+    tab_options->expand_tab = ip.type == kSpaceIndent;
 
-          return true;
-        }
-      }
+    // If tab is not expanded, we can't determine the tab stop.
+    if (tab_options->expand_tab) {
+      tab_options->tab_stop = ip.length - prev_ip.length;
     }
+
+    return true;
   }
 
   return false;

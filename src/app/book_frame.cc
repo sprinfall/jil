@@ -1343,18 +1343,21 @@ void BookFrame::PopupStatusTabOptionsMenu() {
 
   wxMenu menu;
 
-  menu.AppendCheckItem(ID_MENU_EXPAND_TAB, _("Expand Tabs"));
+  menu.AppendCheckItem(ID_MENU_EXPAND_TAB, kTrExpandTabs);
   menu.AppendSeparator();
 
   int ts = editor::kMinTabStop;
   int ts_menu_id = ID_MENU_TAB_STOP_0;
   for (; ts < editor::kMaxTabStop; ++ts, ++ts_menu_id) {
-    wxString label = wxString::Format(wxT("Tab Stop: %d"), ts);
+    wxString label = kTrTabStop + wxString::Format(wxT(": %d"), ts);
     menu.AppendCheckItem(ts_menu_id, label);
   }
 
   menu.AppendSeparator();
-  menu.Append(ID_MENU_GUESS_TAB_OPTIONS, _("Guess From Existing Lines"));
+  menu.Append(ID_MENU_GUESS_TAB_OPTIONS, kTrGuessTabOptions);
+
+  menu.AppendSeparator();
+  menu.Append(ID_MENU_RETAB, kTrRetab);
 
   if (text_page->expand_tab()) {
     menu.Check(ID_MENU_EXPAND_TAB, true);
@@ -1447,16 +1450,12 @@ void BookFrame::PopupStatusFileTypeMenu() {
 void BookFrame::OnStatusTabOptionsMenu(wxCommandEvent& evt) {
   int menu_id = evt.GetId();
 
-  editor::TextBuffer* buffer = ActiveBuffer();
-  if (buffer == NULL) {
+  TextPage* text_page = ActiveTextPage();
+  if (text_page == NULL) {
     return;
   }
 
-  if (menu_id == ID_MENU_EXPAND_TAB) {
-    buffer->set_expand_tab(evt.IsChecked());
-    buffer->Notify(editor::kTabOptionsChange);
-    return;
-  }
+  editor::TextBuffer* buffer = text_page->buffer();
 
   if (menu_id >= ID_MENU_TAB_STOP_0 && menu_id <= ID_MENU_TAB_STOP_8) {
     int tab_stop = editor::kMinTabStop + (menu_id - ID_MENU_TAB_STOP_0);
@@ -1465,12 +1464,26 @@ void BookFrame::OnStatusTabOptionsMenu(wxCommandEvent& evt) {
     return;
   }
 
-  if (menu_id == ID_MENU_GUESS_TAB_OPTIONS) {
-    editor::TabOptions tab_options;
-    if (buffer->GuessTabOptions(&tab_options)) {
-      buffer->SetTabOptions(tab_options, true);
+  switch (menu_id) {
+    case ID_MENU_EXPAND_TAB:
+      buffer->set_expand_tab(evt.IsChecked());
+      buffer->Notify(editor::kTabOptionsChange);
+      break;
+
+    case ID_MENU_GUESS_TAB_OPTIONS:
+    {
+      editor::TabOptions tab_options;
+      if (buffer->GuessTabOptions(&tab_options)) {
+        buffer->SetTabOptions(tab_options, true);
+      }
+      break;
     }
-    return;
+      
+    case ID_MENU_RETAB:
+    {
+      text_page->Retab();
+      break;
+    }
   }
 }
 

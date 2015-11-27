@@ -343,7 +343,7 @@ Coord TextLine::GetIndent(int tab_stop) const {
 }
 
 std::wstring TextLine::GetIndentStr() const {
-  Coord i = FindNonSpace();
+  Coord i = FindNonSpace(0);
 
   if (i == 0) {
     return L"";
@@ -355,7 +355,27 @@ std::wstring TextLine::GetIndentStr() const {
 }
 
 Coord TextLine::GetIndentStrLength() const {
-  return FindNonSpace();
+  return FindNonSpace(0);
+}
+
+IndentProp TextLine::GetIndentProp() const {
+  IndentProp prop;
+  prop.length = GetIndentStrLength();
+
+  if (prop.length == 0) {
+    prop.type = kNoIndent;
+    return prop;
+  }
+
+  prop.type = data_[0] == kTabChar ? kTabIndent : kSpaceIndent;
+  for (size_t i = 1; i < prop.length; ++i) {
+    if (data_[i] != data_[0]) {
+      prop.type = kMixedIndent;
+      break;
+    }
+  }
+
+  return prop;
 }
 
 //------------------------------------------------------------------------------
