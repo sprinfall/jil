@@ -321,3 +321,95 @@ TEST(DeleteRangeAction, DeleteRange_Backward) {
     EXPECT_EQ(L"", buffer->LineData(4));
   }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// RetabAction
+
+TEST(RetabAction, ToSpaces) {
+  FtPlugin ft_plugin(kFtTxt);
+
+  TextOptions text_options;
+  text_options.expand_tab = true;
+  text_options.tab_stop = 4;
+  ft_plugin.set_text_options(text_options);
+
+  TextBufferPtr buffer(TextBuffer::Create(0, &ft_plugin, kEncoding));
+
+  buffer->AppendLine(L"test");
+  buffer->AppendLine(L"\ttest");
+  buffer->AppendLine(L"  \ttest");
+  buffer->AppendLine(L"\t  test");
+  buffer->AppendLine(L"  test");
+
+  const TextPoint caret_point(1, 2);
+
+  RetabAction action(buffer.get());
+  action.set_caret_point(caret_point);
+  action.set_update_caret(true);
+
+  for (size_t i = 0; i < 2; ++i) {
+    action.Exec();
+
+    EXPECT_EQ(L"", buffer->Line(2)->GetIndentStr());
+    EXPECT_EQ(L"    ", buffer->Line(3)->GetIndentStr());
+    EXPECT_EQ(L"    ", buffer->Line(4)->GetIndentStr());
+    EXPECT_EQ(L"      ", buffer->Line(5)->GetIndentStr());
+    EXPECT_EQ(L"  ", buffer->Line(6)->GetIndentStr());
+
+    EXPECT_EQ(caret_point, action.CaretPointAfterExec());
+
+    action.Undo();
+
+    EXPECT_EQ(L"", buffer->Line(2)->GetIndentStr());
+    EXPECT_EQ(L"\t", buffer->Line(3)->GetIndentStr());
+    EXPECT_EQ(L"  \t", buffer->Line(4)->GetIndentStr());
+    EXPECT_EQ(L"\t  ", buffer->Line(5)->GetIndentStr());
+    EXPECT_EQ(L"  ", buffer->Line(6)->GetIndentStr());
+  }
+}
+
+TEST(RetabAction, ToTabs) {
+  FtPlugin ft_plugin(kFtTxt);
+
+  TextOptions text_options;
+  text_options.expand_tab = false;
+  text_options.tab_stop = 4;
+  ft_plugin.set_text_options(text_options);
+
+  TextBufferPtr buffer(TextBuffer::Create(0, &ft_plugin, kEncoding));
+
+  buffer->AppendLine(L"test");
+  buffer->AppendLine(L"    test");
+  buffer->AppendLine(L"  \ttest");
+  buffer->AppendLine(L"\t  test");
+  buffer->AppendLine(L"  test");
+  buffer->AppendLine(L"      test");
+
+  const TextPoint caret_point(10, 7);
+
+  RetabAction action(buffer.get());
+  action.set_caret_point(caret_point);
+  action.set_update_caret(true);
+
+  for (size_t i = 0; i < 2; ++i) {
+    action.Exec();
+
+    EXPECT_EQ(L"", buffer->Line(2)->GetIndentStr());
+    EXPECT_EQ(L"\t", buffer->Line(3)->GetIndentStr());
+    EXPECT_EQ(L"\t", buffer->Line(4)->GetIndentStr());
+    EXPECT_EQ(L"\t  ", buffer->Line(5)->GetIndentStr());
+    EXPECT_EQ(L"  ", buffer->Line(6)->GetIndentStr());
+    EXPECT_EQ(L"\t  ", buffer->Line(7)->GetIndentStr());
+
+    EXPECT_EQ(TextPoint(7, 7), action.CaretPointAfterExec());
+
+    action.Undo();
+
+    EXPECT_EQ(L"", buffer->Line(2)->GetIndentStr());
+    EXPECT_EQ(L"    ", buffer->Line(3)->GetIndentStr());
+    EXPECT_EQ(L"  \t", buffer->Line(4)->GetIndentStr());
+    EXPECT_EQ(L"\t  ", buffer->Line(5)->GetIndentStr());
+    EXPECT_EQ(L"  ", buffer->Line(6)->GetIndentStr());
+    EXPECT_EQ(L"      ", buffer->Line(7)->GetIndentStr());
+  }
+}
