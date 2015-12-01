@@ -58,7 +58,6 @@ public:
     kSpace,       // Space and Tab
     kBlank,       // Blank area (similar to Vim NonText)
     kDelimiter,   // !@#$%^&*()+-=~, etc.
-    kError,       // E.g., Lexical error
     kItemCount,
   };
 

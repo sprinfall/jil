@@ -1370,14 +1370,12 @@ void TextWindow::HandleTextPaint(Renderer& renderer) {
     int blank_h = line_height_ * (line_range.last() - ln + 1);
 
     if (blank_bg != style_->Get(Style::kNormal)->bg()) {
-      renderer.SetPen(wxPen(blank_bg), true);
-      renderer.SetBrush(wxBrush(blank_bg), true);
+      renderer.SetStyle(blank_bg, blank_bg, true);
 
       int blank_w = text_area_->GetVirtualSize().x;
       renderer.DrawRectangle(x, y2, blank_w, blank_h);
 
-      renderer.RestoreBrush();
-      renderer.RestorePen();
+      renderer.RestoreStyle();
     }
 
     y2 += blank_h;
@@ -1467,14 +1465,12 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
     int h = line_height_ * blank_line_range.LineCount();
 
     if (blank_bg != style_->Get(Style::kNormal)->bg()) {
-      renderer.SetPen(wxPen(blank_bg), true);
-      renderer.SetBrush(wxBrush(blank_bg), true);
+      renderer.SetStyle(blank_bg, blank_bg, true);
 
       int w = text_area_->GetVirtualSize().x;
       renderer.DrawRectangle(x, y, w, h);
 
-      renderer.RestoreBrush();
-      renderer.RestorePen();
+      renderer.RestoreStyle();
     }
 
     // Rulers.
@@ -1770,7 +1766,7 @@ void TextWindow::DrawTextLinePiece(Renderer& renderer,
     if (line_data[i] == kSpaceChar) {
       Coord spaces = CountCharAfter(line_data, i, kSpaceChar) + 1;
       if (view_options_.show_space) {
-        renderer.SetPen(space_pen);
+        renderer.SetPen(space_pen, false);
         renderer.DrawWhiteSpaces(x, y, spaces);
       }
       x += char_size_.x * spaces;
@@ -1784,7 +1780,7 @@ void TextWindow::DrawTextLinePiece(Renderer& renderer,
 
       int tab_w = char_size_.x * tab_spaces;
       if (view_options_.show_space) {
-        renderer.SetPen(space_pen);
+        renderer.SetPen(space_pen, false);
         renderer.DrawTab(x, y, tab_w, char_size_.y);
       }
       x += tab_w;
@@ -1833,8 +1829,6 @@ void TextWindow::DrawTextWord(Renderer& renderer,
                               int& x,
                               int y,
                               Coord& chars) {
-  //SetRendererStyle(renderer, style_->Get(lex));
-
   int piece_w = 0;
   renderer.DrawText(line_data, off, len, x, y, &piece_w);
   x += piece_w;
@@ -1842,20 +1836,25 @@ void TextWindow::DrawTextWord(Renderer& renderer,
 
 void TextWindow::SetRendererStyle(Renderer& renderer, const StyleValue* style_value) {
   if (style_value != NULL) {
+    // Font
     wxFont font = text_area_->GetFont();
-
     if ((style_value->font() & Style::kBold) != 0) {
       font.SetWeight(wxFONTWEIGHT_BOLD);
     }
     if ((style_value->font() & Style::kItalic) != 0) {
       font.SetStyle(wxFONTSTYLE_ITALIC);
     }
+    renderer.SetFont(font);
 
+    // FG
     if (style_value->fg().IsOk()) {
-      renderer.SetFont(font, style_value->fg());
+      renderer.SetTextForeground(style_value->fg());
     } else {
-      renderer.SetFont(font, style_->Get(Style::kNormal)->fg());
+      renderer.SetTextForeground(style_->Get(Style::kNormal)->fg());
     }
+
+    // BG (TODO)
+    //renderer.SetTextBackground(style_value->bg());
   }
 }
 

@@ -148,3 +148,41 @@ TEST(LiteRegex, Match_IgnoreCase) {
     EXPECT_EQ(str.size(), off);
   }
 }
+
+
+TEST(LiteRegex, Match_End) {
+  {
+    relite::Regex regex(L"\\s+$x", 0);
+    EXPECT_FALSE(regex.valid());
+  }
+
+  {
+    relite::Regex regex(L"test$", 0);
+    EXPECT_TRUE(regex.valid());
+
+    std::wstring str = L"test";
+    size_t off = regex.Match(str, 0);
+    EXPECT_EQ(str.size(), off);
+
+    str = L"  test";
+    off = regex.Match(str, 2);
+    EXPECT_EQ(str.size(), off);
+
+    str = L"  test ";
+    off = regex.Match(str, 2);
+    EXPECT_EQ(2, off);
+  }
+
+  {
+    relite::Regex regex(L"\\s+$", 0);
+    EXPECT_TRUE(regex.valid());
+
+    std::wstring str = L"test   ";
+    size_t off = regex.Match(str, 4);
+    EXPECT_EQ(str.size(), off);
+
+    str = L"  x";
+    off = regex.Match(str, 0);
+    EXPECT_EQ(0, off);
+  }
+}

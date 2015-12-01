@@ -189,6 +189,16 @@ size_t Regex::Match(const std::wstring& str, size_t off, Sub* subs, size_t subs_
       }
     }
 
+    if (atom != NULL) {
+      if (atom->type() == Atom::kEnd) {  // $
+        if (i != str.size()) {
+          return off;
+        } else {
+          return i;
+        }
+      }
+    }
+
     match_i = node->Match(str, i, ignore_case);
     if (match_i == kNpos) {
       return off;
@@ -334,6 +344,21 @@ bool Regex::Compile() {
         } else {
           return false;  // Not supported yet
         }
+        break;
+
+      case L'$':
+        if (escaped) {
+          escaped = false;
+          word.append(1, c);
+        } else {
+          if (i != size - 1) {
+            // $ should always be the last char.
+            return false;
+          }
+          CompileWord(word);
+          nodes_.push_back(new Atom(Atom::kEnd));
+        }
+
         break;
 
       default:

@@ -66,6 +66,7 @@ public:
     kSpace,       // \s
     kDigit,       // \d
     kBound,       // \b
+    kEnd,         // $
   };
 
 public:

@@ -2760,7 +2760,8 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
   while (i < line_length) {
     // Skip spaces. (Don't keep spaces as lex element to save memory.)
     if (IsSpace(line_data[i])) {
-      for (++i; i < line_length && IsSpace(line_data[i]); ++i) {}
+      for (++i; i < line_length && IsSpace(line_data[i]); ++i) {
+      }
       continue;
     }
 
@@ -2827,7 +2828,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
             }
           }
 
-          prev_le.Set(i, 1, Lex(kLexSpecial));  // Any non kLexNone is OK.
+          prev_le.Set(i, 1, Lex(kLexComment));  // Any non kLexNone is OK.
 
           // Skip operator. (ISSUE: See comments for "match regex".)
           // NOTE: If there are more operators after this operator, don't skip
@@ -2870,10 +2871,11 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
     }
   }
 
-  // Deal with unclosed quote and EOL-closed quote.
   if (quote == NULL) {
     return;
   }
+
+  // Deal with unclosed quote and EOL-closed quote.
 
   assert(quote_off != kNpos);
 

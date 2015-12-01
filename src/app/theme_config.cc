@@ -239,9 +239,6 @@ bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style)
   ReadStyle(root, "delimiter", &style_value);
   style->Set(Style::kDelimiter, style_value);
 
-  ReadStyle(root, "error", &style_value);
-  style->Set(Style::kError, style_value);
-
   ReadStyle(root, "blank", &style_value);
   style->Set(Style::kBlank, style_value);
 
@@ -300,10 +297,16 @@ bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style)
     style->Set(Lex(kLexType, kLexTypeQualifier), style_value);
   }
 
-  setting = root.Get("special", Setting::kGroup);
+  setting = root.Get("url", Setting::kGroup);
   if (setting) {
     ReadStyle(setting, &style_value);
-    style->Set(Lex(kLexSpecial), style_value);
+    style->Set(Lex(kLexUrl), style_value);
+  }
+
+  setting = root.Get("error", Setting::kGroup);
+  if (setting) {
+    ReadStyle(setting, &style_value);
+    style->Set(Lex(kLexError), style_value);
   }
 
   return true;

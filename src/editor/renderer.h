@@ -20,19 +20,20 @@ public:
   explicit Renderer(wxDC* dc);
   ~Renderer();
 
-  void SetFont(const wxFont& font, const wxColour& fg);
+  void SetFont(const wxFont& font);
+
+  void SetTextForeground(const wxColour& fg);
+  void SetTextBackground(const wxColour& bg);
 
   const wxBrush& GetBrush() const;
-  void SetBrush(const wxBrush& brush, bool backup = false);
+  void SetBrush(const wxBrush& brush, bool backup);
 
   const wxPen& GetPen() const;
-  void SetPen(const wxPen& pen, bool backup = false);
+  void SetPen(const wxPen& pen, bool backup);
 
   void SetStyle(const wxBrush& brush, const wxPen& pen, bool backup);
 
   void SetStyle(const wxColour& brush_color, const wxColour& pen_color, bool backup);
-
-  void SetTextBackground(const wxColour& bg);
 
   void BackupBrush();
   void RestoreBrush();

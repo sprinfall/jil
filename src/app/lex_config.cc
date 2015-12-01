@@ -104,8 +104,10 @@ Lex ParseLex(const char* lex_str) {
     return Lex(kLexPreProc);
   } else if (major_str == "type") {
     return Lex(kLexType, ParseLexType(minor_str));
-  } else if (major_str == "special") {
-    return Lex(kLexSpecial);
+  } else if (major_str == "url") {
+    return Lex(kLexUrl);
+  } else if (major_str == "error") {
+    return Lex(kLexError);
   } else {
     return Lex(kLexNone);
   }

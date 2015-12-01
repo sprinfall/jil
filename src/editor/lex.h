@@ -34,7 +34,8 @@ enum LexMajorType {
   kLexPackage,
   kLexPreProc,
   kLexType,
-  kLexSpecial,  // http URL, etc.
+  kLexUrl,
+  kLexError,
 
   kLexMajorTypeCount
 };

@@ -15,12 +15,19 @@ Renderer::Renderer(wxDC* dc) : dc_(dc) {
 Renderer::~Renderer() {
 }
 
-void Renderer::SetFont(const wxFont& font, const wxColour& fg) {
+void Renderer::SetFont(const wxFont& font) {
   dc_->SetFont(font);
-  dc_->SetTextForeground(fg);
 
   // Font affects char size.
   UpdateCharSize();
+}
+
+void Renderer::SetTextForeground(const wxColour& fg) {
+  dc_->SetTextForeground(fg);
+}
+
+void Renderer::SetTextBackground(const wxColour& bg) {
+  dc_->SetTextBackground(bg);
 }
 
 const wxBrush& Renderer::GetBrush() const {
@@ -62,10 +69,6 @@ void Renderer::SetStyle(const wxColour& brush_color, const wxColour& pen_color, 
   } else {
     SetPen(*wxTRANSPARENT_PEN, backup);
   }
-}
-
-void Renderer::SetTextBackground(const wxColour& bg) {
-  dc_->SetTextBackground(bg);
 }
 
 void Renderer::BackupBrush() {
