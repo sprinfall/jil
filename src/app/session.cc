@@ -21,7 +21,6 @@
 #define NODE2             "node2"
 
 #define LOCATION          "location"
-#define SHOW_OPTIONS      "show_options"
 #define USE_REGEX         "use_regex"
 #define CASE_SENSITIVE    "case_sensitive"
 #define MATCH_WORD        "match_word"
@@ -119,7 +118,7 @@ bool Session::Load(const wxString& file) {
   }
 
   //----------------------------------------------------------------------------
-  // Find window
+  // Find panel
 
   Setting fp_setting = root_setting.Get(FIND_PANEL, Setting::kGroup);
   if (fp_setting) {
@@ -131,7 +130,7 @@ bool Session::Load(const wxString& file) {
     find_flags_ = SetBit(find_flags_, kFind_MatchWord, fp_setting.GetBool(MATCH_WORD));
 
     int location = fp_setting.GetInt(LOCATION);
-    if (location >= 0 && location < kLocationCount) {
+    if (location >= 0 && location < kFindLocations) {
       find_location_ = static_cast<FindLocation>(location);
     }
 
@@ -188,7 +187,7 @@ bool Session::Save(const wxString& file) {
   bf_setting.SetBool(MAXIMIZED, book_frame_maximized_);
 
   //----------------------------------------------------------------------------
-  // Find window
+  // Find panel
 
   Setting fp_setting = root_setting.Add(FIND_PANEL, Setting::kGroup);
 
@@ -197,7 +196,6 @@ bool Session::Save(const wxString& file) {
 
   fp_setting.SetInt(LOCATION, find_location_);
 
-  fp_setting.SetBool(SHOW_OPTIONS, show_options_);
   fp_setting.SetBool(USE_REGEX, GetBit(find_flags_, kFind_UseRegex));
   fp_setting.SetBool(CASE_SENSITIVE, GetBit(find_flags_, kFind_CaseSensitive));
   fp_setting.SetBool(MATCH_WORD, GetBit(find_flags_, kFind_MatchWord));

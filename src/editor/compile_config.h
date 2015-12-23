@@ -13,10 +13,6 @@
 //   - relite::Regex: 16ms
 #define JIL_LEX_USE_RELITE 1
 
-// Underline each lex element (when wrap is off).
-// Test only.
-#define JIL_TEST_UNDERLINE_LEX_ELEMENT 0
-
 // Rectangle selection. Not fully implemented.
 #define JIL_ENABLE_RECT_SELECT 0
 

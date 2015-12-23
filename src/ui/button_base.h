@@ -34,7 +34,7 @@ public:
   }
 
 protected:
-  virtual ButtonStyle::State GetState() = 0;
+  virtual ButtonStyle::State GetState() const = 0;
 
   virtual void DrawForeground(wxDC& dc, ButtonStyle::State state) = 0;
 

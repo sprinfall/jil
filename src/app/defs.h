@@ -30,8 +30,8 @@ enum FindFlag {
 enum FindLocation {
   kCurrentPage = 0,
   kAllPages,
-  kSelection,
-  kLocationCount,
+  kFolders,
+  kFindLocations,
 };
 
 // Prefix of all internal file type IDs.

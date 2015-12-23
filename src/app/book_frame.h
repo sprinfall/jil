@@ -145,11 +145,19 @@ protected:
 
   void OnGlobalPreferences(wxCommandEvent& evt);
 
+  // Compare global options and apply the changes.
+  void ApplyGlobalOptionChanges(const Options& old_options);
+
   void ApplyLinePadding(int line_padding);
   void ApplyTextFont(const wxFont& font);
   void ApplyLineNrFont(const wxFont& font);
 
   void OnEditorPreferences(wxCommandEvent& evt);
+
+  // Apply changes to the text pages/buffers of the given file type.
+  void ApplyEditorOptionChanges(const wxString& ft_id,
+                                const editor::Options& options,
+                                const editor::Options& old_options);
 
   void OnTheme(wxCommandEvent& evt);
 
@@ -254,6 +262,8 @@ private:
   //----------------------------------------------------------------------------
   // Find & Replace
 
+  void HandleFindStrChange(const std::wstring& str, int flags);
+
   void FindInActivePage(const std::wstring& str, int flags);
 
   void FindInAllPages(const std::wstring& str, int flags);
@@ -288,6 +298,11 @@ private:
 
   // Select the result text range, update caret point and scroll to it if necessary.
   void SelectFindResult(TextPage* text_page, const editor::TextRange& result_range);
+
+  void SetFindResult(TextPage* text_page,
+                     const editor::TextRange& find_result,
+                     bool select,
+                     bool update_caret);
 
   //----------------------------------------------------------------------------
   // Menu

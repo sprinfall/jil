@@ -30,16 +30,10 @@ ButtonBase::ButtonBase(SharedButtonStyle style)
 ButtonBase::~ButtonBase() {
 }
 
-bool ButtonBase::Create(wxWindow* parent,
-                        wxWindowID id,
-                        const wxString& label) {
+bool ButtonBase::Create(wxWindow* parent, wxWindowID id, const wxString& label) {
   assert(style_);
 
-  if (!wxControl::Create(parent,
-                         id,
-                         wxDefaultPosition,
-                         wxDefaultSize,
-                         wxBORDER_NONE)) {
+  if (!wxControl::Create(parent, id, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)) {
     return false;
   }
 
@@ -61,7 +55,7 @@ bool ButtonBase::Enable(bool enable) {
 
 void ButtonBase::OnPaint(wxPaintEvent& evt) {
   wxAutoBufferedPaintDC dc(this);
-#if (!wxALWAYS_NATIVE_DOUBLE_BUFFER)
+#if !wxALWAYS_NATIVE_DOUBLE_BUFFER
   dc.SetBackground(wxBrush(GetBackgroundColour()));
   dc.Clear();
 #endif

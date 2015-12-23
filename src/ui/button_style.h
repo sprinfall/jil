@@ -2,8 +2,8 @@
 #define JIL_UI_BUTTON_STYLE_H_
 #pragma once
 
-#include "wx/colour.h"
 #include "boost/shared_ptr.hpp"
+#include "wx/colour.h"
 
 namespace jil {
 namespace ui {

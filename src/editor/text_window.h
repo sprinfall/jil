@@ -57,11 +57,6 @@ public:
 
   enum ColorId {
     RULER = 0,
-
-    //// Find matching results.
-    //MATCHING_BG,
-    //MATCHING_BORDER,
-
     COLORS
   };
 
@@ -115,6 +110,11 @@ public:
   void SetLinePadding(int line_padding);
 
   //----------------------------------------------------------------------------
+  // Mediators.
+
+  FtPlugin* ft_plugin() const;
+
+  //----------------------------------------------------------------------------
 
   TextBuffer* buffer() const {
     return buffer_;
@@ -141,34 +141,47 @@ public:
   int tab_stop() const {
     return tab_stop_;
   }
+
   bool expand_tab() const {
     return expand_tab_;
   }
 
-  void SetTabStop(int tab_stop);
-  void SetExpandTab(bool expand_tab);
-
   // Wrap or unwrap lines.
   void Wrap(bool wrap);
 
-  // Show or hide line number.
+  // Show/hide line numbers.
   void ShowNumber(bool show_number);
 
-  // Show or hide white space.
+  // Show/hide white space.
   void ShowSpace(bool show_space);
+
+  // Show/hide horizontal scrollbar.
+  void ShowHScrollbar(bool show_hscrollbar);
+
+  // Set rulers.
+  void SetRulers(const std::vector<int>& rulers);
 
   //----------------------------------------------------------------------------
 
-  TextArea* text_area() const { return text_area_; }
-  LineNrArea* line_nr_area() const { return line_nr_area_; }
+  TextArea* text_area() const {
+    return text_area_;
+  }
 
-  const TextPoint& caret_point() const { return caret_point_; }
+  LineNrArea* line_nr_area() const {
+    return line_nr_area_;
+  }
+
+  const TextPoint& caret_point() const {
+    return caret_point_;
+  }
 
 #if JIL_ENABLE_LEADER_KEY
   void set_leader_key(Key* key);
 #endif  // JIL_ENABLE_LEADER_KEY
 
-  const Selection& selection() const { return selection_; }
+  const Selection& selection() const {
+    return selection_;
+  }
 
   Mode mode() const;
 
@@ -276,6 +289,14 @@ public:
 
   void ClearSelection(bool refresh = true);
 
+  //----------------------------------------------------------------------------
+
+  const TextRange& find_result() const {
+    return find_result_;
+  }
+
+  void SetFindResult(const TextRange& find_result);
+
 protected:
   //----------------------------------------------------------------------------
 
@@ -283,17 +304,19 @@ protected:
   void Init();
 
   //----------------------------------------------------------------------------
-  // Mediators.
-
-  FtPlugin* ft_plugin() const;
-
-  //----------------------------------------------------------------------------
-  // Wrap
 
   // Return the wrap helper (create it if NULL).
   WrapHelper* wrap_helper() const;
 
+  // Wrap lines according to the current option.
   void DoWrap();
+
+  // Show/hide line numbers according to the current option.
+  void DoShowNumber();
+
+  // Show/hide horizontal scrollbar according to the current option.
+  // NOTE: The horizontal scrollbar will always be hidden if line wrap is on.
+  void DoShowHScrollbar();
 
   //----------------------------------------------------------------------------
   // Handlers for buffer and buffer line changes.
@@ -337,11 +360,42 @@ protected:
   void HandleTextPaint(Renderer& renderer);
   void HandleWrappedTextPaint(Renderer& renderer);
 
-  void DrawTextLine(Coord ln, Renderer& renderer, int x, int& y);
-  void DrawWrappedTextLine(Coord ln, Renderer& renderer, int x, int& y);
+  void DrawTextLine(Renderer& renderer, Coord ln, int x, int& y);
+  void DrawTextLineSelection(Renderer& renderer, Coord ln, int x, int y);
+
+  void DrawWrappedTextLine(Renderer& renderer, Coord ln, int x, int& y);
+  void DrawWrappedTextLineSelection(Renderer& renderer, Coord ln, int x, int y);
+  void DrawWrappedTextLineWithLex(Renderer& renderer, Coord ln, int x, int& y);
+  void DrawWrappedTextLineWithoutLex(Renderer& renderer, Coord ln, int x, int& y);
 
   // NOTE: Tabs and different text styles are handled here.
   void DrawTextLine(Renderer& renderer, const TextLine* line, int x, int y);
+
+  void DrawTextLinePart(Renderer& renderer,
+                        const TextLine* line,
+                        const CharRange& part,
+                        int& x,
+                        int y,
+                        Coord& chars);
+
+  void DrawTextLineMatchingPart(Renderer& renderer,
+                                const TextLine* line,
+                                const CharRange& part,
+                                int& x,
+                                int y,
+                                Coord& chars);
+
+  // \param style_value Style value set to the renderer to draw this line piece.
+  // \param has_lex If this line piece has lex or not.
+  void DrawTextLinePiece(Renderer& renderer,
+                         const std::wstring& line_data,
+                         Coord i,
+                         Coord j,
+                         const StyleValue* style_value,
+                         bool has_lex,
+                         int& x,
+                         int y,
+                         Coord& chars);
 
   void DrawTextLinePiece(Renderer& renderer,
                          const std::wstring& line_data,
@@ -554,6 +608,9 @@ protected:
   int line_nr_width_;
 
   wxSize char_size_;
+
+  // Text size is currently only used to calculate virtual size when wrap
+  // is off.
   wxSize text_size_;
 
   mutable WrapHelper* wrap_helper_;
@@ -617,6 +674,9 @@ protected:
 
   // Current text selection.
   Selection selection_;
+
+  // Find matching result.
+  TextRange find_result_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

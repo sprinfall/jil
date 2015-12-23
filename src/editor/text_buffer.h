@@ -207,9 +207,15 @@ public:
   const TextOptions& text_options() const {
     return options_.text;
   }
+  void set_text_options(const TextOptions& text) {
+    options_.text = text;
+  }
 
   const ViewOptions& view_options() const {
     return options_.view;
+  }
+  void set_view_options(const ViewOptions& view_options) {
+    options_.view = view_options;
   }
 
   int tab_stop() const {
@@ -226,6 +232,7 @@ public:
     options_.text.expand_tab = expand_tab;
   }
 
+  // Set tab options and optionally notify kTabOptionsChange.
   void SetTabOptions(const TabOptions& tab_options, bool notify);
 
   // Guess tab options from existing lines.

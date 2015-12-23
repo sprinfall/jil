@@ -220,6 +220,12 @@ public:
   std::vector<int> rulers;
 };
 
+bool operator==(const ViewOptions& lhs, const ViewOptions& rhs);
+
+inline bool operator!=(const ViewOptions& lhs, const ViewOptions& rhs) {
+  return !(lhs == rhs);
+}
+
 class Options {
 public:
   TextOptions text;

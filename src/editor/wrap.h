@@ -10,8 +10,9 @@
 namespace jil {
 namespace editor {
 
-class TextExtent;
 class TextBuffer;
+class TextExtent;
+class TextLine;
 
 // About "wrap delta":
 // = 0: Wrap is not changed
@@ -28,7 +29,8 @@ class TextBuffer;
 // The wrap offsets is: [3, 6, 9].
 typedef std::vector<Coord> WrapOffsets;
 
-WrapOffsets WrapLineByChar(const std::wstring& line,
+WrapOffsets WrapLineByChar(int tab_stop,
+                           const TextLine* line,
                            TextExtent* text_extent,
                            Coord max_width);
 
@@ -46,7 +48,8 @@ public:
   // Wrap a line.
   // @delta is the wrap count increased (> 0) or decreased (< 0).
   // Return true if the wrap offsets change.
-  bool Wrap(const std::wstring& line,
+  bool Wrap(int tab_stop,
+            const TextLine* line,
             TextExtent* text_extent,
             Coord max_width,
             int* delta);

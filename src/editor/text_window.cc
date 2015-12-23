@@ -75,7 +75,7 @@ END_EVENT_TABLE()
 TextWindow::TextWindow(TextBuffer* buffer) : buffer_(buffer) {
   Init();
 }
-
+  
 bool TextWindow::Create(wxWindow* parent, wxWindowID id, bool hide) {
   assert(theme_);
   assert(style_ != NULL);
@@ -91,9 +91,7 @@ bool TextWindow::Create(wxWindow* parent, wxWindowID id, bool hide) {
     return false;
   }
 
-  if (!view_options_.show_hscrollbar) {
-    ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_ALWAYS);
-  }
+  DoShowHScrollbar();
 
   const wxColour& normal_bg = style_->Get(Style::kNormal)->bg();
 
@@ -220,19 +218,10 @@ void TextWindow::SetLinePadding(int line_padding) {
   }
 }
 
-void TextWindow::UpdateLineHeight() {
-  line_height_ = line_padding_ + char_size_.y + line_padding_;
-}
+//------------------------------------------------------------------------------
 
-void TextWindow::HandleLineHeightChange() {
-  SetScrollbars(char_size_.x, line_height_, 1, 1);
-
-  UpdateTextSize();
-  UpdateVirtualSize();
-
-  // Update caret size and position.
-  text_area_->GetCaret()->SetSize(kCaretWidth, line_height_);
-  UpdateCaretPosition();
+FtPlugin* TextWindow::ft_plugin() const {
+  return buffer_->ft_plugin();
 }
 
 //------------------------------------------------------------------------------
@@ -307,39 +296,37 @@ const TextOptions& TextWindow::text_options() const {
   return buffer_->text_options();
 }
 
-void TextWindow::SetTabStop(int tab_stop) {
-  tab_stop_ = tab_stop;
-  buffer_->set_tab_stop(tab_stop);
-}
-
-void TextWindow::SetExpandTab(bool expand_tab) {
-  expand_tab_ = expand_tab;
-  buffer_->set_expand_tab(expand_tab);
-}
-
 void TextWindow::Wrap(bool wrap) {
-  if (wrap == view_options_.wrap) {
-    return;
+  if (view_options_.wrap != wrap) {
+    view_options_.wrap = wrap;
+    DoWrap();
   }
-
-  view_options_.wrap = wrap;
-
-  DoWrap();
 }
 
 void TextWindow::ShowNumber(bool show_number) {
-  if (show_number != view_options_.show_number) {
+  if (view_options_.show_number != show_number) {
     view_options_.show_number = show_number;
-
-    UpdateLineNrWidth();
-    LayoutAreas();
-    line_nr_area_->Refresh();
+    DoShowNumber();
   }
 }
 
 void TextWindow::ShowSpace(bool show_space) {
-  if (show_space != view_options_.show_space) {
+  if (view_options_.show_space != show_space) {
     view_options_.show_space = show_space;
+    text_area_->Refresh();
+  }
+}
+
+void TextWindow::ShowHScrollbar(bool show_hscrollbar) {
+  if (view_options_.show_hscrollbar != show_hscrollbar) {
+    view_options_.show_hscrollbar = show_hscrollbar;
+    DoShowHScrollbar();
+  }
+}
+
+void TextWindow::SetRulers(const std::vector<int>& rulers) {
+  if (view_options_.rulers != rulers) {
+    view_options_.rulers = rulers;
     text_area_->Refresh();
   }
 }
@@ -923,6 +910,33 @@ void TextWindow::ClearSelection(bool refresh) {
 
 //------------------------------------------------------------------------------
 
+void TextWindow::SetFindResult(const TextRange& find_result) {
+  if (find_result_ == find_result) {
+    return;
+  }
+
+  Coord old_find_ln = kInvCoord;
+  if (!find_result_.IsEmpty()) {
+    old_find_ln = find_result_.line_first();
+  }
+
+  find_result_ = find_result;
+
+  Coord find_ln = kInvCoord;
+  if (!find_result_.IsEmpty()) {
+    find_ln = find_result_.line_first();
+  }
+
+  if (old_find_ln != find_ln && old_find_ln != kInvCoord) {
+    RefreshTextByLine(old_find_ln);
+  }
+  if (find_ln != kInvCoord) {
+    RefreshTextByLine(find_ln);
+  }
+}
+
+//------------------------------------------------------------------------------
+
 void TextWindow::Init() {
   allow_text_change_ = true;
 
@@ -957,12 +971,6 @@ void TextWindow::Init() {
 }
 
 //------------------------------------------------------------------------------
-
-FtPlugin* TextWindow::ft_plugin() const {
-  return buffer_->ft_plugin();
-}
-
-//------------------------------------------------------------------------------
 // Wrap
 
 WrapHelper* TextWindow::wrap_helper() const {
@@ -985,6 +993,10 @@ void TextWindow::DoWrap() {
       wxDELETE(wrap_helper_);
     }
   }
+  
+  if (wrap_changed) {
+    UpdateTextSize();
+  }
 
   // Virtual height might change due to the wrap change.
   // The wrap-on virtual width is also different from the wrap-off one.
@@ -992,6 +1004,7 @@ void TextWindow::DoWrap() {
 
   if (wrap_changed) {
     text_area_->Refresh();
+
     if (wrap_delta != 0) {
       line_nr_area_->Refresh();
     }
@@ -1002,6 +1015,20 @@ void TextWindow::DoWrap() {
 
   // TODO
   //ScrollToPoint(caret_point_);
+}
+
+void TextWindow::DoShowHScrollbar() {
+  if (view_options_.show_hscrollbar) {
+    ShowScrollbars(wxSHOW_SB_DEFAULT, wxSHOW_SB_ALWAYS);
+  } else {
+    ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_ALWAYS);
+  }
+}
+
+void TextWindow::DoShowNumber() {
+  UpdateLineNrWidth();
+  LayoutAreas();
+  line_nr_area_->Refresh();
 }
 
 //------------------------------------------------------------------------------
@@ -1106,6 +1133,7 @@ void TextWindow::HandleLineDeleted(const LineChangeData& data) {
   }
 }
 
+// TODO: tab stop changes need update virtual size, caret pos, etc.
 void TextWindow::HandleFileTypeChange() {
   // Update cached text options.
   tab_stop_ = buffer_->text_options().tab_stop;
@@ -1124,9 +1152,7 @@ void TextWindow::HandleFileTypeChange() {
   }
 
   if (view_options_.show_number != old_view_options.show_number) {
-    UpdateLineNrWidth();
-    LayoutAreas();
-    line_nr_area_->Refresh();
+    DoShowNumber();
   }
 
   if (view_options_.show_space != old_view_options.show_space ||
@@ -1135,11 +1161,7 @@ void TextWindow::HandleFileTypeChange() {
   }
 
   if (view_options_.show_hscrollbar != old_view_options.show_hscrollbar) {
-    wxScrollbarVisibility hsv = wxSHOW_SB_DEFAULT;
-    if (!view_options_.show_hscrollbar) {
-      hsv = wxSHOW_SB_NEVER;
-    }
-    ShowScrollbars(hsv, wxSHOW_SB_ALWAYS);
+    DoShowHScrollbar();
   }
 
   Thaw();
@@ -1150,8 +1172,17 @@ void TextWindow::HandleFileTypeChange() {
 void TextWindow::HandleTabOptionsChange() {
   if (tab_stop_ != buffer_->text_options().tab_stop) {
     tab_stop_ = buffer_->text_options().tab_stop;
-    // TODO: Handle wrap, caret position, etc.
+
+    if (view_options_.wrap) {
+      DoWrap();
+    } else {
+      UpdateTextSize();
+      UpdateVirtualSize();
+    }
+
     text_area_->Refresh();
+
+    UpdateCaretPosition();
   }
 
   expand_tab_ = buffer_->text_options().expand_tab;
@@ -1282,11 +1313,16 @@ void TextWindow::OnTextSize(wxSizeEvent& evt) {
       int wrap_delta = 0;
       bool wrap_changed = wrap_helper()->Wrap(&wrap_delta);
 
+      if (wrap_changed) {
+        UpdateTextSize();
+      }
+
       UpdateVirtualSize();
 
       if (wrap_changed) {
         // The text has to be repainted since the wrap changes.
         text_area_->Refresh();
+
         if (wrap_delta != 0) {
           line_nr_area_->Refresh();
         }
@@ -1361,7 +1397,7 @@ void TextWindow::HandleTextPaint(Renderer& renderer) {
 
   Coord ln = line_range.first();
   for (; ln <= line_range.last() && ln <= line_count; ++ln) {
-    DrawTextLine(ln, renderer, x, y2);
+    DrawTextLine(renderer, ln, x, y2);
   }
 
   // Blank lines.
@@ -1441,7 +1477,7 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
 
     Coord ln = line_range.first();
     for (; ln <= line_range.last() && ln <= line_count; ++ln) {
-      DrawWrappedTextLine(ln, renderer, x, y2);
+      DrawWrappedTextLine(renderer, ln, x, y2);
     }
 
     // Rulers.
@@ -1488,181 +1524,214 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
   }
 }
 
-void TextWindow::DrawTextLine(Coord ln, Renderer& renderer, int x, int& y) {
+void TextWindow::DrawTextLine(Renderer& renderer, Coord ln, int x, int& y) {
   assert(!view_options_.wrap);
-
-  TextLine* line = buffer_->Line(ln);
 
   // If in select range, draw the select background.
   if (selection_.HasLine(ln)) {
-    CharRange line_selection = selection_.GetCharRange(ln);
-
-    const wxColour& bg = style_->Get(Style::kVisual)->bg();
-
-    if (line_selection.IsEmpty()) {
-      if (selection_.rect) {
-        renderer.SetStyle(bg, bg, true);
-
-        // Draw a vertical line for empty rect selection.
-        int x = GetLineWidth(ln, 0, line_selection.begin());
-        renderer.DrawLine(x, y, x, y + line_height_);
-
-        renderer.RestoreStyle();
-      }
-    } else {
-      renderer.SetStyle(bg, bg, true);
-
-      int x_begin = GetLineWidth(line, 0, line_selection.begin());
-      int x_end = GetLineWidth(line, 0, line_selection.end());
-
-      int w = x_end - x_begin;
-      if (ln != selection_.end().y && line_selection.end() == kInvCoord) {
-        w += char_size_.x;  // Extra char width for EOL.
-      }
-
-      renderer.DrawRectangle(x_begin, y, w, line_height_);
-
-      renderer.RestoreStyle();
-    }
+    DrawTextLineSelection(renderer, ln, x, y);
   }
 
+  TextLine* line = buffer_->Line(ln);
+
   int line_text_y = y + line_padding_;
-  DrawTextLine(renderer, line, x, line_text_y);
+
+  // Highlight the find matching result.
+  if (find_result_.HasLine(ln)) {
+    CharRange part2 = find_result_.GetCharRange(ln);
+    CharRange part1(0, part2.begin());
+    CharRange part3(part2.end(), buffer_->LineLength(ln));
+
+    // For calculating spaces occupied by a tab.
+    Coord chars = 0;
+
+    DrawTextLinePart(renderer, line, part1, x, line_text_y, chars);
+    DrawTextLineMatchingPart(renderer, line, part2, x, line_text_y, chars);
+    DrawTextLinePart(renderer, line, part3, x, line_text_y, chars);
+  } else {
+    DrawTextLine(renderer, line, x, line_text_y);
+  }
 
   y += line_height_;
 }
 
-void TextWindow::DrawWrappedTextLine(Coord ln, Renderer& renderer, int x, int& y) {
+void TextWindow::DrawTextLineSelection(Renderer& renderer, Coord ln, int x, int y) {
+  assert(!view_options_.wrap);
+  assert(selection_.HasLine(ln));
+
+  TextLine* line = buffer_->Line(ln);
+  CharRange line_selection = selection_.GetCharRange(ln);
+
+  const wxColour& bg = style_->Get(Style::kVisual)->bg();
+
+  if (line_selection.IsEmpty()) {
+    if (selection_.rect) {
+      renderer.SetStyle(bg, bg, true);
+
+      // Draw a vertical line for empty rect selection.
+      int _x = GetLineWidth(line, 0, line_selection.begin());
+      renderer.DrawLine(_x, y, _x, y + line_height_);
+
+      renderer.RestoreStyle();
+    }
+  } else {
+    renderer.SetStyle(bg, bg, true);
+
+    int _x = GetLineWidth(line, 0, line_selection.begin());
+
+    int _w = GetLineWidth(line, line_selection.begin(), line_selection.end());
+    if (ln != selection_.end().y && line_selection.end() == kInvCoord) {
+      _w += char_size_.x;  // Extra char width for EOL.
+    }
+
+    renderer.DrawRectangle(_x, y, _w, line_height_);
+
+    renderer.RestoreStyle();
+  }
+}
+
+void TextWindow::DrawWrappedTextLine(Renderer& renderer, Coord ln, int x, int& y) {
   assert(view_options_.wrap);
+
+  // If in select range, draw the select background.
+  if (selection_.HasLine(ln)) {
+    DrawWrappedTextLineSelection(renderer, ln, x, y);
+  }
+
+  if (ft_plugin()->IsLexAvailable()) {
+    DrawWrappedTextLineWithLex(renderer, ln, x, y);
+  } else {
+    DrawWrappedTextLineWithoutLex(renderer, ln, x, y);
+  }
+}
+
+void TextWindow::DrawWrappedTextLineSelection(Renderer& renderer, Coord ln, int x, int y) {
+  assert(view_options_.wrap);
+  assert(selection_.HasLine(ln));
 
   const TextLine* line = buffer_->Line(ln);
   CharRange line_selection;
 
   std::vector<CharRange> sub_ranges = wrap_helper()->SubRanges(ln);
 
-  // If in select range, draw the select background.
-  if (selection_.HasLine(ln)) {
-    const wxColour& visual_bg = style_->Get(Style::kVisual)->bg();
-    renderer.SetStyle(visual_bg, visual_bg, true);
+  const wxColour& bg = style_->Get(Style::kVisual)->bg();
+  renderer.SetStyle(bg, bg, true);
 
-    line_selection = selection_.GetCharRange(ln);
-    int _y = y;
+  line_selection = selection_.GetCharRange(ln);
+  int _y = y;
 
-    std::vector<CharRange>::iterator range_it = sub_ranges.begin();
-    for (; range_it != sub_ranges.end(); ++range_it) {
-      CharRange& sub_range = *range_it;
+  std::vector<CharRange>::iterator range_it = sub_ranges.begin();
+  for (; range_it != sub_ranges.end(); ++range_it) {
+    CharRange& sub_range = *range_it;
 
-      CharRange sub_select_char_range = sub_range.Intersect(line_selection);
-      if (sub_select_char_range.IsEmpty()) {
-        _y += line_height_;
-        continue;  // No intersection with the select range.
-      }
-
-      int x1 = GetLineWidth(line, sub_range.begin(), sub_select_char_range.begin());
-      int x2 = GetLineWidth(line, sub_range.begin(), sub_select_char_range.end());
-      int w = x2 - x1;
-      if (ln != selection_.end().y && sub_select_char_range.end() == kInvCoord) {
-        w += char_size_.x;  // Extra char width for EOL.
-      }
-
-      renderer.DrawRectangle(x1, _y, w, line_height_);
-
+    CharRange sub_select_char_range = sub_range.Intersect(line_selection);
+    if (sub_select_char_range.IsEmpty()) {
       _y += line_height_;
+      continue;  // No intersection with the select range.
     }
 
-    renderer.RestoreStyle();
+    int x1 = GetLineWidth(line, sub_range.begin(), sub_select_char_range.begin());
+    int x2 = GetLineWidth(line, sub_range.begin(), sub_select_char_range.end());
+    int w = x2 - x1;
+    if (ln != selection_.end().y && sub_select_char_range.end() == kInvCoord) {
+      w += char_size_.x;  // Extra char width for EOL.
+    }
+
+    renderer.DrawRectangle(x1, _y, w, line_height_);
+
+    _y += line_height_;
   }
 
-  const std::wstring& line_data = line->data();
+  renderer.RestoreStyle();
+}
 
-  if (ft_plugin()->IsLexAvailable()) {
-    // For calculating spaces occupied by a tab.
-    Coord chars = 0;
+void TextWindow::DrawWrappedTextLineWithLex(Renderer& renderer, Coord ln, int x, int& y) {
+  assert(view_options_.wrap);
+  assert(ft_plugin()->IsLexAvailable());
 
-    std::vector<CharRange>::iterator range_it = sub_ranges.begin();
-    for (; range_it != sub_ranges.end(); ++range_it) {
-      CharRange& sub_range = *range_it;
+  const TextLine* line = buffer_->Line(ln);
 
-      if (sub_range.end() == kInvCoord) {  // Last sub range
-        sub_range.set_end(line_data.size());
-      }
+  // For calculating spaces occupied by a tab.
+  Coord chars = 0;
 
-      int _x = x;
-      int _y = y + line_padding_;
+  CharRange fr_char_range;
+  if (find_result_.HasLine(ln)) {
+    fr_char_range = find_result_.GetCharRange(ln);
+  }
 
-      std::list<const LexElem*> lex_elems = line->lex_elems(sub_range);
+  std::vector<CharRange> sub_ranges = wrap_helper()->SubRanges(ln);
 
-      if (lex_elems.empty()) {
-        // Without lex elements.
-
-        // Get the range, [i, j), of the line piece to draw.
-        Coord i = sub_range.begin();
-        Coord j = sub_range.end();
-        DrawTextLinePiece(renderer, line_data, i, j, Lex(), _x, _y, chars);
-
-        y += line_height_;
-
-        continue;
-      }
-
-      // With lex elements.
-
-      Coord i = sub_range.begin();
-
-      std::list<const LexElem*>::iterator le_it = lex_elems.begin();
-      for (; le_it != lex_elems.end(); ++le_it) {
-        const LexElem* le = *le_it;
-
-        // Draw the line piece before the lex element.
-        if (i < le->off) {
-          Coord j = le->off;
-          DrawTextLinePiece(renderer, line_data, i, j, Lex(), _x, _y, chars);
-          i = j;
-        }
-
-        // Draw the line piece of the lex element.
-        Coord j = le->off + le->len;
-        if (j > sub_range.end()) {
-          j = sub_range.end();
-        }
-
-        DrawTextLinePiece(renderer, line_data, i, j, le->lex, _x, _y, chars);
-        i = j;
-      }
-
-      // Draw the line piece after the last lex element.
-      if (i < sub_range.end()) {
-        // Line piece (spaces, operators, plain-text, etc.) with no lex element.
-        Coord j = sub_range.end();
-        DrawTextLinePiece(renderer, line_data, i, j, Lex(), _x, _y, chars);
-      }
-
-      y += line_height_;
+  for (CharRange& sub_range : sub_ranges) {
+    if (sub_range.end() == kInvCoord) {  // Last sub range.
+      sub_range.set_end(line->Length());
     }
-  } else {
-    // Lex unavailable.
 
-    // For calculating spaces occupied by a tab.
-    Coord chars = 0;
+    int _x = x;
+    int text_y = y + line_padding_;
 
-    std::vector<CharRange>::iterator range_it = sub_ranges.begin();
-    for (; range_it != sub_ranges.end(); ++range_it) {
-      CharRange& sub_range = *range_it;
+    if (fr_char_range.IsEmpty()) {
+      DrawTextLinePart(renderer, line, sub_range, _x, text_y, chars);
+    } else {
+      // Highlight the find matching result.
+      CharRange part2 = fr_char_range.Intersect(sub_range);
+      if (part2.IsEmpty()) {
+        DrawTextLinePart(renderer, line, sub_range, _x, text_y, chars);
+      } else {
+        CharRange part1(sub_range.begin(), part2.begin());
+        CharRange part3(part2.end(), sub_range.end());
 
-      if (sub_range.end() == kInvCoord) {  // Last sub range
-        sub_range.set_end(line_data.size());
+        DrawTextLinePart(renderer, line, part1, _x, text_y, chars);
+        DrawTextLineMatchingPart(renderer, line, part2, _x, text_y, chars);
+        DrawTextLinePart(renderer, line, part3, _x, text_y, chars);
       }
-
-      int _x = x;
-      int _y = y + line_padding_;
-
-      // Get the range, [i, j), of the line piece to draw.
-      Coord i = sub_range.begin();
-      Coord j = sub_range.end();
-      DrawTextLinePiece(renderer, line_data, i, j, Lex(), _x, _y, chars);
-
-      y += line_height_;
     }
+
+    y += line_height_;
+  }
+}
+
+void TextWindow::DrawWrappedTextLineWithoutLex(Renderer& renderer, Coord ln, int x, int& y) {
+  assert(view_options_.wrap);
+  assert(!ft_plugin()->IsLexAvailable());
+
+  const TextLine* line = buffer_->Line(ln);
+
+  // For calculating spaces occupied by a tab.
+  Coord chars = 0;
+
+  CharRange fr_char_range;
+  if (find_result_.HasLine(ln)) {
+    fr_char_range = find_result_.GetCharRange(ln);
+  }
+
+  std::vector<CharRange> sub_ranges = wrap_helper()->SubRanges(ln);
+
+  for (CharRange& sub_range : sub_ranges) {
+    if (sub_range.end() == kInvCoord) {  // Last sub range
+      sub_range.set_end(line->Length());
+    }
+
+    int _x = x;
+    int text_y = y + line_padding_;
+
+    if (fr_char_range.IsEmpty()) {
+      DrawTextLinePart(renderer, line, sub_range, _x, text_y, chars);
+    } else {
+      // Highlight the find matching result.
+      CharRange part2 = fr_char_range.Intersect(sub_range);
+      if (part2.IsEmpty()) {
+        DrawTextLinePiece(renderer, line->data(), sub_range.begin(), sub_range.end(), Lex(), _x, text_y, chars);
+      } else {
+        CharRange part1(sub_range.begin(), part2.begin());
+        CharRange part3(part2.end(), sub_range.end());
+
+        DrawTextLinePiece(renderer, line->data(), part1.begin(), part1.end(), Lex(), _x, text_y, chars);
+        DrawTextLineMatchingPart(renderer, line, part2, _x, text_y, chars);
+        DrawTextLinePiece(renderer, line->data(), part3.begin(), part3.end(), Lex(), _x, text_y, chars);
+      }
+    }
+   
+    y += line_height_;
   }
 }
 
@@ -1687,10 +1756,6 @@ void TextWindow::DrawTextLine(Renderer& renderer, const TextLine* line, int x, i
   int _x = x;
   int _y = y;
 
-#if JIL_TEST_UNDERLINE_LEX_ELEMENT
-  renderer.SetPen(*wxRED_PEN);
-#endif  // JIL_TEST_UNDERLINE_LEX_ELEMENT
-
   const std::list<LexElem*>& lex_elems = line->lex_elems();
 
   Coord i = 0;
@@ -1705,26 +1770,12 @@ void TextWindow::DrawTextLine(Renderer& renderer, const TextLine* line, int x, i
       DrawTextLinePiece(renderer, line_data, i, le->off, Lex(), _x, _y, chars);
     }
 
-#if JIL_TEST_UNDERLINE_LEX_ELEMENT
-    int ul_x1 = _x + 3;
-    int ul_y = _y + char_size_.y;
-#endif  // JIL_TEST_UNDERLINE_LEX_ELEMENT
-
     i = le->off;
     j = i + le->len;
     DrawTextLinePiece(renderer, line_data, i, j, le->lex, _x, _y, chars);
 
-#if JIL_TEST_UNDERLINE_LEX_ELEMENT
-    int ul_x2 = _x - 3;
-    renderer.DrawLine(ul_x1, ul_y, ul_x2, ul_y);
-#endif  // JIL_TEST_UNDERLINE_LEX_ELEMENT
-
     i = j;
   }
-
-#if JIL_TEST_UNDERLINE_LEX_ELEMENT
-  renderer.RestorePen();
-#endif  // JIL_TEST_UNDERLINE_LEX_ELEMENT
 
   // Draw line piece after the last lex element.
   j = line->Length();
@@ -1734,18 +1785,91 @@ void TextWindow::DrawTextLine(Renderer& renderer, const TextLine* line, int x, i
   }
 }
 
+void TextWindow::DrawTextLinePart(Renderer& renderer,
+                                  const TextLine* line,
+                                  const CharRange& part,
+                                  int& x,
+                                  int y,
+                                  Coord& chars) {
+  if (part.IsEmpty()) {
+    return;
+  }
+
+  const std::wstring& line_data = line->data();
+
+  Coord i = part.begin();
+  Coord j = i;
+
+  std::list<const LexElem*> lex_elems = line->lex_elems(part);
+
+  for (const LexElem* le : lex_elems) {
+    if (i < le->off) {
+      // Line piece (spaces, operators, plain-text, etc.) with no lex.
+      DrawTextLinePiece(renderer, line_data, i, le->off, Lex(), x, y, chars);
+    }
+
+    i = le->off;
+    j = i + le->len;
+
+    if (i < part.begin()) {
+      i = part.begin();
+    }
+    if (j > part.end()) {
+      j = part.end();
+    }
+
+    DrawTextLinePiece(renderer, line_data, i, j, le->lex, x, y, chars);
+    i = j;
+  }
+
+  // Draw line piece after the last lex element.
+  j = part.end();
+  if (i < j) {
+    DrawTextLinePiece(renderer, line_data, i, j, Lex(), x, y, chars);
+  }
+}
+
+void TextWindow::DrawTextLineMatchingPart(Renderer& renderer,
+                                          const TextLine* line,
+                                          const CharRange& part,
+                                          int& x,
+                                          int y,
+                                          Coord& chars) {
+  if (part.IsEmpty()) {
+    return;
+  }
+
+  const std::wstring& line_data = line->data();
+
+  Coord i = part.begin();
+  Coord j = part.end();
+
+  const StyleValue* style_value = style_->Get(Style::kMatching);
+
+  if (style_value->bg().IsOk()) {
+    int x1 = x;
+    int w = GetLineWidth(line, i, j);
+    renderer.SetStyle(style_value->bg(), style_value->bg(), true);
+    renderer.DrawRectangle(x1, y - line_padding_, w, line_height_);
+    renderer.RestoreStyle();
+  }
+
+  DrawTextLinePiece(renderer, line_data, i, j, style_value, false, x, y, chars);
+}
+
 void TextWindow::DrawTextLinePiece(Renderer& renderer,
                                    const std::wstring& line_data,
                                    Coord i,
                                    Coord j,
-                                   Lex lex,
+                                   const StyleValue* style_value,
+                                   bool has_lex,
                                    int& x,
                                    int y,
                                    Coord& chars) {
-  wxPen space_pen(style_->Get(Style::kSpace)->fg());
+  assert(style_value != NULL);
+  SetRendererStyle(renderer, style_value);
 
-  const StyleValue* lex_style_value = style_->Get(lex);
-  SetRendererStyle(renderer, lex_style_value);
+  wxPen space_pen(style_->Get(Style::kSpace)->fg());
 
   Coord p = i;
 
@@ -1795,19 +1919,19 @@ void TextWindow::DrawTextLinePiece(Renderer& renderer,
         ++delimiters;
       }
 
-      if (lex.major() == kLexNone) {
+      if (!has_lex) {
         SetRendererStyle(renderer, style_->Get(Style::kDelimiter));
       } else {
-        SetRendererStyle(renderer, lex_style_value);
+        SetRendererStyle(renderer, style_value);
       }
 
       int piece_w = 0;
       renderer.DrawText(line_data, i, delimiters, x, y, &piece_w);
       x += piece_w;
 
-      if (lex.major() == kLexNone) {
+      if (!has_lex) {
         // Restore style.
-        SetRendererStyle(renderer, lex_style_value);
+        SetRendererStyle(renderer, style_value);
       }
 
       chars += delimiters;
@@ -1820,6 +1944,19 @@ void TextWindow::DrawTextLinePiece(Renderer& renderer,
   if (p < j) {
     DrawTextWord(renderer, line_data, p, j - p, x, y, chars);
   }
+}
+
+void TextWindow::DrawTextLinePiece(Renderer& renderer,
+                                   const std::wstring& line_data,
+                                   Coord i,
+                                   Coord j,
+                                   Lex lex,
+                                   int& x,
+                                   int y,
+                                   Coord& chars) {
+  const StyleValue* style_value = style_->Get(lex);
+  bool has_lex = !lex.IsEmpty();
+  DrawTextLinePiece(renderer, line_data, i, j, style_value, has_lex, x, y, chars);
 }
 
 void TextWindow::DrawTextWord(Renderer& renderer,
@@ -2704,6 +2841,21 @@ bool TextWindow::HandleTextChange() {
   return resized;
 }
 
+void TextWindow::UpdateLineHeight() {
+  line_height_ = line_padding_ + char_size_.y + line_padding_;
+}
+
+void TextWindow::HandleLineHeightChange() {
+  SetScrollbars(char_size_.x, line_height_, 1, 1);
+
+  UpdateTextSize();
+  UpdateVirtualSize();
+
+  // Update caret size and position.
+  text_area_->GetCaret()->SetSize(kCaretWidth, line_height_);
+  UpdateCaretPosition();
+}
+
 void TextWindow::UpdateTextSize() {
   if (!view_options_.wrap) {
     text_size_.x = char_size_.x * buffer_->GetMaxLineLength();
@@ -2895,12 +3047,12 @@ int TextWindow::GetLineWidth(const TextLine* line, Coord off1, Coord off2) const
     off2 = line->Length();
   }
 
-  // TODO: Avoid copy
-  std::wstring line_data = line->data().substr(off1, off2 - off1);
-  if (!line_data.empty()) {
-    TabbedLineFast(tab_stop_, &line_data);
-    line_width += text_extent_->GetWidth(line_data);
+  Coord count = off2 - off1;
+  if (count == 0) {
+    return 0;
   }
+
+  line_width += text_extent_->GetLineWidth(tab_stop_, line, off1, count);
 
   return line_width;
 }
@@ -2910,7 +3062,7 @@ int TextWindow::GetLineWidth(Coord ln, Coord off1, Coord off2) const {
 }
 
 Coord TextWindow::GetCharIndex(Coord ln, int client_x, bool vspace) const {
-  return text_extent_->IndexChar(tab_stop_, buffer_->LineData(ln), client_x, vspace);
+  return text_extent_->IndexChar(tab_stop_, buffer_->Line(ln), 0, client_x, vspace);
 }
 
 Coord TextWindow::GetWrappedCharIndex(Coord ln, Coord wrapped_sub_ln, int client_x, bool vspace) const {
@@ -2920,12 +3072,9 @@ Coord TextWindow::GetWrappedCharIndex(Coord ln, Coord wrapped_sub_ln, int client
     return GetCharIndex(ln, client_x, vspace);
   } else {  // >= 2
     const WrapInfo& wrap_info = wrap_helper()->GetWrapInfo(ln);
-    Coord offset = wrap_info.offsets()[wrapped_sub_ln - 2];
-
-    // TODO: Avoid copy.
-    std::wstring line_data = buffer_->LineData(ln).substr(offset);
-    Coord i = text_extent_->IndexChar(tab_stop_, line_data, client_x, vspace);
-    return offset + i;
+    Coord off = wrap_info.offsets()[wrapped_sub_ln - 2];
+    Coord i = text_extent_->IndexChar(tab_stop_, buffer_->Line(ln), off, client_x, vspace);
+    return off + i;
   }
 }
 

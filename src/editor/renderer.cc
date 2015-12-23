@@ -147,8 +147,8 @@ void Renderer::DrawLine(int x1, int y1, int x2, int y2) {
   dc_->DrawLine(x1, y1, x2, y2);
 }
 
-void Renderer::DrawRectangle(int x, int y, int h, int w) {
-  dc_->DrawRectangle(x, y, h, w);
+void Renderer::DrawRectangle(int x, int y, int w, int h) {
+  dc_->DrawRectangle(x, y, w, h);
 }
 
 void Renderer::DrawRectangle(const wxRect& rect) {

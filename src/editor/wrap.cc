@@ -6,50 +6,48 @@
 namespace jil {
 namespace editor {
 
-namespace {
-
-size_t __WrapLine(TextExtent* text_extent,
-                  const std::wstring& line,
-                  size_t off,
-                  size_t begin,
-                  size_t end,
-                  Coord max_width) {
+static size_t __WrapLine(int tab_stop,
+                         TextExtent* text_extent,
+                         const TextLine* line,
+                         size_t off,
+                         size_t begin,
+                         size_t end,
+                         Coord max_width) {
   if (begin >= end) {
     return std::wstring::npos;
   }
 
   int m = begin + (end - begin) / 2;
-  int width = text_extent->GetWidth(line.substr(off, m));
+  int width = text_extent->GetLineWidth(tab_stop, line, off, m);
 
   if (width == max_width) {
     return m + off;
   }
   if (width < max_width) {
-    int m_char_width = text_extent->GetWidth(std::wstring(1, line[m]));
-    if (max_width - width < m_char_width) {
+    if (max_width - width < text_extent->char_size().x) {
       // The space left not enough for an extra char.
       return m + off;
     } else {
-    return __WrapLine(text_extent, line, off, m + 1, end, max_width);
+      return __WrapLine(tab_stop, text_extent, line, off, m + 1, end, max_width);
     }
   } else {
-    return __WrapLine(text_extent, line, off, begin, m, max_width);
+    return __WrapLine(tab_stop, text_extent, line, off, begin, m, max_width);
   }
 }
 
-} // namespace
-
-WrapOffsets WrapLineByChar(const std::wstring& line,
+WrapOffsets WrapLineByChar(int tab_stop,
+                           const TextLine* line,
                            TextExtent* text_extent,
                            Coord max_width) {
   WrapOffsets offsets;
   size_t wrap = 0;
   while (true) {
-    wrap = __WrapLine(text_extent,
+    wrap = __WrapLine(tab_stop,
+                      text_extent,
                       line,
                       wrap,
                       0,
-                      line.length() - wrap,
+                      line->Length() - wrap,
                       max_width);
     if (wrap == std::wstring::npos) {
       break;
@@ -59,11 +57,12 @@ WrapOffsets WrapLineByChar(const std::wstring& line,
   return offsets;
 }
 
-bool WrapInfo::Wrap(const std::wstring& line,
+bool WrapInfo::Wrap(int tab_stop,
+                    const TextLine* line,
                     TextExtent* text_extent,
                     Coord max_width,
                     int* delta) {
-  WrapOffsets new_offsets = WrapLineByChar(line, text_extent, max_width);
+  WrapOffsets new_offsets = WrapLineByChar(tab_stop, line, text_extent, max_width);
 
   *delta = static_cast<int>(new_offsets.size()) -
            static_cast<int>(offsets_.size());
@@ -133,13 +132,15 @@ WrapHelper::~WrapHelper() {
 int WrapHelper::AddLineWrap(Coord ln) {
   assert(ln >= 1 && ln <= buffer_->LineCount());
 
-  const std::wstring& line_data = buffer_->LineData(ln);
-
   WrapInfo wrap_info;
 
   int delta = 0;
   if (client_width_ > 0) {
-    wrap_info.Wrap(line_data, text_extent_, client_width_, &delta);
+    wrap_info.Wrap(buffer_->tab_stop(),
+                   buffer_->Line(ln),
+                   text_extent_,
+                   client_width_,
+                   &delta);
   }
 
   WrapInfos::iterator insert_pos(wrap_infos_.begin());
@@ -169,9 +170,12 @@ int WrapHelper::UpdateLineWrap(Coord ln) {
     return 0;
   }
 
-  const std::wstring& line_data = buffer_->LineData(ln);
   int delta = 0;
-  wrap_infos_[ln - 1].Wrap(line_data, text_extent_, client_width_, &delta);
+  wrap_infos_[ln - 1].Wrap(buffer_->tab_stop(),
+                           buffer_->Line(ln),
+                           text_extent_,
+                           client_width_,
+                           &delta);
 
   wrapped_line_count_ += delta;
 
@@ -186,20 +190,21 @@ bool WrapHelper::Wrap(int* wrap_delta) {
     return wrap_changed;
   }
 
-  const Coord line_count = buffer_->LineCount();
-  assert(line_count == CoordCast(wrap_infos_.size()));
-
   wrapped_line_count_ = 0;
 
+  Coord line_count = buffer_->LineCount();
+  assert(line_count == CoordCast(wrap_infos_.size()));
+
   for (Coord ln = 1; ln <= line_count; ++ln) {
-    int line_wrap_delta = 0;
+    int delta = 0;
     WrapInfo& wrap_info = wrap_infos_[ln - 1];
-    if (wrap_info.Wrap(buffer_->LineData(ln),
+    if (wrap_info.Wrap(buffer_->tab_stop(),
+                       buffer_->Line(ln),
                        text_extent_,
                        client_width_,
-                       &line_wrap_delta)) {
+                       &delta)) {
       wrap_changed = true;
-      *wrap_delta += line_wrap_delta;
+      *wrap_delta += delta;
     }
 
     wrapped_line_count_ += wrap_info.WrapCount() + 1;

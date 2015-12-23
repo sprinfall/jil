@@ -48,5 +48,16 @@ bool OptionValue::Parse(const wxString& str) {
   return false;
 }
 
+bool operator==(const ViewOptions& lhs, const ViewOptions& rhs) {
+  if (lhs.wrap == rhs.wrap &&
+      lhs.show_number == rhs.show_number &&
+      lhs.show_space == rhs.show_space &&
+      lhs.show_hscrollbar == rhs.show_hscrollbar &&
+      lhs.rulers == rhs.rulers) {
+    return true;
+  }
+  return false;
+}
+
 }  // namespace editor
 }  // namespace jil

@@ -33,7 +33,7 @@ wxSize BitmapToggleButton::DoGetBestSize() const {
   return wxDefaultSize;
 }
 
-ButtonStyle::State BitmapToggleButton::GetState() {
+ButtonStyle::State BitmapToggleButton::GetState() const {
   if (!IsEnabled()) {
     return ButtonStyle::DISABLED;
   }

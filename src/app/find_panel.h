@@ -4,12 +4,17 @@
 
 // Find & replace panel.
 
+#include "wx/control.h"
 #include "wx/panel.h"
 #include "ui/button_style.h"
+#include "ui/combo_box.h"
 #include "editor/theme.h"
 #include "app/defs.h"
 
 class wxComboBox;
+class wxGraphicsContext;
+class wxStaticText;
+class wxTextCtrl;
 
 namespace jil {
 
@@ -105,11 +110,12 @@ public:
 
   // Detailed event types of kFindPanelEvent.
   enum EventType {
-    kFindTextEvent = 1,
+    kFindStrEvent = 1,
     kFindEvent,
-    kReplaceEvent,
     kFindAllEvent,
+    kReplaceEvent,
     kReplaceAllEvent,
+    kLayoutEvent,  // TODO
   };
 
   enum ColorId {
@@ -161,6 +167,12 @@ public:
     return flags_;
   }
 
+  bool show_location() const {
+    return show_location_;
+  }
+
+  void SetLocation(FindLocation location);
+
   void UpdateLayout();
 
   void SetFindString(const wxString& find_string);
@@ -168,9 +180,13 @@ public:
 protected:
   void OnPaint(wxPaintEvent& evt);
 
-  void OnRegexToggle(wxCommandEvent& evt);
-  void OnCaseToggle(wxCommandEvent& evt);
-  void OnWholeWordToggle(wxCommandEvent& evt);
+  void OnLocationComboBox(wxCommandEvent& evt);
+  void OnLocationMenu(wxCommandEvent& evt);
+
+  void OnLocationToggle(wxCommandEvent& evt);
+  void OnUseRegexToggle(wxCommandEvent& evt);
+  void OnCaseSensitiveToggle(wxCommandEvent& evt);
+  void OnMatchWordToggle(wxCommandEvent& evt);
 
   void OnFind(wxCommandEvent& evt);
   void OnFindAll(wxCommandEvent& evt);
@@ -193,6 +209,14 @@ private:
   void LayoutAsFind();
   void LayoutAsReplace();
 
+  void CommonLayout(bool with_location, bool with_replace);
+
+  void AddToggleButtons(wxSizer* hsizer);
+
+  void ShowReplace(bool show);
+  void ShowLocation(bool show);
+
+  void InitComboStyle();
   void InitButtonStyle();
 
   ui::BitmapToggleButton* NewToggleButton(int id, const wxString& bitmap);
@@ -205,6 +229,8 @@ private:
 
  private:
    editor::SharedTheme theme_;
+
+   ui::SharedComboStyle combo_style_;
    ui::SharedButtonStyle button_style_;
 
   Session* session_;
@@ -214,8 +240,12 @@ private:
   // See enum FindFlag.
   int flags_;
 
-  //FindLocation location_;
+  FindLocation location_;
+  bool show_location_;
+  ui::ComboBox* location_combobox_;
+  wxTextCtrl* folders_text_ctrl_;
 
+  ui::BitmapToggleButton* location_toggle_button_;
   ui::BitmapToggleButton* use_regex_toggle_button_;
   ui::BitmapToggleButton* case_sensitive_toggle_button_;
   ui::BitmapToggleButton* match_word_toggle_button_;

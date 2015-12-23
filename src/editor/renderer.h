@@ -48,7 +48,7 @@ public:
 
   void DrawLine(int x1, int y1, int x2, int y2);
 
-  void DrawRectangle(int x, int y, int h, int w);
+  void DrawRectangle(int x, int y, int w, int h);
   void DrawRectangle(const wxRect& rect);
   void DrawRoundedRectangle(const wxRect& rect, double radius);
 

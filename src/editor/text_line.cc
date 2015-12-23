@@ -17,15 +17,18 @@ namespace editor {
 //------------------------------------------------------------------------------
 
 TextLine::TextLine(size_t id, const wchar_t* data, size_t len)
-    : id_(id), data_(data, len) {
+    : id_(id), data_(data, len), tabs_(0) {
+  tabs_ = CountTabs(data_);
 }
 
 TextLine::TextLine(size_t id, const wchar_t* data)
-    : id_(id), data_(data) {
+    : id_(id), data_(data), tabs_(0) {
+  tabs_ = CountTabs(data_);
 }
 
 TextLine::TextLine(size_t id, const std::wstring& data)
-    : id_(id), data_(data) {
+    : id_(id), data_(data), tabs_(0) {
+  tabs_ = CountTabs(data_);
 }
 
 TextLine::~TextLine() {
@@ -382,17 +385,28 @@ IndentProp TextLine::GetIndentProp() const {
 
 void TextLine::InsertChar(Coord off, wchar_t c) {
   data_.insert(off, 1, c);
+
+  if (c == kTabChar) {
+    ++tabs_;
+  }
 }
 
 void TextLine::DeleteChar(Coord off, wchar_t* c) {
+  if (data_[off] == kTabChar) {
+    --tabs_;
+  }
+
   if (c != NULL) {
     *c = data_[off];
   }
+
   data_.erase(off, 1);
 }
 
 void TextLine::InsertString(Coord off, const std::wstring& str) {
   data_.insert(off, str);
+
+  tabs_ += CountTabs(str);
 }
 
 void TextLine::DeleteString(Coord off, Coord count, std::wstring* str) {
@@ -405,15 +419,18 @@ void TextLine::DeleteString(Coord off, Coord count, std::wstring* str) {
   }
 
   if (count == kInvCoord) {
+    tabs_ -= CountTabs(data_, off);
     data_.erase(off, std::wstring::npos);
     return;
   }
 
   if (off + count > Length()) {
+    tabs_ -= CountTabs(data_, off);
     data_.erase(off, std::wstring::npos);
     return;
   }
 
+  tabs_ -= CountTabs(data_, off, count);
   data_.erase(off, count);
 }
 
@@ -424,10 +441,14 @@ void TextLine::Clear(std::wstring* line_data) {
   } else {
     data_.clear();
   }
+
+  tabs_ = 0;
 }
 
 void TextLine::Append(const std::wstring& str) {
   data_.append(str);
+
+  tabs_ += CountTabs(str);
 }
 
 TextLine* TextLine::Split(Coord off, size_t line_id) {
@@ -438,6 +459,7 @@ TextLine* TextLine::Split(Coord off, size_t line_id) {
     new_line = new TextLine(line_id, L"");
   } else {
     new_line = new TextLine(line_id, &data_[off], data_.size() - off);
+    tabs_ -= CountTabs(data_, off);
     data_.erase(off);
   }
 
@@ -829,6 +851,17 @@ bool TextLine::Lua_equal(const std::string& str,
 
 Coord TextLine::Lua_getUnpairedLeftKey(char l_key, char r_key, Coord off) const {
   return UnpairedLeftKey((wchar_t)l_key, (wchar_t)r_key, off);
+}
+
+int TextLine::CountTabs(const std::wstring& str, size_t off, size_t count) const {
+  int tabs = 0;
+  size_t end = count == std::wstring::npos ? str.size() : (off + count);
+  for (size_t i = off; i < end; ++i) {
+    if (str[i] == kTabChar) {
+      ++tabs;
+    }
+  }
+  return tabs;
 }
 
 }  // namespace editor

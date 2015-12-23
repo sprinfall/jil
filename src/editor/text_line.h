@@ -52,6 +52,10 @@ public:
     extra_data_ = extra_data;
   }
 
+  bool HasTabs() const {
+    return tabs_ > 0;
+  }
+
   //----------------------------------------------------------------------------
 
   Coord Length() const {
@@ -243,12 +247,21 @@ public:
   Coord Lua_getUnpairedLeftKey(char l_key, char r_key, Coord off) const;
 
 private:
+  int CountTabs(const std::wstring& str,
+                size_t off = 0,
+                size_t count = std::wstring::npos) const;
+
+private:
   size_t id_;
   std::wstring data_;
 
   std::list<LexElem*> lex_elems_;
 
   std::list<QuoteElem> quote_elems_;
+
+  // Count of tabs in the line.
+  // Used to quickly determine if the line has tabs or not.
+  int tabs_;
 
   // NOTE:
   // wxAny takes 24 bytes. So boost::any is prefered because it takes only

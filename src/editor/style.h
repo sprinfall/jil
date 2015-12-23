@@ -53,6 +53,7 @@ public:
   enum Item {
     kNormal = 0,
     kVisual,      // Selected text
+    kMatching,    // Find matching
     kNumber,      // Line number area
     kCaretLine,
     kSpace,       // Space and Tab

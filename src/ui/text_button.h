@@ -22,7 +22,7 @@ public:
 protected:
   virtual wxSize DoGetBestSize() const override;
 
-  virtual ButtonStyle::State GetState() override;
+  virtual ButtonStyle::State GetState() const override;
 
   virtual void DrawForeground(wxDC& dc, ButtonStyle::State state) override;
 

@@ -7,6 +7,7 @@ set(HEADERS
     button_base.h
     button_style.h
     color.h
+    combo_box.h
     static_box.h
     text_button.h
     util.h
@@ -17,6 +18,7 @@ set(SRCS
     button_base.cc
     button_style.cc
     color.cc
+    combo_box.cc
     static_box.cc
     text_button.cc
     util.cc

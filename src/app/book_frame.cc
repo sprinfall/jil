@@ -763,7 +763,13 @@ void BookFrame::OnGlobalPreferences(wxCommandEvent& WXUNUSED(evt)) {
   }
 
   // Apply changes.
+  ApplyGlobalOptionChanges(old_options);
 
+  // Save options file.
+  wxGetApp().SaveUserGlobalOptions();
+}
+
+void BookFrame::ApplyGlobalOptionChanges(const Options& old_options) {
   if (options_->show_path != old_options.show_path) {
     if (options_->show_path) {
       UpdateTitleWithPath();
@@ -793,9 +799,6 @@ void BookFrame::OnGlobalPreferences(wxCommandEvent& WXUNUSED(evt)) {
     status_bar_->SetFont(options_->fonts[FONT_STATUS_BAR]);
     UpdateLayout();
   }
-
-  // Save options file.
-  wxGetApp().SaveUserGlobalOptions();
 }
 
 void BookFrame::ApplyLinePadding(int line_padding) {
@@ -845,12 +848,14 @@ void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
   const editor::FileType* ft = app.GetFileType(index);
   editor::FtPlugin* ft_plugin = app.GetFtPlugin(*ft);
 
-  // Copy the options.
+  // Backup the old optinos.
+  editor::Options old_options = ft_plugin->options();
+
+  // This will be the new options.
   editor::Options options = ft_plugin->options();
 
-  PrefEditorDialog dialog(&options);
-
   wxString title = kTrOptions + wxT(" - ") + ft->name;
+  PrefEditorDialog dialog(&options);
   dialog.Create(this, wxID_ANY, title);
   dialog.CenterOnParent();
 
@@ -858,12 +863,68 @@ void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
     return;
   }
 
-  // Apply changes.
-
   ft_plugin->set_options(options);
 
   // Save options file.
-  app.SaveUserEditorOptions(ft_plugin->id(), ft_plugin->options());
+  app.SaveUserEditorOptions(ft_plugin->id(), options);
+
+  // Apply changes to this file type.
+  ApplyEditorOptionChanges(ft->id, options, old_options);
+}
+
+void BookFrame::ApplyEditorOptionChanges(const wxString& ft_id,
+                                         const editor::Options& options,
+                                         const editor::Options& old_options) {
+  bool view_options_changed = options.view != old_options.view;
+
+  std::vector<TextPage*> text_pages = text_book_->TextPages();
+  for (TextPage* text_page : text_pages) {
+    if (text_page->ft_plugin()->id() != ft_id) {
+      continue;
+    }
+
+    editor::TextBuffer* buffer = text_page->buffer();
+
+    // Apply text option changes.
+
+    buffer->set_text_options(options.text);
+
+    if (options.text.tab_stop != old_options.text.tab_stop ||
+        options.text.expand_tab != old_options.text.expand_tab) {
+      // Notify to update the copy in text window and the status field.
+      buffer->Notify(editor::kTabOptionsChange);
+    }
+
+    // Apply view option changes.
+
+    if (view_options_changed) {
+      buffer->set_view_options(options.view);
+
+      text_page->Freeze();
+
+      if (options.view.wrap != old_options.view.wrap) {
+        text_page->Wrap(options.view.wrap);
+      }
+
+      if (options.view.show_number != old_options.view.show_number) {
+        text_page->ShowNumber(options.view.show_number);
+      }
+
+      if (options.view.show_space != old_options.view.show_space) {
+        text_page->ShowSpace(options.view.show_space);
+      }
+
+      if (options.view.show_hscrollbar != old_options.view.show_hscrollbar) {
+        text_page->ShowHScrollbar(options.view.show_hscrollbar);
+      }
+
+      if (options.view.rulers != old_options.view.rulers) {
+        text_page->SetRulers(options.view.rulers);
+      }
+
+      text_page->Thaw();
+    }
+  }
 }
 
 void BookFrame::OnTheme(wxCommandEvent& evt) {
@@ -1184,6 +1245,11 @@ void BookFrame::OnTextWindowEvent(wxCommandEvent& evt) {
     return;
   }
 
+  // The text page posting this event is not the active page.
+  if (text_page != evt.GetEventObject()) {
+    return;
+  }
+
   // Caret event is very frequently, so avoid updating field sizes.
   if (type == TextWindow::kCaretEvent) {
     UpdateStatusCaret(text_page, true);
@@ -1464,26 +1530,18 @@ void BookFrame::OnStatusTabOptionsMenu(wxCommandEvent& evt) {
     return;
   }
 
-  switch (menu_id) {
-    case ID_MENU_EXPAND_TAB:
-      buffer->set_expand_tab(evt.IsChecked());
-      buffer->Notify(editor::kTabOptionsChange);
-      break;
-
-    case ID_MENU_GUESS_TAB_OPTIONS:
-    {
-      editor::TabOptions tab_options;
-      if (buffer->GuessTabOptions(&tab_options)) {
-        buffer->SetTabOptions(tab_options, true);
-      }
-      break;
+  if (menu_id == ID_MENU_EXPAND_TAB) {
+    buffer->set_expand_tab(evt.IsChecked());
+    buffer->Notify(editor::kTabOptionsChange);
+  } else if (menu_id == ID_MENU_GUESS_TAB_OPTIONS) {
+    editor::TabOptions tab_options;
+    if (buffer->GuessTabOptions(&tab_options)) {
+      buffer->SetTabOptions(tab_options, true);
+    } else {
+      // TODO: Show error message on status bar.
     }
-      
-    case ID_MENU_RETAB:
-    {
-      text_page->Retab();
-      break;
-    }
+  } else if (menu_id == ID_MENU_RETAB) {
+    text_page->Retab();
   }
 }
 
@@ -1573,6 +1631,7 @@ void BookFrame::ShowFindPanel(int mode) {
     find_panel_->Hide();
     find_panel_->set_theme(theme_->GetTheme(THEME_FIND_PANEL));
     find_panel_->Create(this, ID_FIND_PANEL);
+    find_panel_->SetLocation(kCurrentPage);  // TODO
   } else {
     find_panel_->set_mode(mode);
     find_panel_->UpdateLayout();
@@ -1620,10 +1679,17 @@ void BookFrame::CloseFindPanel() {
 
 void BookFrame::OnFindPanelEvent(FindPanelEvent& evt) {
   int event_type = evt.GetInt();
+
+  if (event_type == FindPanel::kLayoutEvent) {
+    UpdateLayout();
+    return;
+  }
+
   FindLocation location = evt.location();
 
   switch (event_type) {
-    case FindPanel::kFindTextEvent:
+    case FindPanel::kFindStrEvent:
+      HandleFindStrChange(evt.find_str(), evt.flags());
       break;
 
     case FindPanel::kFindEvent:
@@ -1745,6 +1811,29 @@ BookPage* BookFrame::GetCurrentPage() {
 //------------------------------------------------------------------------------
 // Find & Replace
 
+void BookFrame::HandleFindStrChange(const std::wstring& str, int flags) {
+  TextPage* text_page = ActiveTextPage();
+  if (text_page == NULL) {
+    return;
+  }
+
+  if (str.empty()) {
+    // Find string changes to empty, clear find result.
+    text_page->SetFindResult(editor::TextRange());
+    return;
+  }
+
+  editor::TextPoint point = text_page->caret_point();
+  if (!text_page->selection().IsEmpty()) {
+    point = text_page->selection().begin();
+  }
+
+  editor::TextRange find_result = Find(text_page, str, point, flags, true);
+  SetFindResult(text_page, find_result, false, false);
+
+  text_page->SetFindResult(find_result);
+}
+
 void BookFrame::FindInActivePage(const std::wstring& str, int flags) {
   using namespace editor;
 
@@ -1764,12 +1853,8 @@ void BookFrame::FindInActivePage(const std::wstring& str, int flags) {
     }
   }
 
-  TextRange result_range = Find(text_page, str, point, flags, true);
-  if (result_range.IsEmpty()) {
-    return;
-  }
-
-  SelectFindResult(text_page, result_range);
+  TextRange find_result = Find(text_page, str, point, flags, true);
+  SetFindResult(text_page, find_result, true, true);
 }
 
 void BookFrame::FindInAllPages(const std::wstring& str, int flags) {
@@ -1807,8 +1892,8 @@ void BookFrame::FindInAllPages(const std::wstring& str, int flags) {
 
   } while (result_range.IsEmpty());
 
-  if (result_range.IsEmpty()) {  // No match
-    return;
+  if (result_range.IsEmpty()) {
+    return;  // No match
   }
 
   if (text_page == start_text_page) {
@@ -2109,6 +2194,28 @@ void BookFrame::SelectFindResult(TextPage* text_page, const editor::TextRange& r
   // Don't use ScrollToPoint().
   // TODO: Horizontally scroll if necessary.
   text_page->Goto(result_range.line_first());
+}
+
+void BookFrame::SetFindResult(TextPage* text_page,
+                              const editor::TextRange& find_result,
+                              bool select,
+                              bool update_caret) {
+  text_page->SetFindResult(find_result);
+
+  if (find_result.IsEmpty()) {
+    return;
+  }
+
+  if (select) {
+    text_page->SetSelection(find_result, editor::kForward, false);
+  }
+
+  if (update_caret) {
+    // NOTE: Scroll later.
+    text_page->UpdateCaretPoint(find_result.point_end(), false, false, false);
+  }
+
+  text_page->ScrollToPoint(find_result.point_begin());
 }
 
 //------------------------------------------------------------------------------

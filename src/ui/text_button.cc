@@ -39,7 +39,7 @@ wxSize TextButton::DoGetBestSize() const {
   return best_size;
 }
 
-ButtonStyle::State TextButton::GetState() {
+ButtonStyle::State TextButton::GetState() const {
   if (!IsEnabled()) {
     return ButtonStyle::DISABLED;
   }
