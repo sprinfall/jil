@@ -1693,6 +1693,7 @@ void BookFrame::OnFindPanelEvent(FindPanelEvent& evt) {
       break;
 
     case FindPanel::kFindEvent:
+      // Find next matching result.
       if (location == kCurrentPage) {
         FindInActivePage(evt.find_str(), evt.flags());
       } else if (location == kAllPages) {
@@ -1819,7 +1820,7 @@ void BookFrame::HandleFindStrChange(const std::wstring& str, int flags) {
 
   if (str.empty()) {
     // Find string changes to empty, clear find result.
-    text_page->SetFindResult(editor::TextRange());
+    text_page->ClearFindResult();
     return;
   }
 
@@ -1829,20 +1830,16 @@ void BookFrame::HandleFindStrChange(const std::wstring& str, int flags) {
   }
 
   editor::TextRange find_result = Find(text_page, str, point, flags, true);
-  SetFindResult(text_page, find_result, false, false);
-
-  text_page->SetFindResult(find_result);
+  SetFindResult(text_page, find_result, true);
 }
 
 void BookFrame::FindInActivePage(const std::wstring& str, int flags) {
-  using namespace editor;
-
   TextPage* text_page = ActiveTextPage();
   if (text_page == NULL) {
     return;
   }
 
-  TextPoint point = text_page->caret_point();
+  editor::TextPoint point = text_page->caret_point();
 
   if (GetBit(flags, kFind_Reversely)) {
     // If there's any selected text, it might be the last find result. We don't
@@ -1853,8 +1850,16 @@ void BookFrame::FindInActivePage(const std::wstring& str, int flags) {
     }
   }
 
-  TextRange find_result = Find(text_page, str, point, flags, true);
-  SetFindResult(text_page, find_result, true, true);
+  editor::TextRange find_result = Find(text_page, str, point, flags, true);
+
+  if (!find_result.IsEmpty()) {
+    if (find_result == text_page->find_result() && !text_page->inc_find()) {
+      // The find result is the same as last time.
+      // TODO: Display a message on status bar.
+    }
+  }
+
+  SetFindResult(text_page, find_result, false);
 }
 
 void BookFrame::FindInAllPages(const std::wstring& str, int flags) {
@@ -2198,24 +2203,19 @@ void BookFrame::SelectFindResult(TextPage* text_page, const editor::TextRange& r
 
 void BookFrame::SetFindResult(TextPage* text_page,
                               const editor::TextRange& find_result,
-                              bool select,
-                              bool update_caret) {
-  text_page->SetFindResult(find_result);
+                              bool incremental) {
+  text_page->SetFindResult(find_result, incremental);
 
   if (find_result.IsEmpty()) {
     return;
   }
 
-  if (select) {
+  if (incremental) {
+    text_page->ScrollToPoint(find_result.point_begin());
+  } else {
     text_page->SetSelection(find_result, editor::kForward, false);
+    text_page->UpdateCaretPoint(find_result.point_end(), false, true, false);
   }
-
-  if (update_caret) {
-    // NOTE: Scroll later.
-    text_page->UpdateCaretPoint(find_result.point_end(), false, false, false);
-  }
-
-  text_page->ScrollToPoint(find_result.point_begin());
 }
 
 //------------------------------------------------------------------------------

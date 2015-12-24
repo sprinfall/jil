@@ -264,6 +264,7 @@ private:
 
   void HandleFindStrChange(const std::wstring& str, int flags);
 
+  // Find string in the active text page, select it and update the caret point.
   void FindInActivePage(const std::wstring& str, int flags);
 
   void FindInAllPages(const std::wstring& str, int flags);
@@ -299,10 +300,11 @@ private:
   // Select the result text range, update caret point and scroll to it if necessary.
   void SelectFindResult(TextPage* text_page, const editor::TextRange& result_range);
 
+  // The find result won't be selected and the caret point won't be updated
+  // if it's incremental.
   void SetFindResult(TextPage* text_page,
                      const editor::TextRange& find_result,
-                     bool select,
-                     bool update_caret);
+                     bool incremental);
 
   //----------------------------------------------------------------------------
   // Menu

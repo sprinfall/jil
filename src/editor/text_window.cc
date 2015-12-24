@@ -240,6 +240,12 @@ bool TextWindow::buffer_new_created() const {
 
 
 void TextWindow::OnBufferLineChange(LineChangeType type, const LineChangeData& data) {
+  if (type != kLineRefresh) {
+    // It's very difficult to update the find result.
+    // Just clear it right now.
+    ClearFindResult();
+  }
+
   switch (type) {
   case kLineAdded:
     HandleLineAdded(data);
@@ -421,12 +427,6 @@ void TextWindow::Redo() {
 }
 
 void TextWindow::SelectText(TextUnit text_unit, SeekType seek_type) {
-  if (text_unit == kSelected && seek_type == kWhole) {
-    // Clear current selection.
-    ClearSelection();
-    return;
-  }
-
   if (text_unit == kBuffer && seek_type == kWhole) {
     // Select the whole buffer.
     Coord line_count = buffer_->LineCount();
@@ -812,11 +812,13 @@ void TextWindow::UpdateCaretPoint(const TextPoint& point, bool line_step, bool s
     max_caret_x_ = p.x;
   }
 
-  UpdateCaretPosition();
-
   if (scroll) {
     ScrollToPoint(caret_point_);
   }
+
+  // NOTE:
+  // If you update caret position before scroll, the position will be wrong.
+  UpdateCaretPosition();
 
   // Notify the caret change.
   PostEvent(TextWindow::kCaretEvent);
@@ -910,7 +912,9 @@ void TextWindow::ClearSelection(bool refresh) {
 
 //------------------------------------------------------------------------------
 
-void TextWindow::SetFindResult(const TextRange& find_result) {
+void TextWindow::SetFindResult(const TextRange& find_result, bool inc_find) {
+  inc_find_ = inc_find;
+
   if (find_result_ == find_result) {
     return;
   }
@@ -932,6 +936,12 @@ void TextWindow::SetFindResult(const TextRange& find_result) {
   }
   if (find_ln != kInvCoord) {
     RefreshTextByLine(find_ln);
+  }
+}
+
+void TextWindow::ClearFindResult() {
+  if (!find_result_.IsEmpty()) {
+    SetFindResult(TextRange(), inc_find_);
   }
 }
 
@@ -968,6 +978,8 @@ void TextWindow::Init() {
   expand_tab_ = buffer_->text_options().expand_tab;
 
   text_extent_ = new TextExtent;
+
+  inc_find_ = false;
 }
 
 //------------------------------------------------------------------------------
@@ -1200,15 +1212,6 @@ void TextWindow::OnSize(wxSizeEvent& evt) {
   }
   evt.Skip();
 }
-
-// NOTE: It seems that text window never gets focus.
-//void TextWindow::OnSetFocus(wxFocusEvent& evt) {
-//  // Always let text area has the focus.
-//  if (text_area_ != NULL) {
-//    text_area_->SetFocus();
-//  }
-//  evt.Skip();
-//}
 
 //------------------------------------------------------------------------------
 // Action
@@ -2311,7 +2314,25 @@ bool TextWindow::OnTextKeyDown(wxKeyEvent& evt) {
   if (code == WXK_NONE) {
     return false;
   }
+
   if (code == WXK_CONTROL || code == WXK_SHIFT || code == WXK_ALT) {
+    return false;
+  }
+
+  if (code == WXK_ESCAPE) {
+    // Clear find result.
+    if (!find_result_.IsEmpty()) {
+      ClearFindResult();
+      return true;
+    }
+
+    // Or clear current selection.
+    if (!selection_.IsEmpty()) {
+      ClearSelection();
+      return true;
+    }
+
+    // NOTE: ESCAPE is supported to be used in the key binding.
     return false;
   }
 

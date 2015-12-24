@@ -295,7 +295,13 @@ public:
     return find_result_;
   }
 
-  void SetFindResult(const TextRange& find_result);
+  bool inc_find() const {
+    return inc_find_;
+  }
+
+  void SetFindResult(const TextRange& find_result, bool inc_find);
+
+  void ClearFindResult();
 
 protected:
   //----------------------------------------------------------------------------
@@ -332,9 +338,6 @@ protected:
   // System event handlers.
 
   void OnSize(wxSizeEvent& evt);
-
-  // NOTE: It seems that text window never gets focus.
-  //void OnSetFocus(wxFocusEvent& evt);
 
   //----------------------------------------------------------------------------
   // Action
@@ -677,6 +680,7 @@ protected:
 
   // Find matching result.
   TextRange find_result_;
+  bool inc_find_;  // Incremental.
 };
 
 ////////////////////////////////////////////////////////////////////////////////
