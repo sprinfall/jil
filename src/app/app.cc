@@ -185,6 +185,16 @@ void ShowReplace() {
   book_frame->ShowReplace();
 }
 
+void FindNext() {
+  GET_BOOK_FRAME_OR_RETURN;
+  book_frame->FindNext();
+}
+
+void FindPrev() {
+  GET_BOOK_FRAME_OR_RETURN;
+  book_frame->FindPrev();
+}
+
 void Wrap() {
   GET_BOOK_FRAME_OR_RETURN;
   book_frame->Wrap();
@@ -796,6 +806,9 @@ void App::InitCommands() {
 
   AddVoidCmd("show_find", ShowFind, ID_MENU_EDIT_FIND);
   AddVoidCmd("show_replace", ShowReplace, ID_MENU_EDIT_REPLACE);
+
+  AddVoidCmd("find_next", FindNext, ID_MENU_EDIT_FIND_NEXT);
+  AddVoidCmd("find_prev", FindPrev, ID_MENU_EDIT_FIND_PREV);
 
   AddVoidCmd("wrap", Wrap, ID_MENU_VIEW_WRAP);
   AddVoidCmd("show_number", ShowNumber, ID_MENU_VIEW_SHOW_NUMBER);

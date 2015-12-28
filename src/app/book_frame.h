@@ -110,6 +110,9 @@ public:
   void ShowFind();
   void ShowReplace();
 
+  void FindNext();
+  void FindPrev();
+
   // Toggle the wrap state of the active text page.
   void Wrap();
   // Toggle the line number show state of the active text page.
@@ -263,6 +266,8 @@ private:
   // Find & Replace
 
   void HandleFindStrChange(const std::wstring& str, int flags);
+  void HandleFind(const std::wstring& str, int flags, FindLocation location);
+  void HandleFindAll(const std::wstring& str, int flags, FindLocation location);
 
   // Find string in the active text page, select it and update the caret point.
   void FindInActivePage(const std::wstring& str, int flags);
@@ -326,7 +331,10 @@ private:
   bool GetFileMenuState(int menu_id, wxString* text = NULL);
   bool GetEditMenuState(int menu_id);
   bool GetViewMenuState(int menu_id, bool* check = NULL);
+
+#if JIL_ENABLE_LEADER_KEY
   bool GetMenuEnableState(int menu_id);
+#endif  // JIL_ENABLE_LEADER_KEY
 
   // Add installed themes to the theme menu.
   void InitThemeMenu(wxMenu* theme_menu);
@@ -391,6 +399,9 @@ private:
   StatusBar* status_bar_;
 
   FindPanel* find_panel_;
+
+  std::wstring find_str_;
+  int find_flags_;  // Find flags exluding kFind_Reversely.
 
   editor::Style* style_;
   editor::SharedTheme theme_;

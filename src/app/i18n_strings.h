@@ -91,7 +91,7 @@
 #define kTrEditCut            _("Cu&t")
 #define kTrEditCopy           _("&Copy")
 #define kTrEditPaste          _("&Paste")
-#define kTrEditIndent         _("&Indent")
+#define kTrEditIndent         _("&Indent")  // Sub
 #define kTrEditIncreaseIndent _("&Increase Indent")
 #define kTrEditDecreaseIndent _("&Decrease Indent")
 #define kTrEditAutoIndent     _("&Auto Indent")
@@ -99,6 +99,8 @@
 #define kTrEditUncomment      _("&Uncomment")
 #define kTrEditFind           _("&Find")
 #define kTrEditReplace        _("Rep&lace")
+#define kTrEditFindNext       _("Find &Next")
+#define kTrEditFindPrev       _("Find &Previous")
 #define kTrEditGoTo           _("&Go To...")
 
 #define kTrViewWrap           _("&Wrap")

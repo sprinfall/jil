@@ -461,6 +461,18 @@ void BookFrame::ShowReplace() {
   ShowFindPanel(FindPanel::kReplaceMode);
 }
 
+void BookFrame::FindNext() {
+  if (!find_str_.empty()) {
+    FindInActivePage(find_str_, find_flags_);
+  }
+}
+
+void BookFrame::FindPrev() {
+  if (!find_str_.empty()) {
+    FindInActivePage(find_str_, find_flags_ | kFind_Reversely);
+  }
+}
+
 void BookFrame::Wrap() {
   TextPage* text_page = ActiveTextPage();
   if (text_page != NULL) {
@@ -1010,8 +1022,8 @@ void BookFrame::OnMenuHelp(wxCommandEvent& evt) {
 //------------------------------------------------------------------------------
 
 bool BookFrame::ExecFuncByMenu(int menu) {
-  // Delegate to the focused page to handle it.
-  BookPage* page = GetFocusedPage();
+  // Delegate to the current page to handle it.
+  BookPage* page = GetCurrentPage();
   if (page != NULL) {
     if (page->Page_OnMenu(menu)) {
       return true;
@@ -1271,6 +1283,7 @@ void BookFrame::OnTextWindowEvent(wxCommandEvent& evt) {
 }
 
 // Update menus according to the focused text window.
+// TODO: Update Edit menus after close last text window?
 void BookFrame::HandleTextWindowGetFocus(wxCommandEvent& evt) {
   wxMenuBar* menu_bar = GetMenuBar();
   if (menu_bar == NULL) {
@@ -1414,7 +1427,7 @@ void BookFrame::PopupStatusTabOptionsMenu() {
 
   int ts = editor::kMinTabStop;
   int ts_menu_id = ID_MENU_TAB_STOP_0;
-  for (; ts < editor::kMaxTabStop; ++ts, ++ts_menu_id) {
+  for (; ts <= editor::kMaxTabStop; ++ts, ++ts_menu_id) {
     wxString label = kTrTabStop + wxString::Format(wxT(": %d"), ts);
     menu.AppendCheckItem(ts_menu_id, label);
   }
@@ -1693,22 +1706,11 @@ void BookFrame::OnFindPanelEvent(FindPanelEvent& evt) {
       break;
 
     case FindPanel::kFindEvent:
-      // Find next matching result.
-      if (location == kCurrentPage) {
-        FindInActivePage(evt.find_str(), evt.flags());
-      } else if (location == kAllPages) {
-        FindInAllPages(evt.find_str(), evt.flags());
-      }
+      HandleFind(evt.find_str(), evt.flags(), location);
       break;
 
     case FindPanel::kFindAllEvent:
-      if (location == kCurrentPage) {
-        FindAllInActivePage(evt.find_str(), evt.flags());
-      } else if (location == kAllPages) {
-        FindAllInAllPages(evt.find_str(), evt.flags());
-      }
-      // Close find panel after find all.
-      //CloseFindPanel();
+      HandleFindAll(evt.find_str(), evt.flags(), location);
       break;
 
     case FindPanel::kReplaceEvent:
@@ -1779,12 +1781,10 @@ void BookFrame::ActivateToolPage(BookPage* page) {
 }
 
 BookPage* BookFrame::GetFocusedPage() {
-  // Check text book.
   if (text_book_->HasFocus()) {
     return text_book_->ActivePage();
   }
 
-  // Check tool book.
   if (tool_book_->IsShown() && tool_book_->HasFocus()) {
     return tool_book_->ActivePage();
   }
@@ -1792,6 +1792,7 @@ BookPage* BookFrame::GetFocusedPage() {
   return NULL;
 }
 
+// TODO: Refine. Maybe don't use GetFocusedPage().
 BookPage* BookFrame::GetCurrentPage() {
   BookPage* focused_page = GetFocusedPage();
   if (focused_page != NULL) {
@@ -1831,6 +1832,35 @@ void BookFrame::HandleFindStrChange(const std::wstring& str, int flags) {
 
   editor::TextRange find_result = Find(text_page, str, point, flags, true);
   SetFindResult(text_page, find_result, true);
+}
+
+void BookFrame::HandleFind(const std::wstring& str,
+                           int flags,
+                           FindLocation location) {
+  find_str_ = str;
+  find_flags_ = flags & (~kFind_Reversely);
+
+  if (location == kCurrentPage) {
+    FindInActivePage(str, flags);
+  } else if (location == kAllPages) {
+    FindInAllPages(str, flags);
+  }
+}
+
+void BookFrame::HandleFindAll(const std::wstring& str,
+                              int flags,
+                              FindLocation location) {
+  find_str_ = str;
+  find_flags_ = flags & (~kFind_Reversely);
+
+  if (location == kCurrentPage) {
+    FindAllInActivePage(str, flags);
+  } else if (location == kAllPages) {
+    FindAllInAllPages(str, flags);
+  }
+
+  // TODO: Close find panel after find all?
+  //CloseFindPanel();
 }
 
 void BookFrame::FindInActivePage(const std::wstring& str, int flags) {
@@ -2430,16 +2460,11 @@ bool BookFrame::GetFileMenuState(int menu_id, wxString* text) {
   return state;
 }
 
+// Let the current page determine the state.
 bool BookFrame::GetEditMenuState(int menu_id) {
-  // Always enable these menu items.
-  if (menu_id == ID_MENU_EDIT_FIND || menu_id == ID_MENU_EDIT_REPLACE) {
-    return true;
-  }
-
-  // Let the focused page determine the state.
-  BookPage* focused_page = GetFocusedPage();
-  if (focused_page != NULL) {
-    return focused_page->Page_EditMenuState(menu_id);
+  BookPage* page = GetCurrentPage();
+  if (page != NULL) {
+    return page->Page_EditMenuState(menu_id);
   }
 
   return false;
@@ -2475,6 +2500,7 @@ bool BookFrame::GetViewMenuState(int menu_id, bool* check) {
   return state;
 }
 
+#if JIL_ENABLE_LEADER_KEY
 bool BookFrame::GetMenuEnableState(int menu_id) {
   if (menu_id >= ID_MENU_FILE_BEGIN && menu_id < ID_MENU_FILE_END) {
     return GetFileMenuState(menu_id);
@@ -2486,6 +2512,7 @@ bool BookFrame::GetMenuEnableState(int menu_id) {
 
   return true;
 }
+#endif  // JIL_ENABLE_LEADER_KEY
 
 void BookFrame::InitThemeMenu(wxMenu* theme_menu) {
   App& app = wxGetApp();

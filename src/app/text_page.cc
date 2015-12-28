@@ -99,6 +99,10 @@ void TextPage::Page_EditMenu(wxMenu* menu) {
 
   AppendMenuItem(menu, ID_MENU_EDIT_FIND, kTrEditFind);
   AppendMenuItem(menu, ID_MENU_EDIT_REPLACE, kTrEditReplace);
+  AppendMenuItem(menu, ID_MENU_EDIT_FIND_NEXT, kTrEditFindNext);
+  AppendMenuItem(menu, ID_MENU_EDIT_FIND_PREV, kTrEditFindPrev);
+  menu->AppendSeparator();
+
   AppendMenuItem(menu, ID_MENU_EDIT_GO_TO, kTrEditGoTo);
 }
 
