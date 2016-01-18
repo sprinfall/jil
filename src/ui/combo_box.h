@@ -77,18 +77,21 @@ public:
   bool Create(wxWindow* parent, wxWindowID id);
   virtual ~ComboPopup();
 
+  void set_padding(const wxSize& padding) {
+    padding_ = padding;
+  }
+
   void SetColor(ColorId color_id, const wxColour& color) {
     assert(color_id < COLORS);
     colors_[color_id] = color;
   }
 
   void Append(const wxString& label);
-  void AppendSeparator();
 
   void SetLabels(const std::vector<wxString>& labels);
 
   // Set client size according to content.
-  void AdjustSize();
+  void AdjustSize(int min_width);
 
 protected:
   void OnPaint(wxPaintEvent& evt);
@@ -112,8 +115,6 @@ private:
 
   wxSize margin_;
   wxSize padding_;
-  int space_y_;
-  int separator_height_;
 
   wxColour colors_[COLORS];
 };
@@ -134,10 +135,6 @@ public:
 
   void set_accept_focus(bool accept_focus) {
     accept_focus_ = accept_focus;
-  }
-
-  void set_padding(const wxSize& padding) {
-    padding_ = padding;
   }
 
   void Append(const wxString& label);
@@ -170,7 +167,9 @@ protected:
 
 private:
   SharedComboStyle style_;
+
   wxSize padding_;
+  wxSize arrow_size_;
 
   bool pressed_;
   bool hover_;

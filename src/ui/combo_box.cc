@@ -35,10 +35,7 @@ END_EVENT_TABLE()
 
 ComboPopup::ComboPopup()
     : hover_index_(kNpos)
-    , margin_(5, 5)
-    , padding_(5, 2)
-    , space_y_(4)
-    , separator_height_(4) {
+    , margin_(0, 5) {
 }
 
 bool ComboPopup::Create(wxWindow* parent, wxWindowID id) {
@@ -62,15 +59,11 @@ void ComboPopup::Append(const wxString& label) {
   labels_.push_back(label);
 }
 
-void ComboPopup::AppendSeparator() {
-  labels_.push_back(wxEmptyString);
-}
-
 void ComboPopup::SetLabels(const std::vector<wxString>& labels) {
   labels_ = labels;
 }
 
-void ComboPopup::AdjustSize() {
+void ComboPopup::AdjustSize(int min_width) {
   item_rects_.resize(labels_.size());
 
   int y = margin_.y;
@@ -85,33 +78,30 @@ void ComboPopup::AdjustSize() {
       if (max_label_w < label_w) {
         max_label_w = label_w;
       }
-    } else {  // Separator
-      label_h = separator_height_;
     }
 
     // Rect width will be set later.
-    item_rects_[i] = wxRect(margin_.x, y, 0, label_h + padding_.y + padding_.y);
-    y += item_rects_[i].height + space_y_;
+    item_rects_[i] = wxRect(0, y, 0, label_h + padding_.y + padding_.y);
+    y += item_rects_[i].height;
   }
 
-  y += margin_.y - space_y_;
+  y += margin_.y;
 
   // Now set the width of item rects.
-  int item_w = max_label_w + padding_.x + padding_.x;
-  for (size_t i = 0; i < item_rects_.size(); ++i) {
-    item_rects_[i].width = item_w;
+  int client_w = max_label_w + padding_.x + padding_.x;
+
+  if (client_w < min_width) {
+    client_w = min_width;
   }
 
-  int client_w = item_w + margin_.x + margin_.x;
+  for (size_t i = 0; i < item_rects_.size(); ++i) {
+    item_rects_[i].width = client_w;
+  }
+
   SetClientSize(client_w, y);
 }
 
 void ComboPopup::OnPaint(wxPaintEvent& evt) {
-  if (item_rects_.empty()) {
-    evt.Skip();
-    return;
-  }
-
   wxAutoBufferedPaintDC dc(this);
 #if !wxALWAYS_NATIVE_DOUBLE_BUFFER
   dc.SetBackground(wxBrush(GetBackgroundColour()));
@@ -131,10 +121,11 @@ void ComboPopup::OnPaint(wxPaintEvent& evt) {
   wxRect update_rect = GetUpdateClientRect();
 
   if (hover_index_ != kNpos) {
-    wxRect& rect = item_rects_[hover_index_];
+    wxRect rect = item_rects_[hover_index_];
     if (rect.Intersects(update_rect)) {
       dc.SetPen(wxPen(colors_[BG_HOVER]));
       dc.SetBrush(wxBrush(colors_[BG_HOVER]));
+      rect.Deflate(1);
       dc.DrawRectangle(rect);
     }
   }
@@ -150,14 +141,14 @@ void ComboPopup::OnPaint(wxPaintEvent& evt) {
 
     const wxString& label = labels_[i];
 
-    if (label.IsEmpty()) {  // Separator
-      dc.SetPen(wxPen(colors_[SEPARATOR]));
-      int y = rect.y + rect.height / 2;
-      dc.DrawLine(padding_.x, y, rect.GetRight(), y);
-    } else {
+    //if (label.IsEmpty()) {  // Separator
+    //  dc.SetPen(wxPen(colors_[SEPARATOR]));
+    //  int y = rect.y + rect.height / 2;
+    //  dc.DrawLine(padding_.x, y, rect.GetRight(), y);
+    //} else {
       dc.SetTextForeground(colors_[FG]);
       dc.DrawText(label, rect.x + padding_.x, rect.y + padding_.y);
-    }
+    //}
   }
 }
 
@@ -270,7 +261,11 @@ bool ComboBox::Create(wxWindow* parent, wxWindowID id, const wxString& label) {
   SetLayoutDirection(wxLayout_LeftToRight);
 
   int cw = GetCharWidth();
-  padding_.Set(cw, cw / 2 + 1);
+  int ch = GetCharHeight();
+  padding_.Set(cw / 2 + 1, cw / 2);  // TODO
+
+  arrow_size_.x = cw;
+  arrow_size_.y = cw / 2 + 1;
 
   SetLabel(label);
 
@@ -288,6 +283,7 @@ wxSize ComboBox::DoGetBestSize() const {
   wxSize best_size;
   GetTextExtent(GetLabel(), &best_size.x, &best_size.y);
   best_size.IncBy(padding_.x * 2, padding_.y * 2);
+  best_size.x += padding_.x + arrow_size_.x + padding_.x;
   return best_size;
 }
 
@@ -344,9 +340,9 @@ void ComboBox::DrawArrow(wxGraphicsContext* gc, ComboStyle::State state) {
 
   wxRect rect = GetClientRect();
 
-  int w = GetCharWidth();
-  int h = w / 2 + 1;
-  int x = rect.GetRight() - 10;
+  int w = arrow_size_.x;
+  int h = arrow_size_.y;
+  int x = rect.GetRight() - padding_.x - w / 2;
   int y = rect.y + (rect.height - h) / 2;
 
   wxGraphicsPath path = gc->CreatePath();
@@ -446,19 +442,23 @@ void ComboBox::OnPopupSelected(wxCommandEvent& evt) {
 void ComboBox::ShowPopup() {
   popup_ = new ComboPopup();
 
+  // TODO
   popup_->SetColor(ComboPopup::BG, style_->GetColor(ComboStyle::BG, ComboStyle::NORMAL));
   popup_->SetColor(ComboPopup::FG, style_->GetColor(ComboStyle::FG, ComboStyle::NORMAL));
-  popup_->SetColor(ComboPopup::BG_HOVER, style_->GetColor(ComboStyle::BG, ComboStyle::NORMAL_HOVER));
+  popup_->SetColor(ComboPopup::BG_HOVER, *wxYELLOW);
   popup_->SetColor(ComboPopup::FG_HOVER, style_->GetColor(ComboStyle::FG, ComboStyle::NORMAL_HOVER));
   popup_->SetColor(ComboPopup::BORDER, style_->GetColor(ComboStyle::BORDER, ComboStyle::NORMAL));
   popup_->SetColor(ComboPopup::SEPARATOR, style_->GetColor(ComboStyle::BORDER, ComboStyle::NORMAL));
 
+  popup_->set_padding(padding_);
+
   popup_->Create(this, wxID_ANY);
+
   popup_->SetLabels(labels_);
 
   ConnectPopupEventHandlers();
 
-  popup_->AdjustSize();
+  popup_->AdjustSize(GetSize().x);
    
   wxRect rect = GetScreenRect();
   wxPoint pos = rect.GetLeftTop();

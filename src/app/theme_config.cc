@@ -167,6 +167,7 @@ bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style)
   SharedTheme fp_theme(new Theme(FindPanel::THEMES, FindPanel::COLORS));
   Setting fp_setting = root.Get("find_panel", Setting::kGroup);
   if (fp_setting) {
+    fp_theme->SetColor(FindPanel::FG, fp_setting.GetColor("fg"));
     fp_theme->SetColor(FindPanel::BG_TOP, fp_setting.GetColor("bg_top"));
     fp_theme->SetColor(FindPanel::BG_BOTTOM, fp_setting.GetColor("bg_bottom"));
     fp_theme->SetColor(FindPanel::BORDER_OUTER,

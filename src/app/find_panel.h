@@ -7,7 +7,6 @@
 #include "wx/control.h"
 #include "wx/panel.h"
 #include "ui/button_style.h"
-#include "ui/combo_box.h"
 #include "editor/theme.h"
 #include "app/defs.h"
 
@@ -19,7 +18,9 @@ class wxTextCtrl;
 namespace jil {
 
 namespace ui {
+class BitmapButton;
 class BitmapToggleButton;
+class Label;
 class TextButton;
 }  // namespace ui
 
@@ -132,7 +133,8 @@ public:
   };
 
   enum ColorId {
-    BG_TOP = 0,
+    FG = 0,
+    BG_TOP,
     BG_BOTTOM,
     BORDER_OUTER,
     BORDER_INNER,
@@ -180,10 +182,6 @@ public:
     return flags_;
   }
 
-  bool show_location() const {
-    return show_location_;
-  }
-
   void SetLocation(FindLocation location);
 
   void UpdateLayout();
@@ -193,10 +191,14 @@ public:
 protected:
   void OnPaint(wxPaintEvent& evt);
 
-  void OnLocationComboBox(wxCommandEvent& evt);
-  void OnLocationMenu(wxCommandEvent& evt);
+  void OnMenuCurrentPage(wxCommandEvent& evt);
+  void OnMenuAllPages(wxCommandEvent& evt);
+  void OnMenuFolders(wxCommandEvent& evt);
+  void OnMenuAddLineRange(wxCommandEvent& evt);
+  void OnMenuAddFilters(wxCommandEvent& evt);
 
-  void OnLocationToggle(wxCommandEvent& evt);
+  void OnLocationButtonClick(wxCommandEvent& evt);
+
   void OnUseRegexToggle(wxCommandEvent& evt);
   void OnCaseSensitiveToggle(wxCommandEvent& evt);
   void OnMatchWordToggle(wxCommandEvent& evt);
@@ -224,15 +226,19 @@ private:
 
   void CommonLayout(bool with_location, bool with_replace);
 
-  void AddToggleButtons(wxSizer* hsizer);
+  void AddOptionButtons(wxSizer* hsizer);
 
   void ShowReplace(bool show);
-  void ShowLocation(bool show);
 
-  void InitComboStyle();
+  void ShowLocationCtrls(bool layout);  // TODO: Rename
+  void ShowLocationCtrls(FindLocation location, bool show);
+
+  wxString GetLocationLabel(FindLocation location) const;
+
   void InitButtonStyle();
 
-  ui::BitmapToggleButton* NewToggleButton(int id, const wxString& bitmap);
+  ui::BitmapButton* NewBitmapButton(int id, const wxString& bitmap);
+  ui::BitmapToggleButton* NewBitmapToggleButton(int id, const wxString& bitmap);
   ui::TextButton* NewTextButton(int id, const wxString& label);
 
   // \param event_type See enum EventType.
@@ -242,8 +248,6 @@ private:
 
  private:
    editor::SharedTheme theme_;
-
-   ui::SharedComboStyle combo_style_;
    ui::SharedButtonStyle button_style_;
 
   Session* session_;
@@ -254,14 +258,17 @@ private:
   int flags_;
 
   FindLocation location_;
-  bool show_location_;
-  ui::ComboBox* location_combobox_;
-  wxTextCtrl* folders_text_ctrl_;
+  bool show_locations_[kFindLocations];
 
-  ui::BitmapToggleButton* location_toggle_button_;
-  ui::BitmapToggleButton* use_regex_toggle_button_;
-  ui::BitmapToggleButton* case_sensitive_toggle_button_;
-  ui::BitmapToggleButton* match_word_toggle_button_;
+  wxStaticText* location_label_;
+  wxTextCtrl* line_range_text_ctrl_;  // For Current Page location.
+  wxTextCtrl* filters_text_ctrl_;  // For All Pages location.
+  wxTextCtrl* folders_text_ctrl_;  // For Folders location.
+
+  ui::BitmapButton* location_button_;
+  ui::BitmapToggleButton* use_regex_tbutton_;
+  ui::BitmapToggleButton* case_sensitive_tbutton_;
+  ui::BitmapToggleButton* match_word_tbutton_;
 
   wxComboBox* find_combobox_;
   wxComboBox* replace_combobox_;
