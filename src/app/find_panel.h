@@ -11,7 +11,6 @@
 #include "app/defs.h"
 
 class wxComboBox;
-class wxGraphicsContext;
 class wxStaticText;
 class wxTextCtrl;
 
@@ -194,8 +193,6 @@ protected:
   void OnMenuCurrentPage(wxCommandEvent& evt);
   void OnMenuAllPages(wxCommandEvent& evt);
   void OnMenuFolders(wxCommandEvent& evt);
-  void OnMenuAddLineRange(wxCommandEvent& evt);
-  void OnMenuAddFilters(wxCommandEvent& evt);
 
   void OnLocationButtonClick(wxCommandEvent& evt);
 
@@ -208,6 +205,8 @@ protected:
   void OnReplace(wxCommandEvent& evt);
   void OnReplaceAll(wxCommandEvent& evt);
 
+  void OnAddFolder(wxCommandEvent& evt);
+
   void OnFindText(wxCommandEvent& evt);
   void OnFindTextEnter(wxCommandEvent& evt);
 
@@ -215,6 +214,12 @@ protected:
   void HandleReplace(bool all);
 
 private:
+  // Initialize find combobox with find history.
+  void InitFindComboBox();
+
+  // Initialize replace combobox with replace history.
+  void InitReplaceComboBox();
+
   // Add a string to find history and find combobox.
   void AddFindString(const wxString& string);
 
@@ -224,16 +229,15 @@ private:
   void LayoutAsFind();
   void LayoutAsReplace();
 
-  void CommonLayout(bool with_location, bool with_replace);
+  void CommonLayout(bool with_replace);
+  wxSizer* CommonLayoutHead(bool with_replace);
+  wxSizer* CommonLayoutBody(bool with_replace);
+  wxSizer* CommonLayoutFoot(bool with_replace);
 
   void AddOptionButtons(wxSizer* hsizer);
 
   void ShowReplace(bool show);
-
-  void ShowLocationCtrls(bool layout);  // TODO: Rename
-  void ShowLocationCtrls(FindLocation location, bool show);
-
-  wxString GetLocationLabel(FindLocation location) const;
+  void ShowFolders(bool show);
 
   void InitButtonStyle();
 
@@ -246,9 +250,9 @@ private:
                  const wxString& find_str,
                  const wxString& replace_str);
 
- private:
-   editor::SharedTheme theme_;
-   ui::SharedButtonStyle button_style_;
+private:
+  editor::SharedTheme theme_;
+  ui::SharedButtonStyle button_style_;
 
   Session* session_;
 
@@ -258,12 +262,10 @@ private:
   int flags_;
 
   FindLocation location_;
-  bool show_locations_[kFindLocations];
 
-  wxStaticText* location_label_;
-  wxTextCtrl* line_range_text_ctrl_;  // For Current Page location.
-  wxTextCtrl* filters_text_ctrl_;  // For All Pages location.
-  wxTextCtrl* folders_text_ctrl_;  // For Folders location.
+  wxStaticText* folders_label_;
+  wxTextCtrl* folders_text_ctrl_;
+  ui::BitmapButton* add_folder_button_;
 
   ui::BitmapButton* location_button_;
   ui::BitmapToggleButton* use_regex_tbutton_;

@@ -7,7 +7,7 @@ namespace ui {
 IMPLEMENT_CLASS(BitmapButton, ButtonBase);
 
 BitmapButton::BitmapButton(SharedButtonStyle style)
-    : ButtonBase(style) {
+    : ButtonBase(style), user_best_size_(wxDefaultSize) {
 }
 
 BitmapButton::~BitmapButton() {
