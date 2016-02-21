@@ -36,9 +36,11 @@ bool SaveBuffer(editor::TextBuffer* buffer, wxWindow* parent) {
 }
 
 bool SaveBufferAs(editor::TextBuffer* buffer, wxWindow* parent) {
+  wxString default_dir = buffer->file_path();
+
   wxFileDialog file_dialog(parent,
                            kTrSaveFileAs,
-                           wxEmptyString,
+                           default_dir,
                            buffer->file_name(),
                            wxFileSelectorDefaultWildcardStr,  // "*.*", all files.
                            wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
