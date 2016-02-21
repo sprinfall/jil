@@ -520,7 +520,7 @@ bool App::ReloadTheme(const wxString& theme_name) {
   wxString theme_file = ResourceFile(kThemeDir, theme_name + kCfgExt);
 
   if (!LoadThemeFile(theme_file, theme_, style_)) {
-    ErrorMsg(kTrFailedToLoad + kSpaceStr + theme_file);
+    ShowError(wxString::Format(kTrCfgFileLoadFail, theme_file));
     return false;
   }
 
@@ -615,7 +615,7 @@ bool App::InitIpc() {
     server_ = new Server;
     if (!server_->Create(kIpcService)) {
       wxDELETE(server_);
-      ErrorMsg(_("Failed to create an IPC service!"));
+      ShowError(_("Cannot create IPC service!"));
       return false;
     }
     return true;
@@ -632,7 +632,7 @@ bool App::InitIpc() {
     connection->Disconnect();
     delete connection;
   } else {
-    ErrorMsg(_("Failed to connect to the existing instance. Any modal dialogs opened?"));
+    ShowError(_("Cannot connect to the existing instance. Any modal dialogs opened?"));
   }
 
   delete client;
@@ -647,7 +647,7 @@ void App::LoadStatusFields() {
 
   Config config;
   if (!config.Load(status_fields_file)) {
-    ErrorMsg(kTrFailedToLoad + kSpaceStr + status_fields_file);
+    ShowError(wxString::Format(kTrCfgFileLoadFail, status_fields_file));
     return;
   }
 
@@ -672,7 +672,7 @@ void App::LoadOptions() {
   }
 
   if (!LoadGlobalOptionsFile(global_options_file, &options_)) {
-    ErrorMsg(kTrFailedToLoad + kSpaceStr + global_options_file);
+    ShowError(wxString::Format(kTrCfgFileLoadFail, global_options_file));
   }
 
   wxString editor_options_file = ResourceFile(kFtPluginDir, wxT("__default"), kOptionsFile);
@@ -692,7 +692,7 @@ bool App::LoadTheme() {
   }
 
   if (theme_names_.empty()) {
-    ErrorMsg(_("No theme is installed!"));
+    ShowError(_("No theme is installed!"));
     return false;
   }
 
@@ -708,7 +708,7 @@ bool App::LoadTheme() {
   wxString theme_file = ResourceFile(kThemeDir, theme_name + kCfgExt);
 
   if (!LoadThemeFile(theme_file, theme_, style_)) {
-    ErrorMsg(kTrFailedToLoad + kSpaceStr + theme_file);
+    ShowError(wxString::Format(kTrCfgFileLoadFail, theme_file));
     return false;
   }
 
@@ -866,7 +866,7 @@ bool App::LoadBinding() {
   // Always load default binding.
   wxString binding_file = ResourceFile(kBindingFile);
   if (!binding_config.Load(binding_file)) {
-    ErrorMsg(kTrFailedToLoad + kSpaceStr + binding_file);
+    ShowError(wxString::Format(kTrCfgFileLoadFail, binding_file));
     return false;
   }
 
@@ -891,7 +891,7 @@ bool App::LoadFileTypes() {
   wxString ft_file = path::ResourceDir() + kFileTypesFile;
 
   if (!LoadFtConfigFile(ft_file, ext_ft_map_, file_types_, internal_file_types_)) {
-    ErrorMsg(kTrFailedToLoad + kSpaceStr + ft_file);
+    ShowError(wxString::Format(kTrCfgFileLoadFail, ft_file));
     return false;
   }
 

@@ -372,13 +372,15 @@ private:
   TextPage* DoOpenFile(const wxFileName& fn_object,
                        bool active,
                        bool silent,
-                       bool* new_opened = NULL);
+                       bool update_recent_files,
+                       bool update_recent_files_menu);
 
   void DoSaveBuffer(editor::TextBuffer* buffer);
 
   //----------------------------------------------------------------------------
 
-  void AddRecentFile(const wxString& recent_file);
+  void AddRecentFile(const wxString& recent_file, bool update_menu);
+  void RemoveRecentFile(const wxString& recent_file, bool update_menu);
 
 private:
   Options* options_;

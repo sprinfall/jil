@@ -44,7 +44,10 @@ wxString ResourceDir();
 
 }  // namespace path
 
-void ErrorMsg(const wxString& msg, wxWindow* parent = NULL);
+// wxMessageBox wrappers.
+void ShowInfo(const wxString& msg, wxWindow* parent = NULL);
+void ShowWarning(const wxString& msg, wxWindow* parent = NULL);
+void ShowError(const wxString& msg, wxWindow* parent = NULL);
 
 // Open file containing folder.
 void ExploreFile(const wxString& file_path);

@@ -21,6 +21,7 @@
 #include "editor/theme.h"
 
 #include "app/config.h"
+#include "app/defs.h"
 #include "app/ft_config.h"
 #include "app/option.h"
 #include "app/session.h"
@@ -35,19 +36,6 @@ class LuaRef;
 #if JIL_SINGLE_INSTANCE
 class wxSingleInstanceChecker;
 #endif
-
-// App name used for paths, config, and other places the user doesn't see.
-#if defined (__WXMSW__) || defined (__WXMAC__)
-#define kAppName wxT("Jil")
-#else
-#define kAppName wxT("jil")
-#endif
-
-// App name used in window titles, etc.
-#define kAppDisplayName wxT("Jil Text")
-
-// App version.
-#define kAppVersion wxT("0.1")
 
 namespace jil {
 

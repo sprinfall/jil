@@ -67,6 +67,7 @@ enum {
   ID_MENU_FILE_END,
 
   // Recent Files sub menu
+  // TODO: Add ID_MENU_FILE_CLEAR_RECENT_FILES
   ID_MENU_FILE_RECENT_FILE_0,
   // Recent file 1, 2, ..., 8.
   ID_MENU_FILE_RECENT_FILE_9 = ID_MENU_FILE_RECENT_FILE_0 + 9,

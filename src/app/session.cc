@@ -167,6 +167,8 @@ bool Session::Load(const wxString& file) {
 
   GetStringArray(root_setting, RECENT_FILES, &recent_files_);
 
+  // Filter out unexisted files.
+
   return true;
 }
 

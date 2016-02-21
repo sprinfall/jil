@@ -29,14 +29,10 @@
 // Plain text file type name.
 #define kTrPlainText          _("Plain Text")
 
-#define kTrError              _("Error")
-#define kTrWarning            _("Warning")
-
 #define kTrComingSoon         _("Coming soon...")
-#define kTrFailedToLoad       _("Failed to load:")
 
-#define kTrOpenFile           _("Open File")
-#define kTrFailedToOpenFile   _("Failed to open file! (%s)")
+#define kTrFileOpenFail       _("The file '%s' cannot be opened.")
+#define kTrCfgFileLoadFail    _("The config file '%s' cannot be loaded.")
 
 #if defined (__WXMSW__)
 #define kTrOptions            _("Options")
@@ -69,7 +65,7 @@
 
 #define kTrFileNew            _("&New")
 #if JIL_MULTIPLE_WINDOW
-#  define kTrFileNewFrame       _("New &Window")
+#  define kTrFileNewFrame     _("New &Window")
 #endif  // JIL_MULTIPLE_WINDOW
 #define kTrFileOpen           _("&Open")
 #define kTrFileClose          _("&Close")
@@ -107,7 +103,6 @@
 #define kTrViewShowNumber     _("Show &Line Number")
 #define kTrViewShowSpace      _("Show White &Space")
 #define kTrViewFullScreen     _("&Full Screen")
-
 
 // For find result page.
 #define kTrEditClearAll       _("C&lear All")

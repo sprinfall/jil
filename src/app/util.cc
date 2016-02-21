@@ -6,6 +6,7 @@
 #include "wx/msgdlg.h"
 #include "wx/stdpaths.h"
 
+#include "app/defs.h"
 #include "app/i18n_strings.h"
 
 //#if defined (__WXMAC__)
@@ -36,8 +37,16 @@ wxString ResourceDir() {
 
 } // namespace path
 
-void ErrorMsg(const wxString& msg, wxWindow* parent) {
-  wxMessageBox(msg, kTrError, wxOK | wxICON_ERROR | wxCENTRE);
+void ShowInfo(const wxString& msg, wxWindow* parent) {
+  wxMessageBox(msg, kAppDisplayName, wxOK | wxICON_INFORMATION | wxCENTRE, parent);
+}
+
+void ShowWarning(const wxString& msg, wxWindow* parent) {
+  wxMessageBox(msg, kAppDisplayName, wxOK | wxICON_WARNING | wxCENTRE, parent);
+}
+
+void ShowError(const wxString& msg, wxWindow* parent) {
+  wxMessageBox(msg, kAppDisplayName, wxOK | wxICON_ERROR | wxCENTRE, parent);
 }
 
 void ExploreFile(const wxString& file_path) {
