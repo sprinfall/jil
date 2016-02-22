@@ -72,6 +72,9 @@ public:
   // If the ft plugin doesn't exist, it will be created.
   editor::FtPlugin* GetFtPlugin(const editor::FileType& ft);
 
+  // Get ft plugin object by file extension.
+  editor::FtPlugin* GetFtPlugin(const wxString& ext);
+
   const std::vector<StatusBar::FieldInfo>& status_fields() const {
     return status_fields_;
   }

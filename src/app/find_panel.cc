@@ -2,6 +2,8 @@
 
 #include "wx/button.h"
 #include "wx/combobox.h"
+#include "wx/dirdlg.h"
+#include "wx/filename.h"
 #include "wx/log.h"
 #include "wx/menu.h"
 #include "wx/sizer.h"
@@ -16,6 +18,7 @@
 
 #include "editor/text_buffer.h"
 
+#include "app/book_frame.h"
 #include "app/id.h"
 #include "app/session.h"
 #include "app/skin.h"
@@ -29,7 +32,7 @@
 #define kTrAllPages           _("All Pages")
 #define kTrFolders            _("Folders")
 
-#define kTrLocation           _("Show location panel")
+#define kTrLocation           _("Choose location")
 #define kTrUseRegex           _("Use regular expression")
 #define kTrCaseSensitive      _("Case sensitive")
 #define kTrMatchWord          _("Match whole word")
@@ -43,6 +46,8 @@ namespace jil {
 
 const int kPaddingX = 5;
 const int kPaddingY = 2;
+
+static const wxChar kFolderSp = wxT(';');
 
 DEFINE_EVENT_TYPE(kFindPanelEvent)
 
@@ -58,6 +63,8 @@ EVT_MENU(ID_FP_MENU_ALL_PAGES, FindPanel::OnMenuAllPages)
 EVT_MENU(ID_FP_MENU_FOLDERS, FindPanel::OnMenuFolders)
 
 EVT_BUTTON(ID_FP_LOCATION_BUTTON, FindPanel::OnLocationButtonClick)
+EVT_BUTTON(ID_FP_ADD_FOLDER_BUTTON, FindPanel::OnAddFolderButtonClick)
+
 EVT_TOGGLEBUTTON(ID_FP_USE_REGEX_TBUTTON, FindPanel::OnUseRegexToggle)
 EVT_TOGGLEBUTTON(ID_FP_CASE_SENSITIVE_TBUTTON, FindPanel::OnCaseSensitiveToggle)
 EVT_TOGGLEBUTTON(ID_FP_MATCH_WORD_TBUTTON, FindPanel::OnMatchWordToggle)
@@ -67,36 +74,38 @@ EVT_BUTTON(ID_FP_FIND_ALL_BUTTON, FindPanel::OnFindAll)
 EVT_BUTTON(ID_FP_REPLACE_BUTTON, FindPanel::OnReplace)
 EVT_BUTTON(ID_FP_REPLACE_ALL_BUTTON, FindPanel::OnReplaceAll)
 
-EVT_BUTTON(ID_FP_ADD_FOLDER_BUTTON, FindPanel::OnAddFolder)
-
 EVT_TEXT(ID_FP_FIND_COMBOBOX, FindPanel::OnFindText)
 EVT_TEXT_ENTER(ID_FP_FIND_COMBOBOX, FindPanel::OnFindTextEnter)
 END_EVENT_TABLE()
 
 FindPanel::FindPanel()
-    : session_(NULL)
+    : book_frame_(NULL)
+    , session_(NULL)
     , mode_(kFindMode)
     , flags_(0)
     , location_(kCurrentPage) {
 }
 
 FindPanel::FindPanel(Session* session, int mode)
-    : session_(session)
+    : book_frame_(NULL)
+    , session_(session)
     , mode_(mode)
     , flags_(0)
     , location_(kCurrentPage) {
 }
 
-bool FindPanel::Create(wxWindow* parent, wxWindowID id) {
+bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   assert(theme_);
   assert(session_ != NULL);
+
+  book_frame_ = book_frame;
 
   // Restore find options from session.
   flags_ = session_->find_flags();
 
   //location_ = session_->find_location();
 
-  if (!wxPanel::Create(parent, id)) {
+  if (!wxPanel::Create(book_frame, id)) {
     return false;
   }
 
@@ -239,6 +248,12 @@ void FindPanel::OnMenuAllPages(wxCommandEvent& evt) {
 
 void FindPanel::OnMenuFolders(wxCommandEvent& evt) {
   SetLocation(kFolders);
+
+  // Add current working dir.
+  if (folders_text_ctrl_->GetValue().IsEmpty()) {
+    wxString cwd = wxGetCwd();
+    folders_text_ctrl_->SetValue(cwd);
+  }
 }
 
 void FindPanel::SetFindString(const wxString& find_string) {
@@ -265,6 +280,16 @@ void FindPanel::OnLocationButtonClick(wxCommandEvent& evt) {
   PopupMenu(&menu, ScreenToClient(wxGetMousePosition()));
 }
 
+void FindPanel::OnAddFolderButtonClick(wxCommandEvent& evt) {
+  wxString default_path = wxGetCwd();
+  long style = wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST;
+  wxDirDialog dlg(this, wxDirSelectorPromptStr, default_path, style);
+
+  if (dlg.ShowModal() == wxID_OK) {
+    AddFolder(dlg.GetPath());
+  }
+}
+
 void FindPanel::OnUseRegexToggle(wxCommandEvent& evt) {
   flags_ = SetBit(flags_, kFind_UseRegex, evt.IsChecked());
 }
@@ -278,11 +303,35 @@ void FindPanel::OnMatchWordToggle(wxCommandEvent& evt) {
 }
 
 void FindPanel::OnFind(wxCommandEvent& evt) {
-  HandleFind(false);
+  if (location_ == kCurrentPage) {
+    HandleFind();
+  }
 }
 
 void FindPanel::OnFindAll(wxCommandEvent& evt) {
-  HandleFind(true);
+  wxString find_str = find_combobox_->GetValue();
+  if (find_str.IsEmpty()) {
+    return;
+  }
+
+  AddFindString(find_str);
+
+  std::wstring str = find_str.ToStdWstring();
+
+  if (location_ == kCurrentPage) {
+    book_frame_->FindAllInActivePage(str, flags_);
+
+  } else if (location_ == kAllPages) {
+    book_frame_->FindAllInAllPages(str, flags_);
+
+  } else if (location_ == kFolders) {
+    wxString folders_str = folders_text_ctrl_->GetValue();
+    folders_str.Trim(true).Trim(false);
+    if (!folders_str.IsEmpty()) {
+      wxArrayString folders = wxSplit(folders_str, kFolderSp);
+      book_frame_->FindAllInFolders(str, flags_, folders);
+    }
+  }
 }
 
 void FindPanel::OnReplace(wxCommandEvent& evt) {
@@ -293,29 +342,32 @@ void FindPanel::OnReplaceAll(wxCommandEvent& evt) {
   HandleReplace(true);
 }
 
-void FindPanel::OnAddFolder(wxCommandEvent& evt) {
-
-}
-
 void FindPanel::OnFindText(wxCommandEvent& evt) {
-  wxString find_str = find_combobox_->GetValue();
-  // Post event even if the find string is empty so that the previous matching
-  // results can be cleared.
-  PostEvent(kFindStrEvent, find_str, wxEmptyString);
+  if (location_ == kCurrentPage) {
+    wxString find_str = find_combobox_->GetValue();
+    // Post event even if the find string is empty so that the previous matching
+    // results can be cleared.
+    PostEvent(kFindStrEvent, find_str, wxEmptyString);
+  }
 }
 
 void FindPanel::OnFindTextEnter(wxCommandEvent& evt) {
-  HandleFind(false);
+  if (location_ == kCurrentPage) {
+    HandleFind();
+  }
 }
 
-void FindPanel::HandleFind(bool all) {
-  wxString find_str = find_combobox_->GetValue();
-  if (!find_str.IsEmpty()) {
-    AddFindString(find_str);
+void FindPanel::HandleFind() {
+  assert(location_ == kCurrentPage);
 
-    int event_type = all ? kFindAllEvent : kFindEvent;
-    PostEvent(event_type, find_str, wxEmptyString);
+  wxString find_str = find_combobox_->GetValue();
+  if (find_str.IsEmpty()) {
+    return;
   }
+
+  AddFindString(find_str);
+
+  book_frame_->FindInActivePage(find_str.ToStdWstring(), flags_);
 }
 
 void FindPanel::HandleReplace(bool all) {
@@ -357,6 +409,34 @@ void FindPanel::InitReplaceComboBox() {
   if (!replace_combobox_->IsListEmpty()) {
     replace_combobox_->Select(0);
   }
+}
+
+// TODO: If a folder includes another folder...
+void FindPanel::AddFolder(const wxString& folder) {
+  wxString folders_str = folders_text_ctrl_->GetValue();
+  folders_str.Trim(true).Trim(false);
+
+  if (!folders_str.IsEmpty()) {
+    wxArrayString folders = wxSplit(folders_str, kFolderSp);
+
+    // Check if the folder already exists.
+    size_t count = folders.GetCount();
+    wxFileName new_fn = wxFileName::DirName(folder);
+    for (size_t i = 0; i < count; ++i) {
+      wxFileName fn = wxFileName::DirName(folders[i]);
+      if (fn.IsOk() && fn == new_fn) {
+        return;
+      }
+    }
+  }
+
+  if (!folders_str.IsEmpty() && !folders_str.EndsWith(wxT(";"))) {
+    folders_str += kFolderSp;
+  }
+
+  folders_str += folder;
+
+  folders_text_ctrl_->SetValue(folders_str);
 }
 
 void FindPanel::AddFindString(const wxString& string) {

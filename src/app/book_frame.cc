@@ -536,6 +536,294 @@ editor::TextBuffer* BookFrame::ActiveBuffer() const {
 }
 
 //------------------------------------------------------------------------------
+// Find & Replace
+
+// TODO: Rename and compare with FindInActivePage
+void BookFrame::HandleFindStrChange(const std::wstring& str, int flags) {
+  TextPage* text_page = ActiveTextPage();
+  if (text_page == NULL) {
+    return;
+  }
+
+  if (str.empty()) {
+    // Find string changes to empty, clear find result.
+    text_page->ClearFindResult();
+    return;
+  }
+
+  editor::TextPoint point = text_page->caret_point();
+  if (!text_page->selection().IsEmpty()) {
+    point = text_page->selection().begin();
+  }
+
+  editor::TextRange find_result = Find(text_page, str, point, flags, true);
+  SetFindResult(text_page, find_result, true);
+}
+
+void BookFrame::FindInActivePage(const std::wstring& str, int flags) {
+  TextPage* text_page = ActiveTextPage();
+  if (text_page == NULL) {
+    return;
+  }
+
+  editor::TextPoint point = text_page->caret_point();
+
+  if (GetBit(flags, kFind_Reversely)) {
+    // If there's any selected text, it might be the last find result. We don't
+    // check it (for simplicity). But the find start point has to be adjusted,
+    // otherwise the find result will always be this selected text.
+    if (!text_page->selection().IsEmpty()) {
+      point = text_page->selection().begin();
+    }
+  }
+
+  editor::TextRange find_result = Find(text_page, str, point, flags, true);
+
+  if (!find_result.IsEmpty()) {
+    if (find_result == text_page->find_result() && !text_page->inc_find()) {
+      // The find result is the same as last time.
+      // TODO: Display a message on status bar.
+    }
+  }
+
+  SetFindResult(text_page, find_result, false);
+}
+
+//void BookFrame::FindInAllPages(const std::wstring& str, int flags) {
+//  using namespace editor;
+//
+//  TextPage* text_page = text_book_->ActiveTextPage();
+//  if (text_page == NULL) {
+//    return;
+//  }
+//
+//  // Find in active text page.
+//  TextRange result_range = Find(text_page, str, text_page->caret_point(), flags, false);
+//
+//  if (!result_range.IsEmpty()) {
+//    SelectFindResult(text_page, result_range);
+//    return;
+//  }
+//
+//  TextPage* start_text_page = text_page;
+//
+//  do {
+//    // Go to next page.
+//    text_page = AsTextPage(text_book_->NextPage(text_page));
+//    if (text_page == NULL) {
+//      break;
+//    }
+//
+//    if (text_page == start_text_page) {
+//      // Back to the start page.
+//      result_range = Find(text_page, str, kPointBegin, flags, false);
+//      break;
+//    }
+//
+//    result_range = Find(text_page, str, kPointBegin, flags, false);
+//
+//  } while (result_range.IsEmpty());
+//
+//  if (result_range.IsEmpty()) {
+//    return;  // No match
+//  }
+//
+//  if (text_page == start_text_page) {
+//    return;
+//  }
+//
+//  // Activate the text page where the match is found.
+//  text_book_->ActivatePage(text_page);
+//
+//  SelectFindResult(text_page, result_range);
+//}
+
+void BookFrame::ReplaceInActivePage(const std::wstring& str,
+                                    const std::wstring& replace_str,
+                                    int flags) {
+  using namespace editor;
+
+  TextPage* text_page = ActiveTextPage();
+  if (text_page == NULL) {
+    return;
+  }
+
+  // Backup the selection.
+  Selection selection = text_page->selection();
+
+  TextPoint point = text_page->caret_point();
+
+  // If there's any selected text, the find start point has to be adjusted to
+  // the begin point of the selection.
+  if (!selection.IsEmpty()) {
+    point = selection.begin();
+  }
+
+  TextRange result_range = Find(text_page, str, point, flags, true);
+  if (result_range.IsEmpty()) {
+    return;
+  }
+
+  // If the find result is not the current selection, select it.
+  // TODO: Rect selection.
+  if (result_range != selection.range) {
+    SelectFindResult(text_page, result_range);
+    return;
+  }
+
+  // The find result is the current selection, replace it.
+  text_page->ClearSelection();
+
+  bool grouped = !replace_str.empty();
+  text_page->DeleteSelection(grouped, false);
+  if (!replace_str.empty()) {
+    text_page->InsertString(result_range.point_begin(), replace_str, grouped, false);
+  }
+
+  // Go to next match.
+  point = text_page->caret_point();
+  result_range = Find(text_page, str, point, flags, true);
+  if (!result_range.IsEmpty()) {
+    SelectFindResult(text_page, result_range);
+  }
+}
+
+void BookFrame::ReplaceAllInActivePage(const std::wstring& str,
+                                       const std::wstring& replace_str,
+                                       int flags) {
+  using namespace editor;
+
+  TextPage* text_page = ActiveTextPage();
+  if (text_page == NULL) {
+    return;
+  }
+
+  TextBuffer* buffer = text_page->buffer();
+
+  bool use_regex = GetBit(flags, kFind_UseRegex);
+  bool case_sensitive = GetBit(flags, kFind_CaseSensitive);
+  bool match_word = GetBit(flags, kFind_MatchWord);
+
+  TextRange source_range = buffer->range();
+  TextRange result_range;
+
+  size_t count = 0;
+
+  while (true) {
+    result_range = buffer->FindString(str,
+                                      source_range,
+                                      use_regex,
+                                      case_sensitive,
+                                      match_word,
+                                      false);
+
+    if (result_range.IsEmpty()) {
+      break;
+    }
+
+    if (count == 0) {
+      text_page->Exec(new GroupAction(text_page->buffer()));
+    }
+
+    ++count;
+
+    text_page->DeleteRange(result_range, kForward, false, false, false, false);
+    if (!replace_str.empty()) {
+      text_page->InsertString(result_range.point_begin(), replace_str, false, false);
+    }
+
+    // Update source range and find next.
+    TextPoint point_begin = result_range.point_begin();
+    point_begin.x += CoordCast(replace_str.length());
+    source_range.Set(point_begin, source_range.point_end());
+  }
+
+  if (count > 0) {
+    text_page->Exec(new GroupAction(text_page->buffer()));
+  }
+}
+
+void BookFrame::FindAllInActivePage(const std::wstring& str, int flags) {
+  FindResultPage* fr_page = GetFindResultPage(true);
+  ClearFindAllResult(fr_page);
+
+  TextPage* text_page = ActiveTextPage();
+  if (text_page != NULL) {
+    FindAll(str, text_page->buffer(), flags, fr_page);
+  }
+
+  // Reset caret point.
+  fr_page->UpdateCaretPoint(kPointBegin, false, true, false);
+
+  ActivateToolPage(fr_page);
+}
+
+void BookFrame::FindAllInAllPages(const std::wstring& str, int flags) {
+  FindResultPage* fr_page = GetFindResultPage(true);
+  ClearFindAllResult(fr_page);
+
+  std::vector<TextPage*> text_pages = text_book_->TextPages();
+  for (size_t i = 0; i < text_pages.size(); ++i) {
+    FindAll(str, text_pages[i]->buffer(), flags, fr_page);
+  }
+
+  // Reset caret point.
+  fr_page->UpdateCaretPoint(kPointBegin, false, true, false);
+
+  ActivateToolPage(fr_page);
+}
+
+void BookFrame::FindAllInFolders(const std::wstring& str,
+                                 int flags,
+                                 const wxArrayString& folders) {
+  FindResultPage* fr_page = GetFindResultPage(true);
+  ClearFindAllResult(fr_page);
+
+  size_t folders_count = folders.GetCount();
+  for (size_t i = 0; i < folders_count; ++i) {
+    wxString folder = folders[i];
+
+    if (!wxDir::Exists(folder)) {
+      continue;
+    }
+
+    wxArrayString files;
+    int flags = wxDIR_FILES | wxDIR_DIRS;
+    wxDir::GetAllFiles(folder, &files, wxEmptyString, flags);
+
+    if (files.IsEmpty()) {
+      continue;
+    }
+
+    size_t files_count = files.GetCount();
+    for (size_t j = 0; j < files_count; ++j) {
+      wxString file = files[j];  // Full file path.
+
+      wxFileName fn(file);
+      TextPage* text_page = TextPageByFileName(fn);
+
+      if (text_page != NULL) {
+        FindAll(str, text_page->buffer(), flags, fr_page);
+      } else {
+        // Create the buffer for this file.
+        // TODO: Disable lex, ftplugin, ...
+        editor::TextBuffer* buffer = CreateBuffer(fn);
+        if (buffer != NULL) {
+          FindAll(str, buffer, flags, fr_page);
+
+          wxDELETE(buffer);
+        }
+      }
+    }
+  }
+
+  // Reset caret point.
+  fr_page->UpdateCaretPoint(kPointBegin, false, true, false);
+
+  ActivateToolPage(fr_page);
+}
+
+//------------------------------------------------------------------------------
 
 void BookFrame::OnSize(wxSizeEvent& evt) {
   if (GetClientSize().x < editor::kUnreadyWindowSize) {
@@ -1699,29 +1987,29 @@ void BookFrame::OnFindPanelEvent(FindPanelEvent& evt) {
     return;
   }
 
-  FindLocation location = evt.location();
+  //FindLocation location = evt.location();
 
-  switch (event_type) {
-    case FindPanel::kFindStrEvent:
-      HandleFindStrChange(evt.find_str(), evt.flags());
-      break;
+  //switch (event_type) {
+  //  case FindPanel::kFindStrEvent:
+  //    HandleFindStrChange(evt.find_str(), evt.flags());
+  //    break;
 
-    case FindPanel::kFindEvent:
-      HandleFind(evt.find_str(), evt.flags(), location);
-      break;
+  //  case FindPanel::kFindEvent:
+  //    HandleFind(evt.find_str(), evt.flags(), location);
+  //    break;
 
-    case FindPanel::kFindAllEvent:
-      HandleFindAll(evt.find_str(), evt.flags(), location);
-      break;
+  //  case FindPanel::kFindAllEvent:
+  //    HandleFindAll(evt.find_str(), evt.flags(), location);
+  //    break;
 
-    case FindPanel::kReplaceEvent:
-      ReplaceInActivePage(evt.find_str(), evt.replace_str(), evt.flags());
-      break;
+  //  case FindPanel::kReplaceEvent:
+  //    ReplaceInActivePage(evt.find_str(), evt.replace_str(), evt.flags());
+  //    break;
 
-    case FindPanel::kReplaceAllEvent:
-      ReplaceAllInActivePage(evt.find_str(), evt.replace_str(), evt.flags());
-      break;
-  }
+  //  case FindPanel::kReplaceAllEvent:
+  //    ReplaceAllInActivePage(evt.find_str(), evt.replace_str(), evt.flags());
+  //    break;
+  //}
 }
 
 FindResultPage* BookFrame::GetFindResultPage(bool create) {
@@ -1814,280 +2102,34 @@ BookPage* BookFrame::GetCurrentPage() {
 //------------------------------------------------------------------------------
 // Find & Replace
 
-void BookFrame::HandleFindStrChange(const std::wstring& str, int flags) {
-  TextPage* text_page = ActiveTextPage();
-  if (text_page == NULL) {
-    return;
-  }
-
-  if (str.empty()) {
-    // Find string changes to empty, clear find result.
-    text_page->ClearFindResult();
-    return;
-  }
-
-  editor::TextPoint point = text_page->caret_point();
-  if (!text_page->selection().IsEmpty()) {
-    point = text_page->selection().begin();
-  }
-
-  editor::TextRange find_result = Find(text_page, str, point, flags, true);
-  SetFindResult(text_page, find_result, true);
-}
-
-void BookFrame::HandleFind(const std::wstring& str,
-                           int flags,
-                           FindLocation location) {
-  find_str_ = str;
-  find_flags_ = flags & (~kFind_Reversely);
-
-  if (location == kCurrentPage) {
-    FindInActivePage(str, flags);
-  } else if (location == kAllPages) {
-    FindInAllPages(str, flags);
-  }
-}
-
-void BookFrame::HandleFindAll(const std::wstring& str,
-                              int flags,
-                              FindLocation location) {
-  find_str_ = str;
-  find_flags_ = flags & (~kFind_Reversely);
-
-  if (location == kCurrentPage) {
-    FindAllInActivePage(str, flags);
-  } else if (location == kAllPages) {
-    FindAllInAllPages(str, flags);
-  }
-
-  // TODO: Close find panel after find all?
-  //CloseFindPanel();
-}
-
-void BookFrame::FindInActivePage(const std::wstring& str, int flags) {
-  TextPage* text_page = ActiveTextPage();
-  if (text_page == NULL) {
-    return;
-  }
-
-  editor::TextPoint point = text_page->caret_point();
-
-  if (GetBit(flags, kFind_Reversely)) {
-    // If there's any selected text, it might be the last find result. We don't
-    // check it (for simplicity). But the find start point has to be adjusted,
-    // otherwise the find result will always be this selected text.
-    if (!text_page->selection().IsEmpty()) {
-      point = text_page->selection().begin();
-    }
-  }
-
-  editor::TextRange find_result = Find(text_page, str, point, flags, true);
-
-  if (!find_result.IsEmpty()) {
-    if (find_result == text_page->find_result() && !text_page->inc_find()) {
-      // The find result is the same as last time.
-      // TODO: Display a message on status bar.
-    }
-  }
-
-  SetFindResult(text_page, find_result, false);
-}
-
-void BookFrame::FindInAllPages(const std::wstring& str, int flags) {
-  using namespace editor;
-
-  TextPage* text_page = text_book_->ActiveTextPage();
-  if (text_page == NULL) {
-    return;
-  }
-
-  // Find in active text page.
-  TextRange result_range = Find(text_page, str, text_page->caret_point(), flags, false);
-
-  if (!result_range.IsEmpty()) {
-    SelectFindResult(text_page, result_range);
-    return;
-  }
-
-  TextPage* start_text_page = text_page;
-
-  do {
-    // Go to next page.
-    text_page = AsTextPage(text_book_->NextPage(text_page));
-    if (text_page == NULL) {
-      break;
-    }
-
-    if (text_page == start_text_page) {
-      // Back to the start page.
-      result_range = Find(text_page, str, kPointBegin, flags, false);
-      break;
-    }
-
-    result_range = Find(text_page, str, kPointBegin, flags, false);
-
-  } while (result_range.IsEmpty());
-
-  if (result_range.IsEmpty()) {
-    return;  // No match
-  }
-
-  if (text_page == start_text_page) {
-    return;
-  }
-
-  // Activate the text page where the match is found.
-  text_book_->ActivatePage(text_page);
-
-  SelectFindResult(text_page, result_range);
-}
-
-void BookFrame::FindAllInActivePage(const std::wstring& str, int flags) {
-  FindResultPage* fr_page = GetFindResultPage(true);
-
-  // Clear previous result.
-  editor::TextRange range = fr_page->buffer()->range();
-  if (!range.IsEmpty()) {
-    fr_page->buffer()->DeleteText(range);
-  }
-  fr_page->buffer()->Line(1)->set_id(editor::kNpos);  // Clear line ID
-
-  TextPage* text_page = ActiveTextPage();
-  if (text_page != NULL) {
-    FindAll(str, text_page->buffer(), flags, fr_page);
-  }
-
-  // Reset caret point.
-  fr_page->UpdateCaretPoint(kPointBegin, false, true, false);
-
-  ActivateToolPage(fr_page);
-}
-
-void BookFrame::FindAllInAllPages(const std::wstring& str, int flags) {
-  FindResultPage* fr_page = GetFindResultPage(true);
-
-  // Clear previous result.
-  editor::TextRange range = fr_page->buffer()->range();
-  if (!range.IsEmpty()) {
-    fr_page->buffer()->DeleteText(range);
-  }
-  fr_page->buffer()->Line(1)->set_id(editor::kNpos);  // Clear line ID
-
-  std::vector<TextPage*> text_pages = text_book_->TextPages();
-  for (size_t i = 0; i < text_pages.size(); ++i) {
-    FindAll(str, text_pages[i]->buffer(), flags, fr_page);
-  }
-
-  // Reset caret point.
-  fr_page->UpdateCaretPoint(kPointBegin, false, true, false);
-
-  ActivateToolPage(fr_page);
-}
-
-void BookFrame::ReplaceInActivePage(const std::wstring& str,
-                                    const std::wstring& replace_str,
-                                    int flags) {
-  using namespace editor;
-
-  TextPage* text_page = ActiveTextPage();
-  if (text_page == NULL) {
-    return;
-  }
-
-  // Backup the selection.
-  Selection selection = text_page->selection();
-
-  TextPoint point = text_page->caret_point();
-
-  // If there's any selected text, the find start point has to be adjusted to
-  // the begin point of the selection.
-  if (!selection.IsEmpty()) {
-    point = selection.begin();
-  }
-
-  TextRange result_range = Find(text_page, str, point, flags, true);
-  if (result_range.IsEmpty()) {
-    return;
-  }
-
-  // If the find result is not the current selection, select it.
-  // TODO: Rect selection.
-  if (result_range != selection.range) {
-    SelectFindResult(text_page, result_range);
-    return;
-  }
-
-  // The find result is the current selection, replace it.
-  text_page->ClearSelection();
-
-  bool grouped = !replace_str.empty();
-  text_page->DeleteSelection(grouped, false);
-  if (!replace_str.empty()) {
-    text_page->InsertString(result_range.point_begin(), replace_str, grouped, false);
-  }
-
-  // Go to next match.
-  point = text_page->caret_point();
-  result_range = Find(text_page, str, point, flags, true);
-  if (!result_range.IsEmpty()) {
-    SelectFindResult(text_page, result_range);
-  }
-}
-
-void BookFrame::ReplaceAllInActivePage(const std::wstring& str,
-                                       const std::wstring& replace_str,
-                                       int flags) {
-  using namespace editor;
-
-  TextPage* text_page = ActiveTextPage();
-  if (text_page == NULL) {
-    return;
-  }
-
-  TextBuffer* buffer = text_page->buffer();
-
-  bool use_regex = GetBit(flags, kFind_UseRegex);
-  bool case_sensitive = GetBit(flags, kFind_CaseSensitive);
-  bool match_word = GetBit(flags, kFind_MatchWord);
-
-  TextRange source_range = buffer->range();
-  TextRange result_range;
-
-  size_t count = 0;
-
-  while (true) {
-    result_range = buffer->FindString(str,
-                                      source_range,
-                                      use_regex,
-                                      case_sensitive,
-                                      match_word,
-                                      false);
-
-    if (result_range.IsEmpty()) {
-      break;
-    }
-
-    if (count == 0) {
-      text_page->Exec(new GroupAction(text_page->buffer()));
-    }
-
-    ++count;
-
-    text_page->DeleteRange(result_range, kForward, false, false, false, false);
-    if (!replace_str.empty()) {
-      text_page->InsertString(result_range.point_begin(), replace_str, false, false);
-    }
-
-    // Update source range and find next.
-    TextPoint point_begin = result_range.point_begin();
-    point_begin.x += CoordCast(replace_str.length());
-    source_range.Set(point_begin, source_range.point_end());
-  }
-
-  if (count > 0) {
-    text_page->Exec(new GroupAction(text_page->buffer()));
-  }
-}
+//void BookFrame::HandleFind(const std::wstring& str,
+//                           int flags,
+//                           FindLocation location) {
+//  find_str_ = str;
+//  find_flags_ = flags & (~kFind_Reversely);
+//
+//  if (location == kCurrentPage) {
+//    FindInActivePage(str, flags);
+//  } else if (location == kAllPages) {
+//    FindInAllPages(str, flags);
+//  }
+//}
+//
+//void BookFrame::HandleFindAll(const std::wstring& str,
+//                              int flags,
+//                              FindLocation location) {
+//  find_str_ = str;
+//  find_flags_ = flags & (~kFind_Reversely);
+//
+//  if (location == kCurrentPage) {
+//    FindAllInActivePage(str, flags);
+//  } else if (location == kAllPages) {
+//    FindAllInAllPages(str, flags);
+//  }
+//
+//  // TODO: Close find panel after find all?
+//  //CloseFindPanel();
+//}
 
 editor::TextRange BookFrame::Find(TextPage* text_page,
                                   const std::wstring& str,
@@ -2247,6 +2289,15 @@ void BookFrame::SetFindResult(TextPage* text_page,
     text_page->SetSelection(find_result, editor::kForward, false);
     text_page->UpdateCaretPoint(find_result.point_end(), false, true, false);
   }
+}
+
+void BookFrame::ClearFindAllResult(FindResultPage* fr_page) {
+  editor::TextRange range = fr_page->buffer()->range();
+  if (!range.IsEmpty()) {
+    fr_page->buffer()->DeleteText(range);
+  }
+
+  fr_page->buffer()->Line(1)->set_id(editor::kNpos);  // Clear line ID
 }
 
 //------------------------------------------------------------------------------
@@ -2647,6 +2698,19 @@ void BookFrame::SwitchStackPage(bool forward) {
 //------------------------------------------------------------------------------
 // File - Open, Save
 
+editor::TextBuffer* BookFrame::CreateBuffer(const wxFileName& fn) {
+  using namespace editor;
+
+  FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(fn.GetExt());
+
+  TextBuffer* buffer = TextBuffer::Create(NewBufferId(),
+                                          fn,
+                                          ft_plugin,
+                                          options_->cjk_filters,
+                                          options_->file_encoding);
+  return buffer;
+}
+
 TextPage* BookFrame::DoOpenFile(const wxString& file_name,
                                 bool active,
                                 bool silent,
@@ -2675,16 +2739,7 @@ TextPage* BookFrame::DoOpenFile(const wxFileName& fn,
       text_book_->ActivatePage(text_page);
     }
   } else {
-    App& app = wxGetApp();
-
-    const FileType& ft = app.FileTypeFromExt(fn.GetExt());
-    FtPlugin* ft_plugin = app.GetFtPlugin(ft);
-
-    TextBuffer* buffer = TextBuffer::Create(NewBufferId(),
-                                            fn,
-                                            ft_plugin,
-                                            options_->cjk_filters,
-                                            options_->file_encoding);
+    TextBuffer* buffer = CreateBuffer(fn);
     if (buffer == NULL) {
       if (!silent) {
         // Show error message only when it's not silent.

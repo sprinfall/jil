@@ -500,6 +500,10 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
   return ft_plugin;
 }
 
+editor::FtPlugin* App::GetFtPlugin(const wxString& ext) {
+  return GetFtPlugin(FileTypeFromExt(ext));
+}
+
 bool App::SaveUserGlobalOptions() {
   wxString options_file = UserDataFile(kOptionsFile);
   return SaveGlobalOptionsFile(options_file, options_);

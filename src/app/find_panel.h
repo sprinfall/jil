@@ -23,6 +23,7 @@ class Label;
 class TextButton;
 }  // namespace ui
 
+class BookFrame;
 class Session;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -149,7 +150,7 @@ public:
   FindPanel();
   FindPanel(Session* session, int mode);
 
-  bool Create(wxWindow* parent, wxWindowID id);
+  bool Create(BookFrame* book_frame, wxWindowID id);
 
   virtual ~FindPanel();
 
@@ -195,6 +196,7 @@ protected:
   void OnMenuFolders(wxCommandEvent& evt);
 
   void OnLocationButtonClick(wxCommandEvent& evt);
+  void OnAddFolderButtonClick(wxCommandEvent& evt);
 
   void OnUseRegexToggle(wxCommandEvent& evt);
   void OnCaseSensitiveToggle(wxCommandEvent& evt);
@@ -205,12 +207,10 @@ protected:
   void OnReplace(wxCommandEvent& evt);
   void OnReplaceAll(wxCommandEvent& evt);
 
-  void OnAddFolder(wxCommandEvent& evt);
-
   void OnFindText(wxCommandEvent& evt);
   void OnFindTextEnter(wxCommandEvent& evt);
 
-  void HandleFind(bool all);
+  void HandleFind();
   void HandleReplace(bool all);
 
 private:
@@ -219,6 +219,9 @@ private:
 
   // Initialize replace combobox with replace history.
   void InitReplaceComboBox();
+
+  // Append a folder to folders text ctrl.
+  void AddFolder(const wxString& folder);
 
   // Add a string to find history and find combobox.
   void AddFindString(const wxString& string);
@@ -251,6 +254,8 @@ private:
                  const wxString& replace_str);
 
 private:
+  BookFrame* book_frame_;
+
   editor::SharedTheme theme_;
   ui::SharedButtonStyle button_style_;
 

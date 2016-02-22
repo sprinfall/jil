@@ -126,6 +126,32 @@ public:
   TextPage* ActiveTextPage() const;
   editor::TextBuffer* ActiveBuffer() const;
 
+  //----------------------------------------------------------------------------
+  // Find & Replace
+
+  void HandleFindStrChange(const std::wstring& str, int flags);
+
+  // Find string in the active text page, select it and update the caret point.
+  void FindInActivePage(const std::wstring& str, int flags);
+
+  //void FindInAllPages(const std::wstring& str, int flags);
+
+  void ReplaceInActivePage(const std::wstring& str,
+                           const std::wstring& replace_str,
+                           int flags);
+
+  void ReplaceAllInActivePage(const std::wstring& str,
+                              const std::wstring& replace_str,
+                              int flags);
+
+  void FindAllInActivePage(const std::wstring& str, int flags);
+
+  void FindAllInAllPages(const std::wstring& str, int flags);
+
+  void FindAllInFolders(const std::wstring& str,
+                        int flags,
+                        const wxArrayString& folders);
+
 protected:
   void OnSize(wxSizeEvent& evt);
 
@@ -265,26 +291,8 @@ private:
   //----------------------------------------------------------------------------
   // Find & Replace
 
-  void HandleFindStrChange(const std::wstring& str, int flags);
-  void HandleFind(const std::wstring& str, int flags, FindLocation location);
-  void HandleFindAll(const std::wstring& str, int flags, FindLocation location);
-
-  // Find string in the active text page, select it and update the caret point.
-  void FindInActivePage(const std::wstring& str, int flags);
-
-  void FindInAllPages(const std::wstring& str, int flags);
-
-  void FindAllInActivePage(const std::wstring& str, int flags);
-
-  void FindAllInAllPages(const std::wstring& str, int flags);
-
-  void ReplaceInActivePage(const std::wstring& str,
-                           const std::wstring& replace_str,
-                           int flags);
-
-  void ReplaceAllInActivePage(const std::wstring& str,
-                              const std::wstring& replace_str,
-                              int flags);
+  //void HandleFind(const std::wstring& str, int flags, FindLocation location);
+  //void HandleFindAll(const std::wstring& str, int flags, FindLocation location);
 
   // Return the matched result range.
   editor::TextRange Find(TextPage* text_page,
@@ -310,6 +318,8 @@ private:
   void SetFindResult(TextPage* text_page,
                      const editor::TextRange& find_result,
                      bool incremental);
+
+  void ClearFindAllResult(FindResultPage* fr_page);
 
   //----------------------------------------------------------------------------
   // Menu
@@ -360,6 +370,9 @@ private:
 
   //----------------------------------------------------------------------------
   // File - Open, Save
+
+  // Create a buffer according to the given file name.
+  editor::TextBuffer* CreateBuffer(const wxFileName& fn_object);
 
   TextPage* DoOpenFile(const wxString& file_name,
                        bool active,
