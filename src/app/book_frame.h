@@ -33,6 +33,7 @@ class BookPage;
 class FindResultPage;
 class FindPanel;
 class FindPanelEvent;
+class PageWindow;
 class Session;
 class Splitter;
 class SplitNode;
@@ -134,8 +135,6 @@ public:
   // Find string in the active text page, select it and update the caret point.
   void FindInActivePage(const std::wstring& str, int flags);
 
-  //void FindInAllPages(const std::wstring& str, int flags);
-
   void ReplaceInActivePage(const std::wstring& str,
                            const std::wstring& replace_str,
                            int flags);
@@ -223,19 +222,19 @@ protected:
   void UpdateStatusFields();
 
   // Update status fields with the given text page.
-  void UpdateStatusCaret(TextPage* page, bool refresh);
-  void UpdateStatusTabOptions(TextPage* page, bool refresh);
-  void UpdateStatusEncoding(TextPage* page, bool refresh);
-  void UpdateStatusFileFormat(TextPage* page, bool refresh);
-  void UpdateStatusFileType(TextPage* page, bool refresh);
+  void UpdateStatusCaret(PageWindow* pw, bool refresh);
+  void UpdateStatusTabOptions(PageWindow* pw, bool refresh);
+  void UpdateStatusEncoding(PageWindow* pw, bool refresh);
+  void UpdateStatusFileFormat(PageWindow* pw, bool refresh);
+  void UpdateStatusFileType(PageWindow* pw, bool refresh);
 
   // Update title with the file path of the active text page.
   void UpdateTitleWithPath();
 
   // Example: "3/120, 27"
-  wxString GetStatusCaretString(TextPage* page) const;
+  wxString GetStatusCaretString(PageWindow* pw) const;
   // Example: "Tab: 4"
-  wxString GetStatusTabOptionsString(TextPage* page) const;
+  wxString GetStatusTabOptionsString(PageWindow* pw) const;
 
   // Handle events from text window.
   void OnTextWindowEvent(wxCommandEvent& evt);
@@ -279,13 +278,15 @@ protected:
   // Show tool book and activate the given page.
   void ActivateToolPage(BookPage* page);
 
+  // TODO
   // Get the page which has focus.
-  BookPage* GetFocusedPage();
+  //BookPage* GetFocusedPage();
 
+  // TODO
   // The focused page must be the current page, but the current page might
   // not be focused.
   // Only used by Save As.
-  BookPage* GetCurrentPage();
+  //BookPage* GetCurrentPage();
 
 private:
   //----------------------------------------------------------------------------
@@ -311,11 +312,11 @@ private:
   void FindAll(const std::wstring& str, editor::TextBuffer* buffer, int flags);
 
   // Select the result text range, update caret point and scroll to it if necessary.
-  void SelectFindResult(TextPage* text_page, const editor::TextRange& result_range);
+  void SelectFindResult(PageWindow* page_window, const editor::TextRange& result_range);
 
   // The find result won't be selected and the caret point won't be updated
   // if it's incremental.
-  void SetFindResult(TextPage* text_page,
+  void SetFindResult(PageWindow* page_window,
                      const editor::TextRange& find_result,
                      bool incremental);
 
@@ -356,9 +357,6 @@ private:
 
   //----------------------------------------------------------------------------
   // Text Page
-
-  // Create text page with the given buffer.
-  TextPage* CreateTextPage(editor::TextBuffer* buffer, wxWindow* parent, wxWindowID id);
 
   TextPage* TextPageByFileName(const wxFileName& fn_object) const;
 

@@ -2,50 +2,53 @@
 #define JIL_TEXT_PAGE_H_
 #pragma once
 
-// Text window as book page.
-
-#include <vector>
-#include "editor/text_window.h"
-#include "app/book_ctrl.h"
+#include "wx/string.h"
 
 namespace jil {
 
-////////////////////////////////////////////////////////////////////////////////
-
-class TextPage : public editor::TextWindow, public BookPage {
-  DECLARE_CLASS(TextPage)
+namespace editor {
+class TextBuffer;
+class TextView;
+}  // namespace editor
+ 
+class TextPage {
+public:
+  enum Flag {
+    kModified = 1,
+    kUntitled,
+  };
 
 public:
-  explicit TextPage(editor::TextBuffer* buffer);
-  virtual ~TextPage();
+  TextPage(editor::TextBuffer* buffer);
+  ~TextPage();
 
-  // OVERRIDE of BookPage:
-  virtual wxWindow* Page_Window() override { return this; }
-  virtual void Page_Activate(bool active) override;
-  virtual void Page_Close() override;
-  virtual wxString Page_Type() const override;
-  virtual wxString Page_Label() const override;
-  virtual wxString Page_Description() const override;
-  virtual int Page_Flags() const override;
+  editor::TextBuffer* buffer() const {
+    return buffer_;
+  }
 
-  virtual void Page_EditMenu(wxMenu* menu) override;
-  virtual bool Page_EditMenuState(int menu_id) override;
+  editor::TextView* view() const {
+    return view_;
+  }
 
-  virtual bool Page_FileMenuState(int menu_id, wxString* text) override;
+  // Activate/deactivate this page.
+  void Page_Activate(bool active);
 
-  virtual bool Page_OnMenu(int menu_id) override;
+  // Page type ID.
+  //wxString Page_Type() const;
 
-  virtual void Page_OnSaveAs() override;
+  // Page label displayed in tab.
+  wxString Page_Label() const;
 
-protected:
-  // OVERRIDE of editor::TextWindow:
-  virtual void HandleTextRightUp(wxMouseEvent& evt) override;
+  // Page description displayed, e.g., in tab tooltip.
+  wxString Page_Description() const;
+
+  // See enum Flag.
+  int Page_Flags() const;
+
+private:
+  editor::TextBuffer* buffer_;
+  editor::TextView* view_;
 };
-
-////////////////////////////////////////////////////////////////////////////////
-
-// Convert book page to text page or NULL.
-TextPage* AsTextPage(BookPage* page);
 
 }  // namespace jil
 

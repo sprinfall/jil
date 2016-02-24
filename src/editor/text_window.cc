@@ -17,6 +17,7 @@
 
 #include "ui/color.h"
 
+#include "editor/action.h"
 #include "editor/compile_config.h"
 #include "editor/util.h"
 #include "editor/style.h"
@@ -27,7 +28,6 @@
 #include "editor/tab.h"
 #include "editor/text_extent.h"
 #include "editor/renderer.h"
-#include "editor/action.h"
 #include "editor/ft_plugin.h"
 
 // When to update virtual size?
@@ -136,18 +136,67 @@ TextWindow::~TextWindow() {
     if (scroll_timer_->IsRunning()) {
       scroll_timer_->Stop();
     }
-    delete scroll_timer_;
+    wxDELETE(scroll_timer_);
   }
+
+  if (buffer_ != NULL) {
+    buffer_->DetachListener(this);
+  }
+
+  wxDELETE(wrap_helper_);
+  wxDELETE(text_extent_);
+}
+
+//------------------------------------------------------------------------------
+
+void TextWindow::SetBuffer(TextBuffer* buffer, const TextView* view) {
+  assert(buffer != NULL);
 
   buffer_->DetachListener(this);
-  delete buffer_;
 
-  if (wrap_helper_ != NULL) {
-    delete wrap_helper_;
+  buffer_ = buffer;
+
+  if (view != NULL) {
+    allow_text_change_ = view->allow_text_change;
+
+    view_options_ = view->view_options;
+
+    line_height_ = view->line_height;
+    line_nr_width_ = view->line_nr_width;
+
+    char_size_ = view->char_size;
+    text_size_ = view->text_size;
+
+    caret_point_ = view->caret_point;
+    max_caret_x_ = view->max_caret_x;
+
+    selection_ = view->selection;
   }
 
-  delete text_extent_;
+  HandleTextChange();
+  Refresh();
+
+  buffer_->AttachListener(this);
 }
+
+void TextWindow::GetView(TextView* view) {
+  view->allow_text_change = allow_text_change_;
+
+  view->view_options = view_options_;
+
+  view->line_height = line_height_;
+  view->line_nr_width = line_nr_width_;
+
+  view->char_size = char_size_;
+  view->text_size = text_size_;
+
+  view->caret_point = caret_point_;
+  view->max_caret_x = max_caret_x_;
+
+  view->selection = selection_;
+}
+
+//------------------------------------------------------------------------------
 
 void TextWindow::ReapplyTheme() {
   assert(theme_);
@@ -365,9 +414,7 @@ void TextWindow::Exec(Action* action) {
 
 void TextWindow::SetFileFormat(FileFormat file_format) {
   if (file_format != buffer_->file_format()) {
-    SetFileFormatAction* sffa = new SetFileFormatAction(buffer_,
-                                                        caret_point_,
-                                                        file_format);
+    SetFileFormatAction* sffa = new SetFileFormatAction(buffer_, caret_point_, file_format);
     sffa->set_caret_point(caret_point_);
     sffa->set_update_caret(false);
     Exec(sffa);

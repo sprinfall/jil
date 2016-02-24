@@ -5,6 +5,7 @@
 #include "editor/ft_plugin.h"
 #include "app/app.h"
 #include "app/text_page.h"
+#include "app/text_book.h"  // TODO
 
 #define kTrSaveFile           _("Save File")
 #define kTrSaveFileAs         _("Save File As")
