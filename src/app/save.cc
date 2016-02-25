@@ -99,7 +99,7 @@ int ConfirmSave(TextPage* text_page) {
   if (buffer->new_created()) {
     msg = _("The file is untitled and changed, save it?");
   } else {
-    msg = wxString::Format(_("The file (%s) has been changed, save it?"), text_page->Page_Label().c_str());
+    msg = wxString::Format(_("The file (%s) has been changed, save it?"), text_page->GetLabel().c_str());
   }
 
   long style = wxYES | wxNO | wxCANCEL | wxYES_DEFAULT | wxICON_EXCLAMATION | wxCENTRE;

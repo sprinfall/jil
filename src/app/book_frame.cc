@@ -43,6 +43,7 @@
 #include "app/find_panel.h"
 #include "app/i18n_strings.h"
 #include "app/navigation_dialog.h"
+#include "app/page_window.h"
 #include "app/preferences.h"
 #include "app/save.h"
 #include "app/session.h"
@@ -1455,7 +1456,7 @@ void BookFrame::UpdateTitleWithPath() {
   if (text_page == NULL) {
     SetTitle(kAppDisplayName);
   } else {
-    wxString title = text_page->Page_Description() + wxT(" - ") + kAppDisplayName;
+    wxString title = text_page->GetDescription() + wxT(" - ") + kAppDisplayName;
     SetTitle(title);
   }
 }

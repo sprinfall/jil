@@ -53,6 +53,8 @@ set(SRCS
     option_config.h
     option_list_ctrl.cc
     option_list_ctrl.h
+    page_window.cc
+    page_window.h
     preferences.cc
     preferences.h
     save.cc

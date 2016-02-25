@@ -7,26 +7,16 @@
 
 namespace jil {
 
-TextPage::TextPage(editor::TextBuffer* buffer)
-  : buffer_(buffer) {
-  view_ = new editor::TextView();
+TextPage::TextPage(editor::TextBuffer* buffer) : buffer_(buffer) {
+  state_ = new PageState();
 }
 
 TextPage::~TextPage() {
   wxDELETE(buffer_);
-  wxDELETE(view_);
+  wxDELETE(state_);
 }
 
-void TextPage::Page_Activate(bool active) {
-  view_;
-}
-
-//wxString TextPage::Page_Type() const {
-//  static const wxString kType = "TextPage";
-//  return kType;
-//}
-
-wxString TextPage::Page_Label() const {
+wxString TextPage::GetLabel() const {
   wxString label = buffer_->file_name();
   if (label.IsEmpty()) {
     label = kTrPageUntitled;
@@ -34,7 +24,7 @@ wxString TextPage::Page_Label() const {
   return label;
 }
 
-wxString TextPage::Page_Description() const {
+wxString TextPage::GetDescription() const {
   if (!buffer_->file_name().IsEmpty()) {
     return buffer_->file_path_name();
   }

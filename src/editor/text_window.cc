@@ -149,55 +149,6 @@ TextWindow::~TextWindow() {
 
 //------------------------------------------------------------------------------
 
-void TextWindow::SetBuffer(TextBuffer* buffer, const TextView* view) {
-  assert(buffer != NULL);
-
-  buffer_->DetachListener(this);
-
-  buffer_ = buffer;
-
-  if (view != NULL) {
-    allow_text_change_ = view->allow_text_change;
-
-    view_options_ = view->view_options;
-
-    line_height_ = view->line_height;
-    line_nr_width_ = view->line_nr_width;
-
-    char_size_ = view->char_size;
-    text_size_ = view->text_size;
-
-    caret_point_ = view->caret_point;
-    max_caret_x_ = view->max_caret_x;
-
-    selection_ = view->selection;
-  }
-
-  HandleTextChange();
-  Refresh();
-
-  buffer_->AttachListener(this);
-}
-
-void TextWindow::GetView(TextView* view) {
-  view->allow_text_change = allow_text_change_;
-
-  view->view_options = view_options_;
-
-  view->line_height = line_height_;
-  view->line_nr_width = line_nr_width_;
-
-  view->char_size = char_size_;
-  view->text_size = text_size_;
-
-  view->caret_point = caret_point_;
-  view->max_caret_x = max_caret_x_;
-
-  view->selection = selection_;
-}
-
-//------------------------------------------------------------------------------
-
 void TextWindow::ReapplyTheme() {
   assert(theme_);
   assert(style_ != NULL);

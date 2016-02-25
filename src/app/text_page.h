@@ -4,13 +4,44 @@
 
 #include "wx/string.h"
 
+#include "editor/option.h"
+#include "editor/selection.h"
+#include "editor/text_point.h"
+
 namespace jil {
 
 namespace editor {
 class TextBuffer;
-class TextView;
 }  // namespace editor
  
+////////////////////////////////////////////////////////////////////////////////
+
+// State (or context) of text page.
+class PageState {
+public:
+  PageState() {
+    Init();
+  }
+
+  bool allow_text_change;
+
+  editor::ViewOptions view_options;
+
+  editor::TextPoint caret_point;
+  editor::Coord max_caret_x;
+
+  editor::Selection selection;
+
+private:
+  void Init() {
+    allow_text_change = false;
+    caret_point.Set(0, 1);
+    max_caret_x = 0;
+  }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
 class TextPage {
 public:
   enum Flag {
@@ -19,35 +50,29 @@ public:
   };
 
 public:
-  TextPage(editor::TextBuffer* buffer);
+  explicit TextPage(editor::TextBuffer* buffer);
   ~TextPage();
 
   editor::TextBuffer* buffer() const {
     return buffer_;
   }
 
-  editor::TextView* view() const {
-    return view_;
+  PageState* state() const {
+    return state_;
   }
 
-  // Activate/deactivate this page.
-  void Page_Activate(bool active);
-
-  // Page type ID.
-  //wxString Page_Type() const;
-
   // Page label displayed in tab.
-  wxString Page_Label() const;
+  wxString GetLabel() const;
 
   // Page description displayed, e.g., in tab tooltip.
-  wxString Page_Description() const;
+  wxString GetDescription() const;
 
   // See enum Flag.
   int Page_Flags() const;
 
 private:
   editor::TextBuffer* buffer_;
-  editor::TextView* view_;
+  PageState* state_;
 };
 
 }  // namespace jil

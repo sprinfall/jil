@@ -2,29 +2,18 @@
 #define JIL_TEXT_BOOK_H_
 #pragma once
 
-// A replacement of wxNotebook.
-
 #include <list>
 #include <vector>
 
 #include "wx/panel.h"
 #include "wx/dcbuffer.h"
 
-#include "editor/text_window.h"
 #include "editor/theme.h"
-
-#include "app/compile_config.h"
-
-class wxMenu;
-class wxSizer;
-
-#ifndef __WXMAC__
-class wxMemoryDC;
-#endif  // __WXMAC__
 
 namespace jil {
 
 class Options;
+class PageWindow;
 class TextPage;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -38,47 +27,12 @@ END_DECLARE_EVENT_TYPES()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class PageWindow : public editor::TextWindow {
-  DECLARE_CLASS(PageWindow)
-
-public:
-  explicit PageWindow(TextPage* page);
-  virtual ~PageWindow();
-
-  void SetPage(TextPage* page);
-
-  // Add menu items to the edit menu.
-  // Different pages might have different edit menu items.
-  // E.g., text page has Undo and Redo while find result page doesn't.
-  void Page_EditMenu(wxMenu* menu);
-
-  // Get the enable state of the edit menu item.
-  bool Page_EditMenuState(int menu_id);
-
-  // Get the enable state of the file menu item and optionaly return the
-  // menu item text.
-  bool Page_FileMenuState(int menu_id, wxString* text);
-
-  // Handle the menu event.
-  bool Page_OnMenu(int menu_id);
-
-  // Special handling of Save As.
-  // Save As applies to not only text page, but also tool pages, e.g.,
-  // find result page.
-  void Page_OnSaveAs();
-
-protected:
-  virtual void HandleTextRightUp(wxMouseEvent& evt) override;
-
-private:
-  TextPage* page_;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
 class TextBook;
 
 namespace editor {
+class Binding;
+class Style;
+class TextBuffer;
 class TipHandler;
 }  // namespace editor
 
@@ -113,6 +67,8 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 
 class TextBook : public wxPanel {
+  DECLARE_EVENT_TABLE()
+
 public:
   enum ColorId {
     BG = 0,  // The whole book background
@@ -191,17 +147,20 @@ public:
 
   virtual bool HasFocus() const override;
 
+  // Override to set focus to page window.
+  virtual void SetFocus() override;
+
   PageWindow* page_window() {
     return page_window_;
   }
 
   // Set batch flag to avoid unnecessary resizing tabs and refresh.
   // Example:
-  //   notebook->StartBatch();
-  //   notebook->AddPage(...);
-  //   notebook->AddPage(...);
+  //   text_book->StartBatch();
+  //   text_book->AddPage(...);
+  //   text_book->AddPage(...);
   //   ...
-  //   notebook->EndBatch();
+  //   text_book->EndBatch();
   void StartBatch();
   void EndBatch();
 
@@ -290,7 +249,6 @@ protected:
   virtual void HandleTabMouseLeftDClick(wxMouseEvent& evt);
 
   TabList::iterator TabByPos(int pos_x);
-  Tab* GetTabByWindow(wxWindow* window, size_t* index = NULL);
 
   void ActivatePage(TabList::iterator it);
   bool RemovePage(TabList::iterator it);
@@ -308,6 +266,7 @@ protected:
   void PostEvent(wxEventType event_type);
 
   // Handle text window event to update and refresh tab area.
+  // TODO: Rename
   void OnTextWindowEvent(wxCommandEvent& evt);
 
 protected:

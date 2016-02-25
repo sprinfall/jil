@@ -15,7 +15,6 @@
 #include "editor/text_area.h"
 #include "editor/text_buffer.h"
 #include "editor/text_extent.h"
-#include "editor/text_window.h"
 #include "editor/tip.h"
 #include "editor/util.h"
 
@@ -23,6 +22,7 @@
 #include "app/i18n_strings.h"
 #include "app/id.h"
 #include "app/option.h"
+#include "app/page_window.h"
 #include "app/save.h"
 #include "app/text_page.h"
 #include "app/util.h"
@@ -36,151 +36,6 @@ static const wxString kStar = wxT("*");
 
 DEFINE_EVENT_TYPE(kEvtTextBookPageChange);
 DEFINE_EVENT_TYPE(kEvtTextBookPageSwitch);
-
-////////////////////////////////////////////////////////////////////////////////
-
-IMPLEMENT_CLASS(PageWindow, editor::TextWindow)
-
-PageWindow::PageWindow(TextPage* page)
-    : editor::TextWindow(page->buffer())
-    , page_(page) {
-}
-
-PageWindow::~PageWindow() {
-}
-
-void PageWindow::SetPage(TextPage* page) {
-  assert(page != NULL);
-
-  if (page_ != page) {
-    // Save view state.
-    GetView(page->view());
-
-    page_ = page;
-
-    // Set buffer and restore view state.
-    SetBuffer(page->buffer(), page->view());
-  }
-}
-
-void PageWindow::Page_EditMenu(wxMenu* menu) {
-  if (page_ == NULL) {
-    return;
-  }
-
-  //------------------------------------
-
-  AppendMenuItem(menu, ID_MENU_EDIT_UNDO, kTrEditUndo);
-  AppendMenuItem(menu, ID_MENU_EDIT_REDO, kTrEditRedo);
-  menu->AppendSeparator();
-
-  //------------------------------------
-
-  AppendMenuItem(menu, ID_MENU_EDIT_CUT, kTrEditCut);
-  AppendMenuItem(menu, ID_MENU_EDIT_COPY, kTrEditCopy);
-  AppendMenuItem(menu, ID_MENU_EDIT_PASTE, kTrEditPaste);
-  menu->AppendSeparator();
-
-  //------------------------------------
-
-  wxMenu* indent_menu = new wxMenu;
-  AppendMenuItem(indent_menu, ID_MENU_EDIT_INCREASE_INDENT, kTrEditIncreaseIndent);
-  AppendMenuItem(indent_menu, ID_MENU_EDIT_DECREASE_INDENT, kTrEditDecreaseIndent);
-  AppendMenuItem(indent_menu, ID_MENU_EDIT_AUTO_INDENT, kTrEditAutoIndent);
-  menu->AppendSubMenu(indent_menu, kTrEditIndent);
-
-  //------------------------------------
-
-  wxMenu* comment_menu = new wxMenu;
-  AppendMenuItem(comment_menu, ID_MENU_EDIT_COMMENT, kTrEditComment);
-  AppendMenuItem(comment_menu, ID_MENU_EDIT_UNCOMMENT, kTrEditUncomment);
-  menu->AppendSubMenu(comment_menu, kTrEditComment);
-  menu->AppendSeparator();
-
-  //------------------------------------
-
-  AppendMenuItem(menu, ID_MENU_EDIT_FIND, kTrEditFind);
-  AppendMenuItem(menu, ID_MENU_EDIT_REPLACE, kTrEditReplace);
-  AppendMenuItem(menu, ID_MENU_EDIT_FIND_NEXT, kTrEditFindNext);
-  AppendMenuItem(menu, ID_MENU_EDIT_FIND_PREV, kTrEditFindPrev);
-  menu->AppendSeparator();
-
-  AppendMenuItem(menu, ID_MENU_EDIT_GO_TO, kTrEditGoTo);
-}
-
-bool PageWindow::Page_EditMenuState(int menu_id) {
-  if (page_ == NULL) {
-    return false;
-  }
-
-  switch (menu_id) {
-    case ID_MENU_EDIT_UNDO:
-      return CanUndo();
-
-    case ID_MENU_EDIT_REDO:
-      return CanRedo();
-
-    case ID_MENU_EDIT_PASTE:
-      return !editor::IsClipboardEmpty();
-
-    default:
-      return true;
-  }
-}
-
-bool PageWindow::Page_FileMenuState(int menu_id, wxString* text) {
-  if (page_ == NULL) {
-    return false;
-  }
-
-  if (menu_id == ID_MENU_FILE_SAVE_AS) {
-    if (text != NULL) {
-      // TODO: The page label might be too long.
-      *text = wxString::Format(kTrFileSaveAsFormat, page_->Page_Label());
-    }
-    return true;
-  }
-
-  return false;
-}
-
-bool PageWindow::Page_OnMenu(int menu_id) {
-  if (page_ == NULL) {
-    return false;
-  }
-
-  editor::TextFunc* text_func = binding_->GetTextFuncByMenu(menu_id);
-  if (text_func != NULL) {
-    text_func->Exec(this);
-    return true;
-  }
-
-  return false;
-}
-
-void PageWindow::Page_OnSaveAs() {
-  if (page_ == NULL) {
-    return;
-  }
-
-  SaveBufferAs(buffer_, NULL);
-}
-
-void PageWindow::HandleTextRightUp(wxMouseEvent& evt) {
-  if (page_ == NULL) {
-    return;
-  }
-
-  wxMenu menu;
-  menu.Append(ID_MENU_EDIT_CUT, kTrRClickCut);
-  menu.Append(ID_MENU_EDIT_COPY, kTrRClickCopy);
-  menu.Append(ID_MENU_EDIT_PASTE, kTrRClickPaste);
-
-  // TODO: Add a method to TextWindow.
-  wxPoint pos = text_area()->ClientToScreen(evt.GetPosition());
-  pos = ScreenToClient(pos);
-  PopupMenu(&menu, pos);
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -244,15 +99,15 @@ void TextBookTabArea::OnMouseCaptureLost(wxMouseCaptureLostEvent& evt) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+BEGIN_EVENT_TABLE(TextBook, wxPanel)
+EVT_TEXT_WINDOW(ID_TEXT_WINDOW, TextBook::OnTextWindowEvent)
+END_EVENT_TABLE()
+
 TextBook::TextBook() {
   Init();
 }
 
 TextBook::~TextBook() {
-  if (page_window_ != NULL) {
-    Disconnect(page_window_->GetId());
-  }
-
   editor::ClearContainer(&tabs_);
 }
 
@@ -314,6 +169,14 @@ bool TextBook::HasFocus() const {
   return (wxPanel::HasFocus() || page_window_->HasFocus());
 }
 
+void TextBook::SetFocus() {
+  if (page_window_->IsShown()) {
+    page_window_->SetFocus();
+  } else {
+    wxPanel::SetFocus();
+  }
+}
+
 void TextBook::StartBatch() {
   batch_ = true;
   tab_area_->Freeze();
@@ -331,13 +194,7 @@ void TextBook::EndBatch() {
 }
 
 void TextBook::AddPage(TextPage* page, bool active) {
-  if (PageCount() == 0) {
-    // No pages added yet. Page window is hidden, show it.
-    // TODO: Might be a little earlier, move to another place.
-    page_window_->Show();
-  }
-
-  int tab_best_size = CalcTabBestSize(page->Page_Label());
+  int tab_best_size = CalcTabBestSize(page->GetLabel());
 
   Tab* tab = new Tab(page, tab_best_size, false);
   tabs_.push_back(tab);
@@ -719,15 +576,11 @@ void TextBook::CreatePageWindow() {
   page_window_->set_theme(page_theme_);
   page_window_->set_binding(binding_);
 
-  page_window_->Create(page_area_, wxID_ANY, true);
+  page_window_->Create(page_area_, ID_TEXT_WINDOW, true);
 
   page_window_->SetTextFont(options_->fonts[FONT_TEXT]);
   page_window_->SetLineNrFont(options_->fonts[FONT_LINE_NR]);
   page_window_->SetLinePadding(options_->line_padding);
-
-  Connect(page_window_->GetId(),
-          kTextWindowEvent,
-          wxCommandEventHandler(TextBook::OnTextWindowEvent));
 }
 
 void TextBook::UpdateTabFontDetermined() {
@@ -740,7 +593,7 @@ void TextBook::UpdateTabFontDetermined() {
 
   // Update tabs best size.
   for (Tab* tab : tabs_) {
-    tab->best_size = CalcTabBestSize(tab->page->Page_Label());
+    tab->best_size = CalcTabBestSize(tab->page->GetLabel());
   }
 
   ResizeTabs();
@@ -817,7 +670,7 @@ void TextBook::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
     tab_fg_rect.Deflate(tab_padding_);
     tab_fg_rect.width -= char_width_;  // *
 
-    wxString label = tab->page->Page_Label();
+    wxString label = tab->page->GetLabel();
 
     if (!label.IsEmpty()) {
       if (tab->best_size <= tab->size) {
@@ -957,7 +810,7 @@ void TextBook::OnTabMouseMotion(wxMouseEvent& evt) {
 
   TabIter it = TabByPos(evt.GetPosition().x);
   if (it != tabs_.end()) {
-    tooltip = (*it)->page->Page_Description();
+    tooltip = (*it)->page->GetDescription();
   }
 
   tab_area_->SetToolTipEx(tooltip);
@@ -1056,21 +909,6 @@ TextBook::TabIter TextBook::TabByPos(int pos_x) {
   return tabs_.end();
 }
 
-TextBook::Tab* TextBook::GetTabByWindow(wxWindow* window, size_t* index) {
-  size_t i = 0;
-
-  //for (TabIter it = tabs_.begin(); it != tabs_.end(); ++it, ++i) {
-  //  if ((*it)->page->Page_Window() == window) {
-  //    if (index != NULL) {
-  //      *index = i;
-  //    }
-  //    return (*it);
-  //  }
-  //}
-
-  return NULL;
-}
-
 void TextBook::ActivatePage(TabIter it) {
   if (it == tabs_.end()) {
     return;
@@ -1084,16 +922,18 @@ void TextBook::ActivatePage(TabIter it) {
   // Deactivate previous active page.
   TabIter active_it = ActiveTab();
   if (active_it != tabs_.end()) {
-    // TODO: Add a method Activate(bool) to Tab.
     (*active_it)->active = false;
-    (*active_it)->page->Page_Activate(false);
   }
 
   // Activate new page.
   tab->active = true;
-  tab->page->Page_Activate(true);
 
   page_window_->SetPage(tab->page);
+
+  if (!page_window_->IsShown()) {
+    page_window_->Show();
+    page_area_->Layout();
+  }
 
   // Make sure the active tab has enough space to display.
   if (tab->size < tab->best_size) {
@@ -1103,8 +943,6 @@ void TextBook::ActivatePage(TabIter it) {
   // Update tab stack.
   stack_tabs_.remove(tab);
   stack_tabs_.push_front(tab);
-
-  page_area_->Layout();  // TODO
 
   tab_area_->Refresh();
 
@@ -1123,21 +961,23 @@ bool TextBook::RemovePage(TabIter it) {
 
   // The page to remove is active; activate another page.
   if (tab->active) {
-    if (PageCount() > 0) {
+    if (!IsEmpty()) {
       Tab* active_tab = stack_tabs_.front();
-
       active_tab->active = true;
-      active_tab->page->Page_Activate(true);
-
       page_window_->SetPage(active_tab->page);
 
       PostEvent(kEvtTextBookPageSwitch);
     }
   }
 
-  delete tab;
+  if (IsEmpty()) {
+    // No pages left, set empty page and hide page window.
+    page_window_->SetPage(empty_page_);
+    page_window_->Hide();
+    page_area_->Layout();
+  }
 
-  page_area_->Layout();
+  delete tab;
 
   // Resize tabs since more space is available.
   ResizeTabs();
@@ -1219,7 +1059,7 @@ void TextBook::OnTextWindowEvent(wxCommandEvent& evt) {
     //if (page_window != NULL) {
     //  Tab* tab = GetTabByWindow(page_window);
     //  if (tab != NULL) {
-    //    tab->best_size = CalcTabBestSize(tab->page->Page_Label());
+    //    tab->best_size = CalcTabBestSize(tab->page->GetLabel());
     //  }
     //}
     //tab_area_->Refresh();

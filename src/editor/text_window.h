@@ -34,28 +34,6 @@ class TextExtent;
 class TextLine;
 class WrapHelper;
 
-// TODO: Rename to ViewState?
-class TextView {
-public:
-  // Some text window cannot be changed, e.g., find result.
-  bool allow_text_change;
-
-  // View options copied from text buffer.
-  ViewOptions view_options;
-
-  int line_height;
-  int line_nr_width;
-
-  wxSize char_size;
-  wxSize text_size;
-
-  TextPoint caret_point;
-  Coord max_caret_x;
-
-  // Current text selection.
-  Selection selection;
-};
-
 class TextWindow : public wxScrolledWindow, public BufferListener {
   DECLARE_CLASS(TextWindow)
   DECLARE_EVENT_TABLE()
@@ -88,14 +66,6 @@ public:
   bool Create(wxWindow* parent, wxWindowID id, bool hide = false);
 
   virtual ~TextWindow();
-
-  //----------------------------------------------------------------------------
-
-  // Change buffer.
-  // \param buffer Must be valid.
-  void SetBuffer(TextBuffer* buffer, const TextView* view);
-
-  void GetView(TextView* view);
 
   //----------------------------------------------------------------------------
 
