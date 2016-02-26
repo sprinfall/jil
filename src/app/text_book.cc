@@ -685,7 +685,7 @@ void TextBook::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
       }
     }
 
-    if ((tab->page->Page_Flags() & TextPage::kModified) != 0) {
+    if ((tab->page->GetFlags() & TextPage::kModified) != 0) {
       int x = tab_fg_rect.GetRight() + char_width_ / 2;
       dc.DrawText(kStar, x, tab_fg_rect.y);
     }
@@ -860,7 +860,7 @@ void TextBook::HandleTabMouseRightUp(wxMouseEvent& evt) {
       menu.Append(ID_MENU_FILE_CLOSE_ALL, kTrRClickCloseAll);
     }
   } else {
-    if ((page->Page_Flags() & TextPage::kModified) != 0) {
+    if ((page->GetFlags() & TextPage::kModified) != 0) {
       menu.Append(ID_MENU_FILE_SAVE, kTrRClickSave);
     }
 

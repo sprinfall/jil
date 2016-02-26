@@ -1229,11 +1229,13 @@ void TextBuffer::FindStringAll(const std::wstring& str,
 //------------------------------------------------------------------------------
 // Listener
 
-void TextBuffer::AttachListener(BufferListener* listener) {
-  listeners_.push_back(listener);
+void TextBuffer::AttachListener(TextListener* listener) {
+  if (std::find(listeners_.begin(), listeners_.end(), listener) == listeners_.end()) {
+    listeners_.push_back(listener);
+  }
 }
 
-void TextBuffer::DetachListener(BufferListener* listener) {
+void TextBuffer::DetachListener(TextListener* listener) {
   std::remove(listeners_.begin(), listeners_.end(), listener);
 }
 

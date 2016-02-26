@@ -4,7 +4,6 @@ endif()
 
 set(HEADERS
     binding.h
-    buffer_listener.h
     compile_config.h
     defs.h
     action.h
@@ -24,6 +23,7 @@ set(HEADERS
     text_extent.h
     text_func.h
     text_line.h
+    text_listener.h
     text_point.cc
     text_point.h
     text_range.h

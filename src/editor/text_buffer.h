@@ -12,10 +12,10 @@
 #include "wx/filename.h"
 #include "wx/fontenc.h"
 #include "editor/compile_config.h"
-#include "editor/buffer_listener.h"
 #include "editor/defs.h"
 #include "editor/option.h"
 #include "editor/text_line.h"
+#include "editor/text_listener.h"
 #include "editor/text_range.h"
 #include "editor/text_point.h"
 
@@ -52,7 +52,7 @@ public:
 };
 
 // Text buffer is the model of an opened text file.
-// A view implemented interface BufferListener listens to the change of it.
+// A view implemented interface TextListener listens to the change of it.
 // A text buffer may have multiple views.
 class TextBuffer {
 public:
@@ -372,8 +372,8 @@ public:
   //----------------------------------------------------------------------------
   // Listener
 
-  void AttachListener(BufferListener* listener);
-  void DetachListener(BufferListener* listener);
+  void AttachListener(TextListener* listener);
+  void DetachListener(TextListener* listener);
 
   size_t ListenerCount() const {
     return listeners_.size();
@@ -752,7 +752,7 @@ private:
   // A text buffer has one or more listeners.
   // Different listeners may want to listen to different changes of the buffer.
   // But in current implementation, a listener always listens to all changes.
-  typedef std::vector<BufferListener*> Listeners;
+  typedef std::vector<TextListener*> Listeners;
   Listeners listeners_;
 
   // The listeners won't be notified on line changes if it's frozen.

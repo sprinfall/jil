@@ -2340,10 +2340,45 @@ void BookFrame::LoadMenus() {
   //------------------------------------
   // Edit
 
-  // Edit menu items will be created when some page is focused.
-  // See: virtual bool BookPage::Page_OnMenu(int menu_id) = 0;
-
   wxMenu* edit_menu = new wxMenu;
+
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_UNDO, kTrEditUndo);
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_REDO, kTrEditRedo);
+  edit_menu->AppendSeparator();
+
+  //------------------------------------
+
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_CUT, kTrEditCut);
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_COPY, kTrEditCopy);
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_PASTE, kTrEditPaste);
+  edit_menu->AppendSeparator();
+
+  //------------------------------------
+
+  wxMenu* indent_menu = new wxMenu;
+  AppendMenuItem(indent_menu, ID_MENU_EDIT_INCREASE_INDENT, kTrEditIncreaseIndent);
+  AppendMenuItem(indent_menu, ID_MENU_EDIT_DECREASE_INDENT, kTrEditDecreaseIndent);
+  AppendMenuItem(indent_menu, ID_MENU_EDIT_AUTO_INDENT, kTrEditAutoIndent);
+  edit_menu->AppendSubMenu(indent_menu, kTrEditIndent);
+
+  //------------------------------------
+
+  wxMenu* comment_menu = new wxMenu;
+  AppendMenuItem(comment_menu, ID_MENU_EDIT_COMMENT, kTrEditComment);
+  AppendMenuItem(comment_menu, ID_MENU_EDIT_UNCOMMENT, kTrEditUncomment);
+  edit_menu->AppendSubMenu(comment_menu, kTrEditComment);
+  edit_menu->AppendSeparator();
+
+  //------------------------------------
+
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_FIND, kTrEditFind);
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_REPLACE, kTrEditReplace);
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_FIND_NEXT, kTrEditFindNext);
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_FIND_PREV, kTrEditFindPrev);
+  edit_menu->AppendSeparator();
+
+  AppendMenuItem(edit_menu, ID_MENU_EDIT_GO_TO, kTrEditGoTo);
+
   menu_bar->Append(edit_menu, kTrMenuEdit);
 
   //------------------------------------

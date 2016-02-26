@@ -2,16 +2,20 @@
 #define JIL_TEXT_PAGE_H_
 #pragma once
 
+#include <memory>  // std::shared_ptr
+
 #include "wx/string.h"
 
 #include "editor/option.h"
 #include "editor/selection.h"
+#include "editor/text_listener.h"
 #include "editor/text_point.h"
 
 namespace jil {
 
 namespace editor {
 class TextBuffer;
+class WrapHelper;
 }  // namespace editor
  
 ////////////////////////////////////////////////////////////////////////////////
@@ -32,6 +36,8 @@ public:
 
   editor::Selection selection;
 
+  std::shared_ptr<editor::WrapHelper> wrap_helper;
+
 private:
   void Init() {
     allow_text_change = false;
@@ -42,7 +48,10 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class TextPage {
+// A non-active text page could be changed by some operations (e.g., Replace All).
+// Implement TextListener so that the wrap info can be updated when changes
+// happen.
+class TextPage : public editor::TextListener {
 public:
   enum Flag {
     kModified = 1,
@@ -51,7 +60,11 @@ public:
 
 public:
   explicit TextPage(editor::TextBuffer* buffer);
-  ~TextPage();
+  virtual ~TextPage();
+
+  // Overriddens of TextListener:
+  virtual void OnBufferLineChange(editor::LineChangeType type, const editor::LineChangeData& data) override;
+  virtual void OnBufferChange(editor::ChangeType type) override;
 
   editor::TextBuffer* buffer() const {
     return buffer_;
@@ -68,7 +81,13 @@ public:
   wxString GetDescription() const;
 
   // See enum Flag.
-  int Page_Flags() const;
+  int GetFlags() const;
+
+  // Attach self to buffer.
+  void Attach();
+
+  // Detach self from the buffer.
+  void Detach();
 
 private:
   editor::TextBuffer* buffer_;

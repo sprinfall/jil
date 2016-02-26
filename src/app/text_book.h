@@ -41,7 +41,6 @@ class TextBookTabArea : public wxPanel {
 
 public:
   TextBookTabArea(TextBook* book_ctrl, wxWindowID id);
-
   virtual ~TextBookTabArea();
 
   // Page header has no focus.

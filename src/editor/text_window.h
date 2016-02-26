@@ -3,15 +3,18 @@
 #pragma once
 
 #include <list>
+#include <memory>  // std::shared_ptr
 #include <string>
+
 #include "wx/scrolwin.h"
+
 #include "editor/binding.h"
-#include "editor/buffer_listener.h"
 #include "editor/compile_config.h"
 #include "editor/defs.h"
 #include "editor/lex.h"
 #include "editor/option.h"
 #include "editor/selection.h"
+#include "editor/text_listener.h"
 #include "editor/theme.h"
 
 class wxMenu;
@@ -34,7 +37,7 @@ class TextExtent;
 class TextLine;
 class WrapHelper;
 
-class TextWindow : public wxScrolledWindow, public BufferListener {
+class TextWindow : public wxScrolledWindow, public TextListener {
   DECLARE_CLASS(TextWindow)
   DECLARE_EVENT_TABLE()
 
@@ -124,7 +127,7 @@ public:
   bool buffer_modified() const;
   bool buffer_new_created() const;
 
-  // Overriddens of BufferListener:
+  // Overriddens of TextListener:
   virtual void OnBufferLineChange(LineChangeType type, const LineChangeData& data) override;
   virtual void OnBufferChange(ChangeType type) override;
 
@@ -308,9 +311,12 @@ protected:
   // Initialize member variables.
   void Init();
 
+  int GetTextClientWidth() const;
+
   //----------------------------------------------------------------------------
 
-  // Return the wrap helper (create it if NULL).
+  // Return the wrap helper (create it if necessary).
+  // NOTE: Return raw pointer instead of std::shared_ptr since it's protected.
   WrapHelper* wrap_helper() const;
 
   // Wrap lines according to the current option.
@@ -615,7 +621,7 @@ protected:
   // is off.
   wxSize text_size_;
 
-  mutable WrapHelper* wrap_helper_;
+  mutable std::shared_ptr<WrapHelper> wrap_helper_;
 
   TextExtent* text_extent_;
 

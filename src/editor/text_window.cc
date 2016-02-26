@@ -143,7 +143,6 @@ TextWindow::~TextWindow() {
     buffer_->DetachListener(this);
   }
 
-  wxDELETE(wrap_helper_);
   wxDELETE(text_extent_);
 }
 
@@ -962,8 +961,6 @@ void TextWindow::Init() {
 
   max_caret_x_ = 0;
 
-  wrap_helper_ = NULL;
-
   down_modifiers_ = 0;
 
   dragged_ = false;
@@ -980,15 +977,20 @@ void TextWindow::Init() {
   inc_find_ = false;
 }
 
+int TextWindow::GetTextClientWidth() const {
+ return text_area_->GetClientSize().GetWidth();
+}
+
 //------------------------------------------------------------------------------
 // Wrap
 
 WrapHelper* TextWindow::wrap_helper() const {
-  if (wrap_helper_ == NULL) {
-    wrap_helper_ = new WrapHelper(buffer_, text_extent_);
-    wrap_helper_->set_client_width(text_area_->GetClientSize().GetWidth());
+  assert(view_options_.wrap);
+  if (!wrap_helper_) {
+    wrap_helper_.reset(new WrapHelper(buffer_, text_extent_));
+    wrap_helper_->set_client_width(GetTextClientWidth());
   }
-  return wrap_helper_;
+  return wrap_helper_.get();
 }
 
 void TextWindow::DoWrap() {
@@ -998,9 +1000,9 @@ void TextWindow::DoWrap() {
   if (view_options_.wrap) {
     wrap_changed = wrap_helper()->Wrap(&wrap_delta);
   } else {
-    if (wrap_helper_ != NULL) {
+    if (wrap_helper_) {
       wrap_changed = wrap_helper_->Unwrap(&wrap_delta);
-      wxDELETE(wrap_helper_);
+      wrap_helper_.reset();
     }
   }
   
@@ -1053,7 +1055,6 @@ void TextWindow::HandleLineUpdated(const LineChangeData& data) {
     RefreshTextByLineRange(data, true);
   } else {
     int wrap_delta = 0;
-    int client_width = text_area_->GetClientSize().GetWidth();
     for (Coord ln = data.first(); ln <= data.last(); ++ln) {
       wrap_delta += wrap_helper()->UpdateLineWrap(ln);
     }
@@ -1093,7 +1094,6 @@ void TextWindow::HandleLineAdded(const LineChangeData& data) {
     RefreshLineNrByLineRange(ln_refresh_range, true);
     // }
   } else {  // Wrapped
-    int client_width = text_area_->GetClientSize().GetWidth();
     for (Coord ln = data.first(); ln <= data.last(); ++ln) {
       wrap_helper()->AddLineWrap(ln);
     }
@@ -2910,7 +2910,7 @@ void TextWindow::UpdateVirtualSize() {
 
   if (!view_options_.wrap) {
     // - char_size_.x to keep the last char visible when scroll to the end.
-    int vw = text_size_.x + text_area_->GetClientSize().GetWidth() - char_size_.x;
+    int vw = text_size_.x + GetTextClientWidth() - char_size_.x;
     text_area_->SetVirtualSize(vw, vh);
   } else {
     text_area_->SetVirtualSize(-1, vh);
@@ -3085,6 +3085,7 @@ Coord TextWindow::GetCharIndex(Coord ln, int client_x, bool vspace) const {
 }
 
 Coord TextWindow::GetWrappedCharIndex(Coord ln, Coord wrapped_sub_ln, int client_x, bool vspace) const {
+  assert(view_options_.wrap);
   assert(wrapped_sub_ln >= 1);
 
   if (wrapped_sub_ln == 1) {

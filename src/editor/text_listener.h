@@ -1,5 +1,5 @@
-#ifndef JIL_EDITOR_BUFFER_LISTENER_H_
-#define JIL_EDITOR_BUFFER_LISTENER_H_
+#ifndef JIL_EDITOR_TEXT_LISTENER_H_
+#define JIL_EDITOR_TEXT_LISTENER_H_
 #pragma once
 
 #include "editor/text_range.h"
@@ -41,9 +41,9 @@ public:
 
 // Implement this interface and attach to a text buffer to listen to
 // the changes of it.
-class BufferListener {
+class TextListener {
 public:
-  virtual ~BufferListener() {
+  virtual ~TextListener() {
   }
 
   virtual void OnBufferLineChange(LineChangeType type, const LineChangeData& data) = 0;
@@ -54,4 +54,4 @@ public:
 }  // namespace editor
 }  // namespace jil
 
-#endif  // JIL_EDITOR_BUFFER_LISTENER_H_
+#endif  // JIL_EDITOR_TEXT_LISTENER_H_

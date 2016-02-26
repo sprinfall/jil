@@ -21,7 +21,7 @@ public:
   // Add menu items to the edit menu.
   // Different pages might have different edit menu items.
   // E.g., text page has Undo and Redo while find result page doesn't.
-  void Page_EditMenu(wxMenu* menu);
+  //void Page_EditMenu(wxMenu* menu);
 
   // Get the enable state of the edit menu item.
   bool Page_EditMenuState(int menu_id);
@@ -42,7 +42,7 @@ protected:
   virtual void HandleTextRightUp(wxMouseEvent& evt) override;
 
   void GetState(PageState* state) const;
-  void SetState(const PageState* state);
+  void SetState(PageState* state);
 
 private:
   TextPage* page_;

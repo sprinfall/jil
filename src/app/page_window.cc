@@ -7,6 +7,7 @@
 #include "editor/text_area.h"  // TODO
 #include "editor/text_buffer.h"
 #include "editor/util.h"
+#include "editor/wrap.h"
 
 #include "app/i18n_strings.h"
 #include "app/id.h"
@@ -30,17 +31,14 @@ void PageWindow::SetPage(TextPage* page) {
   assert(page->buffer() != NULL);
 
   if (page_ != page) {
-    // Save page state.
-    GetState(page_->state());
-
-    page_ = page;
-
-    // Set buffer and restore page state.
-
+    page->Detach();
     buffer_->DetachListener(this);
 
-    buffer_ = page_->buffer();
+    GetState(page_->state());
+    page_->Attach();
 
+    page_ = page;
+    buffer_ = page_->buffer();
     SetState(page_->state());
 
     HandleTextChange();
@@ -50,57 +48,49 @@ void PageWindow::SetPage(TextPage* page) {
     buffer_->AttachListener(this);
   }
 }
-
-void PageWindow::Page_EditMenu(wxMenu* menu) {
-  if (page_ == NULL) {
-    return;
-  }
-
-  //------------------------------------
-
-  AppendMenuItem(menu, ID_MENU_EDIT_UNDO, kTrEditUndo);
-  AppendMenuItem(menu, ID_MENU_EDIT_REDO, kTrEditRedo);
-  menu->AppendSeparator();
-
-  //------------------------------------
-
-  AppendMenuItem(menu, ID_MENU_EDIT_CUT, kTrEditCut);
-  AppendMenuItem(menu, ID_MENU_EDIT_COPY, kTrEditCopy);
-  AppendMenuItem(menu, ID_MENU_EDIT_PASTE, kTrEditPaste);
-  menu->AppendSeparator();
-
-  //------------------------------------
-
-  wxMenu* indent_menu = new wxMenu;
-  AppendMenuItem(indent_menu, ID_MENU_EDIT_INCREASE_INDENT, kTrEditIncreaseIndent);
-  AppendMenuItem(indent_menu, ID_MENU_EDIT_DECREASE_INDENT, kTrEditDecreaseIndent);
-  AppendMenuItem(indent_menu, ID_MENU_EDIT_AUTO_INDENT, kTrEditAutoIndent);
-  menu->AppendSubMenu(indent_menu, kTrEditIndent);
-
-  //------------------------------------
-
-  wxMenu* comment_menu = new wxMenu;
-  AppendMenuItem(comment_menu, ID_MENU_EDIT_COMMENT, kTrEditComment);
-  AppendMenuItem(comment_menu, ID_MENU_EDIT_UNCOMMENT, kTrEditUncomment);
-  menu->AppendSubMenu(comment_menu, kTrEditComment);
-  menu->AppendSeparator();
-
-  //------------------------------------
-
-  AppendMenuItem(menu, ID_MENU_EDIT_FIND, kTrEditFind);
-  AppendMenuItem(menu, ID_MENU_EDIT_REPLACE, kTrEditReplace);
-  AppendMenuItem(menu, ID_MENU_EDIT_FIND_NEXT, kTrEditFindNext);
-  AppendMenuItem(menu, ID_MENU_EDIT_FIND_PREV, kTrEditFindPrev);
-  menu->AppendSeparator();
-
-  AppendMenuItem(menu, ID_MENU_EDIT_GO_TO, kTrEditGoTo);
-}
+//
+//void PageWindow::Page_EditMenu(wxMenu* menu) {
+//  //------------------------------------
+//
+//  AppendMenuItem(menu, ID_MENU_EDIT_UNDO, kTrEditUndo);
+//  AppendMenuItem(menu, ID_MENU_EDIT_REDO, kTrEditRedo);
+//  menu->AppendSeparator();
+//
+//  //------------------------------------
+//
+//  AppendMenuItem(menu, ID_MENU_EDIT_CUT, kTrEditCut);
+//  AppendMenuItem(menu, ID_MENU_EDIT_COPY, kTrEditCopy);
+//  AppendMenuItem(menu, ID_MENU_EDIT_PASTE, kTrEditPaste);
+//  menu->AppendSeparator();
+//
+//  //------------------------------------
+//
+//  wxMenu* indent_menu = new wxMenu;
+//  AppendMenuItem(indent_menu, ID_MENU_EDIT_INCREASE_INDENT, kTrEditIncreaseIndent);
+//  AppendMenuItem(indent_menu, ID_MENU_EDIT_DECREASE_INDENT, kTrEditDecreaseIndent);
+//  AppendMenuItem(indent_menu, ID_MENU_EDIT_AUTO_INDENT, kTrEditAutoIndent);
+//  menu->AppendSubMenu(indent_menu, kTrEditIndent);
+//
+//  //------------------------------------
+//
+//  wxMenu* comment_menu = new wxMenu;
+//  AppendMenuItem(comment_menu, ID_MENU_EDIT_COMMENT, kTrEditComment);
+//  AppendMenuItem(comment_menu, ID_MENU_EDIT_UNCOMMENT, kTrEditUncomment);
+//  menu->AppendSubMenu(comment_menu, kTrEditComment);
+//  menu->AppendSeparator();
+//
+//  //------------------------------------
+//
+//  AppendMenuItem(menu, ID_MENU_EDIT_FIND, kTrEditFind);
+//  AppendMenuItem(menu, ID_MENU_EDIT_REPLACE, kTrEditReplace);
+//  AppendMenuItem(menu, ID_MENU_EDIT_FIND_NEXT, kTrEditFindNext);
+//  AppendMenuItem(menu, ID_MENU_EDIT_FIND_PREV, kTrEditFindPrev);
+//  menu->AppendSeparator();
+//
+//  AppendMenuItem(menu, ID_MENU_EDIT_GO_TO, kTrEditGoTo);
+//}
 
 bool PageWindow::Page_EditMenuState(int menu_id) {
-  if (page_ == NULL) {
-    return false;
-  }
-
   switch (menu_id) {
     case ID_MENU_EDIT_UNDO:
       return CanUndo();
@@ -117,10 +107,6 @@ bool PageWindow::Page_EditMenuState(int menu_id) {
 }
 
 bool PageWindow::Page_FileMenuState(int menu_id, wxString* text) {
-  if (page_ == NULL) {
-    return false;
-  }
-
   if (menu_id == ID_MENU_FILE_SAVE_AS) {
     if (text != NULL) {
       // TODO: The page label might be too long.
@@ -133,10 +119,6 @@ bool PageWindow::Page_FileMenuState(int menu_id, wxString* text) {
 }
 
 bool PageWindow::Page_OnMenu(int menu_id) {
-  if (page_ == NULL) {
-    return false;
-  }
-
   editor::TextFunc* text_func = binding_->GetTextFuncByMenu(menu_id);
   if (text_func != NULL) {
     text_func->Exec(this);
@@ -147,18 +129,10 @@ bool PageWindow::Page_OnMenu(int menu_id) {
 }
 
 void PageWindow::Page_OnSaveAs() {
-  if (page_ == NULL) {
-    return;
-  }
-
   SaveBufferAs(buffer_, NULL);
 }
 
 void PageWindow::HandleTextRightUp(wxMouseEvent& evt) {
-  if (page_ == NULL) {
-    return;
-  }
-
   wxMenu menu;
   menu.Append(ID_MENU_EDIT_CUT, kTrRClickCut);
   menu.Append(ID_MENU_EDIT_COPY, kTrRClickCopy);
@@ -173,6 +147,8 @@ void PageWindow::HandleTextRightUp(wxMouseEvent& evt) {
 //------------------------------------------------------------------------------
 
 void PageWindow::GetState(PageState* state) const {
+  assert(!!wrap_helper_ == view_options_.wrap);
+
   state->allow_text_change = allow_text_change_;
 
   state->view_options = view_options_;
@@ -181,9 +157,15 @@ void PageWindow::GetState(PageState* state) const {
   state->max_caret_x = max_caret_x_;
 
   state->selection = selection_;
+
+  // Transfer wrap helper.
+  state->wrap_helper = wrap_helper_;
+  wrap_helper_.reset();
 }
 
-void PageWindow::SetState(const PageState* state) {
+void PageWindow::SetState(PageState* state) {
+  assert(!!state->wrap_helper == state->view_options.wrap);
+
   allow_text_change_ = state->allow_text_change;
 
   view_options_ = state->view_options;
@@ -192,6 +174,20 @@ void PageWindow::SetState(const PageState* state) {
   max_caret_x_ = state->max_caret_x;
 
   selection_ = state->selection;
+
+  // Transfer wrap helper.
+  wrap_helper_ = state->wrap_helper;
+  state->wrap_helper.reset();
+
+  // Rewrap if the client width has been changed.
+  if (wrap_helper_) {
+    int text_width = GetTextClientWidth();
+    if (text_width != wrap_helper_->client_width()) {
+      wrap_helper_->set_client_width(text_width);
+      int wrap_delta = 0;  // Not used
+      wrap_helper_->Wrap(&wrap_delta);
+    }
+  }
 }
 
 }  // namespace jil

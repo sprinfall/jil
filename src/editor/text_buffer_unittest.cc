@@ -209,13 +209,13 @@ TEST(TextBuffer, GuessTabOptions3) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// Helper buffer listener to test notify.
-class TestBufferListener : public BufferListener {
+// Helper text listener to test notify.
+class TestTextListener : public TextListener {
 public:
-  TestBufferListener() {
+  TestTextListener() {
   }
 
-  virtual ~TestBufferListener() {
+  virtual ~TestTextListener() {
   }
 
   virtual void OnBufferLineChange(LineChangeType type,
@@ -244,7 +244,7 @@ private:
 TEST(TextBuffer, Notify) {
   FtPlugin ft_plugin(kFtTxt);
 
-  TestBufferListener listener;
+  TestTextListener listener;
 
   TextBufferPtr buffer(TextBuffer::Create(0, L"line 1", &ft_plugin, kEncoding));
   buffer->AttachListener(&listener);
