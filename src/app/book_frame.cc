@@ -167,11 +167,12 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
   text_book_->Create(splitter_, wxID_ANY);
   text_book_->SetTabFont(options_->fonts[FONT_TABS]);
 
-  Connect(text_book_->GetId(), kEvtTextBookPageChange, wxCommandEventHandler(BookFrame::OnTextBookPageChange));
-  Connect(text_book_->GetId(), kEvtTextBookPageSwitch, wxCommandEventHandler(BookFrame::OnTextBookPageSwitch));
+  Connect(text_book_->GetId(), kEvtBookPageChange, wxCommandEventHandler(BookFrame::OnTextBookPageChange));
+  Connect(text_book_->GetId(), kEvtBookPageSwitch, wxCommandEventHandler(BookFrame::OnTextBookPageSwitch));
 
   // Create tool book.
-  tool_book_ = new ToolBook(theme_->GetTheme(THEME_TEXT_BOOK));
+  tool_book_ = new ToolBook();
+  tool_book_->set_theme(theme_->GetTheme(THEME_TEXT_BOOK));
   tool_book_->Create(splitter_, wxID_ANY);
   tool_book_->SetTabFont(options_->fonts[FONT_TABS]);
   tool_book_->Hide();
@@ -362,28 +363,19 @@ void BookFrame::FileOpen() {
 }
 
 void BookFrame::FileClose() {
-  TextPage* text_page = text_book_->ActivePage();
-  if (text_page == NULL) {
+  BookPage* page = text_book_->ActivePage();
+  if (page == NULL) {
     return;
   }
 
   // If the buffer is modified, ask for save.
-  if (text_page->buffer()->modified()) {
-    int code = ConfirmSave(text_page);
-
-    if (code == wxCANCEL) {
-      return;  // Don't close.
-    }
-
-    if (code == wxYES) {
-      if (!Save(text_page->buffer(), this)) {
-        // Fail or cancel to save. Don't close.
-        return;
-      }
+  if (page->Page_IsModified()) {
+    if (!page->Page_Save()) {
+      return;  // Failed or canceled.
     }
   }
 
-  text_book_->RemovePage(text_page);
+  text_book_->RemovePage(page);
 }
 
 void BookFrame::FileCloseAll() {
@@ -391,7 +383,7 @@ void BookFrame::FileCloseAll() {
 }
 
 void BookFrame::FileCloseAllButThis() {
-  RemoveAllPages(text_book_->ActivePage());
+  RemoveAllPages(text_book_->ActiveTextPage());
 }
 
 void BookFrame::FileSave() {
@@ -401,20 +393,17 @@ void BookFrame::FileSave() {
   }
 }
 
-// TODO
 void BookFrame::FileSaveAs() {
-  text_book_->page_window()->Page_OnSaveAs();
-
   // NOTE: Save As applies to not only text page, but also tool pages, e.g.,
   // find result page.
-  //BookPage* page = GetCurrentPage();
-  //if (page != NULL) {
-  //  page->Page_OnSaveAs();
-  //}
+  BookPage* page = GetCurrentPage();
+  if (page != NULL) {
+    page->Page_SaveAs();
+  }
 }
 
 void BookFrame::FileSaveAll() {
-  std::vector<TextPage*> text_pages = text_book_->Pages();
+  std::vector<TextPage*> text_pages = text_book_->TextPages();
   for (size_t i = 0; i < text_pages.size(); ++i) {
     if (text_pages[i] != NULL) {
       DoSaveBuffer(text_pages[i]->buffer());
@@ -423,19 +412,19 @@ void BookFrame::FileSaveAll() {
 }
 
 void BookFrame::FileCopyPath() {
-  TextPage* text_page = text_book_->ActivePage();
-  if (text_page != NULL) {
+  TextPage* page = text_book_->ActiveTextPage();
+  if (page != NULL) {
     if (wxTheClipboard->Open()) {
-      wxTheClipboard->SetData(new wxTextDataObject(text_page->buffer()->file_path_name()));
+      wxTheClipboard->SetData(new wxTextDataObject(page->buffer()->file_path_name()));
       wxTheClipboard->Close();
     }
   }
 }
 
 void BookFrame::FileOpenFolder() {
-  TextPage* text_page = text_book_->ActivePage();
-  if (text_page != NULL) {
-    ExploreFile(text_page->buffer()->file_path_name());
+  TextPage* page = text_book_->ActiveTextPage();
+  if (page != NULL) {
+    ExploreFile(page->buffer()->file_path_name());
   }
 }
 
@@ -523,7 +512,7 @@ void BookFrame::FullScreen() {
 }
 
 TextPage* BookFrame::ActiveTextPage() const {
-  return text_book_->ActivePage();
+  return text_book_->ActiveTextPage();
 }
 
 editor::TextBuffer* BookFrame::ActiveBuffer() const {
@@ -720,7 +709,7 @@ void BookFrame::FindAllInAllPages(const std::wstring& str, int flags) {
   FindResultPage* fr_page = GetFindResultPage(true);
   ClearFindAllResult(fr_page);
 
-  std::vector<TextPage*> text_pages = text_book_->Pages();
+  std::vector<TextPage*> text_pages = text_book_->TextPages();
   for (size_t i = 0; i < text_pages.size(); ++i) {
     FindAll(str, text_pages[i]->buffer(), flags, fr_page);
   }
@@ -1132,7 +1121,7 @@ void BookFrame::ApplyEditorOptionChanges(const wxString& ft_id,
                                          const editor::Options& old_options) {
   bool view_options_changed = options.view != old_options.view;
 
-  std::vector<TextPage*> text_pages = text_book_->Pages();
+  std::vector<TextPage*> text_pages = text_book_->TextPages();
   for (TextPage* text_page : text_pages) {
     editor::TextBuffer* buffer = text_page->buffer();
 
@@ -1256,19 +1245,14 @@ void BookFrame::OnMenuHelp(wxCommandEvent& evt) {
 
 //------------------------------------------------------------------------------
 
-// TODO
 bool BookFrame::ExecFuncByMenu(int menu) {
-  if (text_book_->page_window()->Page_OnMenu(menu)) {
-    return true;
-  }
-
   // Delegate to the current page to handle it.
-  //BookPage* page = GetCurrentPage();
-  //if (page != NULL) {
-  //  if (page->Page_OnMenu(menu)) {
-  //    return true;
-  //  }
-  //}
+  BookPage* page = GetCurrentPage();
+  if (page != NULL) {
+    if (page->Page_OnMenu(menu)) {
+      return true;
+    }
+  }
 
   // Match void command.
   editor::VoidFunc* void_func = binding_->GetVoidFuncByMenu(menu);
@@ -1316,7 +1300,7 @@ void BookFrame::OnClose(wxCloseEvent& evt) {
   // Remember opened files.
   session_->ClearOpenedFiles();
 
-  std::vector<TextPage*> text_pages = text_book_->Pages();
+  std::vector<TextPage*> text_pages = text_book_->TextPages();
   for (size_t i = 0; i < text_pages.size(); ++i) {
     if (!text_pages[i]->buffer()->new_created()) {
       wxString file_path = text_pages[i]->buffer()->file_path_name();
@@ -1452,11 +1436,11 @@ void BookFrame::UpdateStatusFileType(PageWindow* pw, bool refresh) {
 }
 
 void BookFrame::UpdateTitleWithPath() {
-  TextPage* text_page = text_book_->ActivePage();
+  TextPage* text_page = text_book_->ActiveTextPage();
   if (text_page == NULL) {
     SetTitle(kAppDisplayName);
   } else {
-    wxString title = text_page->GetDescription() + wxT(" - ") + kAppDisplayName;
+    wxString title = text_page->Page_Description() + wxT(" - ") + kAppDisplayName;
     SetTitle(title);
   }
 }
@@ -1937,6 +1921,7 @@ void BookFrame::OnFindPanelEvent(FindPanelEvent& evt) {
     return;
   }
 
+  // TODO
   //FindLocation location = evt.location();
 
   //switch (event_type) {
@@ -2019,35 +2004,35 @@ void BookFrame::ActivateToolPage(BookPage* page) {
   tool_book_->ActivatePage(page);
 }
 
-//BookPage* BookFrame::GetFocusedPage() {
-//  if (text_book_->HasFocus()) {
-//    return text_book_->ActivePage();
-//  }
-//
-//  if (tool_book_->IsShown() && tool_book_->HasFocus()) {
-//    return tool_book_->ActivePage();
-//  }
-//
-//  return NULL;
-//}
+BookPage* BookFrame::GetFocusedPage() {
+  if (text_book_->HasFocus()) {
+    return text_book_->ActivePage();
+  }
+
+  if (tool_book_->IsShown() && tool_book_->HasFocus()) {
+    return tool_book_->ActivePage();
+  }
+
+  return NULL;
+}
 
 // TODO: Refine. Maybe don't use GetFocusedPage().
-//BookPage* BookFrame::GetCurrentPage() {
-//  BookPage* focused_page = GetFocusedPage();
-//  if (focused_page != NULL) {
-//    return focused_page;
-//  }
-//
-//  if (text_book_->ActivePage() != NULL) {
-//    return text_book_->ActivePage();
-//  }
-//
-//  if (tool_book_->IsShown() && tool_book_->ActivePage() != NULL) {
-//    return tool_book_->ActivePage();
-//  }
-//
-//  return NULL;
-//}
+BookPage* BookFrame::GetCurrentPage() {
+  BookPage* focused_page = GetFocusedPage();
+  if (focused_page != NULL) {
+    return focused_page;
+  }
+
+  if (text_book_->ActivePage() != NULL) {
+    return text_book_->ActivePage();
+  }
+
+  if (tool_book_->IsShown() && tool_book_->ActivePage() != NULL) {
+    return tool_book_->ActivePage();
+  }
+
+  return NULL;
+}
 
 //------------------------------------------------------------------------------
 // Find & Replace
@@ -2461,22 +2446,19 @@ void BookFrame::SetAccelForVoidCmds() {
 bool BookFrame::GetFileMenuState(int menu_id, wxString* text) {
   using namespace editor;
 
-  // TODO
   if (menu_id == ID_MENU_FILE_SAVE_AS) {
-    return text_book_->page_window()->Page_FileMenuState(menu_id, text);
-
-    //BookPage* page = GetCurrentPage();
-    //if (page != NULL) {
-    //  return page->Page_FileMenuState(menu_id, text);
-    //} else {
-    //  if (text != NULL) {
-    //    *text = kTrFileSaveAs;
-    //  }
-    //  return false;
-    //}
+    BookPage* page = GetCurrentPage();
+    if (page != NULL) {
+      return page->Page_FileMenuState(menu_id, text);
+    } else {
+      if (text != NULL) {
+        *text = kTrFileSaveAs;
+      }
+      return false;
+    }
   }
 
-  TextPage* text_page = text_book_->ActivePage();
+  BookPage* page = text_book_->ActivePage();
 
   bool state = true;
 
@@ -2486,11 +2468,11 @@ bool BookFrame::GetFileMenuState(int menu_id, wxString* text) {
   case ID_MENU_FILE_CLOSE_ALL:
     // Fall through.
   case ID_MENU_FILE_SAVE_ALL:
-    state = (text_page != NULL);
+    state = (page != NULL);
     break;
 
   case ID_MENU_FILE_SAVE:
-    state = (text_page != NULL && text_page->buffer()->modified());
+    state = (page != NULL && page->Page_IsModified());
     break;
 
   default:
@@ -2502,14 +2484,11 @@ bool BookFrame::GetFileMenuState(int menu_id, wxString* text) {
 
 // Let the current page determine the state.
 bool BookFrame::GetEditMenuState(int menu_id) {
-  // TODO
-  return text_book_->page_window()->Page_EditMenuState(menu_id);
-
-  //BookPage* page = GetCurrentPage();
-  //if (page != NULL) {
-  //  return page->Page_EditMenuState(menu_id);
-  //}
-  //return false;
+  BookPage* page = GetCurrentPage();
+  if (page != NULL) {
+    return page->Page_EditMenuState(menu_id);
+  }
+  return false;
 }
 
 bool BookFrame::GetViewMenuState(int menu_id, bool* check) {
@@ -2602,7 +2581,7 @@ void BookFrame::UpdateRecentFilesMenu() {
 // Text Page
 
 TextPage* BookFrame::TextPageByFileName(const wxFileName& fn_object) const {
-  std::vector<TextPage*> text_pages = text_book_->Pages();
+  std::vector<TextPage*> text_pages = text_book_->TextPages();
   for (size_t i = 0; i < text_pages.size(); ++i) {
     if (fn_object == text_pages[i]->buffer()->file_name_object()) {
       return text_pages[i];
@@ -2612,7 +2591,7 @@ TextPage* BookFrame::TextPageByFileName(const wxFileName& fn_object) const {
 }
 
 TextPage* BookFrame::TextPageByBufferId(size_t buffer_id) const {
-  std::vector<TextPage*> text_pages = text_book_->Pages();
+  std::vector<TextPage*> text_pages = text_book_->TextPages();
   for (size_t i = 0; i < text_pages.size(); ++i) {
     if (buffer_id == text_pages[i]->buffer()->id()) {
       return text_pages[i];
@@ -2622,7 +2601,7 @@ TextPage* BookFrame::TextPageByBufferId(size_t buffer_id) const {
 }
 
 void BookFrame::RemoveAllPages(const TextPage* except_page) {
-  std::vector<TextPage*> text_pages = text_book_->Pages();
+  std::vector<TextPage*> text_pages = text_book_->TextPages();
   
   // If any buffer is modified, ask for save.
 
@@ -2647,7 +2626,7 @@ void BookFrame::RemoveAllPages(const TextPage* except_page) {
 }
 
 void BookFrame::SwitchStackPage(bool forward) {
-  std::vector<TextPage*> text_pages = text_book_->StackPages();
+  std::vector<TextPage*> text_pages = text_book_->StackTextPages();
   if (text_pages.size() <= 1) {
     return;
   }
@@ -2719,8 +2698,7 @@ TextPage* BookFrame::DoOpenFile(const wxFileName& fn,
       return NULL;
     }
 
-    text_page = new TextPage(buffer);
-    text_book_->AddPage(text_page, active);
+    text_page = text_book_->AddPage(buffer, active);
   }
 
   if (update_recent_files) {

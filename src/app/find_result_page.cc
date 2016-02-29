@@ -1,5 +1,6 @@
 #include "app/find_result_page.h"
 #include "wx/menu.h"
+#include "wx/sizer.h"
 #include "editor/text_area.h"
 #include "editor/text_buffer.h"
 #include "app/id.h"
@@ -25,11 +26,27 @@ bool FindResultPage::Create(wxWindow* parent, wxWindowID id, bool hide) {
 }
 
 FindResultPage::~FindResultPage() {
+  wxDELETE(buffer_);
+}
+
+bool FindResultPage::Page_HasFocus() const {
+  return HasFocus();
+}
+
+void FindResultPage::Page_SetFocus() {
+  SetFocus();
 }
 
 void FindResultPage::Page_Activate(bool active) {
-  Show(active);
-  SetFocus();
+  wxSizer* parent_Sizer = GetParent()->GetSizer();
+  if (active) {
+    parent_Sizer->Add(this, 1, wxEXPAND);
+    Show(true);
+    SetFocus();
+  } else {
+    Show(false);
+    parent_Sizer->Clear(false);
+  }
 }
 
 void FindResultPage::Page_Close() {
@@ -53,13 +70,13 @@ int FindResultPage::Page_Flags() const {
   return 0;
 }
 
-void FindResultPage::Page_EditMenu(wxMenu* menu) {
-  AppendMenuItem(menu, ID_MENU_EDIT_COPY, kTrEditCopy);
-  menu->AppendSeparator();
-  AppendMenuItem(menu, ID_MENU_EDIT_CLEAR_ALL, kTrEditClearAll);
-  menu->AppendSeparator();
-  AppendMenuItem(menu, ID_MENU_EDIT_GO_TO_LOCATION, kTrEditGoToLocation);
-}
+//void FindResultPage::Page_EditMenu(wxMenu* menu) {
+//  AppendMenuItem(menu, ID_MENU_EDIT_COPY, kTrEditCopy);
+//  menu->AppendSeparator();
+//  AppendMenuItem(menu, ID_MENU_EDIT_CLEAR_ALL, kTrEditClearAll);
+//  menu->AppendSeparator();
+//  AppendMenuItem(menu, ID_MENU_EDIT_GO_TO_LOCATION, kTrEditGoToLocation);
+//}
 
 bool FindResultPage::Page_EditMenuState(int menu_id) {
   if (menu_id == ID_MENU_EDIT_COPY || menu_id == ID_MENU_EDIT_CLEAR_ALL) {
@@ -102,8 +119,12 @@ bool FindResultPage::Page_OnMenu(int menu_id) {
   return false;
 }
 
-void FindResultPage::Page_OnSaveAs() {
-  SaveBufferAs(buffer_, NULL);
+bool FindResultPage::Page_Save() {
+  return false;
+}
+
+bool FindResultPage::Page_SaveAs() {
+  return SaveBufferAs(buffer_, NULL);
 }
 
 // Double-click goes to the line of this result.

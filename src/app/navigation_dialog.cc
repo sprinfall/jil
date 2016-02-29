@@ -105,12 +105,12 @@ void NavigationDialog::OnPaint(wxPaintEvent& evt) {
     dc.DrawRectangle(text_rect);
 
     text_rect.Deflate(kPaddingX, kPaddingY);
-    ui::DrawTextInRect(dc, text_pages_[select_index_]->GetLabel(), text_rect);
+    ui::DrawTextInRect(dc, text_pages_[select_index_]->Page_Label(), text_rect);
 
     // Selected file path
     dc.SetTextForeground(theme_->GetColor(FG));
 
-    wxString path = text_pages_[select_index_]->GetDescription();
+    wxString path = text_pages_[select_index_]->Page_Description();
     ui::DrawTextInRect(dc, path, path_rect_);
   }
 
@@ -121,7 +121,7 @@ void NavigationDialog::OnPaint(wxPaintEvent& evt) {
     if (i != select_index_) {
       wxRect text_rect = text_rects_[i];
       text_rect.Deflate(kPaddingX, kPaddingY);
-      ui::DrawTextInRect(dc, text_pages_[i]->GetLabel(), text_rect);
+      ui::DrawTextInRect(dc, text_pages_[i]->Page_Label(), text_rect);
     }
   }
 }

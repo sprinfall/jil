@@ -278,15 +278,13 @@ protected:
   // Show tool book and activate the given page.
   void ActivateToolPage(BookPage* page);
 
-  // TODO
   // Get the page which has focus.
-  //BookPage* GetFocusedPage();
+  BookPage* GetFocusedPage();
 
-  // TODO
   // The focused page must be the current page, but the current page might
   // not be focused.
   // Only used by Save As.
-  //BookPage* GetCurrentPage();
+  BookPage* GetCurrentPage();
 
 private:
   //----------------------------------------------------------------------------

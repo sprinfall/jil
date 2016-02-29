@@ -10,12 +10,22 @@ class ToolBook : public BookCtrl {
   DECLARE_EVENT_TABLE()
 
 public:
-  explicit ToolBook(const editor::SharedTheme& theme);
-  bool Create(wxWindow* parent, wxWindowID id);
+  ToolBook();
   virtual ~ToolBook();
+
+  bool Create(wxWindow* parent, wxWindowID id);
+
+  // TODO: Rename to page_area.
+  wxPanel* PageParent() const {
+    return page_area_;
+  }
 
 protected:
   virtual void HandleTabMouseRightUp(wxMouseEvent& evt) override;
+
+  virtual void DoActivateTab(Tab* tab, bool active) override;
+  virtual void DoRemoveTab(Tab* tab) override;
+  virtual void DoRemoveAll(Tab* tab) override;
 
   void OnMenuClose(wxCommandEvent& evt);
 };

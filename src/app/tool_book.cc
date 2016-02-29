@@ -1,5 +1,10 @@
 #include "app/tool_book.h"
+
 #include "wx/menu.h"
+#include "wx/panel.h"
+#include "wx/sizer.h"
+
+#include "app/book_page.h"
 #include "app/i18n_strings.h"
 #include "app/id.h"
 
@@ -9,8 +14,7 @@ BEGIN_EVENT_TABLE(ToolBook, BookCtrl)
 EVT_MENU(ID_MENU_FILE_CLOSE, ToolBook::OnMenuClose)
 END_EVENT_TABLE()
 
-ToolBook::ToolBook(const editor::SharedTheme& theme)
-    : BookCtrl(theme) {
+ToolBook::ToolBook() {
 }
 
 bool ToolBook::Create(wxWindow* parent, wxWindowID id) {
@@ -32,6 +36,46 @@ void ToolBook::HandleTabMouseRightUp(wxMouseEvent& evt) {
     PopupMenu(&menu, evt.GetPosition());
   }
 }
+
+void ToolBook::DoActivateTab(Tab* tab, bool active) {
+  if (active) {
+    tab->active = true;
+    tab->page->Page_Activate(true);
+    page_area_->Layout();
+  } else {
+    tab->active = false;
+    tab->page->Page_Activate(false);
+  }
+}
+
+void ToolBook::DoRemoveTab(Tab* tab) {
+  tab->page->Page_Close();
+
+  // The page to remove is active; activate another page.
+  if (tab->active) {
+    page_area_->GetSizer()->Clear(false);
+
+    if (!IsEmpty()) {
+      // TODO: Duplicate code as DoActivateTab().
+      Tab* active_tab = stack_tabs_.front();
+      active_tab->active = true;
+      active_tab->page->Page_Activate(true);
+
+      PostEvent(kEvtBookPageSwitch);
+    }
+  }
+
+  page_area_->Layout();
+}
+
+void ToolBook::DoRemoveAll(Tab* tab) {
+  tab->page->Page_Close();
+
+  if (tab->active) {
+    page_area_->GetSizer()->Clear(false);
+  }
+}
+
 
 void ToolBook::OnMenuClose(wxCommandEvent& evt) {
   RemoveActivePage();

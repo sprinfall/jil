@@ -1,14 +1,20 @@
 #include "app/book_ctrl.h"
+
 #include <cassert>
 #include <memory>
+
 #include "wx/log.h"
 #include "wx/menu.h"
 #include "wx/sizer.h"
 #include "wx/wupdlock.h"
+
 #include "base/math_util.h"
 #include "ui/util.h"
+
 #include "editor/text_extent.h"
 #include "editor/tip.h"
+
+#include "app/book_page.h"
 #include "app/i18n_strings.h"
 #include "app/id.h"
 
@@ -78,16 +84,13 @@ void BookTabArea::OnMouseCaptureLost(wxMouseCaptureLostEvent& evt) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-BookCtrl::BookCtrl(const editor::SharedTheme& theme)
-    : theme_(theme) {
+BookCtrl::BookCtrl() {
   Init();
 }
 
 BookCtrl::~BookCtrl() {
-  TabList::iterator it = tabs_.begin();
-  for (; it != tabs_.end(); ++it) {
-    Disconnect((*it)->page->Page_Window()->GetId());
-    delete (*it);
+  for (Tab* tab : tabs_) {
+    delete tab;
   }
   tabs_.clear();
 }
@@ -105,8 +108,8 @@ bool BookCtrl::Create(wxWindow* parent, wxWindowID id) {
   tab_area_->SetBackgroundColour(theme_->GetColor(TAB_AREA_BG));
 
   page_area_ = new wxPanel(this, wxID_ANY);
-  page_vsizer_ = new wxBoxSizer(wxVERTICAL);
-  page_area_->SetSizer(page_vsizer_);
+  wxSizer* page_vsizer = new wxBoxSizer(wxVERTICAL);
+  page_area_->SetSizer(page_vsizer);
 
   wxSizer* vsizer = new wxBoxSizer(wxVERTICAL);
   vsizer->Add(tab_area_, 0, wxEXPAND);
@@ -116,6 +119,27 @@ bool BookCtrl::Create(wxWindow* parent, wxWindowID id) {
   UpdateTabFontDetermined();
 
   return true;
+}
+
+bool BookCtrl::HasFocus() const {
+  if (wxPanel::HasFocus()) {
+    return true;
+  }
+
+  BookPage* page = ActivePage();
+  if (page != NULL) {
+    return page->Page_HasFocus();
+  }
+
+  return false;
+}
+
+void BookCtrl::SetFocus() {
+  BookPage* page = ActivePage();
+  if (page != NULL) {
+    return page->Page_SetFocus();
+  }
+  wxPanel::SetFocus();
 }
 
 void BookCtrl::SetTabFont(const wxFont& tab_font) {
@@ -133,19 +157,6 @@ void BookCtrl::ReapplyTheme() {
   tab_area_->SetBackgroundColour(theme_->GetColor(TAB_AREA_BG));
 
   tab_area_->Refresh();
-}
-
-bool BookCtrl::HasFocus() const {
-  if (wxPanel::HasFocus()) {
-    return true;
-  }
-
-  BookPage* page = ActivePage();
-  if (page != NULL && page->Page_Window()->HasFocus()) {
-    return true;
-  }
-
-  return false;
 }
 
 void BookCtrl::StartBatch() {
@@ -194,7 +205,7 @@ void BookCtrl::AddPage(BookPage* page, bool active) {
 }
 
 bool BookCtrl::RemovePage(const BookPage* page) {
-  TabList::iterator it = TabByPage(page);
+  TabIter it = TabByPage(page);
   if (it == tabs_.end()) {
     return false;
   }
@@ -203,7 +214,7 @@ bool BookCtrl::RemovePage(const BookPage* page) {
 }
 
 bool BookCtrl::RemoveActivePage() {
-  TabList::iterator it = ActiveTab();
+  TabIter it = ActiveTab();
   if (it == tabs_.end()) {
     return false;
   }
@@ -214,24 +225,24 @@ bool BookCtrl::RemoveActivePage() {
 void BookCtrl::RemoveAllPages(const BookPage* except_page) {
   wxWindowUpdateLocker avoid_flickering(this);
 
-  bool removed = PageCount() > (except_page != NULL ? 1 : 0);
+  bool removed = false;
 
-  TabList::iterator it = tabs_.begin();
-  for (; it != tabs_.end(); ) {
+  for (TabIter it = tabs_.begin(); it != tabs_.end(); ) {
     Tab* tab = *it;
+
     if (tab->page == except_page) {
       ++it;
       continue;
     }
 
-    tab->page->Page_Close();
-
     it = tabs_.erase(it);
     stack_tabs_.remove(tab);
-    if (tab->active) {
-      page_vsizer_->Clear(false);
-    }
-    delete tab;
+
+    DoRemoveAll(tab);
+
+    wxDELETE(tab);
+
+    removed = true;
   }
 
   if (removed) {
@@ -247,12 +258,9 @@ void BookCtrl::RemoveAllPages(const BookPage* except_page) {
 }
 
 void BookCtrl::ActivatePage(BookPage* page) {
-  TabList::iterator it = tabs_.begin();
-  for (; it != tabs_.end(); ++it) {
-    if ((*it)->page == page) {
-      ActivatePage(it);
-      return;
-    }
+  TabIter it = TabByPage(page);
+  if (it != tabs_.end()) {
+    ActivatePage(it);
   }
 }
 
@@ -263,6 +271,7 @@ BookPage* BookCtrl::ActivePage() const {
   if (!stack_tabs_.front()->active) {
     return NULL;
   }
+
   return stack_tabs_.front()->page;
 }
 
@@ -271,7 +280,7 @@ void BookCtrl::SwitchToNextPage() {
     return;
   }
 
-  TabList::iterator it = tabs_.begin();
+  TabIter it = tabs_.begin();
   for (; it != tabs_.end(); ++it) {
     if ((*it)->active) {
       ++it;
@@ -289,7 +298,7 @@ void BookCtrl::SwitchToPrevPage() {
     return;
   }
 
-  TabList::iterator it = tabs_.begin();
+  TabIter it = tabs_.begin();
   for (; it != tabs_.end(); ++it) {
     if ((*it)->active) {
       if (it == tabs_.begin()) {
@@ -302,28 +311,8 @@ void BookCtrl::SwitchToPrevPage() {
   }
 }
 
-#if 0
-void BookCtrl::SwitchToNextStackPage() {
-  if (PageCount() <= 1) {
-    return;
-  }
-
-  TabList::iterator it = stack_tabs_.begin();
-  ++it;
-  ActivatePage((*it)->page);
-}
-
-void BookCtrl::SwitchToPrevStackPage() {
-  if (PageCount() <= 1) {
-    return;
-  }
-
-  ActivatePage(stack_tabs_.back()->page);
-}
-#endif
-
 int BookCtrl::GetStackIndex(BookPage* page) const {
-  TabList::const_iterator it = stack_tabs_.begin();
+  TabConstIter it = stack_tabs_.begin();
   for (int i = 0; it != stack_tabs_.end(); ++it, ++i) {
     if ((*it)->page == page) {
       return i;
@@ -333,7 +322,7 @@ int BookCtrl::GetStackIndex(BookPage* page) const {
 }
 
 void BookCtrl::MovePageToStackFront(BookPage* page) {
-  TabList::const_iterator it = stack_tabs_.begin();
+  TabConstIter it = stack_tabs_.begin();
   for (int i = 0; it != stack_tabs_.end(); ++it) {
     Tab* tab = *it;
     if (tab->page == page) {
@@ -346,23 +335,17 @@ void BookCtrl::MovePageToStackFront(BookPage* page) {
 
 std::vector<BookPage*> BookCtrl::Pages() const {
   std::vector<BookPage*> pages;
-
-  TabList::const_iterator it = tabs_.begin();
-  for (; it != tabs_.end(); ++it) {
-    pages.push_back((*it)->page);
+  for (const Tab* tab : tabs_) {
+    pages.push_back(tab->page);
   }
-
   return pages;
 }
 
 std::vector<BookPage*> BookCtrl::StackPages() const {
   std::vector<BookPage*> pages;
-
-  TabList::const_iterator it = stack_tabs_.begin();
-  for (; it != stack_tabs_.end(); ++it) {
-    pages.push_back((*it)->page);
+  for (const Tab* tab : stack_tabs_) {
+    pages.push_back(tab->page);
   }
-
   return pages;
 }
 
@@ -371,7 +354,7 @@ BookPage* BookCtrl::NextPage(const BookPage* page) const {
     return NULL;
   }
 
-  TabList::const_iterator it = TabByPage(page);
+  TabConstIter it = TabByPage(page);
   if (it == tabs_.end()) {
     return NULL;
   }
@@ -521,7 +504,6 @@ void BookCtrl::Init() {
 
   tab_area_ = NULL;
   page_area_ = NULL;
-  page_vsizer_ = NULL;
 
   batch_ = false;
   need_resize_tabs_ = false;
@@ -545,6 +527,9 @@ void BookCtrl::UpdateTabFontDetermined() {
   Layout();
   //tab_area_->Refresh();
 }
+
+//------------------------------------------------------------------------------
+// Tab area event handlers.
 
 void BookCtrl::OnTabSize(wxSizeEvent& evt) {
   if (!batch_) {
@@ -577,7 +562,7 @@ void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
 
   x += tab_area_padding_x_;
 
-  for (TabList::iterator it = tabs_.begin(); it != tabs_.end(); ++it) {
+  for (TabIter it = tabs_.begin(); it != tabs_.end(); ++it) {
     Tab* tab = *it;
 
     wxRect tab_rect(x, rect.y, tab->size, rect.height);
@@ -629,7 +614,7 @@ void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
       }
     }
 
-    if ((tab->page->Page_Flags() & BookPage::kModified) != 0) {
+    if (tab->page->Page_IsModified()) {
       int x = tab_fg_rect.GetRight() + char_width_ / 2;
       dc.DrawText(kStar, x, tab_fg_rect.y);
     }
@@ -680,10 +665,6 @@ void BookCtrl::OnTabMouseLeftDown(wxMouseEvent& evt) {
   HandleTabMouseLeftDown(evt);
 }
 
-void BookCtrl::HandleTabMouseLeftDown(wxMouseEvent& evt) {
-  ActivatePageByPos(evt.GetPosition().x);
-}
-
 void BookCtrl::OnTabMouseLeftUp(wxMouseEvent& evt) {
   if (!tab_area_->HasCapture()) {
     return;
@@ -692,9 +673,6 @@ void BookCtrl::OnTabMouseLeftUp(wxMouseEvent& evt) {
   HandleTabMouseLeftUp(evt);
 
   tab_area_->ReleaseMouse();
-}
-
-void BookCtrl::HandleTabMouseLeftUp(wxMouseEvent& evt) {
 }
 
 void BookCtrl::OnTabMouseMiddleDown(wxMouseEvent& evt) {
@@ -717,18 +695,11 @@ void BookCtrl::OnTabMouseMiddleUp(wxMouseEvent& evt) {
   HandleTabMouseMiddleUp(evt);
 }
 
-void BookCtrl::HandleTabMouseMiddleUp(wxMouseEvent& evt) {
-  TabList::iterator it = TabByPos(evt.GetPosition().x);
-  if (it != tabs_.end()) {
-    RemovePage(it);
-  }
-}
-
 // Update tooltip on mouse motion.
 void BookCtrl::OnTabMouseMotion(wxMouseEvent& evt) {
   wxString tooltip;
 
-  TabList::iterator it = TabByPos(evt.GetPosition().x);
+  TabIter it = TabByPos(evt.GetPosition().x);
   if (it != tabs_.end()) {
     tooltip = (*it)->page->Page_Description();
   }
@@ -749,10 +720,6 @@ void BookCtrl::OnTabMouseRightDown(wxMouseEvent& evt) {
   HandleTabMouseRightDown(evt);
 }
 
-void BookCtrl::HandleTabMouseRightDown(wxMouseEvent& evt) {
-  ActivatePageByPos(evt.GetPosition().x);
-}
-
 void BookCtrl::OnTabMouseRightUp(wxMouseEvent& evt) {
   if (!tab_area_->HasCapture()) {
     return;
@@ -762,20 +729,34 @@ void BookCtrl::OnTabMouseRightUp(wxMouseEvent& evt) {
   HandleTabMouseRightUp(evt);
 }
 
-void BookCtrl::HandleTabMouseRightUp(wxMouseEvent& evt) {
-}
-
 void BookCtrl::OnTabMouseLeftDClick(wxMouseEvent& evt) {
   HandleTabMouseLeftDClick(evt);
 }
 
-void BookCtrl::HandleTabMouseLeftDClick(wxMouseEvent& evt) {
+void BookCtrl::HandleTabMouseLeftDown(wxMouseEvent& evt) {
+  ActivatePageByPos(evt.GetPosition().x);
 }
 
-BookCtrl::TabList::iterator BookCtrl::TabByPos(int pos_x) {
+void BookCtrl::HandleTabMouseLeftUp(wxMouseEvent& evt) {
+}
+
+void BookCtrl::HandleTabMouseMiddleUp(wxMouseEvent& evt) {
+  TabIter it = TabByPos(evt.GetPosition().x);
+  if (it != tabs_.end()) {
+    RemovePage(it);
+  }
+}
+
+void BookCtrl::HandleTabMouseRightDown(wxMouseEvent& evt) {
+  ActivatePageByPos(evt.GetPosition().x);
+}
+
+//------------------------------------------------------------------------------
+
+BookCtrl::TabIter BookCtrl::TabByPos(int pos_x) {
   int x = 0;
 
-  TabList::iterator it = tabs_.begin();
+  TabIter it = tabs_.begin();
   for (; it != tabs_.end(); ++it) {
     if (pos_x >= x && pos_x < x + (*it)->size) {
       return it;
@@ -787,22 +768,30 @@ BookCtrl::TabList::iterator BookCtrl::TabByPos(int pos_x) {
   return tabs_.end();
 }
 
-BookCtrl::Tab* BookCtrl::GetTabByWindow(wxWindow* window, size_t* index) {
-  size_t i = 0;
-
-  for (TabList::iterator it = tabs_.begin(); it != tabs_.end(); ++it, ++i) {
-    if ((*it)->page->Page_Window() == window) {
-      if (index != NULL) {
-        *index = i;
-      }
-      return (*it);
-    }
+BookPage* BookCtrl::PageByPos(int pos_x) {
+  TabIter it = TabByPos(pos_x);
+  if (it != tabs_.end()) {
+    return (*it)->page;
   }
-
   return NULL;
 }
 
-void BookCtrl::ActivatePage(TabList::iterator it) {
+//BookCtrl::Tab* BookCtrl::GetTabByWindow(wxWindow* window, size_t* index) {
+//  size_t i = 0;
+//
+//  for (TabIter it = tabs_.begin(); it != tabs_.end(); ++it, ++i) {
+//    if ((*it)->page->Page_Window() == window) {
+//      if (index != NULL) {
+//        *index = i;
+//      }
+//      return (*it);
+//    }
+//  }
+//
+//  return NULL;
+//}
+
+void BookCtrl::ActivatePage(TabIter it) {
   if (it == tabs_.end()) {
     return;
   }
@@ -812,22 +801,14 @@ void BookCtrl::ActivatePage(TabList::iterator it) {
     return;  // Already active
   }
 
-  // NOTE: If freeze the page area, tab area and status bar can't be painted in GTK+.
-  // Don't know the reason. (2015-05-04)
-  //page_area_->Freeze();
-
   // Deactivate previous active page.
-  TabList::iterator active_it = ActiveTab();
+  TabIter active_it = ActiveTab();
   if (active_it != tabs_.end()) {
-    (*active_it)->active = false;
-    (*active_it)->page->Page_Activate(false);
-    page_vsizer_->Clear(false);
+    DoActivateTab(*active_it, false);
   }
 
   // Activate new page.
-  (*it)->active = true;
-  page_vsizer_->Add((*it)->page->Page_Window(), 1, wxEXPAND);
-  (*it)->page->Page_Activate(true);
+  DoActivateTab(*it, true);
 
   // Make sure the active tab has enough space to display.
   if ((*it)->size < (*it)->best_size) {
@@ -838,47 +819,24 @@ void BookCtrl::ActivatePage(TabList::iterator it) {
   stack_tabs_.remove(tab);
   stack_tabs_.push_front(tab);
 
-  page_area_->Layout();
-  //page_area_->Thaw();
-
   tab_area_->Refresh();
 
   PostEvent(kEvtBookPageSwitch);
 }
 
-bool BookCtrl::RemovePage(TabList::iterator it) {
+bool BookCtrl::RemovePage(TabIter it) {
   if (it == tabs_.end()) {
     return false;
   }
 
   Tab* tab = *it;
 
-  tab->page->Page_Close();
-
-  //page_area_->Freeze();
-
   tabs_.erase(it);
   stack_tabs_.remove(tab);
 
-  // The page to remove is active.
-  if (tab->active) {
-    page_vsizer_->Clear(false);
-
-    if (PageCount() > 0) {
-      // Activate another page.
-      Tab* active_tab = stack_tabs_.front();
-      active_tab->active = true;
-      page_vsizer_->Add(active_tab->page->Page_Window(), 1, wxEXPAND);
-      active_tab->page->Page_Activate(true);
-
-      PostEvent(kEvtBookPageSwitch);
-    }
-  }
+  DoRemoveTab(tab);
 
   delete tab;
-
-  page_area_->Layout();
-  //page_area_->Thaw();
 
   // Resize tabs since more space is available.
   ResizeTabs();
@@ -890,14 +848,14 @@ bool BookCtrl::RemovePage(TabList::iterator it) {
 }
 
 void BookCtrl::ActivatePageByPos(int pos_x) {
-  TabList::iterator it = TabByPos(pos_x);
+  TabIter it = TabByPos(pos_x);
   if (it != tabs_.end()) {
     ActivatePage(it);
   }
 }
 
-BookCtrl::TabList::iterator BookCtrl::ActiveTab() {
-  TabList::iterator it = tabs_.begin();
+BookCtrl::TabIter BookCtrl::ActiveTab() {
+  TabIter it = tabs_.begin();
   for (; it != tabs_.end(); ++it) {
     if ((*it)->active) {
       break;
@@ -906,8 +864,8 @@ BookCtrl::TabList::iterator BookCtrl::ActiveTab() {
   return it;
 }
 
-BookCtrl::TabList::iterator BookCtrl::TabByPage(const BookPage* page) {
-  TabList::iterator it = tabs_.begin();
+BookCtrl::TabIter BookCtrl::TabByPage(const BookPage* page) {
+  TabIter it = tabs_.begin();
   for (; it != tabs_.end(); ++it) {
     if ((*it)->page == page) {
       break;
@@ -916,9 +874,8 @@ BookCtrl::TabList::iterator BookCtrl::TabByPage(const BookPage* page) {
   return it;
 }
 
-BookCtrl::TabList::const_iterator BookCtrl::TabByPage(
-    const BookPage* page) const {
-  TabList::const_iterator it = tabs_.begin();
+BookCtrl::TabConstIter BookCtrl::TabByPage(const BookPage* page) const {
+  TabConstIter it = tabs_.begin();
   for (; it != tabs_.end(); ++it) {
     if ((*it)->page == page) {
       break;

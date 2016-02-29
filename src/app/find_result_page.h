@@ -5,7 +5,7 @@
 // Text window as find result page in the tool book.
 
 #include "editor/text_window.h"
-#include "app/book_ctrl.h"
+#include "app/book_page.h"
 
 namespace jil {
 
@@ -23,8 +23,9 @@ public:
   bool Create(wxWindow* parent, wxWindowID id, bool hide = false);
   virtual ~FindResultPage();
 
-  // OVERRIDE of BookPage:
-  virtual wxWindow* Page_Window() override { return this; }
+  // Overriddens of BookPage:
+  virtual bool Page_HasFocus() const override;
+  virtual void Page_SetFocus() override;
   virtual void Page_Activate(bool active) override;
   virtual void Page_Close() override;
   virtual wxString Page_Type() const override;
@@ -32,17 +33,15 @@ public:
   virtual wxString Page_Description() const override;
   virtual int Page_Flags() const override;
 
-  virtual void Page_EditMenu(wxMenu* edit_menu) override;
+  //virtual void Page_EditMenu(wxMenu* edit_menu) override;
   virtual bool Page_EditMenuState(int menu_id) override;
-
   virtual bool Page_FileMenuState(int menu_id, wxString* text) override;
-
   virtual bool Page_OnMenu(int menu_id) override;
-
-  virtual void Page_OnSaveAs() override;
+  virtual bool Page_Save() override;
+  virtual bool Page_SaveAs() override;
 
 protected:
-  // OVERRIDE of editor::TextWindow:
+  // Overriddens of editor::TextWindow:
   virtual void HandleTextLeftDClick(wxMouseEvent& evt) override;
   virtual void HandleTextRightUp(wxMouseEvent& evt) override;
 

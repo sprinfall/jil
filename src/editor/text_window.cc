@@ -72,7 +72,8 @@ END_EVENT_TABLE()
 
 //------------------------------------------------------------------------------
 
-TextWindow::TextWindow(TextBuffer* buffer) : buffer_(buffer) {
+TextWindow::TextWindow(TextBuffer* buffer)
+    : buffer_(buffer) {
   Init();
 }
   

@@ -20,75 +20,14 @@ class wxMemoryDC;
 
 namespace jil {
 
-////////////////////////////////////////////////////////////////////////////////
-
-// Page interface of book ctrl.
-class BookPage {
-public:
-  enum Flag {
-    kModified = 1,
-    kUntitled,
-  };
-
-  virtual ~BookPage() {
-  }
-
-  // NOTE:
-  // Prefix "Page_" is added to each function to avoid name conflict.
-
-  // Page as window.
-  virtual wxWindow* Page_Window() = 0;
-
-  // Activate/deactivate this page.
-  virtual void Page_Activate(bool active) = 0;
-
-  // Close this page (also destroy the window).
-  virtual void Page_Close() = 0;
-
-  // Page type ID.
-  virtual wxString Page_Type() const = 0;
-
-  // Page label displayed in tab.
-  virtual wxString Page_Label() const = 0;
-
-  // Page description displayed, e.g., in tab tooltip.
-  virtual wxString Page_Description() const {
-    return wxEmptyString;
-  }
-
-  // See enum Flag.
-  virtual int Page_Flags() const {
-    return 0;
-  }
-
-  // Add menu items to the edit menu.
-  // Different pages might have different edit menu items.
-  // E.g., text page has Undo and Redo while find result page doesn't.
-  virtual void Page_EditMenu(wxMenu* menu) = 0;
-
-  // Get the enable state of the edit menu item.
-  virtual bool Page_EditMenuState(int menu_id) = 0;
-
-  // Get the enable state of the file menu item and optionaly return the
-  // menu item text.
-  virtual bool Page_FileMenuState(int menu_id, wxString* text) = 0;
-
-  // Handle the menu event.
-  virtual bool Page_OnMenu(int menu_id) = 0;
-
-  // Special handling of Save As.
-  // Save As applies to not only text page, but also tool pages, e.g.,
-  // find result page.
-  virtual void Page_OnSaveAs() = 0;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-class BookCtrl;
-
 namespace editor {
 class TipHandler;
 }  // namespace editor
+
+class BookCtrl;
+class BookPage;
+
+////////////////////////////////////////////////////////////////////////////////
 
 class BookTabArea : public wxPanel {
   DECLARE_EVENT_TABLE()
@@ -159,23 +98,25 @@ protected:
 
   typedef std::list<Tab*> TabList;
   typedef TabList::iterator TabIter;
+  typedef TabList::const_iterator TabConstIter;
 
 public:
-  explicit BookCtrl(const editor::SharedTheme& theme);
+  BookCtrl();
   virtual ~BookCtrl();
 
+  void set_theme(const editor::SharedTheme& theme) {
+    theme_ = theme;
+  }
+
   bool Create(wxWindow* parent, wxWindowID id);
+
+  virtual bool HasFocus() const override;
+  virtual void SetFocus() override;
 
   // NOTE: Call after Create().
   void SetTabFont(const wxFont& tab_font);
 
-  void ReapplyTheme();
-
-  virtual bool HasFocus() const override;
-
-  wxPanel* PageParent() const {
-    return page_area_;
-  }
+  virtual void ReapplyTheme();
 
   // Set batch flag to avoid unnecessary resizing tabs and refresh.
   // Example:
@@ -201,6 +142,10 @@ public:
     return tabs_.size();
   }
 
+  bool IsEmpty() const {
+    return PageCount() == 0;
+  }
+
   void ActivatePage(BookPage* page);
 
   BookPage* ActivePage() const;
@@ -208,18 +153,11 @@ public:
   void SwitchToNextPage();
   void SwitchToPrevPage();
 
-#if 0
-  // Not used
-  void SwitchToNextStackPage();
-  void SwitchToPrevStackPage();
-#endif
-
   int GetStackIndex(BookPage* page) const;
 
   void MovePageToStackFront(BookPage* page);
 
   std::vector<BookPage*> Pages() const;
-
   std::vector<BookPage*> StackPages() const;
 
   // Return the page next to the given page.
@@ -234,6 +172,9 @@ protected:
   // Update values determined by tab font.
   void UpdateTabFontDetermined();
 
+  //----------------------------------------------------------------------------
+  // Tab area event handlers.
+
   friend class BookTabArea;
 
   void OnTabSize(wxSizeEvent& evt);
@@ -241,39 +182,41 @@ protected:
   void OnTabPaint(wxDC& dc, wxPaintEvent& evt);
 
   void OnTabMouse(wxMouseEvent& evt);
-
   void OnTabMouseLeftDown(wxMouseEvent& evt);
-  virtual void HandleTabMouseLeftDown(wxMouseEvent& evt);
-
   void OnTabMouseLeftUp(wxMouseEvent& evt);
-  virtual void HandleTabMouseLeftUp(wxMouseEvent& evt);
-
   void OnTabMouseMiddleDown(wxMouseEvent& evt);
   void OnTabMouseMiddleUp(wxMouseEvent& evt);
-  virtual void HandleTabMouseMiddleUp(wxMouseEvent& evt);
-
   void OnTabMouseMotion(wxMouseEvent& evt);
-
   void OnTabMouseRightDown(wxMouseEvent& evt);
-  virtual void HandleTabMouseRightDown(wxMouseEvent& evt);
-
   void OnTabMouseRightUp(wxMouseEvent& evt);
-  virtual void HandleTabMouseRightUp(wxMouseEvent& evt);
-
   void OnTabMouseLeftDClick(wxMouseEvent& evt);
-  virtual void HandleTabMouseLeftDClick(wxMouseEvent& evt);
 
-  TabList::iterator TabByPos(int pos_x);
-  Tab* GetTabByWindow(wxWindow* window, size_t* index = NULL);
+  virtual void HandleTabMouseLeftDown(wxMouseEvent& evt);
+  virtual void HandleTabMouseLeftUp(wxMouseEvent& evt);
+  virtual void HandleTabMouseMiddleUp(wxMouseEvent& evt);
+  virtual void HandleTabMouseRightDown(wxMouseEvent& evt);
+  virtual void HandleTabMouseRightUp(wxMouseEvent& evt) {}
+  virtual void HandleTabMouseLeftDClick(wxMouseEvent& evt) {}
 
-  void ActivatePage(TabList::iterator it);
-  bool RemovePage(TabList::iterator it);
+  //----------------------------------------------------------------------------
+
+  TabIter TabByPos(int pos_x);
+  BookPage* PageByPos(int pos_x);
+
+  //Tab* GetTabByWindow(wxWindow* window, size_t* index = NULL);
+
+  void ActivatePage(TabIter it);
+  bool RemovePage(TabIter it);
+
+  virtual void DoActivateTab(Tab* tab, bool active) = 0;
+  virtual void DoRemoveTab(Tab* tab) = 0;
+  virtual void DoRemoveAll(Tab* tab) = 0;
 
   void ActivatePageByPos(int pos_x);
 
-  TabList::iterator ActiveTab();
-  TabList::iterator TabByPage(const BookPage* page);
-  TabList::const_iterator TabByPage(const BookPage* page) const;
+  TabIter ActiveTab();
+  TabIter TabByPage(const BookPage* page);
+  TabConstIter TabByPage(const BookPage* page) const;
 
   int CalcTabBestSize(const wxString& label) const;
 
@@ -301,7 +244,6 @@ protected:
 
   BookTabArea* tab_area_;
   wxPanel* page_area_;
-  wxSizer* page_vsizer_;
 
   TabList tabs_;
 
