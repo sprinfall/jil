@@ -5,6 +5,8 @@
 #include "wx/defs.h"
 #include "wx/string.h"
 
+#include "editor/defs.h"
+
 // App name used for paths, config, and other places the user doesn't see.
 #if defined (__WXMSW__) || defined (__WXMAC__)
 #define kAppName wxT("Jil")
@@ -57,6 +59,9 @@ extern const wxString kFtId_FindResult;
 // Plain Text file type ID.
 // Please use kTrPlainText as file type name.
 extern const wxString kTxtFtId;
+
+// Plain Text file type.
+extern const editor::FileType kTxtFt;
 
 // Extra data for each line in the find result buffer.
 // Saved in TextLine.extra_data_.

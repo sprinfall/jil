@@ -1,4 +1,5 @@
 #include "app/defs.h"
+#include "app/i18n_strings.h"
 
 namespace jil {
   
@@ -9,6 +10,8 @@ const wxString kInternalFtIdPrefix = wxT("jil-");
 const wxString kFtId_FindResult = wxT("jil-find_result");
 
 const wxString kTxtFtId = wxT("txt");
+
+const editor::FileType kTxtFt(kTxtFtId, kTrPlainText);
 
 }  // namespace jil
 

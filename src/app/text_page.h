@@ -78,11 +78,7 @@ public:
   virtual wxString Page_Description() const override;
   virtual int Page_Flags() const override;
 
-  // Add menu items to the edit menu.
-  // Different pages might have different edit menu items.
-  // E.g., text page has Undo and Redo while find result page doesn't.
-  //void Page_EditMenu(wxMenu* menu);
-
+  virtual void Page_EditMenu(wxMenu* menu) override;
   virtual bool Page_EditMenuState(int menu_id) override;
   virtual bool Page_FileMenuState(int menu_id, wxString* text) override;
   virtual bool Page_OnMenu(int menu_id) override;

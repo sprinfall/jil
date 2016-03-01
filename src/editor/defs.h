@@ -84,6 +84,11 @@ public:
       : id(_id), name(_name) {
   }
 
+  FileType(const FileType& rhs)
+      : id(rhs.id), name(rhs.name) {
+
+  }
+
   wxString id;
   wxString name;
 };

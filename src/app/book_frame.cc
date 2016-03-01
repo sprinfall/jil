@@ -314,8 +314,7 @@ void BookFrame::FileNew() {
   using namespace editor;
 
   // TODO: Let the user choose file type.
-  FileType txt_ft(kTxtFtId, kTrPlainText);
-  FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(txt_ft);
+  FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(kTxtFt);
 
   TextBuffer* buffer = TextBuffer::Create(NewBufferId(), ft_plugin, options_->file_encoding);
 
@@ -1511,28 +1510,28 @@ void BookFrame::HandleTextWindowGetFocus(wxCommandEvent& evt) {
     return;
   }
 
+  // TODO: Use Remove/Insert instead?
   wxMenu* edit_menu = menu_bar->GetMenu(1);
   if (edit_menu == NULL) {
     return;
   }
 
-  // TODO
   // NOTE: Don't try to get the focused page from evt.GetEventObject().
   // A window could be destroyed immediately after it gets focus.
-  //BookPage* focused_page = GetFocusedPage();
-  //if (focused_page == NULL) {
-  //  return;
-  //}
+  BookPage* focused_page = GetFocusedPage();
+  if (focused_page == NULL) {
+    return;
+  }
 
-  //wxString page_type = focused_page->Page_Type();
+  wxString page_type = focused_page->Page_Type();
 
-  //if (page_type != page_type_) {
-  //  page_type_ = page_type;
-  //  wxLogDebug("Current page type: %s", page_type_);
+  if (page_type != page_type_) {
+    page_type_ = page_type;
+    wxLogDebug("Current page type: %s", page_type_);
 
-  //  ClearMenuItems(edit_menu);
-  //  focused_page->Page_EditMenu(edit_menu);
-  //}
+    ClearMenuItems(edit_menu);
+    focused_page->Page_EditMenu(edit_menu);
+  }
 }
 
 void BookFrame::OnFindResultPageEvent(wxCommandEvent& evt) {

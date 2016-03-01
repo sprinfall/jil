@@ -1,5 +1,7 @@
 #include "app/text_page.h"
 
+#include "wx/menu.h"
+
 #include "editor/text_buffer.h"
 #include "editor/text_window.h"
 #include "editor/wrap.h"
@@ -24,17 +26,22 @@ TextPage::~TextPage() {
 //------------------------------------------------------------------------------
 
 bool TextPage::Page_HasFocus() const {
-  assert(page_window_ != NULL);
-  return page_window_->HasFocus();
+  if (page_window_ != NULL) {
+    return page_window_->HasFocus();
+  }
+  return false;
 }
 
 void TextPage::Page_SetFocus() {
-  assert(page_window_ != NULL);
-  return page_window_->SetFocus();
+  if (page_window_ != NULL) {
+    page_window_->SetFocus();
+  }
 }
 
 void TextPage::Page_Activate(bool active) {
-  assert(page_window_ != NULL);
+  if (page_window_ == NULL) {
+    return;
+  }
 
   if (active) {
     page_window_->SetPage(this);
@@ -81,64 +88,37 @@ int TextPage::Page_Flags() const {
   return flags;
 }
 
-//void TextPage::Page_EditMenu(wxMenu* menu) {
-//  //------------------------------------
-//
-//  AppendMenuItem(menu, ID_MENU_EDIT_UNDO, kTrEditUndo);
-//  AppendMenuItem(menu, ID_MENU_EDIT_REDO, kTrEditRedo);
-//  menu->AppendSeparator();
-//
-//  //------------------------------------
-//
-//  AppendMenuItem(menu, ID_MENU_EDIT_CUT, kTrEditCut);
-//  AppendMenuItem(menu, ID_MENU_EDIT_COPY, kTrEditCopy);
-//  AppendMenuItem(menu, ID_MENU_EDIT_PASTE, kTrEditPaste);
-//  menu->AppendSeparator();
-//
-//  //------------------------------------
-//
-//  wxMenu* indent_menu = new wxMenu;
-//  AppendMenuItem(indent_menu, ID_MENU_EDIT_INCREASE_INDENT, kTrEditIncreaseIndent);
-//  AppendMenuItem(indent_menu, ID_MENU_EDIT_DECREASE_INDENT, kTrEditDecreaseIndent);
-//  AppendMenuItem(indent_menu, ID_MENU_EDIT_AUTO_INDENT, kTrEditAutoIndent);
-//  menu->AppendSubMenu(indent_menu, kTrEditIndent);
-//
-//  //------------------------------------
-//
-//  wxMenu* comment_menu = new wxMenu;
-//  AppendMenuItem(comment_menu, ID_MENU_EDIT_COMMENT, kTrEditComment);
-//  AppendMenuItem(comment_menu, ID_MENU_EDIT_UNCOMMENT, kTrEditUncomment);
-//  menu->AppendSubMenu(comment_menu, kTrEditComment);
-//  menu->AppendSeparator();
-//
-//  //------------------------------------
-//
-//  AppendMenuItem(menu, ID_MENU_EDIT_FIND, kTrEditFind);
-//  AppendMenuItem(menu, ID_MENU_EDIT_REPLACE, kTrEditReplace);
-//  AppendMenuItem(menu, ID_MENU_EDIT_FIND_NEXT, kTrEditFindNext);
-//  AppendMenuItem(menu, ID_MENU_EDIT_FIND_PREV, kTrEditFindPrev);
-//  menu->AppendSeparator();
-//
-//  AppendMenuItem(menu, ID_MENU_EDIT_GO_TO, kTrEditGoTo);
-//}
+void TextPage::Page_EditMenu(wxMenu* menu) {
+  if (page_window_ != NULL) {
+    return page_window_->GetEditMenu(menu);
+  }
+}
 
 bool TextPage::Page_EditMenuState(int menu_id) {
-  assert(page_window_ != NULL);
-  return page_window_->GetEditMenuState(menu_id);
+  if (page_window_ != NULL) {
+    return page_window_->GetEditMenuState(menu_id);
+  }
+  return false;
 }
 
 bool TextPage::Page_FileMenuState(int menu_id, wxString* text) {
-  assert(page_window_ != NULL);
-  return page_window_->GetFileMenuState(menu_id, text);
+  if (page_window_ != NULL) {
+    return page_window_->GetFileMenuState(menu_id, text);
+  }
+  return false;
 }
 
 bool TextPage::Page_OnMenu(int menu_id) {
-  assert(page_window_ != NULL);
-  return page_window_->HandleMenu(menu_id);
+  if (page_window_ != NULL) {
+    return page_window_->HandleMenu(menu_id);
+  }
+  return false;
 }
 
 bool TextPage::Page_Save() {
-  assert(page_window_ != NULL);
+  if (page_window_ == NULL) {
+    return false;
+  }
 
   int code = ConfirmSave(this);
 

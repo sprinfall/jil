@@ -33,7 +33,7 @@ public:
   virtual wxString Page_Description() const override;
   virtual int Page_Flags() const override;
 
-  //virtual void Page_EditMenu(wxMenu* edit_menu) override;
+  virtual void Page_EditMenu(wxMenu* edit_menu) override;
   virtual bool Page_EditMenuState(int menu_id) override;
   virtual bool Page_FileMenuState(int menu_id, wxString* text) override;
   virtual bool Page_OnMenu(int menu_id) override;

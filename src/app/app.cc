@@ -885,8 +885,9 @@ bool App::LoadBinding() {
 
 bool App::LoadFileTypes() {
   // Plain Text file type.
-  editor::FileType* ft_txt = new editor::FileType(kTxtFtId, kTrPlainText);
+  editor::FileType* ft_txt = new editor::FileType(kTxtFt);
   file_types_.push_back(ft_txt);
+
   // Files without extension name are considered as Plain Text file.
   ext_ft_map_[wxEmptyString] = ft_txt;
   ext_ft_map_[kTxtFtId] = ft_txt;

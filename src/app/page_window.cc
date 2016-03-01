@@ -50,6 +50,45 @@ void PageWindow::SetPage(TextPage* page) {
 
 //------------------------------------------------------------------------------
 
+void PageWindow::GetEditMenu(wxMenu* menu) {
+  AppendMenuItem(menu, ID_MENU_EDIT_UNDO, kTrEditUndo);
+  AppendMenuItem(menu, ID_MENU_EDIT_REDO, kTrEditRedo);
+  menu->AppendSeparator();
+
+  //------------------------------------
+
+  AppendMenuItem(menu, ID_MENU_EDIT_CUT, kTrEditCut);
+  AppendMenuItem(menu, ID_MENU_EDIT_COPY, kTrEditCopy);
+  AppendMenuItem(menu, ID_MENU_EDIT_PASTE, kTrEditPaste);
+  menu->AppendSeparator();
+
+  //------------------------------------
+
+  wxMenu* indent_menu = new wxMenu;
+  AppendMenuItem(indent_menu, ID_MENU_EDIT_INCREASE_INDENT, kTrEditIncreaseIndent);
+  AppendMenuItem(indent_menu, ID_MENU_EDIT_DECREASE_INDENT, kTrEditDecreaseIndent);
+  AppendMenuItem(indent_menu, ID_MENU_EDIT_AUTO_INDENT, kTrEditAutoIndent);
+  menu->AppendSubMenu(indent_menu, kTrEditIndent);
+
+  //------------------------------------
+
+  wxMenu* comment_menu = new wxMenu;
+  AppendMenuItem(comment_menu, ID_MENU_EDIT_COMMENT, kTrEditComment);
+  AppendMenuItem(comment_menu, ID_MENU_EDIT_UNCOMMENT, kTrEditUncomment);
+  menu->AppendSubMenu(comment_menu, kTrEditComment);
+  menu->AppendSeparator();
+
+  //------------------------------------
+
+  AppendMenuItem(menu, ID_MENU_EDIT_FIND, kTrEditFind);
+  AppendMenuItem(menu, ID_MENU_EDIT_REPLACE, kTrEditReplace);
+  AppendMenuItem(menu, ID_MENU_EDIT_FIND_NEXT, kTrEditFindNext);
+  AppendMenuItem(menu, ID_MENU_EDIT_FIND_PREV, kTrEditFindPrev);
+  menu->AppendSeparator();
+
+  AppendMenuItem(menu, ID_MENU_EDIT_GO_TO, kTrEditGoTo);
+}
+
 bool PageWindow::GetEditMenuState(int menu_id) {
   switch (menu_id) {
     case ID_MENU_EDIT_UNDO:

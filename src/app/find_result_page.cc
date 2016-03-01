@@ -70,13 +70,13 @@ int FindResultPage::Page_Flags() const {
   return 0;
 }
 
-//void FindResultPage::Page_EditMenu(wxMenu* menu) {
-//  AppendMenuItem(menu, ID_MENU_EDIT_COPY, kTrEditCopy);
-//  menu->AppendSeparator();
-//  AppendMenuItem(menu, ID_MENU_EDIT_CLEAR_ALL, kTrEditClearAll);
-//  menu->AppendSeparator();
-//  AppendMenuItem(menu, ID_MENU_EDIT_GO_TO_LOCATION, kTrEditGoToLocation);
-//}
+void FindResultPage::Page_EditMenu(wxMenu* menu) {
+  AppendMenuItem(menu, ID_MENU_EDIT_COPY, kTrEditCopy);
+  menu->AppendSeparator();
+  AppendMenuItem(menu, ID_MENU_EDIT_CLEAR_ALL, kTrEditClearAll);
+  menu->AppendSeparator();
+  AppendMenuItem(menu, ID_MENU_EDIT_GO_TO_LOCATION, kTrEditGoToLocation);
+}
 
 bool FindResultPage::Page_EditMenuState(int menu_id) {
   if (menu_id == ID_MENU_EDIT_COPY || menu_id == ID_MENU_EDIT_CLEAR_ALL) {

@@ -18,7 +18,7 @@ public:
 
   void SetPage(TextPage* page);
 
-  void FillEditMenu(wxMenu* menu);
+  void GetEditMenu(wxMenu* menu);
   bool GetEditMenuState(int menu_id);
   bool GetFileMenuState(int menu_id, wxString* text);
   bool HandleMenu(int menu_id);

@@ -45,10 +45,15 @@ TextBook::TextBook() {
 }
 
 TextBook::~TextBook() {
-  for (Tab* tab : tabs_) {
-    delete tab->page;
+  //page_window_->SetPage(empty_page_);
+   
+  if (!tabs_.empty()) {
+    for (Tab* tab : tabs_) {
+      delete tab->page;
+      delete tab;
+    }
+    tabs_.clear();
   }
-  // Don't clear tabs; BookCtrl's dtor will clear it.
 }
 
 bool TextBook::Create(wxWindow* parent, wxWindowID id) {
@@ -104,14 +109,13 @@ std::vector<TextPage*> TextBook::StackTextPages() const {
 void TextBook::CreatePageWindow() {
   using namespace editor;
 
-  // Create a buffer for the empty page.
-  FileType txt_ft(kTxtFtId, kTrPlainText);
-  FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(txt_ft);
+  FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(kTxtFt);
   TextBuffer* buffer = TextBuffer::Create(0, ft_plugin, options_->file_encoding);
-
   empty_page_ = new TextPage(buffer);
 
   page_window_ = new PageWindow(empty_page_);
+
+  empty_page_->set_page_window(page_window_);
 
   page_window_->set_style(style_);
   page_window_->set_theme(page_theme_);
@@ -209,7 +213,6 @@ void TextBook::DoActivateTab(Tab* tab, bool active) {
   if (active) {
     tab->active = true;
 
-    //page_window_->SetPage(tab->page);
     tab->page->Page_Activate(true);
 
     if (!page_window_->IsShown()) {
@@ -228,7 +231,6 @@ void TextBook::DoRemoveTab(Tab* tab) {
     if (!IsEmpty()) {
       Tab* active_tab = stack_tabs_.front();
       active_tab->active = true;
-      //page_window_->SetPage(active_tab->page);
       active_tab->page->Page_Activate(true);
 
       PostEvent(kEvtBookPageSwitch);
@@ -238,7 +240,6 @@ void TextBook::DoRemoveTab(Tab* tab) {
   if (IsEmpty()) {
     // No pages left, set empty page and hide page window.
     empty_page_->Page_Activate(true);
-    //page_window_->SetPage(empty_page_);
     page_window_->Hide();
     page_area_->Layout();
   }
