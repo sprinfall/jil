@@ -50,8 +50,8 @@ bool NavigationDialog::Create(wxWindow* parent, wxWindowID id) {
 
   SetBackgroundStyle(wxBG_STYLE_CUSTOM);
 
-  if (theme_->GetColor(BG).IsOk()) {
-    SetBackgroundColour(theme_->GetColor(BG));
+  if (theme_->GetColor(COLOR_BG).IsOk()) {
+    SetBackgroundColour(theme_->GetColor(COLOR_BG));
   }
 
   title_font_ = GetFont();
@@ -97,9 +97,9 @@ void NavigationDialog::OnPaint(wxPaintEvent& evt) {
     // Selected file name
     dc.SetFont(GetFont());
 
-    dc.SetPen(wxPen(theme_->GetColor(SELECT_BORDER)));
-    dc.SetBrush(wxBrush(theme_->GetColor(SELECT_BG)));
-    dc.SetTextForeground(theme_->GetColor(SELECT_FG));
+    dc.SetPen(wxPen(theme_->GetColor(COLOR_SELECT_BORDER)));
+    dc.SetBrush(wxBrush(theme_->GetColor(COLOR_SELECT_BG)));
+    dc.SetTextForeground(theme_->GetColor(COLOR_SELECT_FG));
 
     wxRect text_rect = text_rects_[select_index_];
     dc.DrawRectangle(text_rect);
@@ -108,14 +108,14 @@ void NavigationDialog::OnPaint(wxPaintEvent& evt) {
     ui::DrawTextInRect(dc, text_pages_[select_index_]->Page_Label(), text_rect);
 
     // Selected file path
-    dc.SetTextForeground(theme_->GetColor(FG));
+    dc.SetTextForeground(theme_->GetColor(COLOR_FG));
 
     wxString path = text_pages_[select_index_]->Page_Description();
     ui::DrawTextInRect(dc, path, path_rect_);
   }
 
   dc.SetFont(GetFont());
-  dc.SetTextForeground(theme_->GetColor(FG));
+  dc.SetTextForeground(theme_->GetColor(COLOR_FG));
 
   for (size_t i = 0; i < text_pages_.size(); ++i) {
     if (i != select_index_) {

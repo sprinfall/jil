@@ -155,7 +155,7 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
 
   splitter_ = new Splitter;
   splitter_->Create(this);
-  splitter_->SetBackgroundColour(bf_theme->GetColor(BookFrame::BG));
+  splitter_->SetBackgroundColour(bf_theme->GetColor(COLOR_BG));
 
   // Create text book.
   text_book_ = new TextBook();

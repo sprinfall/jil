@@ -62,19 +62,19 @@ private:
 class BookCtrl : public wxPanel {
 public:
   enum ColorId {
-    BG = 0,  // The whole book background
+    COLOR_BG = 0,  // The whole book background
 
-    TAB_AREA_BG,  // The tab area background
+    COLOR_TAB_AREA_BG,  // The tab area background
 
     // Tab item colors:
-    TAB_FG,
-    ACTIVE_TAB_FG,
-    TAB_BG,
-    ACTIVE_TAB_BG,
-    TAB_BORDER,
-    ACTIVE_TAB_BORDER,
+    COLOR_TAB_FG,
+    COLOR_ACTIVE_TAB_FG,
+    COLOR_TAB_BG,
+    COLOR_ACTIVE_TAB_BG,
+    COLOR_TAB_BORDER,
+    COLOR_ACTIVE_TAB_BORDER,
 
-    COLOR_COUNT
+    COLORS,
   };
 
 protected:

@@ -1421,7 +1421,7 @@ void TextWindow::HandleTextPaint(Renderer& renderer) {
 
   // Rulers.
   if (!view_options_.rulers.empty()) {
-    renderer.SetPen(wxPen(theme_->GetColor(RULER)), true);
+    renderer.SetPen(wxPen(theme_->GetColor(COLOR_RULER)), true);
 
     for (size_t i = 0; i < view_options_.rulers.size(); ++i) {
       int ruler_x = x + char_size_.x * view_options_.rulers[i];
@@ -1484,7 +1484,7 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
 
     // Rulers.
     if (!view_options_.rulers.empty()) {
-      renderer.SetPen(wxPen(theme_->GetColor(RULER)), true);
+      renderer.SetPen(wxPen(theme_->GetColor(COLOR_RULER)), true);
 
       for (size_t i = 0; i < view_options_.rulers.size(); ++i) {
         int ruler_x = x + char_size_.x * view_options_.rulers[i];
@@ -1513,7 +1513,7 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
 
     // Rulers.
     if (!view_options_.rulers.empty()) {
-      renderer.SetPen(wxPen(theme_->GetColor(RULER)), true);
+      renderer.SetPen(wxPen(theme_->GetColor(COLOR_RULER)), true);
 
       int y2 = y + h;
       for (size_t i = 0; i < view_options_.rulers.size(); ++i) {

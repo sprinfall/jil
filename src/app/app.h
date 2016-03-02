@@ -135,6 +135,9 @@ private:
 
   void LoadOptions();
 
+  // List all installed themes.
+  void ListThemes();
+
   bool LoadTheme();
 
   // Init text and void commands.

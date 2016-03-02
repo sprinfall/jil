@@ -2,8 +2,9 @@
 #include <string>
 #include <vector>
 #include "boost/algorithm/string.hpp"
-#include "wx/log.h"
+#include "wx/dir.h"
 #include "wx/filename.h"
+#include "wx/log.h"
 #include "ui/color.h"
 #include "editor/lex.h"
 #include "editor/style.h"
@@ -91,7 +92,7 @@ static SharedTheme GetButtonTheme(Setting button_setting) {
   for (int part = 0; part < ui::ButtonStyle::PARTS; ++part) {
     Setting fg_setting = button_setting.Get(kButtonParts[part], Setting::kGroup);
     if (fg_setting) {
-      SharedTheme part_theme(new Theme(0, ui::ButtonStyle::STATES));
+      SharedTheme part_theme(new Theme(0, ui::ButtonStyle::STATES, 0));
       for (int state = 0; state < ui::ButtonStyle::STATES; ++state) {
         part_theme->SetColor(state, fg_setting.GetColor(kButtonStates[state]));
       }
@@ -102,16 +103,25 @@ static SharedTheme GetButtonTheme(Setting button_setting) {
   return button_theme;
 }
 
+static wxBitmap GetImage(const wxString& dir, const wxString& name) {
+  return wxBitmap(dir + name + wxT(".png"), wxBITMAP_TYPE_PNG);
+}
+
 // TODO: Error handling
+// TODO: Rename theme_file
 bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style) {
-  if (!wxFileName::FileExists(theme_file)) {
-    wxLogError(wxT("Theme file doesn't exist: %s!"), theme_file.c_str());
+  if (!wxDir::Exists(theme_file)) {
+    wxLogError(wxT("The theme folder '%s' doesn't exist!"), theme_file);
     return false;
   }
 
+  wxString image_dir = theme_file + wxFILE_SEP_PATH + wxT("image") + wxFILE_SEP_PATH;
+
+  wxString color_file = theme_file + wxFILE_SEP_PATH + wxT("color.cfg");
+
   Config cfg;
-  if (!cfg.Load(theme_file)) {
-    wxLogError(wxT("Failed to parse theme file: %s!"), theme_file.c_str());
+  if (!cfg.Load(color_file)) {
+    wxLogError(wxT("Failed to parse theme/color file: %s!"), theme_file);
     return false;
   }
 
@@ -123,96 +133,101 @@ bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style)
   // Book frame
   SharedTheme bf_theme = theme->GetTheme(THEME_BOOK_FRAME);
   if (!bf_theme) {
-    bf_theme.reset(new Theme(0, BookFrame::COLOR_COUNT));
+    bf_theme.reset(new Theme(0, BookFrame::COLORS, 0));
     theme->SetTheme(THEME_BOOK_FRAME, bf_theme);
   }
 
   Setting bf_setting = root.Get("book_frame", Setting::kGroup);
   if (bf_setting) {
-    bf_theme->SetColor(BookFrame::BG, bf_setting.GetColor("bg"));
+    bf_theme->SetColor(BookFrame::COLOR_BG, bf_setting.GetColor("bg"));
   }
 
   // Text book
   SharedTheme tb_theme = theme->GetTheme(THEME_TEXT_BOOK);
   if (!tb_theme) {
-    tb_theme.reset(new Theme(0, BookCtrl::COLOR_COUNT));
+    tb_theme.reset(new Theme(0, BookCtrl::COLORS, 0));
     theme->SetTheme(THEME_TEXT_BOOK, tb_theme);
   }
 
   Setting tb_setting = root.Get("text_book", Setting::kGroup);
   if (tb_setting) {
-    tb_theme->SetColor(BookCtrl::BG, tb_setting.GetColor("bg"));
-    tb_theme->SetColor(BookCtrl::TAB_AREA_BG, tb_setting.GetColor("tab_area_bg"));
-    tb_theme->SetColor(BookCtrl::TAB_FG, tb_setting.GetColor("tab_fg"));
-    tb_theme->SetColor(BookCtrl::ACTIVE_TAB_FG, tb_setting.GetColor("active_tab_fg"));
-    tb_theme->SetColor(BookCtrl::TAB_BG, tb_setting.GetColor("tab_bg"));
-    tb_theme->SetColor(BookCtrl::ACTIVE_TAB_BG, tb_setting.GetColor("active_tab_bg"));
-    tb_theme->SetColor(BookCtrl::TAB_BORDER, tb_setting.GetColor("tab_border"));
-    tb_theme->SetColor(BookCtrl::ACTIVE_TAB_BORDER, tb_setting.GetColor("active_tab_border"));
+    tb_theme->SetColor(BookCtrl::COLOR_BG, tb_setting.GetColor("bg"));
+    tb_theme->SetColor(BookCtrl::COLOR_TAB_AREA_BG, tb_setting.GetColor("tab_area_bg"));
+    tb_theme->SetColor(BookCtrl::COLOR_TAB_FG, tb_setting.GetColor("tab_fg"));
+    tb_theme->SetColor(BookCtrl::COLOR_ACTIVE_TAB_FG, tb_setting.GetColor("active_tab_fg"));
+    tb_theme->SetColor(BookCtrl::COLOR_TAB_BG, tb_setting.GetColor("tab_bg"));
+    tb_theme->SetColor(BookCtrl::COLOR_ACTIVE_TAB_BG, tb_setting.GetColor("active_tab_bg"));
+    tb_theme->SetColor(BookCtrl::COLOR_TAB_BORDER, tb_setting.GetColor("tab_border"));
+    tb_theme->SetColor(BookCtrl::COLOR_ACTIVE_TAB_BORDER, tb_setting.GetColor("active_tab_border"));
   }
 
   // Text page
   SharedTheme tp_theme = theme->GetTheme(THEME_TEXT_PAGE);
   if (!tp_theme) {
-    tp_theme.reset(new Theme(0, TextWindow::COLORS));
+    tp_theme.reset(new Theme(0, TextWindow::COLORS, 0));
     theme->SetTheme(THEME_TEXT_PAGE, tp_theme);
   }
 
   Setting tp_setting = root.Get("text_page", Setting::kGroup);
   if (tp_setting) {
-    tp_theme->SetColor(TextWindow::RULER, tp_setting.GetColor("ruler"));
+    tp_theme->SetColor(TextWindow::COLOR_RULER, tp_setting.GetColor("ruler"));
   }
 
   // Find panel
-  SharedTheme fp_theme(new Theme(FindPanel::THEMES, FindPanel::COLORS));
+  SharedTheme fp_theme(new Theme(FindPanel::THEMES, FindPanel::COLORS, FindPanel::IMAGES));
   Setting fp_setting = root.Get("find_panel", Setting::kGroup);
   if (fp_setting) {
-    fp_theme->SetColor(FindPanel::FG, fp_setting.GetColor("fg"));
-    fp_theme->SetColor(FindPanel::BG_TOP, fp_setting.GetColor("bg_top"));
-    fp_theme->SetColor(FindPanel::BG_BOTTOM, fp_setting.GetColor("bg_bottom"));
-    fp_theme->SetColor(FindPanel::BORDER_OUTER,
-                       fp_setting.GetColor("border_outer"));
-    fp_theme->SetColor(FindPanel::BORDER_INNER,
-                       fp_setting.GetColor("border_inner"));
+    fp_theme->SetColor(FindPanel::COLOR_FG, fp_setting.GetColor("fg"));
+    fp_theme->SetColor(FindPanel::COLOR_BG_TOP, fp_setting.GetColor("bg_top"));
+    fp_theme->SetColor(FindPanel::COLOR_BG_BOTTOM, fp_setting.GetColor("bg_bottom"));
+    fp_theme->SetColor(FindPanel::COLOR_BORDER_OUTER, fp_setting.GetColor("border_outer"));
+    fp_theme->SetColor(FindPanel::COLOR_BORDER_INNER, fp_setting.GetColor("border_inner"));
 
     Setting button_setting = fp_setting.Get("button", Setting::kGroup);
     if (button_setting) {
-      fp_theme->SetTheme(FindPanel::BUTTON, GetButtonTheme(button_setting));
+      fp_theme->SetTheme(FindPanel::THEME_BUTTON, GetButtonTheme(button_setting));
     }
   }
+  // Load images.
+  fp_theme->SetImage(FindPanel::IMAGE_LOCATION, GetImage(image_dir, wxT("fp_location")));
+  fp_theme->SetImage(FindPanel::IMAGE_CASE_SENSITIVE, GetImage(image_dir, wxT("fp_case_sensitive")));
+  fp_theme->SetImage(FindPanel::IMAGE_MATCH_WORD, GetImage(image_dir, wxT("fp_match_word")));
+  fp_theme->SetImage(FindPanel::IMAGE_USE_REGEX, GetImage(image_dir, wxT("fp_use_regex")));
+  fp_theme->SetImage(FindPanel::IMAGE_ADD, GetImage(image_dir, wxT("fp_add")));
+
   theme->SetTheme(THEME_FIND_PANEL, fp_theme);
 
   // Status bar
   SharedTheme sb_theme = theme->GetTheme(THEME_STATUS_BAR);
   if (!sb_theme) {
-    sb_theme.reset(new Theme(0, StatusBar::COLORS));
+    sb_theme.reset(new Theme(0, StatusBar::COLORS, 0));
     theme->SetTheme(THEME_STATUS_BAR, sb_theme);
   }
 
   Setting sb_setting = root.Get("status_bar", Setting::kGroup);
   if (sb_setting) {
-    sb_theme->SetColor(StatusBar::FG, sb_setting.GetColor("fg"));
-    sb_theme->SetColor(StatusBar::BORDER_OUTER, sb_setting.GetColor("border_outer"));
-    sb_theme->SetColor(StatusBar::BORDER_INNER, sb_setting.GetColor("border_inner"));
-    sb_theme->SetColor(StatusBar::BG_TOP, sb_setting.GetColor("bg_top"));
-    sb_theme->SetColor(StatusBar::BG_BOTTOM, sb_setting.GetColor("bg_bottom"));
-    sb_theme->SetColor(StatusBar::SEPARATOR, sb_setting.GetColor("separator"));
+    sb_theme->SetColor(StatusBar::COLOR_FG, sb_setting.GetColor("fg"));
+    sb_theme->SetColor(StatusBar::COLOR_BORDER_OUTER, sb_setting.GetColor("border_outer"));
+    sb_theme->SetColor(StatusBar::COLOR_BORDER_INNER, sb_setting.GetColor("border_inner"));
+    sb_theme->SetColor(StatusBar::COLOR_BG_TOP, sb_setting.GetColor("bg_top"));
+    sb_theme->SetColor(StatusBar::COLOR_BG_BOTTOM, sb_setting.GetColor("bg_bottom"));
+    sb_theme->SetColor(StatusBar::COLOR_SEPARATOR, sb_setting.GetColor("separator"));
   }
 
   // Navigation dialog
   SharedTheme nd_theme = theme->GetTheme(THEME_NAVIGATION_DIALOG);
   if (!nd_theme) {
-    nd_theme.reset(new Theme(0, NavigationDialog::COLOR_COUNT));
+    nd_theme.reset(new Theme(0, NavigationDialog::COLORS, 0));
     theme->SetTheme(THEME_NAVIGATION_DIALOG, nd_theme);
   }
 
   Setting nd_setting = root.Get("navigation_dialog", Setting::kGroup);
   if (nd_setting) {
-    nd_theme->SetColor(NavigationDialog::BG, nd_setting.GetColor("bg"));
-    nd_theme->SetColor(NavigationDialog::FG, nd_setting.GetColor("fg"));
-    nd_theme->SetColor(NavigationDialog::SELECT_FG, nd_setting.GetColor("select_fg"));
-    nd_theme->SetColor(NavigationDialog::SELECT_BG, nd_setting.GetColor("select_bg"));
-    nd_theme->SetColor(NavigationDialog::SELECT_BORDER, nd_setting.GetColor("select_border"));
+    nd_theme->SetColor(NavigationDialog::COLOR_BG, nd_setting.GetColor("bg"));
+    nd_theme->SetColor(NavigationDialog::COLOR_FG, nd_setting.GetColor("fg"));
+    nd_theme->SetColor(NavigationDialog::COLOR_SELECT_FG, nd_setting.GetColor("select_fg"));
+    nd_theme->SetColor(NavigationDialog::COLOR_SELECT_BG, nd_setting.GetColor("select_bg"));
+    nd_theme->SetColor(NavigationDialog::COLOR_SELECT_BORDER, nd_setting.GetColor("select_border"));
   }
 
   //----------------------------------------------------------------------------

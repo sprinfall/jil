@@ -47,8 +47,8 @@ class BookFrame : public wxFrame {
 
 public:
   enum ColorId {
-    BG = 0,
-    COLOR_COUNT,
+    COLOR_BG = 0,
+    COLORS,
   };
 
 public:

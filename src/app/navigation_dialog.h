@@ -15,12 +15,12 @@ class NavigationDialog : public wxDialog {
 
 public:
   enum ColorId {
-    BG = 0,
-    FG,
-    SELECT_BG,
-    SELECT_BORDER,
-    SELECT_FG,
-    COLOR_COUNT,
+    COLOR_BG = 0,
+    COLOR_FG,
+    COLOR_SELECT_BG,
+    COLOR_SELECT_BORDER,
+    COLOR_SELECT_FG,
+    COLORS,
   };
 
 public:

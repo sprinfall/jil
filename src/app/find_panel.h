@@ -133,16 +133,25 @@ public:
   };
 
   enum ColorId {
-    FG = 0,
-    BG_TOP,
-    BG_BOTTOM,
-    BORDER_OUTER,
-    BORDER_INNER,
-    COLORS
+    COLOR_FG = 0,
+    COLOR_BG_TOP,
+    COLOR_BG_BOTTOM,
+    COLOR_BORDER_OUTER,
+    COLOR_BORDER_INNER,
+    COLORS,
+  };
+
+  enum ImageId {
+    IMAGE_LOCATION = 0,
+    IMAGE_CASE_SENSITIVE,
+    IMAGE_MATCH_WORD,
+    IMAGE_USE_REGEX,
+    IMAGE_ADD,
+    IMAGES,
   };
 
   enum ThemeId {
-    BUTTON = 0,
+    THEME_BUTTON = 0,
     THEMES
   };
 
@@ -244,8 +253,8 @@ private:
 
   void InitButtonStyle();
 
-  ui::BitmapButton* NewBitmapButton(int id, const wxString& bitmap);
-  ui::BitmapToggleButton* NewBitmapToggleButton(int id, const wxString& bitmap);
+  ui::BitmapButton* NewBitmapButton(int id, ImageId image_id);
+  ui::BitmapToggleButton* NewBitmapToggleButton(int id, ImageId image_id);
   ui::TextButton* NewTextButton(int id, const wxString& label);
 
   // \param event_type See enum EventType.

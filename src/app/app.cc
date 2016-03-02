@@ -350,6 +350,8 @@ bool App::OnInit() {
 
   LoadOptions();
 
+  ListThemes();
+
   if (!LoadTheme()) {
     return false;
   }
@@ -683,20 +685,24 @@ void App::LoadOptions() {
   LoadEditorOptionsFile(editor_options_file, &editor_options_);
 }
 
-bool App::LoadTheme() {
-  // List installed themes.
-  wxDir theme_dir(ResourceDir(kThemeDir));
-  if (theme_dir.IsOpened()) {
-    wxString theme_name;
-    bool cont = theme_dir.GetFirst(&theme_name, wxT("*.cfg"));
+void App::ListThemes() {
+  theme_names_.clear();
+
+  wxDir dir(ResourceDir(kThemeDir));
+
+  if (dir.IsOpened()) {
+    wxString name;
+    bool cont = dir.GetFirst(&name, wxEmptyString, wxDIR_DIRS);
     while (cont) {
-      theme_names_.push_back(theme_name.BeforeLast(kDotChar));
-      cont = theme_dir.GetNext(&theme_name);
+      theme_names_.push_back(name);
+      cont = dir.GetNext(&name);
     }
   }
+}
 
+bool App::LoadTheme() {
   if (theme_names_.empty()) {
-    ShowError(_("No theme is installed!"));
+    ShowError(_("Cannot find any theme installed!"));
     return false;
   }
 
@@ -705,11 +711,15 @@ bool App::LoadTheme() {
   wxString theme_name = options_.theme;
   if (theme_name.empty()) {
     theme_name = theme_names_.front();
+    wxLogWarning(wxT("The theme is not specified, '%s' will be used."), theme_name);
   } else if (std::find(theme_names_.begin(), theme_names_.end(), theme_name) == theme_names_.end()) {
+    wxLogWarning(wxT("The specified theme '%s' doesn't exist, '%s' will be used instead."),
+                 theme_name,
+                 theme_names_.front());
     theme_name = theme_names_.front();
   }
 
-  wxString theme_file = ResourceFile(kThemeDir, theme_name + kCfgExt);
+  wxString theme_file = ResourceFile(kThemeDir, theme_name);
 
   if (!LoadThemeFile(theme_file, theme_, style_)) {
     ShowError(wxString::Format(kTrCfgFileLoadFail, theme_file));

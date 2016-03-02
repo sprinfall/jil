@@ -26,9 +26,6 @@
 #include "app/text_page.h"
 #include "app/util.h"
 
-#define wxALIGN_CV  wxALIGN_CENTER_VERTICAL
-#define wxALIGN_CH  wxALIGN_CENTER_HORIZONTAL
-
 #define kTrCurrentPage        _("Current Page")
 #define kTrAllPages           _("All Pages")
 #define kTrFolders            _("Folders")
@@ -111,34 +108,34 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   }
 
   SetBackgroundStyle(wxBG_STYLE_PAINT);
-  SetBackgroundColour(theme_->GetColor(BG_TOP));
+  SetBackgroundColour(theme_->GetColor(COLOR_BG_TOP));
 
   InitButtonStyle();
 
   //----------------------------------------------------------------------------
 
   folders_label_ = new wxStaticText(this, ID_FP_FOLDERS_LABEL, kTrFolders);
-  folders_label_->SetForegroundColour(theme_->GetColor(FG));
+  folders_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
   folders_label_->Hide();
 
   folders_text_ctrl_ = new wxTextCtrl(this, ID_FP_FOLDERS_TEXTCTRL);
   folders_text_ctrl_->Hide();
 
-  add_folder_button_ = NewBitmapButton(ID_FP_ADD_FOLDER_BUTTON, wxT("add"));
+  add_folder_button_ = NewBitmapButton(ID_FP_ADD_FOLDER_BUTTON, IMAGE_ADD);
   add_folder_button_->Hide();
 
   //----------------------------------------------------------------------------
 
-  location_button_ = NewBitmapButton(ID_FP_LOCATION_BUTTON, wxT("location"));
+  location_button_ = NewBitmapButton(ID_FP_LOCATION_BUTTON, IMAGE_LOCATION);
   location_button_->SetToolTip(kTrLocation);
 
-  use_regex_tbutton_ = NewBitmapToggleButton(ID_FP_USE_REGEX_TBUTTON, wxT("use_regex"));
+  use_regex_tbutton_ = NewBitmapToggleButton(ID_FP_USE_REGEX_TBUTTON, IMAGE_USE_REGEX);
   use_regex_tbutton_->SetToolTip(kTrUseRegex);
 
-  case_sensitive_tbutton_ = NewBitmapToggleButton(ID_FP_CASE_SENSITIVE_TBUTTON, wxT("case_sensitive"));
+  case_sensitive_tbutton_ = NewBitmapToggleButton(ID_FP_CASE_SENSITIVE_TBUTTON, IMAGE_CASE_SENSITIVE);
   case_sensitive_tbutton_->SetToolTip(kTrCaseSensitive);
 
-  match_word_tbutton_ = NewBitmapToggleButton(ID_FP_MATCH_WORD_TBUTTON, wxT("match_word"));
+  match_word_tbutton_ = NewBitmapToggleButton(ID_FP_MATCH_WORD_TBUTTON, IMAGE_MATCH_WORD);
   match_word_tbutton_->SetToolTip(kTrMatchWord);
 
   // Initialize toggle button states.
@@ -226,16 +223,16 @@ void FindPanel::OnPaint(wxPaintEvent& evt) {
   wxRect bg_rect(update_rect.x, 0, update_rect.width, 0);
   bg_rect.y = rect.y + 2;
   bg_rect.height = rect.height - 2;
-  wxColour bg_top = theme_->GetColor(BG_TOP);
-  wxColour bg_bottom = theme_->GetColor(BG_BOTTOM);
+  wxColour bg_top = theme_->GetColor(COLOR_BG_TOP);
+  wxColour bg_bottom = theme_->GetColor(COLOR_BG_BOTTOM);
   dc.GradientFillLinear(bg_rect, bg_bottom, bg_top, wxNORTH);
 
   // Borders
   int border_y = rect.y;
-  dc.SetPen(wxPen(theme_->GetColor(BORDER_OUTER)));
+  dc.SetPen(wxPen(theme_->GetColor(COLOR_BORDER_OUTER)));
   dc.DrawLine(bg_rect.x, border_y, bg_rect.GetRight() + 1, border_y);
   ++border_y;
-  dc.SetPen(wxPen(theme_->GetColor(BORDER_INNER)));
+  dc.SetPen(wxPen(theme_->GetColor(COLOR_BORDER_INNER)));
   dc.DrawLine(bg_rect.x, border_y, bg_rect.GetRight() + 1, border_y);
 }
 
@@ -607,7 +604,7 @@ void FindPanel::ShowFolders(bool show) {
 void FindPanel::InitButtonStyle() {
   button_style_.reset(new ui::ButtonStyle);
 
-  editor::SharedTheme button_theme = theme_->GetTheme(BUTTON);
+  editor::SharedTheme button_theme = theme_->GetTheme(THEME_BUTTON);
   if (!button_theme) {
     return;
   }
@@ -624,26 +621,26 @@ void FindPanel::InitButtonStyle() {
   button_style_->Fix();
 }
 
-ui::BitmapButton* FindPanel::NewBitmapButton(int id, const wxString& bitmap) {
+ui::BitmapButton* FindPanel::NewBitmapButton(int id, ImageId image_id) {
   ui::BitmapButton* button = new ui::BitmapButton(button_style_);
   button->Create(this, id);
-  button->SetBitmap(skin::GetIcon(bitmap));
-  button->set_user_best_size(wxSize(24, 24));
+  button->SetBitmap(theme_->GetImage(image_id));
+  button->set_user_best_size(wxSize(24, 24));  // TODO
   return button;
 }
 
-ui::BitmapToggleButton* FindPanel::NewBitmapToggleButton(int id, const wxString& bitmap) {
+ui::BitmapToggleButton* FindPanel::NewBitmapToggleButton(int id, ImageId image_id) {
   ui::BitmapToggleButton* button = new ui::BitmapToggleButton(button_style_);
   button->Create(this, id);
-  button->SetBitmap(skin::GetIcon(bitmap));
-  button->set_user_best_size(wxSize(24, 24));
+  button->SetBitmap(theme_->GetImage(image_id));
+  button->set_user_best_size(wxSize(24, 24));  // TODO
   return button;
 }
 
 ui::TextButton* FindPanel::NewTextButton(int id, const wxString& label) {
   ui::TextButton* button = new ui::TextButton(button_style_);
   button->Create(this, id, label);
-  button->SetMinSize(wxSize(80, -1));
+  button->SetMinSize(wxSize(80, -1));  // TODO
   return button;
 }
 

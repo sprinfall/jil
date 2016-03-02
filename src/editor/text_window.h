@@ -58,7 +58,7 @@ public:
   };
 
   enum ColorId {
-    RULER = 0,
+    COLOR_RULER = 0,
     COLORS
   };
 

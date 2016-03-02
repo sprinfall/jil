@@ -25,6 +25,8 @@
 #define wxTB (wxTOP|wxBOTTOM)
 #define wxLTR (wxLEFT|wxTOP|wxRIGHT)
 #define wxLRB (wxLEFT|wxRIGHT|wxBOTTOM)
+#define wxALIGN_CV  wxALIGN_CENTER_VERTICAL
+#define wxALIGN_CH  wxALIGN_CENTER_HORIZONTAL
 
 #define kMaxFileTypes 256
 #define kMaxThemes 32

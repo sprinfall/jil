@@ -102,10 +102,10 @@ bool BookCtrl::Create(wxWindow* parent, wxWindowID id) {
     return false;
   }
 
-  SetBackgroundColour(theme_->GetColor(BG));
+  SetBackgroundColour(theme_->GetColor(COLOR_BG));
 
   tab_area_ = new BookTabArea(this, wxID_ANY);
-  tab_area_->SetBackgroundColour(theme_->GetColor(TAB_AREA_BG));
+  tab_area_->SetBackgroundColour(theme_->GetColor(COLOR_TAB_AREA_BG));
 
   page_area_ = new wxPanel(this, wxID_ANY);
   wxSizer* page_vsizer = new wxBoxSizer(wxVERTICAL);
@@ -153,8 +153,8 @@ void BookCtrl::SetTabFont(const wxFont& tab_font) {
 void BookCtrl::ReapplyTheme() {
   assert(theme_);
 
-  SetBackgroundColour(theme_->GetColor(BG));
-  tab_area_->SetBackgroundColour(theme_->GetColor(TAB_AREA_BG));
+  SetBackgroundColour(theme_->GetColor(COLOR_BG));
+  tab_area_->SetBackgroundColour(theme_->GetColor(COLOR_TAB_AREA_BG));
 
   tab_area_->Refresh();
 }
@@ -544,14 +544,14 @@ void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
   wxRect rect = tab_area_->GetClientRect();
   int bottom = rect.GetBottom();
 
-  const wxColour& tab_border = theme_->GetColor(TAB_BORDER);
-  const wxColour& tab_bg = theme_->GetColor(TAB_BG);
+  const wxColour& tab_border = theme_->GetColor(COLOR_TAB_BORDER);
+  const wxColour& tab_bg = theme_->GetColor(COLOR_TAB_BG);
 
   wxPen tab_pen = tab_border.IsOk() ? wxPen(tab_border) : *wxTRANSPARENT_PEN;
   wxBrush tab_brush = tab_bg.IsOk() ? wxBrush(tab_bg) : *wxTRANSPARENT_BRUSH;
 
-  wxPen active_tab_pen(theme_->GetColor(ACTIVE_TAB_BORDER));
-  wxBrush active_tab_brush(theme_->GetColor(ACTIVE_TAB_BG));
+  wxPen active_tab_pen(theme_->GetColor(COLOR_ACTIVE_TAB_BORDER));
+  wxBrush active_tab_brush(theme_->GetColor(COLOR_ACTIVE_TAB_BG));
 
   dc.SetFont(tab_area_->GetFont());
 
@@ -592,7 +592,7 @@ void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
 
     // Foreground
 
-    ColorId fg_color_id = tab->active ? ACTIVE_TAB_FG : TAB_FG;
+    ColorId fg_color_id = tab->active ? COLOR_ACTIVE_TAB_FG : COLOR_TAB_FG;
     dc.SetTextForeground(theme_->GetColor(fg_color_id));
 
     wxRect tab_fg_rect = tab_rect;

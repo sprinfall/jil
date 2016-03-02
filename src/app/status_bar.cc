@@ -175,23 +175,23 @@ void StatusBar::OnPaint(wxPaintEvent& evt) {
   wxRect bg_rect(update_rect.x, 0, update_rect.width, 0);
   bg_rect.y = rect.y + 2;
   bg_rect.height = rect.height - 2;
-  wxColour bg_top = theme_->GetColor(BG_TOP);
-  wxColour bg_bottom = theme_->GetColor(BG_BOTTOM);
+  wxColour bg_top = theme_->GetColor(COLOR_BG_TOP);
+  wxColour bg_bottom = theme_->GetColor(COLOR_BG_BOTTOM);
   dc.GradientFillLinear(bg_rect, bg_bottom, bg_top, wxNORTH);
 
   // Borders
   int border_y = rect.y;
-  dc.SetPen(wxPen(theme_->GetColor(BORDER_OUTER)));
+  dc.SetPen(wxPen(theme_->GetColor(COLOR_BORDER_OUTER)));
   dc.DrawLine(bg_rect.x, border_y, bg_rect.GetRight() + 1, border_y);
   ++border_y;
-  dc.SetPen(wxPen(theme_->GetColor(BORDER_INNER)));
+  dc.SetPen(wxPen(theme_->GetColor(COLOR_BORDER_INNER)));
   dc.DrawLine(bg_rect.x, border_y, bg_rect.GetRight() + 1, border_y);
 
   // Foreground
   dc.SetBrush(*wxTRANSPARENT_BRUSH);
   dc.SetFont(GetFont());
-  dc.SetTextForeground(theme_->GetColor(FG));
-  dc.SetPen(wxPen(theme_->GetColor(SEPARATOR)));
+  dc.SetTextForeground(theme_->GetColor(COLOR_FG));
+  dc.SetPen(wxPen(theme_->GetColor(COLOR_SEPARATOR)));
 
   int x = rect.GetLeft();
 

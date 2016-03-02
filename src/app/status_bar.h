@@ -13,12 +13,12 @@ class StatusBar : public wxPanel {
 
 public:
   enum ColorId {
-    FG = 0,
-    BORDER_OUTER,
-    BORDER_INNER,
-    BG_TOP,
-    BG_BOTTOM,
-    SEPARATOR,
+    COLOR_FG = 0,
+    COLOR_BORDER_OUTER,
+    COLOR_BORDER_INNER,
+    COLOR_BG_TOP,
+    COLOR_BG_BOTTOM,
+    COLOR_SEPARATOR,
     COLORS,
   };
 
