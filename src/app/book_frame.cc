@@ -76,6 +76,37 @@ class FileDropTarget : public wxFileDropTarget {
   BookFrame* book_frame_;
 };
 
+////////////////////////////////////////////////////////////////////////////////
+
+wxDEFINE_EVENT(wxEVT_COMMAND_FINDTHREAD_COMPLETED, wxThreadEvent);
+wxDEFINE_EVENT(wxEVT_COMMAND_FINDTHREAD_UPDATE, wxThreadEvent);
+
+FindThread::FindThread(BookFrame* handler)
+    : wxThread(wxTHREAD_DETACHED), handler_(handler) {
+}
+
+wxThread::ExitCode FindThread::Entry() {
+  while (!TestDestroy()) {
+    // ... do a bit of work...
+    wxThreadEvent* evt = new wxThreadEvent(wxEVT_COMMAND_FINDTHREAD_UPDATE);
+    evt->SetString();
+    wxQueueEvent(handler_, evt);
+  }
+
+  // Signal the event handler that this thread is going to be destroyed.
+  wxQueueEvent(handler_, new wxThreadEvent(wxEVT_COMMAND_FINDTHREAD_COMPLETED));
+
+  return (wxThread::ExitCode)0;
+}
+
+FindThread::~FindThread() {
+  // The thread is being destroyed; make sure not to leave dangling pointers around.
+  wxCriticalSectionLocker locker(handler_->find_thread_cs_);
+  handler_->find_thread_ = NULL;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 // Char hook event is actually a key down event, so we give it a better name.
 #define EVT_KEYDOWN_HOOK EVT_CHAR_HOOK
 
@@ -125,30 +156,22 @@ EVT_FIND_PANEL(ID_FIND_PANEL, BookFrame::OnFindPanelEvent)
 
 END_EVENT_TABLE()
 
-BookFrame::BookFrame(Options* options, editor::Options* editor_options, Session* session)
-    : options_(options)
-    , editor_options_(editor_options)
-    , session_(session)
-    , splitter_(NULL)
-    , tool_book_(NULL)
-    , status_bar_(NULL)
-    , style_(NULL)
-    , find_panel_(NULL)
-    , binding_(NULL)
-    , recent_files_menu_(NULL) {
-  recent_files_ = session_->recent_files();
+BookFrame::BookFrame() {
+  Init();
 }
 
 bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
+  assert(options_ != NULL);
+  assert(session_ != NULL);
+  assert(theme_);
+  assert(style_ != NULL);
+  assert(binding_ != NULL); 
+  
   if (!wxFrame::Create(parent, id, title)) {
     return false;
   }
 
-  assert(options_ != NULL);
-  assert(session_ != NULL);
-  assert(theme_.get() != NULL);
-  assert(style_ != NULL);
-  assert(binding_ != NULL);
+  recent_files_ = session_->recent_files();
 
   editor::SharedTheme bf_theme = theme_->GetTheme(THEME_BOOK_FRAME);
 
@@ -724,48 +747,99 @@ void BookFrame::FindAllInFolders(const std::wstring& str,
   FindResultPage* fr_page = GetFindResultPage(true);
   ClearFindAllResult(fr_page);
 
+  wxArrayString files;
+
   size_t folders_count = folders.GetCount();
   for (size_t i = 0; i < folders_count; ++i) {
     wxString folder = folders[i];
 
-    if (!wxDir::Exists(folder)) {
-      continue;
+    if (wxDir::Exists(folder)) {
+      wxDir::GetAllFiles(folder, &files, wxEmptyString, wxDIR_FILES | wxDIR_DIRS);
+    } else {
+      // TODO: Log
     }
+  }
 
-    wxArrayString files;
-    int flags = wxDIR_FILES | wxDIR_DIRS;
-    wxDir::GetAllFiles(folder, &files, wxEmptyString, flags);
+  if (files.IsEmpty()) {
+    return;
+  }
 
-    if (files.IsEmpty()) {
-      continue;
-    }
+  find_thread_ = new FindThread(this);
+  find_thread_->set_files(files);
 
-    size_t files_count = files.GetCount();
-    for (size_t j = 0; j < files_count; ++j) {
-      wxString file = files[j];  // Full file path.
+  if (find_thread_->Run() != wxTHREAD_NO_ERROR) {
+    wxDELETE(find_thread_);
+  }
 
-      wxFileName fn(file);
-      TextPage* text_page = TextPageByFileName(fn);
+  status_bar_->SetMessage(wxEmptyString, 1000);
+  size_t files_count = files.GetCount();
+  for (size_t j = 0; j < files_count; ++j) {
+    wxString file = files[j];  // Full file path.
 
-      if (text_page != NULL) {
-        FindAll(str, text_page->buffer(), flags, fr_page);
-      } else {
-        // Create the buffer for this file.
-        // TODO: Disable lex, ftplugin, ...
-        editor::TextBuffer* buffer = CreateBuffer(fn);
-        if (buffer != NULL) {
-          FindAll(str, buffer, flags, fr_page);
-
-          wxDELETE(buffer);
-        }
-      }
-    }
   }
 
   // Reset caret point.
   fr_page->UpdateCaretPoint(kPointBegin, false, true, false);
 
   ActivateToolPage(fr_page);
+}
+
+void BookFrame::FindInFile(const std::wstring& str,
+                           const wxString& file,
+                           int flags) {
+  wxFileName fn(file);
+
+  TextPage* text_page = TextPageByFileName(fn);
+
+  // TODO
+  wxString msg = wxT("Searching in '");
+
+  if (text_page != NULL) {
+    //msg += text_page->Page_Description();
+    //msg += wxT("'...");
+    //status_bar_->SetMessage(msg);
+
+    FindAll(str, text_page->buffer(), flags, fr_page);
+  } else {
+    // Create the buffer for this file.
+    // TODO: Disable lex, ftplugin, ...
+    editor::TextBuffer* buffer = CreateBuffer(fn);
+    if (buffer != NULL) {
+      //msg += buffer->file_path_name();
+      //msg += wxT("'...");
+      //status_bar_->SetMessage(msg);
+      //status_bar_->Update();  // Update immediately.
+
+      FindAll(str, buffer, flags, fr_page);
+
+      wxDELETE(buffer);
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+
+void BookFrame::Init() {
+  options_ = NULL;
+  editor_options_ = NULL;
+  session_ = NULL;
+
+  style_ = NULL;
+  binding_ = NULL;
+
+  splitter_ = NULL;
+
+  text_book_ = NULL;
+  tool_book_ = NULL;
+
+  status_bar_ = NULL;
+
+  find_panel_ = NULL;
+
+  find_flags_ = 0;
+  find_thread_ = NULL;
+
+  recent_files_menu_ = NULL;
 }
 
 //------------------------------------------------------------------------------
@@ -2123,6 +2197,7 @@ editor::TextRange BookFrame::Find(TextPage* text_page,
   return result_range;
 }
 
+// TODO: FreezeNotify...
 void BookFrame::FindAll(const std::wstring& str,
                         editor::TextBuffer* buffer,
                         int flags,
@@ -2194,6 +2269,77 @@ void BookFrame::FindAll(const std::wstring& str,
   fr_page->buffer()->AppendLine(L"");
 }
  
+// TODO
+void BookFrame::FindAll(const std::wstring& str,
+                        editor::TextBuffer* buffer,
+                        int flags) {
+  using namespace editor;
+
+  std::list<TextRange> result_ranges;
+  buffer->FindStringAll(str,
+                        buffer->range(),
+                        GetBit(flags, kFind_UseRegex),
+                        GetBit(flags, kFind_CaseSensitive),
+                        GetBit(flags, kFind_MatchWord),
+                        &result_ranges);
+
+  if (result_ranges.empty()) {
+    return;
+  }
+
+  // Add file path name line.
+  wxString file_path = buffer->file_path_name();
+
+  std::wstring fr_line_data = L"-- ";
+  if (file_path.IsEmpty()) {
+    fr_line_data += wxString(kTrPageUntitled).ToStdWstring();
+  } else {
+    fr_line_data += file_path.ToStdWstring();
+  }
+  fr_page->buffer()->AppendLine(fr_line_data);
+
+  // Get max line number's string size.
+  Coord max_ln = result_ranges.back().point_end().y;
+  size_t max_ln_size = base::LexicalCast<std::string>(max_ln).size();
+
+  std::list<TextRange>::iterator range_it = result_ranges.begin();
+  for (; range_it != result_ranges.end(); ++range_it) {
+    const TextRange& range = *range_it;
+
+    Coord ln = range.point_begin().y;
+    std::wstring ln_str = base::LexicalCast<std::wstring>(ln);
+    if (ln_str.size() < max_ln_size) {
+      // Right align the line number.
+      ln_str.insert(ln_str.begin(), max_ln_size - ln_str.size(), kSpaceChar);
+    }
+
+    TextLine* line = buffer->Line(ln);
+
+    std::wstring fr_line_data = ln_str + L" " + line->data();
+    TextLine* fr_line = fr_page->buffer()->AppendLine(fr_line_data);
+
+    // Save the file path, buffer id and source line id in the extra data.
+    FrExtraData fr_extra_data = { file_path, buffer->id(), line->id() };
+    fr_line->set_extra_data(fr_extra_data);
+
+    // Add lex element for the prefix line number.
+    fr_line->AddLexElem(0, max_ln_size, Lex(kLexConstant, kLexConstantNumber));
+
+    // Add lex element for the matched string.
+    // TODO: Multiple line match when using regex.
+    size_t off = range.point_begin().x + max_ln_size + 1;
+    size_t len = range.point_end().x - range.point_begin().x;
+    fr_line->AddLexElem(off, len, Lex(kLexIdentifier));
+  }
+
+  // Add match count line.
+  // Example: >> 4
+  std::wstring match_count = L">> ";
+  match_count += base::LexicalCast<std::wstring>(result_ranges.size());
+  fr_page->buffer()->AppendLine(match_count);
+  fr_page->buffer()->AppendLine(L"");
+}
+
 void BookFrame::SelectFindResult(PageWindow* page_window, const editor::TextRange& result_range) {
   page_window->SetSelection(result_range, editor::kForward, false);
 

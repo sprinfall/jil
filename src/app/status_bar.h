@@ -6,6 +6,9 @@
 #include "wx/panel.h"
 #include "editor/theme.h"
 
+class wxTimer;
+class wxTimerEvent;
+
 namespace jil {
 
 class StatusBar : public wxPanel {
@@ -89,6 +92,10 @@ public:
 
   void ClearFieldValues();
 
+  // Set a message to display in the first field.
+  // If time_ms is 
+  void SetMessage(const wxString& msg, int time_ms = 0);
+
 protected:
   virtual wxSize DoGetBestSize() const override;
 
@@ -96,6 +103,8 @@ protected:
 
   void OnSize(wxSizeEvent& evt);
   void OnMouseLeftDown(wxMouseEvent& evt);
+
+  void OnMsgTimer(wxTimerEvent& evt);
 
 private:
   void UpdateFontDetermined();
@@ -105,6 +114,11 @@ private:
   // Get field rect according to its size and the client rect.
   // If the field is not found, the rect will be empty.
   wxRect GetFieldRect(FieldId id) const;
+
+  wxRect GetFieldRectByIndex(size_t index) const;
+
+  void RefreshFieldById(FieldId id);
+  void RefreshFieldByIndex(size_t index);
 
   const FieldInfo* GetFieldByPos(int pos_x) const;
 
@@ -118,6 +132,10 @@ private:
 
   wxSize char_size_;
   wxSize padding_;
+
+  // Status message (temporarily) displayed in the first field.
+  wxString msg_;
+  wxTimer* msg_timer_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

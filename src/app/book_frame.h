@@ -4,16 +4,20 @@
 
 #include <list>
 #include <vector>
-#include "wx/frame.h"
+
 #include "wx/arrstr.h"
 #include "wx/filename.h"
+#include "wx/frame.h"
+#include "wx/thread.h"
+
+#include "editor/binding.h"
 #include "editor/compile_config.h"
 #include "editor/theme.h"
-#include "editor/binding.h"
-#include "app/defs.h"
-#include "app/option.h"
-#include "app/id.h"
+
 #include "app/compile_config.h"
+#include "app/defs.h"
+#include "app/id.h"
+#include "app/option.h"
 
 namespace jil {
 
@@ -29,6 +33,7 @@ class TextWindow;
 }  // namespace editor
 
 class BookCtrl;
+class BookFrame;
 class BookPage;
 class FindResultPage;
 class FindPanel;
@@ -42,6 +47,34 @@ class TextBook;
 class TextPage;
 class ToolBook;
 
+////////////////////////////////////////////////////////////////////////////////
+// Thread for Find All.
+
+wxDECLARE_EVENT(wxEVT_COMMAND_FINDTHREAD_COMPLETED, wxThreadEvent);
+wxDECLARE_EVENT(wxEVT_COMMAND_FINDTHREAD_UPDATE, wxThreadEvent);
+
+class FindThread : public wxThread {
+public:
+  explicit FindThread(BookFrame* handler);
+  virtual ~FindThread();
+
+  // TODO: Avoid copy
+  void set_files(const wxArrayString& files) {
+    files_ = files;
+  }
+
+protected:
+  virtual ExitCode Entry() override;
+
+private:
+  BookFrame* handler_;
+
+  // Files in which to find.
+  wxArrayString files_;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
 class BookFrame : public wxFrame {
   DECLARE_EVENT_TABLE()
 
@@ -51,10 +84,25 @@ public:
     COLORS,
   };
 
+  friend class FindThread;
+
 public:
-  BookFrame(Options* options, editor::Options* editor_options, Session* session);
-  bool Create(wxWindow* parent, wxWindowID id, const wxString& title);
+  BookFrame();
   virtual ~BookFrame();
+
+  void set_options(Options* options) {
+    options_ = options;
+  }
+
+  void set_editor_options(editor::Options* editor_options) {
+    editor_options_ = editor_options;
+  }
+
+  void set_session(Session* session) {
+    session_ = session;
+  }
+
+  bool Create(wxWindow* parent, wxWindowID id, const wxString& title);
 
   virtual bool Show(bool show = true) override;
 
@@ -151,7 +199,13 @@ public:
                         int flags,
                         const wxArrayString& folders);
 
+  void FindInFile(const std::wstring& str,
+                  const wxString& file,
+                  int flags);
+
 protected:
+  void Init();
+
   void OnSize(wxSizeEvent& evt);
 
   // Layout child windows.
@@ -306,6 +360,10 @@ private:
                int flags,
                FindResultPage* fr_page);
 
+  void FindAll(const std::wstring& str,
+               editor::TextBuffer* buffer,
+               int flags);
+
   // Find all in the given buffer, save the find result in each line.
   void FindAll(const std::wstring& str, editor::TextBuffer* buffer, int flags);
 
@@ -397,27 +455,30 @@ private:
 
   Session* session_;
 
+  editor::Style* style_;
+  editor::SharedTheme theme_;
+
+  editor::Binding* binding_;
+
   // Splitter splits sub windows.
   Splitter* splitter_;
 
   TextBook* text_book_;
   ToolBook* tool_book_;
 
-  // Current page type.
-  // See BookPage::Page_Type().
-  wxString page_type_;
-
   StatusBar* status_bar_;
 
   FindPanel* find_panel_;
 
+  // Current page type.
+  // See BookPage::Page_Type().
+  wxString page_type_;
+
   std::wstring find_str_;
   int find_flags_;  // Find flags exluding kFind_Reversely.
 
-  editor::Style* style_;
-  editor::SharedTheme theme_;
-
-  editor::Binding* binding_;
+  FindThread* find_thread_;
+  wxCriticalSection find_thread_cs_;
 
 #if JIL_ENABLE_LEADER_KEY
   editor::Key leader_key_;

@@ -1,12 +1,18 @@
 #include "app/status_bar.h"
+
 #include "wx/dcbuffer.h"
 #include "wx/menu.h"
 #include "wx/log.h"
+#include "wx/timer.h"
+
 #include "ui/color.h"
 #include "ui/util.h"
+
 #include "editor/text_extent.h"
 #include "editor/ft_plugin.h"
 #include "editor/text_buffer.h"
+
+#include "app/id.h"
 
 namespace jil {
 
@@ -16,9 +22,11 @@ BEGIN_EVENT_TABLE(StatusBar, wxPanel)
 EVT_PAINT     (StatusBar::OnPaint)
 EVT_SIZE      (StatusBar::OnSize)
 EVT_LEFT_DOWN (StatusBar::OnMouseLeftDown)
+EVT_TIMER     (ID_STATUS_MSG_TIMER, StatusBar::OnMsgTimer)
 END_EVENT_TABLE()
 
-StatusBar::StatusBar() {
+StatusBar::StatusBar()
+    : msg_timer_(NULL) {
 }
 
 StatusBar::~StatusBar() {
@@ -30,6 +38,8 @@ bool StatusBar::Create(wxWindow* parent, wxWindowID id) {
   if (!wxPanel::Create(parent, id)) {
     return false;
   }
+
+  msg_timer_ = new wxTimer(this, ID_STATUS_MSG_TIMER);
 
   SetBackgroundStyle(wxBG_STYLE_PAINT);
 
@@ -144,16 +154,36 @@ void StatusBar::SetFieldValue(FieldId id, const wxString& value, bool refresh) {
     UpdateFieldSizes();
     Refresh();  // Refresh all fields.
   } else {
-    wxRect field_rect = GetFieldRect(id);
-    if (!field_rect.IsEmpty()) {
-      RefreshRect(field_rect);  // Refresh only this field.
-    }
+    RefreshFieldById(id);
   }
 }
 
 void StatusBar::ClearFieldValues() {
   for (size_t i = 0; i < kField_Count; ++i) {
     field_values_[i] = wxEmptyString;
+  }
+}
+
+void StatusBar::SetMessage(const wxString& msg, int time_ms) {
+  if (msg_timer_->IsRunning()) {
+    msg_timer_->Stop();
+  }
+
+  if (msg.IsEmpty()) {
+    if (time_ms > 0) {
+      // Clear message after the given time.
+      msg_timer_->StartOnce(time_ms);
+    } else {
+      msg_.Clear();
+      RefreshFieldByIndex(0);
+    }
+  } else {
+    msg_ = msg;
+    RefreshFieldByIndex(0);
+    
+    if (time_ms > 0) {
+      msg_timer_->StartOnce(time_ms);
+    }
   }
 }
 
@@ -211,18 +241,27 @@ void StatusBar::OnPaint(wxPaintEvent& evt) {
       continue;
     }
 
-    wxString label = GetFieldValue(field_info.id);
-    field_rect.Deflate(padding_.x, 0);
-
-    int expected_size = 0;
-    dc.GetTextExtent(label, &expected_size, NULL, NULL, NULL);
-
-    if (expected_size > field_rect.GetWidth()) {
-      label = label.Mid(0, ui::TailorLabel(dc, label, field_rect.GetWidth()));
+    wxString label;
+    if (i == 0 && !msg_.IsEmpty()) {
+      // If the status message is not empty, display it in the frist field.
+      label = msg_;
+    } else {
+      label = GetFieldValue(field_info.id);
     }
 
-    int flags = field_info.align | wxALIGN_CENTER_VERTICAL;
-    dc.DrawLabel(label, field_rect, flags);
+    if (!label.IsEmpty()) {
+      field_rect.Deflate(padding_.x, 0);
+
+      int expected_size = 0;
+      dc.GetTextExtent(label, &expected_size, NULL, NULL, NULL);
+
+      if (expected_size > field_rect.GetWidth()) {
+        label = label.Mid(0, ui::TailorLabel(dc, label, field_rect.GetWidth()));
+      }
+
+      int flags = field_info.align | wxALIGN_CENTER_VERTICAL;
+      dc.DrawLabel(label, field_rect, flags);
+    }
 
     // Separator
     if (i != 0) {
@@ -257,6 +296,13 @@ void StatusBar::OnMouseLeftDown(wxMouseEvent& evt) {
   GetParent()->GetEventHandler()->AddPendingEvent(field_click_evt);
 }
 
+void StatusBar::OnMsgTimer(wxTimerEvent& evt) {
+  if (!msg_.IsEmpty()) {
+    msg_.Clear();
+    RefreshFieldByIndex(0);
+  }
+}
+
 void StatusBar::UpdateFontDetermined() {
   char_size_.x = GetCharWidth();
   char_size_.y = GetCharHeight();
@@ -282,6 +328,35 @@ wxRect StatusBar::GetFieldRect(FieldId id) const {
   }
 
   return wxRect();
+}
+
+wxRect StatusBar::GetFieldRectByIndex(size_t index) const {
+  if (index >= field_infos_.size()) {
+    return wxRect();
+  }
+
+  const wxRect client_rect = GetClientRect();
+  int x = client_rect.x;
+
+  for (size_t i = 0; i < index; ++i) {
+    x += field_infos_[i].size;
+  }
+
+  return wxRect(x, client_rect.y, field_infos_[index].size, client_rect.height);
+}
+
+void StatusBar::RefreshFieldById(FieldId id) {
+  wxRect field_rect = GetFieldRect(id);
+  if (!field_rect.IsEmpty()) {
+    RefreshRect(field_rect);
+  }
+}
+
+void StatusBar::RefreshFieldByIndex(size_t index) {
+  wxRect field_rect = GetFieldRectByIndex(index);
+  if (!field_rect.IsEmpty()) {
+    RefreshRect(field_rect);
+  }
 }
 
 const StatusBar::FieldInfo* StatusBar::GetFieldByPos(int pos_x) const {

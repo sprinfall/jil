@@ -368,7 +368,11 @@ bool App::OnInit() {
   editor::InitLua(lua_state_);
 
   // Create book frame.
-  BookFrame* book_frame = new BookFrame(&options_, &editor_options_, &session_);
+  BookFrame* book_frame = new BookFrame();
+
+  book_frame->set_options(&options_);
+  book_frame->set_editor_options(&editor_options_);
+  book_frame->set_session(&session_);
   book_frame->set_theme(theme_);
   book_frame->set_style(style_);
   book_frame->set_binding(binding_);
