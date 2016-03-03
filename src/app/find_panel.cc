@@ -22,7 +22,6 @@
 #include "app/book_frame.h"
 #include "app/id.h"
 #include "app/session.h"
-#include "app/skin.h"
 #include "app/text_page.h"
 #include "app/util.h"
 

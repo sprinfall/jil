@@ -47,7 +47,6 @@
 #include "app/preferences.h"
 #include "app/save.h"
 #include "app/session.h"
-#include "app/skin.h"
 #include "app/splitter.h"
 #include "app/status_bar.h"
 #include "app/text_page.h"

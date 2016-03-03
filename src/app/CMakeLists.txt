@@ -63,8 +63,6 @@ set(SRCS
     save.h
     session.cc
     session.h
-    skin.cc
-    skin.h
     splitter.cc
     splitter.h
     status_bar.cc
