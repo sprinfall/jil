@@ -65,7 +65,7 @@ public:
   typedef std::iterator<std::bidirectional_iterator_tag, wchar_t, ptrdiff_t> CharIteratorBase;
 
   class CharIterator : public CharIteratorBase {
- private:
+  private:
     // Use TextLines::iterator instead of Coord for performance.
     // If lines are kept in vector instead of deque, Coord will be OK.
     TextLines::const_iterator y_;
@@ -137,11 +137,36 @@ public:
 
   //----------------------------------------------------------------------------
 
+  TextPoint point_begin() const {
+    return TextPoint(0, 1);
+  }
+
+  TextPoint point_end() const {
+    return TextPoint(LineLength(LineCount()), LineCount());
+  }
+
+  // The whole text range.
+  TextRange range() const {
+    return TextRange(point_begin(), point_end());
+  }
+
   CharIterator CharBegin();
   const CharIterator CharBegin() const;
 
   CharIterator CharEnd();
   const CharIterator CharEnd() const;
+  
+  // Get text point from char iterator.
+  TextPoint PointFromCharIterator(CharIterator c_it) const {
+    return TextPoint(c_it.x(), c_it.line_iterator() - lines_.begin() + 1);
+  }
+
+  // Get char iterator from text point.
+  CharIterator CharIteratorFromPoint(const TextPoint& point) const {
+    TextLines::const_iterator l_it = lines_.begin();
+    l_it += (point.y - 1);
+    return CharIterator(l_it, point.x);
+  }
 
   //----------------------------------------------------------------------------
 
@@ -193,7 +218,7 @@ public:
     return ft_plugin_;
   }
 
-  // Update ft plugin.
+  // Change file type plugin.
   // E.g., when a buffer is saved as another file type.
   void SetFtPlugin(FtPlugin* ft_plugin);
 
@@ -245,7 +270,7 @@ public:
   void SetIndentOption(const std::string& key, const OptionValue& value);
 
   //----------------------------------------------------------------------------
-  // Buffer states
+  // States
 
   // New buffer. No file path name.
   bool new_created() const;
@@ -293,27 +318,12 @@ public:
   // Get the lex at the given point.
   Lex GetLex(const TextPoint& point) const;
 
-  //----------------------------------------------------------------------------
-
-  TextPoint point_begin() const {
-    return TextPoint(0, 1);
-  }
-
-  TextPoint point_end() const {
-    return TextPoint(LineLength(LineCount()), LineCount());
-  }
-
-  // The whole text range.
-  TextRange range() const {
-    return TextRange(point_begin(), point_end());
-  }
-
-  //----------------------------------------------------------------------------
-  // Buffer
-
   void GetText(std::wstring* text) const;
   void GetText(const TextRange& range, std::wstring* text) const;
   void GetRectText(const TextRange& range, std::wstring* text) const;
+
+  //----------------------------------------------------------------------------
+  // Buffer change.
 
   TextPoint InsertChar(const TextPoint& point, wchar_t c);
 
@@ -337,19 +347,7 @@ public:
   void DeleteText(const TextRange& range, std::wstring* text = NULL);
   void DeleteRectText(const TextRange& range, std::wstring* text = NULL);
 
-  //----------------------------------------------------------------------------
-
-  // Get text point from char iterator.
-  TextPoint PointFromCharIterator(CharIterator c_it) const {
-    return TextPoint(c_it.x(), c_it.line_iterator() - lines_.begin() + 1);
-  }
-
-  // Get char iterator from text point.
-  CharIterator CharIteratorFromPoint(const TextPoint& point) const {
-    TextLines::const_iterator l_it = lines_.begin();
-    l_it += (point.y - 1);
-    return CharIterator(l_it, point.x);
-  }
+  void HandleLineChange(LineChangeType type, Coord first_ln, Coord last_ln = 0);
 
   //----------------------------------------------------------------------------
   // Find
@@ -495,6 +493,10 @@ public:
 
   //----------------------------------------------------------------------------
   // Lex
+
+  void set_scan_lex(bool scan_lex) {
+    scan_lex_ = scan_lex;
+  }
 
   bool GetQuoteInfo(const TextPoint& point, QuoteInfo* quote_info) const;
 
@@ -758,6 +760,10 @@ private:
   // The listeners won't be notified on line changes if it's frozen.
   // Currently this flag only applies to line changes.
   bool notify_frozen_;
+
+  // Scan lex or not on line changes.
+  // Default: true
+  bool scan_lex_;
 
   // Undo/redo.
 

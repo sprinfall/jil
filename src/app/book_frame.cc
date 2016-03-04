@@ -89,7 +89,7 @@ wxThread::ExitCode FindThread::Entry() {
   while (!TestDestroy()) {
     // ... do a bit of work...
     wxThreadEvent* evt = new wxThreadEvent(wxEVT_COMMAND_FINDTHREAD_UPDATE);
-    evt->SetString();
+    //evt->SetString();
     wxQueueEvent(handler_, evt);
   }
 
@@ -717,7 +717,7 @@ void BookFrame::FindAllInActivePage(const std::wstring& str, int flags) {
 
   TextPage* text_page = ActiveTextPage();
   if (text_page != NULL) {
-    FindAll(str, text_page->buffer(), flags, fr_page);
+    FindAll(str, text_page->buffer(), flags, fr_page->buffer());
   }
 
   // Reset caret point.
@@ -732,7 +732,7 @@ void BookFrame::FindAllInAllPages(const std::wstring& str, int flags) {
 
   std::vector<TextPage*> text_pages = text_book_->TextPages();
   for (size_t i = 0; i < text_pages.size(); ++i) {
-    FindAll(str, text_pages[i]->buffer(), flags, fr_page);
+    FindAll(str, text_pages[i]->buffer(), flags, fr_page->buffer());
   }
 
   // Reset caret point.
@@ -787,19 +787,19 @@ void BookFrame::FindAllInFolders(const std::wstring& str,
 void BookFrame::FindInFile(const std::wstring& str,
                            const wxString& file,
                            int flags) {
-  wxFileName fn(file);
+  FindResultPage* fr_page = GetFindResultPage(true);  // TODO: Create?
 
+  wxFileName fn(file);
   TextPage* text_page = TextPageByFileName(fn);
 
-  // TODO
-  wxString msg = wxT("Searching in '");
+  //wxString msg = wxT("Searching in '");
 
   if (text_page != NULL) {
     //msg += text_page->Page_Description();
     //msg += wxT("'...");
     //status_bar_->SetMessage(msg);
 
-    FindAll(str, text_page->buffer(), flags, fr_page);
+    FindAll(str, text_page->buffer(), flags, fr_page->buffer());
   } else {
     // Create the buffer for this file.
     // TODO: Disable lex, ftplugin, ...
@@ -810,7 +810,7 @@ void BookFrame::FindInFile(const std::wstring& str,
       //status_bar_->SetMessage(msg);
       //status_bar_->Update();  // Update immediately.
 
-      FindAll(str, buffer, flags, fr_page);
+      FindAll(str, buffer, flags, fr_page->buffer());
 
       wxDELETE(buffer);
     }
@@ -2198,10 +2198,16 @@ editor::TextRange BookFrame::Find(TextPage* text_page,
 }
 
 // TODO: FreezeNotify...
+//void BookFrame::FindAll(const std::wstring& str,
+//                        editor::TextBuffer* buffer,
+//                        int flags,
+//                        FindResultPage* fr_page) {
+//}
+ 
 void BookFrame::FindAll(const std::wstring& str,
                         editor::TextBuffer* buffer,
                         int flags,
-                        FindResultPage* fr_page) {
+                        editor::TextBuffer* fr_buffer) {
   using namespace editor;
 
   std::list<TextRange> result_ranges;
@@ -2216,27 +2222,37 @@ void BookFrame::FindAll(const std::wstring& str,
     return;
   }
 
-  // Add file path name line.
-  wxString file_path = buffer->file_path_name();
+  //----------------------------------------------------------------------------
+
+  fr_buffer->FreezeNotify();
+  Coord first_ln = fr_buffer->LineCount() + 1;
+
+  //----------------------------------------------------------------------------
+  // Add file path line.
 
   std::wstring fr_line_data = L"-- ";
+  wxString file_path = buffer->file_path_name();
   if (file_path.IsEmpty()) {
     fr_line_data += wxString(kTrPageUntitled).ToStdWstring();
   } else {
     fr_line_data += file_path.ToStdWstring();
   }
-  fr_page->buffer()->AppendLine(fr_line_data);
+  fr_buffer->AppendLine(fr_line_data);
+
+  //----------------------------------------------------------------------------
+  // Add result matching lines.
+
+  // Don't scan lex.
+  fr_buffer->set_scan_lex(false);
 
   // Get max line number's string size.
   Coord max_ln = result_ranges.back().point_end().y;
   size_t max_ln_size = base::LexicalCast<std::string>(max_ln).size();
 
-  std::list<TextRange>::iterator range_it = result_ranges.begin();
-  for (; range_it != result_ranges.end(); ++range_it) {
-    const TextRange& range = *range_it;
-
+  for (const TextRange& range : result_ranges) {
     Coord ln = range.point_begin().y;
     std::wstring ln_str = base::LexicalCast<std::wstring>(ln);
+
     if (ln_str.size() < max_ln_size) {
       // Right align the line number.
       ln_str.insert(ln_str.begin(), max_ln_size - ln_str.size(), kSpaceChar);
@@ -2245,99 +2261,38 @@ void BookFrame::FindAll(const std::wstring& str,
     TextLine* line = buffer->Line(ln);
 
     std::wstring fr_line_data = ln_str + L" " + line->data();
-    TextLine* fr_line = fr_page->buffer()->AppendLine(fr_line_data);
+    TextLine* fr_line = fr_buffer->AppendLine(fr_line_data);
 
     // Save the file path, buffer id and source line id in the extra data.
     FrExtraData fr_extra_data = { file_path, buffer->id(), line->id() };
     fr_line->set_extra_data(fr_extra_data);
 
-    // Add lex element for the prefix line number.
+    // Add lex for line number.
     fr_line->AddLexElem(0, max_ln_size, Lex(kLexConstant, kLexConstantNumber));
 
-    // Add lex element for the matched string.
+    // Add lex for matched sub-string.
     // TODO: Multiple line match when using regex.
     size_t off = range.point_begin().x + max_ln_size + 1;
     size_t len = range.point_end().x - range.point_begin().x;
     fr_line->AddLexElem(off, len, Lex(kLexIdentifier));
   }
 
-  // Add match count line.
-  // Example: >> 4
+  fr_buffer->set_scan_lex(true);
+
+  //----------------------------------------------------------------------------
+  // Add matching count line.
+
   std::wstring match_count = L">> ";
   match_count += base::LexicalCast<std::wstring>(result_ranges.size());
-  fr_page->buffer()->AppendLine(match_count);
-  fr_page->buffer()->AppendLine(L"");
-}
- 
-// TODO
-void BookFrame::FindAll(const std::wstring& str,
-                        editor::TextBuffer* buffer,
-                        int flags) {
-  using namespace editor;
+  fr_buffer->AppendLine(match_count);
+  fr_buffer->AppendLine(L"");
 
-  std::list<TextRange> result_ranges;
-  buffer->FindStringAll(str,
-                        buffer->range(),
-                        GetBit(flags, kFind_UseRegex),
-                        GetBit(flags, kFind_CaseSensitive),
-                        GetBit(flags, kFind_MatchWord),
-                        &result_ranges);
+  //----------------------------------------------------------------------------
 
-  if (result_ranges.empty()) {
-    return;
-  }
+  fr_buffer->ThawNotify();
 
-  // Add file path name line.
-  wxString file_path = buffer->file_path_name();
-
-  std::wstring fr_line_data = L"-- ";
-  if (file_path.IsEmpty()) {
-    fr_line_data += wxString(kTrPageUntitled).ToStdWstring();
-  } else {
-    fr_line_data += file_path.ToStdWstring();
-  }
-  fr_page->buffer()->AppendLine(fr_line_data);
-
-  // Get max line number's string size.
-  Coord max_ln = result_ranges.back().point_end().y;
-  size_t max_ln_size = base::LexicalCast<std::string>(max_ln).size();
-
-  std::list<TextRange>::iterator range_it = result_ranges.begin();
-  for (; range_it != result_ranges.end(); ++range_it) {
-    const TextRange& range = *range_it;
-
-    Coord ln = range.point_begin().y;
-    std::wstring ln_str = base::LexicalCast<std::wstring>(ln);
-    if (ln_str.size() < max_ln_size) {
-      // Right align the line number.
-      ln_str.insert(ln_str.begin(), max_ln_size - ln_str.size(), kSpaceChar);
-    }
-
-    TextLine* line = buffer->Line(ln);
-
-    std::wstring fr_line_data = ln_str + L" " + line->data();
-    TextLine* fr_line = fr_page->buffer()->AppendLine(fr_line_data);
-
-    // Save the file path, buffer id and source line id in the extra data.
-    FrExtraData fr_extra_data = { file_path, buffer->id(), line->id() };
-    fr_line->set_extra_data(fr_extra_data);
-
-    // Add lex element for the prefix line number.
-    fr_line->AddLexElem(0, max_ln_size, Lex(kLexConstant, kLexConstantNumber));
-
-    // Add lex element for the matched string.
-    // TODO: Multiple line match when using regex.
-    size_t off = range.point_begin().x + max_ln_size + 1;
-    size_t len = range.point_end().x - range.point_begin().x;
-    fr_line->AddLexElem(off, len, Lex(kLexIdentifier));
-  }
-
-  // Add match count line.
-  // Example: >> 4
-  std::wstring match_count = L">> ";
-  match_count += base::LexicalCast<std::wstring>(result_ranges.size());
-  fr_page->buffer()->AppendLine(match_count);
-  fr_page->buffer()->AppendLine(L"");
+  Coord last_ln = fr_buffer->LineCount();
+  fr_buffer->Notify(kLineAdded, LineRange(first_ln, last_ln));
 }
 
 void BookFrame::SelectFindResult(PageWindow* page_window, const editor::TextRange& result_range) {

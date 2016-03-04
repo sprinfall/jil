@@ -622,6 +622,7 @@ void TextBuffer::SetFtPlugin(FtPlugin* ft_plugin) {
 
     // TODO: kFileTypeChange will also trigger the refreshing. So kLineRefresh
     // might not be necessary.
+    // TODO: What about notify_frozen_?
     Notify(kLineRefresh, LineRange(1, LineCount()));
 
     Notify(kFileTypeChange);
@@ -816,8 +817,6 @@ bool TextBuffer::AreLinesAllEmpty(const LineRange& line_range, bool ignore_space
   return true;
 }
 
-//------------------------------------------------------------------------------
-
 Lex TextBuffer::GetLex(const TextPoint& point) const {
   return Line(point.y)->GetLex(point.x);
 }
@@ -874,6 +873,9 @@ void TextBuffer::GetRectText(const TextRange& range, std::wstring* text) const {
   *text += Line(line_range.last())->Sub(char_range);
 }
 
+//------------------------------------------------------------------------------
+// Buffer change.
+
 TextPoint TextBuffer::InsertChar(const TextPoint& point, wchar_t c) {
   TextLine* line = Line(point.y);
 
@@ -882,9 +884,7 @@ TextPoint TextBuffer::InsertChar(const TextPoint& point, wchar_t c) {
     line->InsertChar(point.x, c);
     AddLineLength(line);
 
-    if (!notify_frozen_) {
-      Notify(kLineUpdated, LineChangeData(point.y));
-    }
+    HandleLineChange(kLineUpdated, point.y);
 
     return TextPoint(point.x + 1, point.y);
   } else {
@@ -897,16 +897,12 @@ TextPoint TextBuffer::InsertChar(const TextPoint& point, wchar_t c) {
       new_line = line->Split(point.x, NewLineId());
       AddLineLength(line);
 
-      if (!notify_frozen_) {
-        Notify(kLineUpdated, LineChangeData(point.y));
-      }
+      HandleLineChange(kLineUpdated, point.y);
     }
 
     DoInsertLine(point.y, new_line);
 
-    if (!notify_frozen_) {
-      Notify(kLineAdded, LineChangeData(point.y + 1));
-    }
+    HandleLineChange(kLineAdded, point.y + 1);
 
     return TextPoint(0, point.y + 1);
   }
@@ -928,16 +924,12 @@ void TextBuffer::DeleteChar(const TextPoint& point, wchar_t* c) {
         line->Append(next_line->data());
         AddLineLength(line);
 
-        if (!notify_frozen_) {
-          Notify(kLineUpdated, LineChangeData(point.y));
-        }
+        HandleLineChange(kLineUpdated, point.y);
       }
 
       lines_.erase(lines_.begin() + point.y);
 
-      if (!notify_frozen_) {
-        Notify(kLineDeleted, LineChangeData(point.y + 1));
-      }
+      HandleLineChange(kLineDeleted, point.y + 1);
 
       if (c != NULL) {
         *c = LF;
@@ -955,9 +947,7 @@ void TextBuffer::DeleteChar(const TextPoint& point, wchar_t* c) {
     line->DeleteChar(point.x, c);
     AddLineLength(line);
 
-    if (!notify_frozen_) {
-      Notify(kLineUpdated, LineChangeData(point.y));
-    }
+    HandleLineChange(kLineUpdated, point.y);
   }
 }
 
@@ -968,9 +958,7 @@ TextPoint TextBuffer::InsertString(const TextPoint& point, const std::wstring& s
   line->InsertString(point.x, str);
   AddLineLength(line);
 
-  if (!notify_frozen_) {
-    Notify(kLineUpdated, LineChangeData(point.y));
-  }
+  HandleLineChange(kLineUpdated, point.y);
 
   return TextPoint(point.x + str.size(), point.y);
 }
@@ -982,31 +970,20 @@ void TextBuffer::DeleteString(const TextPoint& point, Coord count, std::wstring*
   line->DeleteString(point.x, count, str);
   AddLineLength(line);
 
-  if (!notify_frozen_) {
-    Notify(kLineUpdated, LineChangeData(point.y));
-  }
+  HandleLineChange(kLineUpdated, point.y);
 }
 
 void TextBuffer::InsertLine(Coord ln, const std::wstring& line_data) {
   assert(ln > 0 && ln <= LineCount() + 1);
-
   DoInsertLine(ln - 1, new TextLine(NewLineId(), line_data));
-
-  if (!notify_frozen_) {
-    Notify(kLineAdded, LineChangeData(ln));
-  }
+  HandleLineChange(kLineAdded, ln);
 }
 
 TextLine* TextBuffer::AppendLine(const std::wstring& line_data) {
   TextLine* line = new TextLine(NewLineId(), line_data);
   lines_.push_back(line);
-
   AddLineLength(line);
-
-  if (!notify_frozen_) {
-    Notify(kLineAdded, LineChangeData(LineCount()));
-  }
-
+  HandleLineChange(kLineAdded, LineCount());
   return line;
 }
 
@@ -1021,9 +998,7 @@ void TextBuffer::DeleteLine(Coord ln, std::wstring* line_data) {
     line->Clear(line_data);
     AddLineLength(line);
 
-    if (!notify_frozen_) {
-      Notify(kLineUpdated, LineChangeData(ln));
-    }
+    HandleLineChange(kLineUpdated, ln);
   } else {
     TextLines::iterator it(lines_.begin());
     std::advance(it, ln - 1);
@@ -1035,16 +1010,15 @@ void TextBuffer::DeleteLine(Coord ln, std::wstring* line_data) {
     RemoveLineLength(*it);
 
     lines_.erase(it);
-
-    if (!notify_frozen_) {
-      Notify(kLineDeleted, LineChangeData(ln));
-    }
+    HandleLineChange(kLineDeleted, ln);
   }
 }
 
 TextPoint TextBuffer::InsertText(const TextPoint& point, const std::wstring& text) {
-  // Avoid to notify on every change, notify at last as few as possible.
-  FreezeNotify();
+  bool need_notify = !notify_frozen_;
+  if (need_notify) {
+    FreezeNotify();
+  }
 
   size_t line_count = 0;
   TextPoint insert_point = point;
@@ -1062,21 +1036,24 @@ TextPoint TextBuffer::InsertText(const TextPoint& point, const std::wstring& tex
     insert_point = InsertString(insert_point, text.substr(p, text.size() - p));
   }
 
-  ThawNotify();
+  if (need_notify) {
+    ThawNotify();
 
-  // Notify now.
-  // Note (2013-04-20): Notify LineAdded first so that wrap infos can be
-  // updated before LineUpdated.
-  if (line_count > 0) {
-    Notify(kLineAdded, LineChangeData(point.y + 1, point.y + line_count));
+    // NOTE: Notify LineAdded first so that wrap infos can be updated before LineUpdated.
+    if (line_count > 0) {
+      Notify(kLineAdded, LineChangeData(point.y + 1, point.y + line_count));
+    }
+    Notify(kLineUpdated, LineChangeData(point.y));
   }
-  Notify(kLineUpdated, LineChangeData(point.y));
 
   return insert_point;
 }
 
 TextPoint TextBuffer::InsertRectText(const TextPoint& point, const std::wstring& text) {
-  FreezeNotify();
+  bool need_notify = !notify_frozen_;
+  if (need_notify) {
+    FreezeNotify();
+  }
 
   size_t line_count = 0;
   TextPoint insert_point = point;
@@ -1095,11 +1072,12 @@ TextPoint TextBuffer::InsertRectText(const TextPoint& point, const std::wstring&
     InsertString(insert_point, text.substr(p, text.size() - p));
   }
 
-  ThawNotify();
+  if (need_notify) {
+    ThawNotify();
 
-  // Notify now.
-  if (line_count > 0) {
-    Notify(kLineUpdated, LineChangeData(point.y, point.y + line_count));
+    if (line_count > 0) {
+      Notify(kLineUpdated, LineChangeData(point.y, point.y + line_count));
+    }
   }
 
   return point;
@@ -1111,7 +1089,10 @@ void TextBuffer::DeleteText(const TextRange& range, std::wstring* text) {
     return;
   }
 
-  FreezeNotify();
+  bool need_notify = !notify_frozen_;
+  if (need_notify) {
+    FreezeNotify();
+  }
 
   // First line.
   DeleteString(range.point_begin(), kInvCoord, text);
@@ -1144,13 +1125,13 @@ void TextBuffer::DeleteText(const TextRange& range, std::wstring* text) {
   // Delete the line ending of first line.
   DeleteChar(TextPoint(LineLength(range.point_begin().y), range.point_begin().y));
 
-  ThawNotify();
+  if (need_notify) {
+    ThawNotify();
 
-  // Avoid to notify on every single change.
-  // NOTE (2013-04-20): Notify LineDeleted first so that wrap infos can be
-  // updated before LineUpdated.
-  Notify(kLineDeleted, LineChangeData(range.point_begin().y + 1, range.point_end().y));
-  Notify(kLineUpdated, LineChangeData(range.point_begin().y));
+    // NOTE: Notify LineDeleted first so that wrap infos can be updated before LineUpdated.
+    Notify(kLineDeleted, LineChangeData(range.point_begin().y + 1, range.point_end().y));
+    Notify(kLineUpdated, LineChangeData(range.point_begin().y));
+  }
 }
 
 void TextBuffer::DeleteRectText(const TextRange& range, std::wstring* text) {
@@ -1163,7 +1144,10 @@ void TextBuffer::DeleteRectText(const TextRange& range, std::wstring* text) {
     return;
   }
 
-  FreezeNotify();
+  bool need_notify = !notify_frozen_;
+  if (need_notify) {
+    FreezeNotify();
+  }
 
   LineRange line_range = range.GetLineRange();
 
@@ -1183,9 +1167,27 @@ void TextBuffer::DeleteRectText(const TextRange& range, std::wstring* text) {
     }
   }
 
-  ThawNotify();
+  if (need_notify) {
+    ThawNotify();
 
-  Notify(kLineUpdated, LineChangeData(line_range));
+    Notify(kLineUpdated, LineChangeData(line_range));
+  }
+}
+
+void TextBuffer::HandleLineChange(LineChangeType type, Coord first_ln, Coord last_ln) {
+  if (scan_lex_ && ft_plugin_->IsLexAvailable()) {
+    if (type == kLineUpdated) {
+      ScanLexOnLineUpdated(LineRange(first_ln, last_ln));
+    } else if (type == kLineAdded) {
+      ScanLexOnLineAdded(LineRange(first_ln, last_ln));
+    } else if (type == kLineDeleted) {
+      ScanLexOnLineDeleted(LineRange(first_ln, last_ln));
+    }
+  }
+
+  if (!notify_frozen_) {
+    Notify(type, LineRange(first_ln, last_ln));
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1240,17 +1242,6 @@ void TextBuffer::DetachListener(TextListener* listener) {
 }
 
 void TextBuffer::Notify(LineChangeType type, const LineChangeData& data) {
-  // Scan lex on change.
-  if (ft_plugin_->IsLexAvailable()) {
-    if (type == kLineUpdated) {
-      ScanLexOnLineUpdated(data);
-    } else if (type == kLineAdded) {
-      ScanLexOnLineAdded(data);
-    } else if (type == kLineDeleted) {
-      ScanLexOnLineDeleted(data);
-    }
-  }
-
   for (size_t i = 0; i < listeners_.size(); ++i) {
     listeners_[i]->OnBufferLineChange(type, data);
   }
@@ -1748,6 +1739,7 @@ TextBuffer::TextBuffer(size_t id, FtPlugin* ft_plugin)
     , deleted_(false)
     , line_id_(0)
     , notify_frozen_(false)
+    , scan_lex_(true)
     , last_saved_undo_count_(0)
     , prev_delete_action_time_(wxDateTime::UNow()) {
   ClearLineLength();
@@ -1837,8 +1829,10 @@ void TextBuffer::SetText(const std::wstring& text) {
     time_it.Start();
 #endif  // JIL_TEST_TIME_SCAN_LEX
 
-    // Scan lex for the whole buffer.
-    ScanLex();
+    if (scan_lex_) {
+      // Scan lex for the whole buffer.
+      ScanLex();
+    }
 
 #if JIL_TEST_TIME_SCAN_LEX
     time_it.End();
