@@ -109,8 +109,9 @@ std::vector<TextPage*> TextBook::StackTextPages() const {
 void TextBook::CreatePageWindow() {
   using namespace editor;
 
+  // TODO: Txt ft has wrap infos, avoid this.
   FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(kTxtFt);
-  TextBuffer* buffer = TextBuffer::Create(0, ft_plugin, options_->file_encoding);
+  TextBuffer* buffer = new TextBuffer(0, ft_plugin, options_->file_encoding);
   empty_page_ = new TextPage(buffer);
 
   page_window_ = new PageWindow(empty_page_);
@@ -123,6 +124,7 @@ void TextBook::CreatePageWindow() {
 
   page_window_->Create(page_area_, ID_TEXT_WINDOW, true);
 
+  // TODO: SetTextFont causes Refresh, avoid it.
   page_window_->SetTextFont(options_->fonts[FONT_TEXT]);
   page_window_->SetLineNrFont(options_->fonts[FONT_LINE_NR]);
   page_window_->SetLinePadding(options_->line_padding);

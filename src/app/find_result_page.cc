@@ -18,15 +18,14 @@ FindResultPage::FindResultPage(editor::TextBuffer* buffer)
   allow_text_change_ = false;
 }
 
+FindResultPage::~FindResultPage() {
+}
+
 bool FindResultPage::Create(wxWindow* parent, wxWindowID id, bool hide) {
   if (!editor::TextWindow::Create(parent, id, hide)) {
     return false;
   }
   return true;
-}
-
-FindResultPage::~FindResultPage() {
-  wxDELETE(buffer_);
 }
 
 bool FindResultPage::Page_HasFocus() const {

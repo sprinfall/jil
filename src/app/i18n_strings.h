@@ -34,6 +34,8 @@
 #define kTrFileOpenFail       _("The file '%s' cannot be opened.")
 #define kTrCfgFileLoadFail    _("The config file '%s' cannot be loaded.")
 
+#define kTrSearchInFile       _("Searching in file '%s'.")
+
 #if defined (__WXMSW__)
 #define kTrOptions            _("Options")
 #else

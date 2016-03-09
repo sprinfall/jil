@@ -183,7 +183,12 @@ public:
     return ln >= point_begin_.y && ln <= point_end_.y;
   }
 
+  bool HasOneLine() const {
+    return point_begin_.y == point_end_.y;
+  }
+
   // If this text range has any line.
+  // TODO: !IsEmpty() ?
   bool HasAnyLine() const {
     return point_begin_.y > 0 &&
            point_end_.y > 0 &&

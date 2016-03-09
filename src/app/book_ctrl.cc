@@ -222,7 +222,7 @@ bool BookCtrl::RemoveActivePage() {
   return RemovePage(it);
 }
 
-void BookCtrl::RemoveAllPages(const BookPage* except_page) {
+void BookCtrl::RemoveAllPages(bool from_destroy, const BookPage* except_page) {
   wxWindowUpdateLocker avoid_flickering(this);
 
   bool removed = false;
@@ -245,7 +245,7 @@ void BookCtrl::RemoveAllPages(const BookPage* except_page) {
     removed = true;
   }
 
-  if (removed) {
+  if (removed && !from_destroy) {
     if (!stack_tabs_.empty()) {
       ActivatePage(stack_tabs_.front()->page);
       PostEvent(kEvtBookPageSwitch);

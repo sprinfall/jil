@@ -17,15 +17,22 @@ END_EVENT_TABLE()
 ToolBook::ToolBook() {
 }
 
+ToolBook::~ToolBook() {
+  if (!tabs_.empty()) {
+    for (Tab* tab : tabs_) {
+      delete tab->page;
+      delete tab;
+    }
+    tabs_.clear();
+  }
+}
+
 bool ToolBook::Create(wxWindow* parent, wxWindowID id) {
   if (!BookCtrl::Create(parent, id)) {
     return false;
   }
 
   return true;
-}
-
-ToolBook::~ToolBook() {
 }
 
 void ToolBook::HandleTabMouseRightUp(wxMouseEvent& evt) {

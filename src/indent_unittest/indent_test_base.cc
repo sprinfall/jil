@@ -55,7 +55,7 @@ void IndentTestBase::StaticTearDown() {
 }
 
 void IndentTestBase::SetUp() {
-  buffer_ = TextBuffer::Create(0, ft_plugin, kEncoding);
+  buffer_ = new TextBuffer(0, ft_plugin, kEncoding);
 }
 
 void IndentTestBase::TearDown() {

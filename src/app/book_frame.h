@@ -50,13 +50,18 @@ class ToolBook;
 ////////////////////////////////////////////////////////////////////////////////
 // Thread for Find All.
 
-wxDECLARE_EVENT(wxEVT_COMMAND_FINDTHREAD_COMPLETED, wxThreadEvent);
-wxDECLARE_EVENT(wxEVT_COMMAND_FINDTHREAD_UPDATE, wxThreadEvent);
-
 class FindThread : public wxThread {
 public:
   explicit FindThread(BookFrame* handler);
   virtual ~FindThread();
+
+  void set_str(const std::wstring& str) {
+    str_ = str;
+  }
+
+  void set_flags(int flags) {
+    flags_ = flags;
+  }
 
   // TODO: Avoid copy
   void set_files(const wxArrayString& files) {
@@ -66,11 +71,14 @@ public:
 protected:
   virtual ExitCode Entry() override;
 
+  void QueueEvent(int new_fr_lines, const wxString& file);
+
 private:
   BookFrame* handler_;
 
-  // Files in which to find.
-  wxArrayString files_;
+  std::wstring str_;  // Find this string.
+  int flags_;  // Find flags.
+  wxArrayString files_;  // Find in these files.
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -89,6 +97,8 @@ public:
 public:
   BookFrame();
   virtual ~BookFrame();
+
+  virtual bool Destroy() override;
 
   void set_options(Options* options) {
     options_ = options;
@@ -148,8 +158,6 @@ public:
   void FileCopyPath();
   void FileOpenFolder();
 
-  size_t PageCount() const;
-
   void SwitchToNextPage();
   void SwitchToPrevPage();
 
@@ -199,12 +207,17 @@ public:
                         int flags,
                         const wxArrayString& folders);
 
-  void FindInFile(const std::wstring& str,
-                  const wxString& file,
-                  int flags);
+  // Find string in the file from another thread (async).
+  // NOTE: Don't call/trigger GUI operations.
+  // Return the number of new lines added to find result buffer.
+  int AsyncFindInFile(const std::wstring& str,
+                      int flags,
+                      const wxString& file);
 
 protected:
   void Init();
+
+  void CreateFrBuffer();
 
   void OnSize(wxSizeEvent& evt);
 
@@ -344,9 +357,6 @@ private:
   //----------------------------------------------------------------------------
   // Find & Replace
 
-  //void HandleFind(const std::wstring& str, int flags, FindLocation location);
-  //void HandleFindAll(const std::wstring& str, int flags, FindLocation location);
-
   // Return the matched result range.
   editor::TextRange Find(TextPage* text_page,
                          const std::wstring& str,
@@ -354,16 +364,12 @@ private:
                          int flags,
                          bool cycle);
 
-  // Find all in the given buffer, add the find result to the find result page.
-  //void FindAll(const std::wstring& str,
-  //             editor::TextBuffer* buffer,
-  //             int flags,
-  //             FindResultPage* fr_page);
-
   // Find all in the given buffer, add the lines to the find result buffer.
+  // \param notify Notify the listeners of find result buffer.
   void FindAll(const std::wstring& str,
-               editor::TextBuffer* buffer,
                int flags,
+               editor::TextBuffer* buffer,
+               bool notify,
                editor::TextBuffer* fr_buffer);
 
   // Find all in the given buffer, save the find result in each line.
@@ -378,7 +384,9 @@ private:
                      const editor::TextRange& find_result,
                      bool incremental);
 
-  void ClearFindAllResult(FindResultPage* fr_page);
+  void ClearFindResult(FindResultPage* fr_page);
+
+  void OnFindThreadEvent(wxThreadEvent& evt);
 
   //----------------------------------------------------------------------------
   // Menu
@@ -420,7 +428,8 @@ private:
 
   TextPage* TextPageByBufferId(size_t buffer_id) const;
 
-  void RemoveAllPages(const TextPage* except_page = NULL);
+  // Remove all text pages from text book.
+  void RemoveAllTextPages(bool from_destroy, const TextPage* except_page);
 
   void SwitchStackPage(bool forward);
 
@@ -428,7 +437,7 @@ private:
   // File - Open, Save
 
   // Create a buffer according to the given file name.
-  editor::TextBuffer* CreateBuffer(const wxFileName& fn_object);
+  editor::TextBuffer* CreateBuffer(const wxFileName& fn, bool scan_lex);
 
   TextPage* DoOpenFile(const wxString& file_name,
                        bool active,
@@ -475,6 +484,11 @@ private:
   // Current page type.
   // See BookPage::Page_Type().
   wxString page_type_;
+
+  // Find result buffer.
+  editor::TextBuffer* fr_buffer_;
+
+  wxCriticalSection fr_cs_;
 
   std::wstring find_str_;
   int find_flags_;  // Find flags exluding kFind_Reversely.

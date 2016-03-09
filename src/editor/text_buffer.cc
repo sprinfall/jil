@@ -264,76 +264,6 @@ private:
   std::string charset_;
 };
 
-////////////////////////////////////////////////////////////////////////////////
-
-wchar_t TextBuffer::CharIterator::operator*() const {
-  TextLine* line = *y_;
-  if (x_ >= line->Length()) {
-    return LF;
-  } else {
-    return line->Char(x_);
-  }
-}
-
-TextBuffer::CharIterator& TextBuffer::CharIterator::operator++() {
-  TextLine* line = *y_;
-  if (x_ < line->Length()) {
-    ++x_;
-  } else {
-    ++y_;
-    x_ = 0;
-  }
-  return *this;
-}
-
-TextBuffer::CharIterator& TextBuffer::CharIterator::operator--() {
-  TextLine* line = *y_;
-  if (x_ == 0) {
-    --y_;
-    x_ = (*y_)->Length();
-  } else {
-    --x_;
-  }
-  return *this;
-}
-
-TextBuffer::CharIterator TextBuffer::CharIterator::operator++(int) {
-  CharIterator tmp = *this;
-  ++*this;
-  return tmp;
-}
-
-TextBuffer::CharIterator TextBuffer::CharIterator::operator--(int) {
-  CharIterator tmp = *this;
-  --*this;
-  return tmp;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-//------------------------------------------------------------------------------
-
-TextBuffer::~TextBuffer() {
-  ClearActions();
-  ClearContainer(&lines_);
-}
-
-//------------------------------------------------------------------------------
-
-// static
-TextBuffer* TextBuffer::Create(size_t id,
-                               FtPlugin* ft_plugin,
-                               const Encoding& file_encoding) {
-  TextBuffer* buffer = new TextBuffer(id, ft_plugin);
-
-  buffer->set_file_encoding(file_encoding);
-
-  // A new file has an empty line.
-  buffer->DoAppendLine(L"");
-
-  return buffer;
-}
-
 // Read the bytes from a file, detect the encoding, then convert to std::wstring.
 static FileError ReadFile(const wxString& file_path,
                           int cjk_filters,
@@ -414,62 +344,96 @@ static FileError ReadFile(const wxString& file_path,
   return kNoError;
 }
 
-// static
-TextBuffer* TextBuffer::Create(size_t id,
-                               const wxFileName& fn_object,
-                               FtPlugin* ft_plugin,
-                               int cjk_filters,
-                               const Encoding& file_encoding) {
-  std::wstring text;
-  Encoding encoding;
+////////////////////////////////////////////////////////////////////////////////
 
-  int error = ReadFile(fn_object.GetFullPath(), cjk_filters, &text, &encoding);
-
-  if (error == kEmptyError) {
-    // The file is empty.
-    TextBuffer* buffer = Create(id, ft_plugin, file_encoding);
-    buffer->set_file_name_object(fn_object);
-    return buffer;
-  }
-
-  if (error != kNoError) {
-    return NULL;
-  }
-
-  TextBuffer* buffer = NULL;
-
-  if (text.empty()) {
-    // The file has only BOM bytes.
-    buffer = Create(id, ft_plugin, encoding);
+wchar_t TextBuffer::CharIterator::operator*() const {
+  TextLine* line = *y_;
+  if (x_ >= line->Length()) {
+    return LF;
   } else {
-    buffer = new TextBuffer(id, ft_plugin);
-    buffer->set_file_encoding(encoding);
-    buffer->SetText(text);
+    return line->Char(x_);
   }
-
-  buffer->set_file_name_object(fn_object);
-
-  return buffer;
 }
 
-// static
-TextBuffer* TextBuffer::Create(size_t id,
-                               const std::wstring& text,
-                               FtPlugin* ft_plugin,
-                               const Encoding& file_encoding) {
-  TextBuffer* buffer = NULL;
-  if (text.empty()) {
-    // The file is empty with only BOM bytes?
-    buffer = Create(id, ft_plugin, file_encoding);
+TextBuffer::CharIterator& TextBuffer::CharIterator::operator++() {
+  TextLine* line = *y_;
+  if (x_ < line->Length()) {
+    ++x_;
   } else {
-    buffer = new TextBuffer(id, ft_plugin);
-    buffer->set_file_encoding(file_encoding);
-    buffer->SetText(text);
+    ++y_;
+    x_ = 0;
   }
-  return buffer;
+  return *this;
+}
+
+TextBuffer::CharIterator& TextBuffer::CharIterator::operator--() {
+  TextLine* line = *y_;
+  if (x_ == 0) {
+    --y_;
+    x_ = (*y_)->Length();
+  } else {
+    --x_;
+  }
+  return *this;
+}
+
+TextBuffer::CharIterator TextBuffer::CharIterator::operator++(int) {
+  CharIterator tmp = *this;
+  ++*this;
+  return tmp;
+}
+
+TextBuffer::CharIterator TextBuffer::CharIterator::operator--(int) {
+  CharIterator tmp = *this;
+  --*this;
+  return tmp;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+TextBuffer::TextBuffer(size_t id, FtPlugin* ft_plugin, const Encoding& file_encoding)
+    : id_(id)
+    , ft_plugin_(ft_plugin)
+    , file_encoding_(file_encoding)
+    , options_(ft_plugin->options()) {
+
+  Init();
+
+  // A new file has an empty line.
+  DoAppendLine(L"");
+}
+
+TextBuffer::~TextBuffer() {
+  ClearActions();
+  ClearContainer(&lines_);
 }
 
 //------------------------------------------------------------------------------
+
+bool TextBuffer::LoadFile(const wxFileName& fn, int cjk_filters) {
+  std::wstring text;
+  Encoding encoding;
+
+  int error = ReadFile(fn.GetFullPath(), cjk_filters, &text, &encoding);
+
+  if (error == kEmptyError) {  // The file is empty.
+    file_name_object_ = fn;
+    return true;
+  }
+
+  if (error != kNoError) {
+    return false;
+  }
+
+  // If text is empty, the file has only BOM bytes.
+  SetText(text, false);  // TODO: notify
+
+  // TODO: notify
+  file_encoding_ = encoding;  
+  file_name_object_ = fn;
+
+  return true;
+}
 
 FileError TextBuffer::SaveFile() {
   // VC++ needs "this->" if variable has the same name as the function.
@@ -876,6 +840,142 @@ void TextBuffer::GetRectText(const TextRange& range, std::wstring* text) const {
 //------------------------------------------------------------------------------
 // Buffer change.
 
+// TODO: notify
+void TextBuffer::SetText(const std::wstring& text, bool notify) {
+  ClearText(notify);
+
+  if (text.empty()) {
+    return;
+  }
+
+  // Delete the first empty line before add real lines.
+  delete lines_.front();
+  lines_.clear();
+
+#if JIL_TEST_TIME_SET_TEXT
+  TimeIt time_it(wxT("SetText"));
+  time_it.Start();
+#endif  // JIL_TEST_TIME_SET_TEXT
+
+  size_t i = 0;
+  size_t first_line_size = 0;
+  FileFormat ff = CheckEol(text, &first_line_size);
+  if (ff != FF_NONE) {
+    // The file has more than one line.
+    // Add the first line here, add the left lines later.
+    DoAppendLine(&text[0], first_line_size);  // Avoid copy via substr()
+    i += first_line_size;  // Skip the first line.
+    i += ff == FF_CRLF ? 2 : 1;  // Skip the EOL
+
+    // Overwrite the default file format.
+    file_format_ = ff;  // TODO: notify
+  }
+
+#if JIL_SPLIT_LINES_WITH_FUNC
+  size_t count = 0;
+  size_t step = 0;
+  while (SplitLines(text, i, &count, &step)) {
+    DoAppendLine(&text[i], count);
+    i += step;
+  }
+#else
+  // A little faster.
+  if (i < text.size()) {
+    const wchar_t* p = &text[i];
+
+    while (*p != kNilChar) {
+      const wchar_t* k = p;
+
+      // Find next EOL.
+      for (; *k != kNilChar; ++k) {
+        if (*k == LF) {
+          DoAppendLine(p, k - p);
+          break;
+        }
+        if (*k == CR) {
+          DoAppendLine(p, k - p);
+          if (*(k + 1) == LF) {
+            ++k;
+          }
+          break;
+        }
+      }
+
+      if (*k == kNilChar) {
+        // No next EOL.
+        DoAppendLine(p, k - p);
+        break;
+      }
+
+      p = k + 1;
+    }
+  }
+#endif  // JIL_SPLIT_LINES_WITH_FUNC
+
+  // If text ends with EOL, append an extra empty line.
+  wchar_t last_char = text[text.size() - 1];
+  if (last_char == LF || last_char == CR) {
+    DoAppendLine(L"");
+  }
+
+#if JIL_TEST_TIME_SET_TEXT
+  time_it.End();
+  DoAppendLine(time_it.result_msg().ToStdWstring());
+#endif  // JIL_TEST_TIME_SET_TEXT
+
+  if (scan_lex_ && ft_plugin_->IsLexAvailable()) {
+#if JIL_TEST_TIME_SCAN_LEX
+    TimeIt time_it(wxT("Scan lex on text load."));
+    time_it.Start();
+#endif  // JIL_TEST_TIME_SCAN_LEX
+
+    // Scan lex for the whole buffer.
+    ScanLex();
+
+#if JIL_TEST_TIME_SCAN_LEX
+    time_it.End();
+    DoAppendLine(time_it.result_msg().ToStdWstring());
+#endif  // JIL_TEST_TIME_SCAN_LEX
+  }
+}
+
+void TextBuffer::ClearText(bool notify) {
+  assert(!lines_.empty());
+
+  ClearLineLength();
+
+  Coord line_count = LineCount();
+  if (line_count > 1) {
+    TextLines::iterator it = lines_.begin();
+    TextLine* line1 = *it;  // Backup the first line.
+    ++it;  // Skip the first line.
+
+    // Delete all other lines.
+    for (; it != lines_.end(); ++it) {
+      delete (*it);
+    }
+
+    lines_.clear();
+    lines_.push_back(line1);
+
+    // Notify if necessary.
+    if (notify && !notify_frozen_) {
+      Notify(kLineDeleted, LineRange(2, line_count));
+    }
+  }
+
+  // Clear the first line.
+  TextLine* line1 = lines_.front();
+  if (!line1->IsEmpty(false)) {
+    line1->Clear();
+
+    // Notify if necessary.
+    if (notify && !notify_frozen_) {
+      Notify(kLineUpdated, LineRange(1, 1));
+    }
+  }
+}
+
 TextPoint TextBuffer::InsertChar(const TextPoint& point, wchar_t c) {
   TextLine* line = Line(point.y);
 
@@ -1002,15 +1102,18 @@ void TextBuffer::DeleteLine(Coord ln, std::wstring* line_data) {
   } else {
     TextLines::iterator it(lines_.begin());
     std::advance(it, ln - 1);
+    TextLine* line = *it;
 
     if (line_data != NULL) {
-      *line_data = (*it)->data();
+      *line_data = line->data();
     }
 
-    RemoveLineLength(*it);
+    RemoveLineLength(line);
 
     lines_.erase(it);
     HandleLineChange(kLineDeleted, ln);
+
+    delete line;
   }
 }
 
@@ -1083,8 +1186,13 @@ TextPoint TextBuffer::InsertRectText(const TextPoint& point, const std::wstring&
   return point;
 }
 
+// TODO: scan_lex
 void TextBuffer::DeleteText(const TextRange& range, std::wstring* text) {
-  if (range.point_begin().y == range.point_end().y) {
+  if (range.IsEmpty()) {
+    return;
+  }
+
+  if (range.HasOneLine()) {
     DeleteString(range.point_begin(), range.point_end().x - range.point_begin().x, text);
     return;
   }
@@ -1101,13 +1209,14 @@ void TextBuffer::DeleteText(const TextRange& range, std::wstring* text) {
   }
 
   // Middle lines.
-  for (Coord y = range.point_begin().y + 1; y < range.point_end().y; ++y) {
+  for (Coord y = range.line_first() + 1; y < range.line_last(); ++y) {
+    Coord ln = range.line_first() + 1;
     if (text != NULL) {
       std::wstring line_data;
-      DeleteLine(range.point_begin().y + 1, &line_data);
+      DeleteLine(ln, &line_data);
       *text += line_data + LF;
     } else {
-      DeleteLine(range.point_begin().y + 1);
+      DeleteLine(ln);
     }
   }
 
@@ -1115,22 +1224,22 @@ void TextBuffer::DeleteText(const TextRange& range, std::wstring* text) {
   if (range.point_end().x > 0) {
     if (text != NULL) {
       std::wstring str;
-      DeleteString(TextPoint(0, range.point_begin().y + 1), range.point_end().x, &str);
+      DeleteString(TextPoint(0, range.line_first() + 1), range.point_end().x, &str);
       *text += str;
     } else {
-      DeleteString(TextPoint(0, range.point_begin().y + 1), range.point_end().x);
+      DeleteString(TextPoint(0, range.line_first() + 1), range.point_end().x);
     }
   }
 
   // Delete the line ending of first line.
-  DeleteChar(TextPoint(LineLength(range.point_begin().y), range.point_begin().y));
+  DeleteChar(TextPoint(LineLength(range.line_first()), range.line_first()));
 
   if (need_notify) {
     ThawNotify();
 
     // NOTE: Notify LineDeleted first so that wrap infos can be updated before LineUpdated.
-    Notify(kLineDeleted, LineChangeData(range.point_begin().y + 1, range.point_end().y));
-    Notify(kLineUpdated, LineChangeData(range.point_begin().y));
+    Notify(kLineDeleted, LineChangeData(range.line_first() + 1, range.point_end().y));
+    Notify(kLineUpdated, LineChangeData(range.line_first()));
   }
 }
 
@@ -1199,7 +1308,7 @@ TextRange TextBuffer::FindString(const std::wstring& str,
                                  bool match_word,
                                  bool reversely) const {
   assert(!str.empty());
-  assert(range.point_begin().y <= LineCount());
+  assert(range.line_first() <= LineCount());
 
   if (use_regex) {
     return FindRegexString(str, range, case_sensitive, match_word);
@@ -1219,7 +1328,7 @@ void TextBuffer::FindStringAll(const std::wstring& str,
                                bool match_word,
                                std::list<TextRange>* result_ranges) const {
   assert(!str.empty());
-  assert(range.point_begin().y <= LineCount());
+  assert(range.line_first() <= LineCount());
 
   if (!use_regex) {
     FindPlainStringAll(str, range, case_sensitive, match_word, result_ranges);
@@ -1728,117 +1837,20 @@ Coord TextBuffer::GetMaxLineLength() const {
   return CoordCast(i);
 }
 
-//------------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 
-TextBuffer::TextBuffer(size_t id, FtPlugin* ft_plugin)
-    : id_(id)
-    , ft_plugin_(ft_plugin)
-    , options_(ft_plugin->options())
-    , file_format_(FF_DEFAULT)
-    , read_only_(false)
-    , deleted_(false)
-    , line_id_(0)
-    , notify_frozen_(false)
-    , scan_lex_(true)
-    , last_saved_undo_count_(0)
-    , prev_delete_action_time_(wxDateTime::UNow()) {
-  ClearLineLength();
-}
+void TextBuffer::Init() {
+  file_format_ = FF_DEFAULT;
+  read_only_ = false;
+  deleted_ = false;
+  line_id_ = 0;
+  notify_frozen_ = false;
+  scan_lex_ = true;
+  last_saved_undo_count_ = 0;
+  prev_delete_action_time_ = wxDateTime::UNow();
 
-// NOTE: Don't have to notify since there shouldn't be any listeners when
-// SetText() is called.
-void TextBuffer::SetText(const std::wstring& text) {
-#if JIL_TEST_TIME_SET_TEXT
-  TimeIt time_it(wxT("SetText"));
-  time_it.Start();
-#endif  // JIL_TEST_TIME_SET_TEXT
-
-  lines_.clear();
   ClearLineLength();
 
-  size_t i = 0;
-  size_t first_line_size = 0;
-  FileFormat ff = CheckEol(text, &first_line_size);
-  if (ff != FF_NONE) {
-    // The file has more than one line.
-    // Add the first line here, add the left lines later.
-    DoAppendLine(&text[0], first_line_size);  // Avoid copy via substr()
-    i += first_line_size;  // Skip the first line.
-    i += ff == FF_CRLF ? 2 : 1;  // Skip the EOL
-
-    // Overwrite the default file format.
-    file_format_ = ff;
-  }
-
-#if JIL_SPLIT_LINES_WITH_FUNC
-  size_t count = 0;
-  size_t step = 0;
-  while (SplitLines(text, i, &count, &step)) {
-    DoAppendLine(&text[i], count);
-    i += step;
-  }
-
-#else
-  // A little faster.
-  if (i < text.size()) {
-    const wchar_t* p = &text[i];
-
-    while (*p != kNilChar) {
-      const wchar_t* k = p;
-
-      // Find next EOL.
-      for (; *k != kNilChar; ++k) {
-        if (*k == LF) {
-          DoAppendLine(p, k - p);
-          break;
-        }
-        if (*k == CR) {
-          DoAppendLine(p, k - p);
-          if (*(k + 1) == LF) {
-            ++k;
-          }
-          break;
-        }
-      }
-
-      if (*k == kNilChar) {
-        // No next EOL.
-        DoAppendLine(p, k - p);
-        break;
-      }
-
-      p = k + 1;
-    }
-  }
-#endif  // JIL_SPLIT_LINES_WITH_FUNC
-
-  // If text ends with EOL, append an extra empty line.
-  wchar_t last_char = text[text.size() - 1];
-  if (last_char == LF || last_char == CR) {
-    DoAppendLine(L"");
-  }
-
-#if JIL_TEST_TIME_SET_TEXT
-  time_it.End();
-  DoAppendLine(time_it.result_msg().ToStdWstring());
-#endif  // JIL_TEST_TIME_SET_TEXT
-
-  if (ft_plugin_->IsLexAvailable()) {
-#if JIL_TEST_TIME_SCAN_LEX
-    TimeIt time_it(wxT("Scan lex on text load."));
-    time_it.Start();
-#endif  // JIL_TEST_TIME_SCAN_LEX
-
-    if (scan_lex_) {
-      // Scan lex for the whole buffer.
-      ScanLex();
-    }
-
-#if JIL_TEST_TIME_SCAN_LEX
-    time_it.End();
-    DoAppendLine(time_it.result_msg().ToStdWstring());
-#endif  // JIL_TEST_TIME_SCAN_LEX
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -1905,7 +1917,7 @@ TextRange TextBuffer::FindPlainString(const std::wstring& str,
   TextRange result_range;
 
   TextLines::const_iterator it = lines_.begin();
-  std::advance(it, range.point_begin().y - 1);
+  std::advance(it, range.line_first() - 1);
 
   // The range contains only one line.
   if (range.LineCount() == 1) {
@@ -1996,7 +2008,7 @@ TextRange TextBuffer::FindPlainStringReversely(const std::wstring& str,
   }
 
   TextLines::const_iterator begin_it = lines_.begin();
-  std::advance(begin_it, range.point_begin().y - 1);
+  std::advance(begin_it, range.line_first() - 1);
 
   // Find in the middle lines of the range.
   for (--it; it != begin_it; --it) {
@@ -2065,7 +2077,7 @@ void TextBuffer::FindPlainStringAll(const std::wstring& str,
                                     bool match_word,
                                     std::list<TextRange>* result_ranges) const {
   TextLines::const_iterator it = lines_.begin();
-  std::advance(it, range.point_begin().y - 1);
+  std::advance(it, range.line_first() - 1);
 
   // The range contains only one line.
   if (range.LineCount() == 1) {

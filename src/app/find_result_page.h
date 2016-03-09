@@ -20,8 +20,9 @@ public:
 
 public:
   explicit FindResultPage(editor::TextBuffer* buffer);
-  bool Create(wxWindow* parent, wxWindowID id, bool hide = false);
   virtual ~FindResultPage();
+
+  bool Create(wxWindow* parent, wxWindowID id, bool hide = false);
 
   // Overriddens of BookPage:
   virtual bool Page_HasFocus() const override;

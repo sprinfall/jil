@@ -15,8 +15,7 @@ public:
 
   bool Create(wxWindow* parent, wxWindowID id);
 
-  // TODO: Rename to page_area.
-  wxPanel* PageParent() const {
+  wxPanel* page_area() const {
     return page_area_;
   }
 

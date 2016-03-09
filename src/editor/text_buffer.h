@@ -107,31 +107,15 @@ public:
 
   //----------------------------------------------------------------------------
 
+  TextBuffer(size_t id, FtPlugin* ft_plugin, const Encoding& file_encoding);
+
   ~TextBuffer();
 
   //----------------------------------------------------------------------------
-  // Create
+  // File
 
-  // Create an empty text buffer.
-  static TextBuffer* Create(size_t id,
-                            FtPlugin* ft_plugin,
-                            const Encoding& file_encoding);
-
-  // Create a text buffer for the given file.
-  static TextBuffer* Create(size_t id,
-                            const wxFileName& fn_object,
-                            FtPlugin* ft_plugin,
-                            int cjk_filters,
-                            const Encoding& file_encoding);
-
-  // Create a text buffer with the given text.
-  static TextBuffer* Create(size_t id,
-                            const std::wstring& text,
-                            FtPlugin* ft_plugin,
-                            const Encoding& file_encoding);
-
-  //----------------------------------------------------------------------------
-  // Save
+  // TODO: Add notify parameter?
+  bool LoadFile(const wxFileName& fn, int cjk_filters);
 
   FileError SaveFile();
 
@@ -325,6 +309,10 @@ public:
   //----------------------------------------------------------------------------
   // Buffer change.
 
+  void SetText(const std::wstring& text, bool notify = false);
+
+  void ClearText(bool notify);
+
   TextPoint InsertChar(const TextPoint& point, wchar_t c);
 
   void DeleteChar(const TextPoint& point, wchar_t* c = NULL);
@@ -344,7 +332,10 @@ public:
   TextPoint InsertText(const TextPoint& point, const std::wstring& text);
   TextPoint InsertRectText(const TextPoint& point, const std::wstring& text);
 
+  // Delete the text in the given range.
+  // NOTE: Use 
   void DeleteText(const TextRange& range, std::wstring* text = NULL);
+
   void DeleteRectText(const TextRange& range, std::wstring* text = NULL);
 
   void HandleLineChange(LineChangeType type, Coord first_ln, Coord last_ln = 0);
@@ -507,11 +498,8 @@ public:
 
 private:
   //----------------------------------------------------------------------------
-  // Buffer
 
-  TextBuffer(size_t id, FtPlugin* ft_plugin);
-
-  void SetText(const std::wstring& text);
+  void Init();
 
   //----------------------------------------------------------------------------
   // Options

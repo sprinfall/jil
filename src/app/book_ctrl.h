@@ -135,8 +135,9 @@ public:
 
   bool RemoveActivePage();
 
-  // The except page, if specified, won't be removed.
-  void RemoveAllPages(const BookPage* except_page = NULL);
+  // \param from_destroy If from destroy, don't refresh or post event.
+  // \param except_page If specified, this page won't be removed.
+  void RemoveAllPages(bool from_destroy, const BookPage* except_page = NULL);
 
   size_t PageCount() const {
     return tabs_.size();
