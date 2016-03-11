@@ -612,8 +612,14 @@ void BookFrame::FindInActivePage(const std::wstring& str, int flags) {
   if (!find_result.IsEmpty()) {
     if (find_result == page_window->find_result() && !page_window->inc_find()) {
       // The find result is the same as last time.
-      // TODO: Display a message on status bar.
+      wxString msg_fmt = _("Cannot find more '%s' in the current page.");
+      wxString msg = wxString::Format(msg_fmt, wxString(str));
+      ShowStatusMessage(msg, 3000);
     }
+  } else {
+    wxString msg_fmt = _("Cannot find '%s' in the current page.");
+    wxString msg = wxString::Format(msg_fmt, wxString(str));
+    ShowStatusMessage(msg, 3000);
   }
 
   SetFindResult(page_window, find_result, false);
@@ -769,8 +775,6 @@ void BookFrame::FindAllInFolders(const std::wstring& str,
 
     if (wxDir::Exists(folder)) {
       wxDir::GetAllFiles(folder, &files, wxEmptyString, wxDIR_FILES | wxDIR_DIRS);
-    } else {
-      // TODO: Log
     }
   }
 
@@ -802,7 +806,7 @@ int BookFrame::AsyncFindInFile(const std::wstring& str,
     FindAll(str, flags, text_page->buffer(), false, fr_buffer_);
   } else {
     // Load the file to buffer without scanning lex.
-    editor::TextBuffer* buffer = CreateBuffer(fn, false);
+    editor::TextBuffer* buffer = CreateBuffer(fn, kTempBufferId, false);
     if (buffer != NULL) {
       FindAll(str, flags, buffer, false, fr_buffer_);
       wxDELETE(buffer);
@@ -840,12 +844,14 @@ void BookFrame::Init() {
 }
 
 void BookFrame::CreateFrBuffer() {
-  editor::FileType fr_ft(kFtId_FindResult, wxEmptyString);
+  editor::FileType fr_ft(kFindResultFtId, wxEmptyString);
   editor::FtPlugin* fr_ft_plugin = wxGetApp().GetFtPlugin(fr_ft);
 
   fr_buffer_ = new editor::TextBuffer(0, fr_ft_plugin, options_->file_encoding);
   fr_buffer_->set_file_name_object(wxFileName::FileName(kTrPageFindResult + wxT(".txt")));
-  fr_buffer_->set_scan_lex(false);  // Don't scan lex!
+
+  // Don't scan lex! We set the lex elements manually.
+  fr_buffer_->set_scan_lex(false);
 }
 
 //------------------------------------------------------------------------------
@@ -1430,6 +1436,7 @@ void BookFrame::OnClose(wxCloseEvent& evt) {
 
   if (find_panel_ != NULL) {
     session_->set_find_flags(find_panel_->flags());
+    session_->set_find_location(find_panel_->location());
   }
 
   // Explicitly remove all pages from tool book to avoid destroy order issue.
@@ -1489,13 +1496,15 @@ void BookFrame::UpdateStatusFields() {
     PageWindow* page_window = text_book_->page_window();
 
     // Update field values.
+
     editor::TextBuffer* buffer = page_window->buffer();
 
-    // TODO: Don't update the field if it's not shown.
     if (options_->switch_cwd && !buffer->new_created()) {
-      wxString cwd = buffer->file_path(wxPATH_GET_VOLUME, wxPATH_NATIVE);
-      wxSetWorkingDirectory(cwd);
-      status_bar_->SetFieldValue(StatusBar::kField_Cwd, cwd, false);
+      if (status_bar_->HasField(StatusBar::kField_Cwd)) {
+        wxString cwd = buffer->file_path(wxPATH_GET_VOLUME, wxPATH_NATIVE);
+        wxSetWorkingDirectory(cwd);
+        status_bar_->SetFieldValue(StatusBar::kField_Cwd, cwd, false);
+      }
     }
 
     UpdateStatusCaret(page_window, false);
@@ -1510,33 +1519,43 @@ void BookFrame::UpdateStatusFields() {
 }
 
 void BookFrame::UpdateStatusCaret(PageWindow* pw, bool refresh) {
-  status_bar_->SetFieldValue(StatusBar::kField_Caret,
-                             GetStatusCaretString(pw),
-                             refresh);
+  StatusBar::FieldId field_id = StatusBar::kField_Caret;
+  if (status_bar_->HasField(field_id)) {
+    wxString field_value = GetStatusCaretString(pw);
+    status_bar_->SetFieldValue(field_id, field_value, refresh);
+  }
 }
 
 void BookFrame::UpdateStatusTabOptions(PageWindow* pw, bool refresh) {
-  status_bar_->SetFieldValue(StatusBar::kField_TabOptions,
-                             GetStatusTabOptionsString(pw),
-                             refresh);
+  StatusBar::FieldId field_id = StatusBar::kField_TabOptions;
+  if (status_bar_->HasField(field_id)) {
+    wxString field_value = GetStatusTabOptionsString(pw);
+    status_bar_->SetFieldValue(field_id, field_value, refresh);
+  }
 }
 
 void BookFrame::UpdateStatusEncoding(PageWindow* pw, bool refresh) {
-  status_bar_->SetFieldValue(StatusBar::kField_Encoding,
-                             pw->buffer()->file_encoding().display_name,
-                             refresh);
+  StatusBar::FieldId field_id = StatusBar::kField_Encoding;
+  if (status_bar_->HasField(field_id)) {
+    wxString field_value = pw->buffer()->file_encoding().display_name;
+    status_bar_->SetFieldValue(field_id, field_value, refresh);
+  }
 }
 
 void BookFrame::UpdateStatusFileFormat(PageWindow* pw, bool refresh) {
-  status_bar_->SetFieldValue(StatusBar::kField_FileFormat,
-                             GetFileFormatName(pw->buffer()->file_format()),
-                             refresh);
+  StatusBar::FieldId field_id = StatusBar::kField_FileFormat;
+  if (status_bar_->HasField(field_id)) {
+    wxString field_value = GetFileFormatName(pw->buffer()->file_format());
+    status_bar_->SetFieldValue(field_id, field_value, refresh);
+  }
 }
 
 void BookFrame::UpdateStatusFileType(PageWindow* pw, bool refresh) {
-  status_bar_->SetFieldValue(StatusBar::kField_FileType,
-                             pw->buffer()->ft_plugin()->name(),
-                             refresh);
+  StatusBar::FieldId field_id = StatusBar::kField_FileFormat;
+  if (status_bar_->HasField(field_id)) {
+    wxString field_value = pw->buffer()->ft_plugin()->name();
+    status_bar_->SetFieldValue(field_id, field_value, refresh);
+  }
 }
 
 void BookFrame::UpdateTitleWithPath() {
@@ -1770,12 +1789,6 @@ void BookFrame::PopupStatusTabOptionsMenu() {
   PopupMenu(&menu, ScreenToClient(wxGetMousePosition()));
 }
 
-// TODO: Move to util
-static bool IsTraditionalChinese(int lang) {
-  return (lang >= wxLANGUAGE_CHINESE_TRADITIONAL &&
-          lang <= wxLANGUAGE_CHINESE_TAIWAN);
-}
-
 // Use sub-menus to simplified the first level menu items.
 // Dynamically adjust the first level menu items according to
 // the current locale.
@@ -1874,7 +1887,7 @@ void BookFrame::OnStatusTabOptionsMenu(wxCommandEvent& evt) {
     if (buffer->GuessTabOptions(&tab_options)) {
       buffer->SetTabOptions(tab_options, true);
     } else {
-      // TODO: Show error message on status bar.
+      ShowStatusMessage(kTrCantGuessTabOptions);
     }
   } else if (menu_id == ID_MENU_RETAB) {
     page_window->Retab();
@@ -1949,6 +1962,10 @@ void BookFrame::OnStatusFileTypeMenu(wxCommandEvent& evt) {
   }
 }
 
+void BookFrame::ShowStatusMessage(const wxString& msg, int time_ms) {
+  status_bar_->SetMessage(msg, time_ms);
+}
+
 FindPanel* BookFrame::GetFindPanel() const {
   wxWindow* w = FindWindowById(ID_FIND_PANEL, this);
   if (w == NULL) {
@@ -1968,13 +1985,15 @@ void BookFrame::ShowFindPanel(int mode) {
     find_panel_->Hide();
     find_panel_->set_theme(theme_->GetTheme(THEME_FIND_PANEL));
     find_panel_->Create(this, ID_FIND_PANEL);
-    find_panel_->SetLocation(kCurrentPage);  // TODO
   } else {
     find_panel_->set_mode(mode);
     find_panel_->UpdateLayout();
   }
 
   UpdateLayout();
+
+  // TODO: There seems not much difference between Show before
+  // and after UpdateLayout.
   find_panel_->Show();
 
   Thaw();
@@ -2307,7 +2326,7 @@ void BookFrame::OnFindThreadEvent(wxThreadEvent& evt) {
 
   if (new_fr_lines == wxNOT_FOUND) {
     // Find thread is completed, clear the status message.
-    status_bar_->SetMessage(wxEmptyString, 0);
+    ShowStatusMessage(wxEmptyString, 0);
     return;
   }
 
@@ -2323,7 +2342,7 @@ void BookFrame::OnFindThreadEvent(wxThreadEvent& evt) {
   // Show status message.
   wxString file = evt.GetString();
   wxString msg = wxString::Format(kTrSearchInFile, file);
-  status_bar_->SetMessage(msg);
+  ShowStatusMessage(msg);
 }
 
 //------------------------------------------------------------------------------
@@ -2575,6 +2594,11 @@ bool BookFrame::GetFileMenuState(int menu_id, wxString* text) {
 
 // Let the current page determine the state.
 bool BookFrame::GetEditMenuState(int menu_id) {
+  // Allow to show find panel even when no pages are opened.
+  if (menu_id == ID_MENU_EDIT_FIND || menu_id == ID_MENU_EDIT_REPLACE) {
+    return true;
+  }
+
   BookPage* page = GetCurrentPage();
   if (page != NULL) {
     return page->Page_EditMenuState(menu_id);
@@ -2738,13 +2762,11 @@ void BookFrame::SwitchStackPage(bool forward) {
 //------------------------------------------------------------------------------
 // File - Open, Save
 
-editor::TextBuffer* BookFrame::CreateBuffer(const wxFileName& fn, bool scan_lex) {
+editor::TextBuffer* BookFrame::CreateBuffer(const wxFileName& fn, size_t id, bool scan_lex) {
   using namespace editor;
 
   FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(fn.GetExt());
-
-  // TODO: NewBufferId()
-  TextBuffer* buffer = new TextBuffer(NewBufferId(), ft_plugin, options_->file_encoding);
+  TextBuffer* buffer = new TextBuffer(id, ft_plugin, options_->file_encoding);
   buffer->set_scan_lex(scan_lex);
 
   if (!buffer->LoadFile(fn, options_->cjk_filters)) {
@@ -2783,7 +2805,7 @@ TextPage* BookFrame::DoOpenFile(const wxFileName& fn,
       text_book_->ActivatePage(text_page);
     }
   } else {
-    TextBuffer* buffer = CreateBuffer(fn, true);
+    TextBuffer* buffer = CreateBuffer(fn, NewBufferId(), true);
     if (buffer == NULL) {
       if (!silent) {
         // Show error message only when it's not silent.

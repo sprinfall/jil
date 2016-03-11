@@ -191,7 +191,9 @@ public:
     return flags_;
   }
 
-  void SetLocation(FindLocation location);
+  FindLocation location() const {
+    return location_;
+  }
 
   void UpdateLayout();
 
@@ -221,6 +223,8 @@ protected:
 
   void HandleFind();
   void HandleReplace(bool all);
+
+  void SetLocation(FindLocation location);
 
 private:
   // Initialize find combobox with find history.

@@ -84,6 +84,8 @@ public:
 
   void AddField(FieldId id, wxAlignment align, SizeType size_type, int size_value);
 
+  bool HasField(FieldId id) const;
+
   void SetFields(const std::vector<FieldInfo>& field_infos);
 
   void UpdateFieldSizes();
@@ -93,7 +95,11 @@ public:
   void ClearFieldValues();
 
   // Set a message to display in the first field.
-  // If time_ms is 
+  // Examples:
+  //   SetMessage(wxT("Some message..."), 1000) -> Show a message and clear it after 1s.
+  //   SetMessage(wxT("Some message..."), 0) -> Just show a message.
+  //   SetMessage(wxEmptyString, 1000) -> Clear last message after 1s.
+  //   SetMessage(wxEmptyString, 0) -> Do nothing.
   void SetMessage(const wxString& msg, int time_ms = 0);
 
 protected:

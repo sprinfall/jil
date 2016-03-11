@@ -16,7 +16,7 @@
 namespace jil {
 
 size_t NewBufferId() {
-  static size_t buffer_id = 1;
+  static size_t buffer_id = kOtherBufferId;
   return buffer_id++;
 }
 
@@ -102,6 +102,11 @@ wxString GetFileFormatName(editor::FileFormat ff) {
     wxT("CR"),
   };
   return kFileFormatNames[ff];
+}
+
+bool IsTraditionalChinese(int lang) {
+  return (lang >= wxLANGUAGE_CHINESE_TRADITIONAL &&
+          lang <= wxLANGUAGE_CHINESE_TAIWAN);
 }
 
 } // namespace jil

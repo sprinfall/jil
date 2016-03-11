@@ -74,6 +74,9 @@ wxString GetEncodingDisplayName(editor::EncodingId enc_id);
 
 wxString GetFileFormatName(editor::FileFormat ff);
 
+// \param lang See wxLanguage
+bool IsTraditionalChinese(int lang);
+
 }  // namespace jil
 
 #endif  // JIL_UTIL_H_

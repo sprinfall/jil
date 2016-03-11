@@ -56,7 +56,7 @@ enum FindLocation {
 extern const wxString kInternalFtIdPrefix;
 
 // Internal file type IDs.
-extern const wxString kFtId_FindResult;
+extern const wxString kFindResultFtId;
 
 // Plain Text file type ID.
 // Please use kTrPlainText as file type name.
@@ -99,6 +99,18 @@ enum FontType {
   FONT_TABS,
   FONT_STATUS_BAR,
   FONT_COUNT,
+};
+
+enum BufferId {
+  // Buffers opened temporarily for, e.g., searching purpose.
+  // See BookFrame::AsyncFindInFile().
+  kTempBufferId = 0,
+
+  // Used by the placeholder buffer.
+  // See TextBook.placeholder_page_.
+  kPlaceholderBufferId,
+
+  kOtherBufferId,
 };
 
 }  // namespace jil

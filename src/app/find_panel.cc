@@ -99,8 +99,7 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   // Restore find options from session.
   flags_ = session_->find_flags();
-
-  //location_ = session_->find_location();
+  location_ = session_->find_location();
 
   if (!wxPanel::Create(book_frame, id)) {
     return false;
@@ -164,6 +163,9 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   //------------------------------------
 
   SetSizer(new wxBoxSizer(wxVERTICAL));
+
+  ShowFolders(location_ == kFolders);
+
   UpdateLayout();
 
   return true;
@@ -175,20 +177,6 @@ FindPanel::~FindPanel() {
 bool FindPanel::Destroy() {
   session_->set_find_flags(flags_);
   return wxPanel::Destroy();
-}
-
-void FindPanel::SetLocation(FindLocation location) {
-  if (location_ != location) {
-    bool folders = location_ == kFolders || location == kFolders;
-    location_ = location;
-
-    if (folders) {
-      ShowFolders(location == kFolders);
-      PostEvent(kLayoutEvent, wxEmptyString, wxEmptyString);
-    }
-
-    UpdateLayout();
-  }
 }
 
 void FindPanel::UpdateLayout() {
@@ -379,6 +367,20 @@ void FindPanel::HandleReplace(bool all) {
 
     int event_type = all ? kReplaceAllEvent : kReplaceEvent;
     PostEvent(kReplaceAllEvent, find_str, replace_str);
+  }
+}
+
+void FindPanel::SetLocation(FindLocation location) {
+  if (location_ != location) {
+    bool folders = location_ == kFolders || location == kFolders;
+    location_ = location;
+
+    if (folders) {
+      ShowFolders(location == kFolders);
+      PostEvent(kLayoutEvent, wxEmptyString, wxEmptyString);
+    }
+
+    UpdateLayout();
   }
 }
 

@@ -62,6 +62,11 @@ void StatusBar::AddField(FieldId id, wxAlignment align, SizeType size_type, int 
   field_infos_.push_back(field_info);
 }
 
+bool StatusBar::HasField(FieldId id) const {
+  const FieldInfo* field_info = GetFieldById(id);
+  return (field_info != NULL);
+}
+
 void StatusBar::SetFields(const std::vector<FieldInfo>& field_infos) {
   field_infos_ = field_infos;
 }

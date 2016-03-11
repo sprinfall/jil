@@ -142,4 +142,6 @@
 #define kTrGuessTabOptions          _("Guess Tab Options")
 #define kTrRetab                    _("Retab")
 
+#define kTrCantGuessTabOptions      _("Cannot guess tab options.")
+
 #endif  // JIL_I18N_STRINGS_H_

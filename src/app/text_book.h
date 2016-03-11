@@ -94,7 +94,7 @@ protected:
 
   // An empty page used as a placeholder when no text page is added.
   // This ensures that text window always has a valid buffer.
-  TextPage* empty_page_;
+  TextPage* placeholder_page_;
 
   PageWindow* page_window_;
 };

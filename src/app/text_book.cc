@@ -40,12 +40,12 @@ TextBook::TextBook() {
   style_ = NULL;
   binding_ = NULL;
   
-  empty_page_ = NULL;
+  placeholder_page_ = NULL;
   page_window_ = NULL;
 }
 
 TextBook::~TextBook() {
-  //page_window_->SetPage(empty_page_);
+  //page_window_->SetPage(placeholder_page_);
    
   if (!tabs_.empty()) {
     for (Tab* tab : tabs_) {
@@ -111,12 +111,12 @@ void TextBook::CreatePageWindow() {
 
   // TODO: Txt ft has wrap infos, avoid this.
   FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(kTxtFt);
-  TextBuffer* buffer = new TextBuffer(0, ft_plugin, options_->file_encoding);
-  empty_page_ = new TextPage(buffer);
+  TextBuffer* buffer = new TextBuffer(kPlaceholderBufferId, ft_plugin, options_->file_encoding);
+  placeholder_page_ = new TextPage(buffer);
 
-  page_window_ = new PageWindow(empty_page_);
+  page_window_ = new PageWindow(placeholder_page_);
 
-  empty_page_->set_page_window(page_window_);
+  placeholder_page_->set_page_window(page_window_);
 
   page_window_->set_style(style_);
   page_window_->set_theme(page_theme_);
@@ -219,6 +219,7 @@ void TextBook::DoActivateTab(Tab* tab, bool active) {
 
     if (!page_window_->IsShown()) {
       page_window_->Show();
+      page_window_->SetFocus();
       page_area_->Layout();
     }
   } else {
@@ -240,8 +241,8 @@ void TextBook::DoRemoveTab(Tab* tab) {
   }
 
   if (IsEmpty()) {
-    // No pages left, set empty page and hide page window.
-    empty_page_->Page_Activate(true);
+    // No pages left, set placeholder page and hide page window.
+    placeholder_page_->Page_Activate(true);
     page_window_->Hide();
     page_area_->Layout();
   }
@@ -249,7 +250,7 @@ void TextBook::DoRemoveTab(Tab* tab) {
 
 void TextBook::DoRemoveAll(Tab* tab) {
   if (tab->active) {
-    page_window_->SetPage(empty_page_);
+    page_window_->SetPage(placeholder_page_);
   }
 }
 

@@ -327,6 +327,10 @@ protected:
 
   void UpdateStatusIndentOptionsField(TextPage* text_page);
 
+  // Show message on status bar.
+  // See StatusBar::SetMessage() for details.
+  void ShowStatusMessage(const wxString& msg, int time_ms = 0);
+
   // Return find panel if it's shown.
   FindPanel* GetFindPanel() const;
 
@@ -437,7 +441,7 @@ private:
   // File - Open, Save
 
   // Create a buffer according to the given file name.
-  editor::TextBuffer* CreateBuffer(const wxFileName& fn, bool scan_lex);
+  editor::TextBuffer* CreateBuffer(const wxFileName& fn, size_t id, bool scan_lex);
 
   TextPage* DoOpenFile(const wxString& file_name,
                        bool active,

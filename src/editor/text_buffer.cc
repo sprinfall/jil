@@ -436,10 +436,6 @@ bool TextBuffer::LoadFile(const wxFileName& fn, int cjk_filters) {
 }
 
 FileError TextBuffer::SaveFile() {
-  // VC++ needs "this->" if variable has the same name as the function.
-  wxString file_path_name = this->file_path_name();
-  assert(!file_path_name.empty());
-
   std::wstring text;
   GetText(&text);
 
@@ -502,7 +498,11 @@ FileError TextBuffer::SaveFile() {
   }
 
   // Save.
-  int save_result = SaveBytes(file_path_name, bom, bytes);
+
+  wxString file_path = file_path_name();
+  assert(!file_path.empty());
+
+  int save_result = SaveBytes(file_path, bom, bytes);
   if (save_result != 0) {
     return kIOError;
   }
@@ -1118,6 +1118,11 @@ void TextBuffer::DeleteLine(Coord ln, std::wstring* line_data) {
 }
 
 TextPoint TextBuffer::InsertText(const TextPoint& point, const std::wstring& text) {
+  bool need_scan_lex = scan_lex_;
+  if (need_scan_lex) {
+    scan_lex_ = false;
+  }
+
   bool need_notify = !notify_frozen_;
   if (need_notify) {
     FreezeNotify();
@@ -1139,6 +1144,15 @@ TextPoint TextBuffer::InsertText(const TextPoint& point, const std::wstring& tex
     insert_point = InsertString(insert_point, text.substr(p, text.size() - p));
   }
 
+  if (need_scan_lex) {
+    scan_lex_ = true;
+
+    if (line_count > 0) {
+      ScanLexOnLineAdded(LineRange(point.y + 1, point.y + line_count));
+    }
+    ScanLexOnLineUpdated(LineRange(point.y));
+  }
+
   if (need_notify) {
     ThawNotify();
 
@@ -1153,6 +1167,11 @@ TextPoint TextBuffer::InsertText(const TextPoint& point, const std::wstring& tex
 }
 
 TextPoint TextBuffer::InsertRectText(const TextPoint& point, const std::wstring& text) {
+  bool need_scan_lex = scan_lex_;
+  if (need_scan_lex) {
+    scan_lex_ = false;
+  }
+
   bool need_notify = !notify_frozen_;
   if (need_notify) {
     FreezeNotify();
@@ -1175,9 +1194,15 @@ TextPoint TextBuffer::InsertRectText(const TextPoint& point, const std::wstring&
     InsertString(insert_point, text.substr(p, text.size() - p));
   }
 
+  if (need_scan_lex) {
+    scan_lex_ = true;
+    if (line_count > 0) {
+      ScanLexOnLineUpdated(LineRange(point.y, point.y + line_count));
+    }
+  }
+
   if (need_notify) {
     ThawNotify();
-
     if (line_count > 0) {
       Notify(kLineUpdated, LineChangeData(point.y, point.y + line_count));
     }
@@ -1186,7 +1211,6 @@ TextPoint TextBuffer::InsertRectText(const TextPoint& point, const std::wstring&
   return point;
 }
 
-// TODO: scan_lex
 void TextBuffer::DeleteText(const TextRange& range, std::wstring* text) {
   if (range.IsEmpty()) {
     return;
@@ -1195,6 +1219,11 @@ void TextBuffer::DeleteText(const TextRange& range, std::wstring* text) {
   if (range.HasOneLine()) {
     DeleteString(range.point_begin(), range.point_end().x - range.point_begin().x, text);
     return;
+  }
+
+  bool need_scan_lex = scan_lex_;
+  if (need_scan_lex) {
+    scan_lex_ = false;
   }
 
   bool need_notify = !notify_frozen_;
@@ -1234,6 +1263,13 @@ void TextBuffer::DeleteText(const TextRange& range, std::wstring* text) {
   // Delete the line ending of first line.
   DeleteChar(TextPoint(LineLength(range.line_first()), range.line_first()));
 
+  if (need_scan_lex) {
+    scan_lex_ = true;
+
+    ScanLexOnLineDeleted(LineRange(range.line_first() + 1, range.point_end().y));
+    ScanLexOnLineUpdated(LineRange(range.line_first()));
+  }
+
   if (need_notify) {
     ThawNotify();
 
@@ -1251,6 +1287,11 @@ void TextBuffer::DeleteRectText(const TextRange& range, std::wstring* text) {
   CharRange char_range = range.GetCharRange();
   if (char_range.IsEmpty()) {
     return;
+  }
+
+  bool need_scan_lex = scan_lex_;
+  if (need_scan_lex) {
+    scan_lex_ = false;
   }
 
   bool need_notify = !notify_frozen_;
@@ -1276,10 +1317,14 @@ void TextBuffer::DeleteRectText(const TextRange& range, std::wstring* text) {
     }
   }
 
+  if (need_scan_lex) {
+    scan_lex_ = true;
+    ScanLexOnLineUpdated(line_range);
+  }
+
   if (need_notify) {
     ThawNotify();
-
-    Notify(kLineUpdated, LineChangeData(line_range));
+    Notify(kLineUpdated, line_range);
   }
 }
 
