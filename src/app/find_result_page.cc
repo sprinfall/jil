@@ -52,9 +52,8 @@ void FindResultPage::Page_Close() {
   Destroy();
 }
 
-wxString FindResultPage::Page_Type() const {
-  static const wxString kType = "FindResultPage";
-  return kType;
+int FindResultPage::Page_Type() const {
+  return FIND_RESULT_PAGE_TYPE;
 }
 
 wxString FindResultPage::Page_Label() const {

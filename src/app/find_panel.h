@@ -111,25 +111,9 @@ public:
 
   // Detailed event types of kFindPanelEvent.
   enum EventType {
-    // Find string is changed, e.g., when user is typing.
-    kFindStrEvent = 1,
-
-    // Enter key is pressed for Find combo box or Find button is clicked.
-    // This normally means Find Next.
-    kFindEvent,
-
-    // Find All button is clicked.
-    kFindAllEvent,
-
-    // Enter key is pressed for Replace combo box or Replace button is clicked.
-    kReplaceEvent,
-
-    // Replace All button is clicked.
-    kReplaceAllEvent,
-
     // Some part of find panel is shown or hidden.
     // Tell the book frame to re-layout.
-    kLayoutEvent,
+    kLayoutEvent = 1,
   };
 
   enum ColorId {

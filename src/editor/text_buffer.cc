@@ -514,7 +514,7 @@ FileError TextBuffer::SaveFile() {
 
   SaveUndoActions();
 
-  Notify(kModifiedChange);
+  Notify(kModifiedStateChange);
 
   return kNoError;
 }
@@ -1391,8 +1391,17 @@ void TextBuffer::AttachListener(TextListener* listener) {
   }
 }
 
+// NOTE:
+// The following std::remove doesn't work:
+//   std::remove(listeners_.begin(), listeners_.end(), listener);
+// You should do it like this:
+//   listeners_.erase(std::remove(listeners_.begin(), listeners_.end(), listener), listeners_.end());
+// See: http://en.cppreference.com/w/cpp/algorithm/remove
 void TextBuffer::DetachListener(TextListener* listener) {
-  std::remove(listeners_.begin(), listeners_.end(), listener);
+  Listeners::iterator it = std::find(listeners_.begin(), listeners_.end(), listener);
+  if (it != listeners_.end()) {
+    listeners_.erase(it);
+  }
 }
 
 void TextBuffer::Notify(LineChangeType type, const LineChangeData& data) {
@@ -1730,7 +1739,7 @@ Action* TextBuffer::AddAction(Action* action) {
   PushUndoAction(action);
 
   if (modified() != modified_backup) {
-    Notify(kModifiedChange);
+    Notify(kModifiedStateChange);
   }
 
   return action;
@@ -1766,7 +1775,7 @@ void TextBuffer::AddInsertCharAction(InsertCharAction* insert_char_action) {
   }
 
   if (modified() != modified_backup) {
-    Notify(kModifiedChange);
+    Notify(kModifiedStateChange);
   }
 }
 
@@ -1780,7 +1789,7 @@ Action* TextBuffer::Undo() {
   }
 
   if (modified() != modified_backup) {
-    Notify(kModifiedChange);
+    Notify(kModifiedStateChange);
   }
 
   return action;
@@ -1799,7 +1808,7 @@ Action* TextBuffer::Redo() {
   action->Exec();
 
   if (modified() != modified_backup) {
-    Notify(kModifiedChange);
+    Notify(kModifiedStateChange);
   }
 
   return action;

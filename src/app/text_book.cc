@@ -279,17 +279,8 @@ void TextBook::OnTextWindowEvent(wxCommandEvent& evt) {
     // Book frame needs this to update encoding field of status bar.
     evt.Skip();
   } else if (type == editor::TextWindow::kFileNameEvent) {
-    // TODO: Always come from current page?
-    // Update tab best size.
-    //wxWindow* page_window = wxDynamicCast(evt.GetEventObject(), wxWindow);
-    //if (page_window != NULL) {
-    //  Tab* tab = GetTabByWindow(page_window);
-    //  if (tab != NULL) {
-    //    tab->best_size = CalcTabBestSize(tab->page->GetLabel());
-    //  }
-    //}
-    //tab_area_->Refresh();
-  } else if (type == editor::TextWindow::kModifiedEvent) {
+    ResizeActiveTab();
+  } else if (type == editor::TextWindow::kModifiedStateEvent) {
     tab_area_->Refresh();
   }
 }

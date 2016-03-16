@@ -48,7 +48,7 @@ public:
     kFileTypeEvent,
     kFileFormatEvent,
     kFileNameEvent,
-    kModifiedEvent,
+    kModifiedStateEvent,
     kCaretEvent,
     kTabOptionsEvent,
 #if JIL_ENABLE_LEADER_KEY

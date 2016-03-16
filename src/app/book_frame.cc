@@ -199,7 +199,7 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
   text_book_->set_theme(theme_->GetTheme(THEME_TEXT_BOOK));
   text_book_->set_page_theme(theme_->GetTheme(THEME_TEXT_PAGE));
   text_book_->set_binding(binding_);
-  text_book_->Create(splitter_, wxID_ANY);
+  text_book_->Create(splitter_, wxID_ANY);  // TODO: Specify an ID?
   text_book_->SetTabFont(options_->fonts[FONT_TABS]);
 
   Connect(text_book_->GetId(), kEvtBookPageChange, wxCommandEventHandler(BookFrame::OnTextBookPageChange));
@@ -564,8 +564,7 @@ editor::TextBuffer* BookFrame::ActiveBuffer() const {
 //------------------------------------------------------------------------------
 // Find & Replace
 
-// TODO: Rename and compare with FindInActivePage
-void BookFrame::HandleFindStrChange(const std::wstring& str, int flags) {
+void BookFrame::FindInActivePageIncrementally(const std::wstring& str, int flags) {
   TextPage* text_page = ActiveTextPage();
   if (text_page == NULL) {
     return;
@@ -757,7 +756,7 @@ void BookFrame::FindAllInAllPages(const std::wstring& str, int flags) {
 void BookFrame::FindAllInFolders(const std::wstring& str,
                                  int flags,
                                  const wxArrayString& folders) {
-  wxCriticalSectionLocker enter(find_thread_cs_);
+  wxCriticalSectionLocker locker(find_thread_cs_);
 
   if (find_thread_ != NULL) {
     wxLogDebug(wxT("Find thread is still running."));
@@ -1226,18 +1225,16 @@ void BookFrame::ApplyEditorOptionChanges(const wxString& ft_id,
     // Apply view option changes.
 
     // TODO
-    //if (view_options_changed) {
-    //  buffer->set_view_options(options.view);
-
-    //  text_page->Freeze();
+    if (view_options_changed) {
+      buffer->set_view_options(options.view);
 
     //  if (options.view.wrap != old_options.view.wrap) {
     //    text_page->Wrap(options.view.wrap);
     //  }
 
-    //  if (options.view.show_number != old_options.view.show_number) {
-    //    text_page->ShowNumber(options.view.show_number);
-    //  }
+      //if (options.view.show_number != old_options.view.show_number) {
+      //  text_page->ShowNumber(options.view.show_number);
+      //}
 
     //  if (options.view.show_space != old_options.view.show_space) {
     //    text_page->ShowSpace(options.view.show_space);
@@ -1250,9 +1247,7 @@ void BookFrame::ApplyEditorOptionChanges(const wxString& ft_id,
     //  if (options.view.rulers != old_options.view.rulers) {
     //    text_page->SetRulers(options.view.rulers);
     //  }
-
-    //  text_page->Thaw();
-    //}
+    }
   }
 }
 
@@ -1380,21 +1375,30 @@ void BookFrame::OnThemeUpdateUI(wxUpdateUIEvent& evt) {
   evt.Check(theme == options_->theme);
 }
 
+// Close process:
+// - BookFrame::OnClose()
+//   - TextBook closes all text pages.
+//   - ToolBook closes all tool pages (find result page, etc.)
+//     - FindResultPage::Page_Close()
+//       - Destroy()
+//       - FindResultPage::~FindResultPage()
+//       - TextWindow::~TextWindow()
 void BookFrame::OnClose(wxCloseEvent& evt) {
   {
-    wxCriticalSectionLocker enter(find_thread_cs_);
+    wxCriticalSectionLocker locker(find_thread_cs_);
     if (find_thread_ != NULL) {  // Does the thread still exist?
       if (find_thread_->Delete() != wxTHREAD_NO_ERROR) {
         wxLogError("Can't delete find thread!");
       }
     }
   }
+
   // Exit from the critical section to give the thread the possibility to
   // enter its destructor (which is guarded with find_thread_cs_).
   while (true) {
     {
       // Was the ~FindThread() executed?
-      wxCriticalSectionLocker enter(find_thread_cs_);
+      wxCriticalSectionLocker locker(find_thread_cs_);
       if (find_thread_ == NULL) {
         break;
       }
@@ -1647,11 +1651,11 @@ void BookFrame::HandleTextWindowGetFocus(wxCommandEvent& evt) {
     return;
   }
 
-  wxString page_type = focused_page->Page_Type();
+  int page_type = focused_page->Page_Type();
 
   if (page_type != page_type_) {
     page_type_ = page_type;
-    wxLogDebug("Current page type: %s", page_type_);
+    wxLogDebug("Current page type: %d", page_type_);
 
     ClearMenuItems(edit_menu);
     focused_page->Page_EditMenu(edit_menu);
@@ -2192,40 +2196,63 @@ void BookFrame::FindAll(const std::wstring& str,
                         editor::TextBuffer* buffer,
                         bool notify,
                         editor::TextBuffer* fr_buffer) {
-  using namespace editor;
-
-  std::list<TextRange> result_ranges;
-  buffer->FindStringAll(str,
-                        buffer->range(),
-                        GetBit(flags, kFind_UseRegex),
-                        GetBit(flags, kFind_CaseSensitive),
-                        GetBit(flags, kFind_MatchWord),
-                        &result_ranges);
+  std::list<editor::TextRange> result_ranges;
+  FindAll(str, flags, buffer, &result_ranges);
 
   if (result_ranges.empty()) {
     return;
   }
 
-  //----------------------------------------------------------------------------
-
   fr_buffer->FreezeNotify();
-  Coord first_ln = fr_buffer->LineCount() + 1;
+  editor::Coord first_ln = fr_buffer->LineCount() + 1;
 
-  //----------------------------------------------------------------------------
-  // Add file path line.
+  AddFrFilePathLine(buffer, fr_buffer);
 
+  AddFrMatchLines(buffer, result_ranges, fr_buffer);
+
+  AddFrMatchCountLine(buffer, result_ranges.size(), fr_buffer);
+
+  fr_buffer->AppendLine(L"");
+
+  fr_buffer->ThawNotify();
+
+  if (notify) {
+    editor::Coord last_ln = fr_buffer->LineCount();
+    fr_buffer->Notify(editor::kLineAdded, editor::LineRange(first_ln, last_ln));
+  }
+}
+
+void BookFrame::FindAll(const std::wstring& str,
+                        int flags,
+                        editor::TextBuffer* buffer,
+                        std::list<editor::TextRange>* result_ranges) {
+  bool use_regex = GetBit(flags, kFind_UseRegex);
+  bool case_sensitive = GetBit(flags, kFind_CaseSensitive);
+  bool match_word = GetBit(flags, kFind_MatchWord);
+
+  buffer->FindStringAll(str, buffer->range(), use_regex, case_sensitive, match_word, result_ranges);
+}
+
+void BookFrame::AddFrFilePathLine(editor::TextBuffer* buffer, editor::TextBuffer* fr_buffer) {
   std::wstring fr_line_data = L"-- ";
+
   wxString file_path = buffer->file_path_name();
   if (file_path.IsEmpty()) {
     fr_line_data += wxString(kTrPageUntitled).ToStdWstring();
   } else {
     fr_line_data += file_path.ToStdWstring();
   }
-  TextLine* fr_line = fr_buffer->AppendLine(fr_line_data);
-  fr_line->AddLexElem(0, fr_line->Length(), Lex(kLexComment));
 
-  //----------------------------------------------------------------------------
-  // Add result matching lines.
+  editor::TextLine* fr_line = fr_buffer->AppendLine(fr_line_data);
+  fr_line->AddLexElem(0, fr_line->Length(), editor::Lex(editor::kLexComment));
+}
+
+void BookFrame::AddFrMatchLines(editor::TextBuffer* buffer,
+                                std::list<editor::TextRange>& result_ranges,
+                                editor::TextBuffer* fr_buffer) {
+  using namespace editor;
+
+  wxString file_path = buffer->file_path_name();
 
   // Get max line number's string size.
   Coord max_ln = result_ranges.back().point_end().y;
@@ -2246,9 +2273,13 @@ void BookFrame::FindAll(const std::wstring& str,
     TextLine* line = buffer->Line(ln);
 
     std::wstring fr_line_data = ln_str + L" " + line->data();
-    fr_line = fr_buffer->AppendLine(fr_line_data);
+    TextLine* fr_line = fr_buffer->AppendLine(fr_line_data);
 
     // Save the file path, buffer id and source line id in the extra data.
+    // TODO:
+    // If the buffer is temporarily opened, can't save line id, should save line number instead.
+    // Can't save buffer id either.
+    // Even if the buffer is not temp, it might be closed.
     FrExtraData fr_extra_data = { file_path, buffer->id(), line->id() };
     fr_line->set_extra_data(fr_extra_data);
 
@@ -2256,30 +2287,21 @@ void BookFrame::FindAll(const std::wstring& str,
     fr_line->AddLexElem(0, max_ln_size, nr_lex);
 
     // Add lex for matched sub-string.
-    // TODO: Multiple line match when using regex.
+    // TODO: Multi-line match when using regex.
     size_t off = range.point_begin().x + max_ln_size + 1;
     size_t len = range.point_end().x - range.point_begin().x;
     fr_line->AddLexElem(off, len, id_lex);
   }
+}
 
-  //----------------------------------------------------------------------------
-  // Add matching count line.
-
+void BookFrame::AddFrMatchCountLine(editor::TextBuffer* buffer,
+                                    size_t count,
+                                    editor::TextBuffer* fr_buffer) {
   std::wstring match_count = L">> ";
-  match_count += base::LexicalCast<std::wstring>(result_ranges.size());
-  fr_line = fr_buffer->AppendLine(match_count);
-  fr_line->AddLexElem(0, fr_line->Length(), Lex(kLexComment));
+  match_count += base::LexicalCast<std::wstring>(count);
 
-  fr_buffer->AppendLine(L"");
-
-  //----------------------------------------------------------------------------
-
-  fr_buffer->ThawNotify();
-
-  if (notify) {
-    Coord last_ln = fr_buffer->LineCount();
-    fr_buffer->Notify(kLineAdded, LineRange(first_ln, last_ln));
-  }
+  editor::TextLine* fr_line = fr_buffer->AppendLine(match_count);
+  fr_line->AddLexElem(0, fr_line->Length(), editor::Lex(editor::kLexComment));
 }
 
 void BookFrame::SelectFindResult(PageWindow* page_window, const editor::TextRange& result_range) {
@@ -2602,7 +2624,7 @@ bool BookFrame::GetEditMenuState(int menu_id) {
   BookPage* page = GetCurrentPage();
   if (page != NULL) {
     return page->Page_EditMenuState(menu_id);
-  }
+  } 
   return false;
 }
 

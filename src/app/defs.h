@@ -93,6 +93,12 @@ enum ThemeId {
 const char* const kSplit_Text = "text";  // Text book
 const char* const kSplit_Tool = "tool";  // Tool book
 
+// See BookPage::Page_Type().
+enum PageType {
+  TEXT_PAGE_TYPE = 0,
+  FIND_RESULT_PAGE_TYPE,
+};
+
 enum FontType {
   FONT_TEXT = 0,
   FONT_LINE_NR,

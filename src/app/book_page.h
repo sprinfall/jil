@@ -34,7 +34,7 @@ public:
   virtual void Page_Close() = 0;
 
   // Page type ID.
-  virtual wxString Page_Type() const = 0;
+  virtual int Page_Type() const = 0;
 
   // Page label displayed in tab.
   virtual wxString Page_Label() const = 0;

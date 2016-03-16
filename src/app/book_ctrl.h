@@ -167,6 +167,9 @@ public:
   // Recalculate the size for each tab.
   void ResizeTabs();
 
+  // Recalculate the active tab's best size, then call ResizeTabs().
+  void ResizeActiveTab();
+
 protected:
   void Init();
 
@@ -215,9 +218,11 @@ protected:
 
   void ActivatePageByPos(int pos_x);
 
-  TabIter ActiveTab();
-  TabIter TabByPage(const BookPage* page);
-  TabConstIter TabByPage(const BookPage* page) const;
+  Tab* ActiveTab() const;
+
+  TabIter ActiveTabIter();
+  TabIter TabIterByPage(const BookPage* page);
+  TabConstIter TabIterByPage(const BookPage* page) const;
 
   int CalcTabBestSize(const wxString& label) const;
 

@@ -29,7 +29,7 @@ public:
   virtual void Page_SetFocus() override;
   virtual void Page_Activate(bool active) override;
   virtual void Page_Close() override;
-  virtual wxString Page_Type() const override;
+  virtual int Page_Type() const override;
   virtual wxString Page_Label() const override;
   virtual wxString Page_Description() const override;
   virtual int Page_Flags() const override;

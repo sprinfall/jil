@@ -330,9 +330,7 @@ void FindPanel::OnReplaceAll(wxCommandEvent& evt) {
 void FindPanel::OnFindText(wxCommandEvent& evt) {
   if (location_ == kCurrentPage) {
     wxString find_str = find_combobox_->GetValue();
-    // Post event even if the find string is empty so that the previous matching
-    // results can be cleared.
-    PostEvent(kFindStrEvent, find_str, wxEmptyString);
+    book_frame_->FindInActivePageIncrementally(find_str.ToStdWstring(), flags_);
   }
 }
 
@@ -365,8 +363,7 @@ void FindPanel::HandleReplace(bool all) {
       AddReplaceString(replace_str);
     }
 
-    int event_type = all ? kReplaceAllEvent : kReplaceEvent;
-    PostEvent(kReplaceAllEvent, find_str, replace_str);
+    // TODO
   }
 }
 

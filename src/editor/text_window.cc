@@ -282,8 +282,8 @@ void TextWindow::OnBufferChange(ChangeType type) {
       PostEvent(TextWindow::kFileNameEvent);
       break;
 
-    case kModifiedChange:
-      PostEvent(TextWindow::kModifiedEvent);
+    case kModifiedStateChange:
+      PostEvent(TextWindow::kModifiedStateEvent);
       break;
 
     case kFileTypeChange:

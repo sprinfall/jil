@@ -205,7 +205,7 @@ void BookCtrl::AddPage(BookPage* page, bool active) {
 }
 
 bool BookCtrl::RemovePage(const BookPage* page) {
-  TabIter it = TabByPage(page);
+  TabIter it = TabIterByPage(page);
   if (it == tabs_.end()) {
     return false;
   }
@@ -214,7 +214,7 @@ bool BookCtrl::RemovePage(const BookPage* page) {
 }
 
 bool BookCtrl::RemoveActivePage() {
-  TabIter it = ActiveTab();
+  TabIter it = ActiveTabIter();
   if (it == tabs_.end()) {
     return false;
   }
@@ -258,21 +258,18 @@ void BookCtrl::RemoveAllPages(bool from_destroy, const BookPage* except_page) {
 }
 
 void BookCtrl::ActivatePage(BookPage* page) {
-  TabIter it = TabByPage(page);
+  TabIter it = TabIterByPage(page);
   if (it != tabs_.end()) {
     ActivatePage(it);
   }
 }
 
 BookPage* BookCtrl::ActivePage() const {
-  if (stack_tabs_.empty()) {
-    return NULL;
+  Tab* tab = ActiveTab();
+  if (tab != NULL) {
+    return tab->page;
   }
-  if (!stack_tabs_.front()->active) {
-    return NULL;
-  }
-
-  return stack_tabs_.front()->page;
+  return NULL;
 }
 
 void BookCtrl::SwitchToNextPage() {
@@ -354,7 +351,7 @@ BookPage* BookCtrl::NextPage(const BookPage* page) const {
     return NULL;
   }
 
-  TabConstIter it = TabByPage(page);
+  TabConstIter it = TabIterByPage(page);
   if (it == tabs_.end()) {
     return NULL;
   }
@@ -486,6 +483,18 @@ void BookCtrl::ResizeTabs() {
           }
         }
       }
+    }
+  }
+}
+
+void BookCtrl::ResizeActiveTab() {
+  Tab* tab = ActiveTab();
+  if (tab != NULL) {
+    int new_best_size = CalcTabBestSize(tab->page->Page_Label());
+    if (tab->best_size != new_best_size) {
+      tab->best_size = new_best_size;
+      ResizeTabs();
+      tab_area_->Refresh();
     }
   }
 }
@@ -802,7 +811,7 @@ void BookCtrl::ActivatePage(TabIter it) {
   }
 
   // Deactivate previous active page.
-  TabIter active_it = ActiveTab();
+  TabIter active_it = ActiveTabIter();
   if (active_it != tabs_.end()) {
     DoActivateTab(*active_it, false);
   }
@@ -854,7 +863,17 @@ void BookCtrl::ActivatePageByPos(int pos_x) {
   }
 }
 
-BookCtrl::TabIter BookCtrl::ActiveTab() {
+BookCtrl::Tab* BookCtrl::ActiveTab() const {
+  if (stack_tabs_.empty()) {
+    return NULL;
+  }
+  if (!stack_tabs_.front()->active) {
+    return NULL;
+  }
+  return stack_tabs_.front();
+}
+
+BookCtrl::TabIter BookCtrl::ActiveTabIter() {
   TabIter it = tabs_.begin();
   for (; it != tabs_.end(); ++it) {
     if ((*it)->active) {
@@ -864,7 +883,7 @@ BookCtrl::TabIter BookCtrl::ActiveTab() {
   return it;
 }
 
-BookCtrl::TabIter BookCtrl::TabByPage(const BookPage* page) {
+BookCtrl::TabIter BookCtrl::TabIterByPage(const BookPage* page) {
   TabIter it = tabs_.begin();
   for (; it != tabs_.end(); ++it) {
     if ((*it)->page == page) {
@@ -874,7 +893,7 @@ BookCtrl::TabIter BookCtrl::TabByPage(const BookPage* page) {
   return it;
 }
 
-BookCtrl::TabConstIter BookCtrl::TabByPage(const BookPage* page) const {
+BookCtrl::TabConstIter BookCtrl::TabIterByPage(const BookPage* page) const {
   TabConstIter it = tabs_.begin();
   for (; it != tabs_.end(); ++it) {
     if ((*it)->page == page) {

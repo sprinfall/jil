@@ -186,7 +186,9 @@ public:
   //----------------------------------------------------------------------------
   // Find & Replace
 
-  void HandleFindStrChange(const std::wstring& str, int flags);
+  // Find string in the active text page "incrementally".
+  // Usually when the user is typing.
+  void FindInActivePageIncrementally(const std::wstring& str, int flags);
 
   // Find string in the active text page, select it and update the caret point.
   void FindInActivePage(const std::wstring& str, int flags);
@@ -376,8 +378,21 @@ private:
                bool notify,
                editor::TextBuffer* fr_buffer);
 
-  // Find all in the given buffer, save the find result in each line.
-  void FindAll(const std::wstring& str, editor::TextBuffer* buffer, int flags);
+  // Find all in the given buffer, return the result text ranges.
+  void FindAll(const std::wstring& str,
+               int flags,
+               editor::TextBuffer* buffer,
+               std::list<editor::TextRange>* result_ranges);
+
+  void AddFrFilePathLine(editor::TextBuffer* buffer, editor::TextBuffer* fr_buffer);
+
+  void AddFrMatchLines(editor::TextBuffer* buffer,
+                       std::list<editor::TextRange>& result_ranges,
+                       editor::TextBuffer* fr_buffer);
+
+  void AddFrMatchCountLine(editor::TextBuffer* buffer,
+                           size_t count,
+                           editor::TextBuffer* fr_buffer);
 
   // Select the result text range, update caret point and scroll to it if necessary.
   void SelectFindResult(PageWindow* page_window, const editor::TextRange& result_range);
@@ -486,8 +501,8 @@ private:
   FindPanel* find_panel_;
 
   // Current page type.
-  // See BookPage::Page_Type().
-  wxString page_type_;
+  // See BookPage::Page_Type() and enum PageType.
+  int page_type_;
 
   // Find result buffer.
   editor::TextBuffer* fr_buffer_;
@@ -497,7 +512,10 @@ private:
   std::wstring find_str_;
   int find_flags_;  // Find flags exluding kFind_Reversely.
 
+  // A thread searching text in the given folders.
   FindThread* find_thread_;
+
+  // Critical section to guard the find thread.
   wxCriticalSection find_thread_cs_;
 
 #if JIL_ENABLE_LEADER_KEY

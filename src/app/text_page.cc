@@ -6,6 +6,7 @@
 #include "editor/text_window.h"
 #include "editor/wrap.h"
 
+#include "app/defs.h"
 #include "app/i18n_strings.h"
 #include "app/page_window.h"
 #include "app/save.h"
@@ -54,9 +55,8 @@ void TextPage::Page_Close() {
   // Do nothing.
 }
 
-wxString TextPage::Page_Type() const {
-  static const wxString kType = "TextPage";
-  return kType;
+int TextPage::Page_Type() const {
+  return TEXT_PAGE_TYPE;
 }
 
 wxString TextPage::Page_Label() const {
