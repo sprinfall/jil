@@ -29,73 +29,13 @@ class Session;
 ////////////////////////////////////////////////////////////////////////////////
 
 BEGIN_DECLARE_EVENT_TYPES()
-// Check GetInt(), which returns FindPanel::EventType, for the details.
-DECLARE_EVENT_TYPE(kFindPanelEvent, 0)
+// Event posted when find panel changes its layout.
+DECLARE_EVENT_TYPE(kFindPanelLayoutEvent, 0)
 END_DECLARE_EVENT_TYPES()
 
-class FindPanelEvent : public wxCommandEvent {
-public:
-  FindPanelEvent(int id)
-      : wxCommandEvent(kFindPanelEvent, id)
-      , flags_(0)
-      , location_(kCurrentPage) {
-  }
-
-  FindPanelEvent(const FindPanelEvent& rhs)
-      : wxCommandEvent(rhs)
-      , flags_(rhs.flags_)
-      , find_str_(rhs.find_str_)
-      , replace_str_(rhs.replace_str_)
-      , location_(rhs.location_) {
-  }
-
-  virtual wxEvent* Clone() const {
-    return new FindPanelEvent(*this);
-  }
-
-  int flags() const {
-    return flags_;
-  }
-  void set_flags(int flags) {
-    flags_ = flags;
-  }
-
-  const std::wstring& find_str() const {
-    return find_str_;
-  }
-  void set_find_str(const std::wstring& find_str) {
-    find_str_ = find_str;
-  }
-
-  const std::wstring& replace_str() const {
-    return replace_str_;
-  }
-  void set_replace_str(const std::wstring& replace_str) {
-    replace_str_ = replace_str;
-  }
-
-  FindLocation location() const {
-    return location_;
-  }
-  void set_location(FindLocation location) {
-    location_ = location;
-  }
-
-private:
-  int flags_;
-  std::wstring find_str_;
-  std::wstring replace_str_;
-  FindLocation location_;
-};
-
-typedef void (wxEvtHandler::*FindPanelEventFunction)(FindPanelEvent&);
-
-#define FindPanelEventHandler(func)\
-  (wxObjectEventFunction)(wxEventFunction)wxStaticCastEvent(jil::FindPanelEventFunction, &func)
-
-#define EVT_FIND_PANEL(id, func)\
-  DECLARE_EVENT_TABLE_ENTRY(jil::kFindPanelEvent, id, -1,\
-  FindPanelEventHandler(func), (wxObject*)NULL),
+#define EVT_FIND_PANEL_LAYOUT(id, func)\
+  DECLARE_EVENT_TABLE_ENTRY(jil::kFindPanelLayoutEvent, id, -1,\
+  wxCommandEventHandler(func), (wxObject*)NULL),
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -107,13 +47,6 @@ public:
   enum Mode {
     kFindMode = 0,
     kReplaceMode
-  };
-
-  // Detailed event types of kFindPanelEvent.
-  enum EventType {
-    // Some part of find panel is shown or hidden.
-    // Tell the book frame to re-layout.
-    kLayoutEvent = 1,
   };
 
   enum ColorId {
@@ -245,10 +178,7 @@ private:
   ui::BitmapToggleButton* NewBitmapToggleButton(int id, ImageId image_id);
   ui::TextButton* NewTextButton(int id, const wxString& label);
 
-  // \param event_type See enum EventType.
-  void PostEvent(int event_type,
-                 const wxString& find_str,
-                 const wxString& replace_str);
+  void PostLayoutEvent();
 
 private:
   BookFrame* book_frame_;

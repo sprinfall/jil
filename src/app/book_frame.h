@@ -37,7 +37,6 @@ class BookFrame;
 class BookPage;
 class FindResultPage;
 class FindPanel;
-class FindPanelEvent;
 class PageWindow;
 class Session;
 class Splitter;
@@ -342,8 +341,8 @@ protected:
   // Close find panel, update layout, etc.
   void CloseFindPanel();
 
-  // Handle find panel events.
-  void OnFindPanelEvent(FindPanelEvent& evt);
+  // Find panel changed its layout.
+  void OnFindPanelLayoutEvent(wxCommandEvent& evt);
 
   // Get find result page, create it if necessary.
   FindResultPage* GetFindResultPage(bool create);

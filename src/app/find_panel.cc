@@ -46,7 +46,7 @@ const int kPaddingY = 2;
 
 static const wxChar kFolderSp = wxT(';');
 
-DEFINE_EVENT_TYPE(kFindPanelEvent)
+DEFINE_EVENT_TYPE(kFindPanelLayoutEvent)
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -374,7 +374,7 @@ void FindPanel::SetLocation(FindLocation location) {
 
     if (folders) {
       ShowFolders(location == kFolders);
-      PostEvent(kLayoutEvent, wxEmptyString, wxEmptyString);
+      PostLayoutEvent();
     }
 
     UpdateLayout();
@@ -642,16 +642,9 @@ ui::TextButton* FindPanel::NewTextButton(int id, const wxString& label) {
   return button;
 }
 
-void FindPanel::PostEvent(int event_type,
-                          const wxString& find_str,
-                          const wxString& replace_str) {
-  FindPanelEvent evt(GetId());
+void FindPanel::PostLayoutEvent() {
+  wxCommandEvent evt(GetId());
   evt.SetEventObject(this);
-  evt.SetInt(event_type);
-  evt.set_flags(flags_);
-  evt.set_find_str(find_str.ToStdWstring());
-  evt.set_replace_str(replace_str.ToStdWstring());
-  evt.set_location(kCurrentPage);  // TODO
   GetParent()->GetEventHandler()->AddPendingEvent(evt);
 }
 

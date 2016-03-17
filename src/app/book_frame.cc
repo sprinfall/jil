@@ -162,7 +162,8 @@ EVT_MENU_RANGE(ID_MENU_ENCODING_BEGIN, ID_MENU_ENCODING_END - 1, BookFrame::OnSt
 EVT_MENU_RANGE(ID_MENU_FILE_FORMAT_BEGIN, ID_MENU_FILE_FORMAT_END - 1, BookFrame::OnStatusFileFormatMenu)
 EVT_MENU_RANGE(ID_MENU_FILE_TYPE_BEGIN, ID_MENU_FILE_TYPE_END - 1, BookFrame::OnStatusFileTypeMenu)
 
-EVT_FIND_PANEL(ID_FIND_PANEL, BookFrame::OnFindPanelEvent)
+EVT_FIND_PANEL_LAYOUT(ID_FIND_PANEL, BookFrame::OnFindPanelLayoutEvent)
+
 EVT_THREAD(ID_FIND_THREAD_EVENT, BookFrame::OnFindThreadEvent)
 
 END_EVENT_TABLE()
@@ -1386,6 +1387,7 @@ void BookFrame::OnThemeUpdateUI(wxUpdateUIEvent& evt) {
 void BookFrame::OnClose(wxCloseEvent& evt) {
   {
     wxCriticalSectionLocker locker(find_thread_cs_);
+
     if (find_thread_ != NULL) {  // Does the thread still exist?
       if (find_thread_->Delete() != wxTHREAD_NO_ERROR) {
         wxLogError("Can't delete find thread!");
@@ -1995,9 +1997,6 @@ void BookFrame::ShowFindPanel(int mode) {
   }
 
   UpdateLayout();
-
-  // TODO: There seems not much difference between Show before
-  // and after UpdateLayout.
   find_panel_->Show();
 
   Thaw();
@@ -2040,12 +2039,8 @@ void BookFrame::CloseFindPanel() {
   text_book_->SetFocus();
 }
 
-// TODO
-void BookFrame::OnFindPanelEvent(FindPanelEvent& evt) {
-  int event_type = evt.GetInt();
-  if (event_type == FindPanel::kLayoutEvent) {
-    UpdateLayout();
-  }
+void BookFrame::OnFindPanelLayoutEvent(wxCommandEvent& evt) {
+  UpdateLayout();
 }
 
 FindResultPage* BookFrame::GetFindResultPage(bool create) {
