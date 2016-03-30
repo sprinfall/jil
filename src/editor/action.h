@@ -349,7 +349,9 @@ public:
     return caret_point_ + delta_point_;
   }
 
-  virtual RangeAction* AsRangeAction() override { return this; }
+  virtual RangeAction* AsRangeAction() override {
+    return this;
+  }
 
   // Return the select range after execute this action.
   // Examples:

@@ -501,12 +501,14 @@ protected:
   // Refresh a line.
   // Sometimes, it's necessary to update immediately to avoid
   // combined paint event.
+  // \param ln Might be invalid.
   void RefreshTextByLine(Coord ln, bool update = false);
 
   // Refresh a range of lines.
   void RefreshTextByLineRange(const LineRange& line_range, bool update = false);
 
   // Refresh the line number area of a line.
+  // \param ln Might be invalid.
   void RefreshLineNrByLine(Coord ln, bool update = false);
 
   // Refresh the line number area of a range of lines.

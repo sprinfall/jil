@@ -4,6 +4,7 @@
 
 #include <memory>  // std::shared_ptr
 
+#include "wx/gdicmn.h"
 #include "wx/string.h"
 
 #include "editor/option.h"
@@ -19,7 +20,7 @@ namespace editor {
 class TextBuffer;
 class WrapHelper;
 }  // namespace editor
- 
+
 class PageWindow;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -37,6 +38,8 @@ public:
 
   editor::TextPoint caret_point;
   editor::Coord max_caret_x;
+
+  wxPoint view_start;  // First visible position in scroll units.
 
   editor::Selection selection;
 

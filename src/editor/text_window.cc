@@ -1227,9 +1227,13 @@ void TextWindow::UpdateAfterExec(Action* action) {
   }
 
   if (action->update_caret()) {
-    // NOTE: Allow virtual spaces. Some actions need this, e.g.,
-    // IncreaseIndentAction.
-    UpdateCaretPoint(action->CaretPointAfterExec(), false, true, true);
+    bool vspace = false;
+    if (ra != NULL && ra->rect()) {
+      // Allow virtual spaces for rect range action.
+      // See IncreaseIndentAction for example.
+      vspace = true;
+    }
+    UpdateCaretPoint(action->CaretPointAfterExec(), false, true, vspace);
   }
 }
 
@@ -1243,8 +1247,13 @@ void TextWindow::UpdateAfterUndo(Action* action) {
   }
 
   if (action->update_caret()) {
-    // NOTE: Allow virtual spaces.
-    UpdateCaretPoint(action->caret_point(), false, true, true);
+    bool vspace = false;
+    if (ra != NULL && ra->rect()) {
+      // Allow virtual spaces for rect range action.
+      // See IncreaseIndentAction for example.
+      vspace = true;
+    }
+    UpdateCaretPoint(action->caret_point(), false, true, vspace);
   }
 }
 
@@ -2800,9 +2809,6 @@ void TextWindow::RefreshLineNrAfterLine(Coord ln, bool included, bool update) {
   }
 }
 
-// NOTE: @ln might be invalid.
-// E.g., called by UpdateCaretPoint() to erase the previous caret line
-// which has been deleted.
 void TextWindow::RefreshTextByLine(Coord ln, bool update) {
   if (ln <= buffer_->LineCount()) {
     RefreshTextByLineRange(LineRange(ln), update);
@@ -2817,9 +2823,6 @@ void TextWindow::RefreshTextByLineRange(const LineRange& line_range, bool update
   }
 }
 
-// NOTE: @ln might be invalid.
-// E.g., called by UpdateCaretPoint() to erase the previous caret line
-// which has been deleted.
 void TextWindow::RefreshLineNrByLine(Coord ln, bool update) {
   if (ln <= buffer_->LineCount()) {
     RefreshLineNrByLineRange(LineRange(ln), update);

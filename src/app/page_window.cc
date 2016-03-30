@@ -150,6 +150,8 @@ void PageWindow::GetState(PageState* state) const {
   state->caret_point = caret_point_;
   state->max_caret_x = max_caret_x_;
 
+  state->view_start = GetViewStart();
+
   state->selection = selection_;
 
   // Transfer wrap helper.
@@ -166,6 +168,8 @@ void PageWindow::SetState(PageState* state) {
 
   caret_point_ = state->caret_point;
   max_caret_x_ = state->max_caret_x;
+
+  Scroll(state->view_start);
 
   selection_ = state->selection;
 
