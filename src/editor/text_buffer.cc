@@ -2871,7 +2871,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
         le.Set(i, 0, Lex(kLexNone));
 
         // Match regex.
-        // Suppose "regex" always starts from the first-non-space char.
+        // Suppose "regex" always starts from the first non-space char.
         // This might be an ISSUE for some file types.
         size_t regex_i = ft_plugin_->MatchRegex(line_data, i, &le.lex);
         if (regex_i > i) {

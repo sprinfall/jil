@@ -28,6 +28,7 @@ namespace editor {
 class Action;
 class FtPlugin;
 class LineNrArea;
+class RangeAction;
 class Renderer;
 class Style;
 class StyleValue;
@@ -347,9 +348,13 @@ protected:
   //----------------------------------------------------------------------------
   // Action
 
-  // Restore or clear the selection, update caret point, etc.
+  // Update the selection and caret point after execute an action.
   void UpdateAfterExec(Action* action);
+
+  // Update the selection and caret point after undo an action.
   void UpdateAfterUndo(Action* action);
+
+  void UpdateCaretPointAfterAction(const TextPoint& point, RangeAction* ra);
 
   void InsertChar(const TextPoint& point, wchar_t c, TextDir dir, bool grouped);
 

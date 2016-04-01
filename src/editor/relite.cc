@@ -50,9 +50,12 @@ size_t Atom::Match(const std::wstring& str, size_t off, bool ignore_case) const 
   size_t m = 0;
   size_t i = off;
 
-  for (; m < repeat_.max && i < str.size(); ++m, ++i) {
+  for (; m < repeat_.max && i < str.size(); ++m) {
     if (!MatchChar(str[i], ignore_case)) {
       break;
+    }
+    if (type_ != kBound) {  // Don't take bound into account!
+      ++i;
     }
   }
 
@@ -189,17 +192,16 @@ size_t Regex::Match(const std::wstring& str, size_t off, Sub* subs, size_t subs_
       }
     }
 
-    if (atom != NULL) {
-      if (atom->type() == Atom::kEnd) {  // $
-        if (i != str.size()) {
-          return off;
-        } else {
-          return i;
-        }
+    if (atom != NULL && atom->type() == Atom::kEnd) {  // $
+      if (i != str.size()) {
+        return off;
+      } else {
+        return i;
       }
     }
 
     match_i = node->Match(str, i, ignore_case);
+
     if (match_i == kNpos) {
       return off;
     } else {

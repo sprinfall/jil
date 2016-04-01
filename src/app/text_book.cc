@@ -192,7 +192,7 @@ void TextBook::HandleTabMouseRightUp(wxMouseEvent& evt) {
       menu.Append(ID_MENU_FILE_CLOSE_ALL_BUT_THIS, kTrRClickCloseAllButThis);
     }
 
-    if (page->Page_IsNewCreated()) {
+    if (!page->Page_IsNewCreated()) {
       menu.AppendSeparator();
       menu.Append(ID_MENU_FILE_COPY_PATH, kTrRClickCopyFilePath);
       menu.Append(ID_MENU_FILE_OPEN_FOLDER, kTrRClickOpenFolder);

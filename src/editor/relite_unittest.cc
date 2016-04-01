@@ -52,15 +52,15 @@ TEST(LiteRegex, Match_Boundary) {
 
   str = L"#elif defined ";
   off = regex.Match(str, 0);
-  EXPECT_EQ(str.size(), off);
+  EXPECT_EQ(str.size() - 1, off);
 
   str = L"#elif defined\t";
   off = regex.Match(str, 0);
-  EXPECT_EQ(str.size(), off);
+  EXPECT_EQ(str.size() - 1, off);
 
   str = L"#elif defined/";
   off = regex.Match(str, 0);
-  EXPECT_EQ(str.size(), off);
+  EXPECT_EQ(str.size() - 1, off);
 
   str = L"#elif definedx";
   off = regex.Match(str, 0);

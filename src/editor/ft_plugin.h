@@ -108,6 +108,8 @@ public:
   // Return the end index of the quote start or @off if no quote start matched.
   size_t MatchQuote(const std::wstring& str, size_t off, Quote** quote) const;
 
+  // Check if any str.substr(off, x) matches a regex.
+  // Return the end index of the matching or @off if no matching is found.
   size_t MatchRegex(const std::wstring& str, size_t off, Lex* lex) const;
 
   bool MatchPrefix(const std::wstring& str, size_t off, size_t len, Lex* lex) const;

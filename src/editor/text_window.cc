@@ -1227,13 +1227,7 @@ void TextWindow::UpdateAfterExec(Action* action) {
   }
 
   if (action->update_caret()) {
-    bool vspace = false;
-    if (ra != NULL && ra->rect()) {
-      // Allow virtual spaces for rect range action.
-      // See IncreaseIndentAction for example.
-      vspace = true;
-    }
-    UpdateCaretPoint(action->CaretPointAfterExec(), false, true, vspace);
+    UpdateCaretPointAfterAction(action->CaretPointAfterExec(), ra);
   }
 }
 
@@ -1247,14 +1241,19 @@ void TextWindow::UpdateAfterUndo(Action* action) {
   }
 
   if (action->update_caret()) {
-    bool vspace = false;
-    if (ra != NULL && ra->rect()) {
-      // Allow virtual spaces for rect range action.
-      // See IncreaseIndentAction for example.
-      vspace = true;
-    }
-    UpdateCaretPoint(action->caret_point(), false, true, vspace);
+    UpdateCaretPointAfterAction(action->caret_point(), ra);
   }
+}
+
+void TextWindow::UpdateCaretPointAfterAction(const TextPoint& point, RangeAction* ra) {
+  bool vspace = false;
+
+  if (ra != NULL && ra->rect()) {
+    // Allow virtual spaces for rect range action.
+    vspace = true;
+  }
+
+  UpdateCaretPoint(point, false, true, vspace);
 }
 
 void TextWindow::InsertChar(const TextPoint& point,
