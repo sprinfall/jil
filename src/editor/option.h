@@ -183,6 +183,7 @@ public:
   bool comment_respect_indent;
 };
 
+
 class ViewOptions {
 public:
   ViewOptions() {
@@ -190,19 +191,11 @@ public:
   }
 
   void Init() {
-    min_font_size = 0;
-    max_font_size = 0;
-
     wrap = false;
     show_number = true;
     show_space = false;
     show_hscrollbar = false;
   }
-
-  // Font size range.
-  // Used in text window when increase/decrease font size with mouse wheel.
-  int min_font_size;
-  int max_font_size;
 
   // Wrap line.
   bool wrap;

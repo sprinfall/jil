@@ -30,6 +30,20 @@ inline Coord CoordCast<size_t>(size_t value) {
   return static_cast<Coord>(value);
 }
 
+// Font size range.
+struct FontRange {
+  FontRange(int _min = 0, int _max = 0)
+      : min(_min), max(_max) {
+  }
+
+  bool IsEmpty() const {
+    return (min <= 0 || min > max);  // Don't have to add "|| max <= 0".
+  }
+
+  int min;
+  int max;
+};
+
 enum TextDir {
   kForward = 0,
   kBackward

@@ -475,10 +475,6 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
   // Overwrite with the file type specific values.
   LoadEditorOptionsFile(ft_options_file, &ft_editor_options);
 
-  // Some extra view options.
-  ft_editor_options.view.min_font_size = kMinFontSize;
-  ft_editor_options.view.max_font_size = kMaxFontSize;
-
   ft_plugin->set_options(ft_editor_options);
 
   //----------------------------------------------------------------------------

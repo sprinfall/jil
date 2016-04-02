@@ -141,6 +141,10 @@ public:
 
   const TextOptions& text_options() const;
 
+  void set_font_range(const FontRange& font_range) {
+    font_range_ = font_range;
+  }
+
   int tab_stop() const {
     return tab_stop_;
   }
@@ -607,6 +611,10 @@ protected:
 
   // View options copied from text buffer.
   ViewOptions view_options_;
+
+  // Font size range.
+  // Used when increase/decrease font size with mouse wheel.
+  FontRange font_range_;
 
   Style* style_;
   SharedTheme theme_;

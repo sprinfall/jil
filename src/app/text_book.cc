@@ -13,6 +13,7 @@
 #include "editor/util.h"
 
 #include "app/app.h"
+#include "app/font_util.h"
 #include "app/i18n_strings.h"
 #include "app/id.h"
 #include "app/option.h"
@@ -128,6 +129,8 @@ void TextBook::CreatePageWindow() {
   page_window_->SetTextFont(options_->fonts[FONT_TEXT]);
   page_window_->SetLineNrFont(options_->fonts[FONT_LINE_NR]);
   page_window_->SetLinePadding(options_->line_padding);
+
+  page_window_->set_font_range(FontRange(kMinFontSize, kMaxFontSize));
 
   page_area_->GetSizer()->Add(page_window_, 1, wxEXPAND);
 }

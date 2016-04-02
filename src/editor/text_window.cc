@@ -2257,7 +2257,7 @@ void TextWindow::HandleTextLeftDClick(wxMouseEvent& evt) {
 }
 
 bool TextWindow::HandleTextMouseWheel(wxMouseEvent& evt) {
-  if (evt.ControlDown()) {
+  if (evt.ControlDown() && !font_range_.IsEmpty()) {
     wxFont font = text_area_->GetFont();
     int size = font.GetPointSize();
 
@@ -2267,7 +2267,7 @@ bool TextWindow::HandleTextMouseWheel(wxMouseEvent& evt) {
       --size;
     }
 
-    if (size >= view_options_.min_font_size && size <= view_options_.max_font_size) {
+    if (size >= font_range_.min && size <= font_range_.max) {
       font.SetPointSize(size);
       SetTextFont(font);
     }

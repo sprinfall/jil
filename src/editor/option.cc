@@ -1,5 +1,8 @@
 #include "editor/option.h"
 
+#define TRUE_STR wxT("true")
+#define FALSE_STR wxT("false")
+
 namespace jil {
 namespace editor {
 
@@ -7,7 +10,7 @@ wxString OptionValue::ToString() const {
   if (type_ == kBool) {
     bool value = false;
     if (As<bool>(&value)) {
-      return value ? wxT("true") : wxT("false");
+      return value ? TRUE_STR : FALSE_STR;
     }
   } else if (type_ == kInt) {
     int value = 0;
@@ -26,10 +29,10 @@ wxString OptionValue::ToString() const {
 
 bool OptionValue::Parse(const wxString& str) {
   if (type_ == kBool) {
-    if (str.CmpNoCase(wxT("true")) == 0) {
+    if (str.CmpNoCase(TRUE_STR) == 0) {
       data_ = true;
       return true;
-    } else if (str.CmpNoCase(wxT("false")) == 0) {
+    } else if (str.CmpNoCase(FALSE_STR) == 0) {
       data_ = false;
       return true;
     }
