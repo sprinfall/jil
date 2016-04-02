@@ -1557,7 +1557,7 @@ void BookFrame::UpdateStatusFileFormat(PageWindow* pw, bool refresh) {
 }
 
 void BookFrame::UpdateStatusFileType(PageWindow* pw, bool refresh) {
-  StatusBar::FieldId field_id = StatusBar::kField_FileFormat;
+  StatusBar::FieldId field_id = StatusBar::kField_FileType;
   if (status_bar_->HasField(field_id)) {
     wxString field_value = pw->buffer()->ft_plugin()->name();
     status_bar_->SetFieldValue(field_id, field_value, refresh);
