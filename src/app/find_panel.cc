@@ -643,7 +643,7 @@ ui::TextButton* FindPanel::NewTextButton(int id, const wxString& label) {
 }
 
 void FindPanel::PostLayoutEvent() {
-  wxCommandEvent evt(GetId());
+  wxCommandEvent evt(kFindPanelLayoutEvent, GetId());
   evt.SetEventObject(this);
   GetParent()->GetEventHandler()->AddPendingEvent(evt);
 }
