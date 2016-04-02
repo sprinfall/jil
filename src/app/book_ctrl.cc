@@ -785,21 +785,6 @@ BookPage* BookCtrl::PageByPos(int pos_x) {
   return NULL;
 }
 
-//BookCtrl::Tab* BookCtrl::GetTabByWindow(wxWindow* window, size_t* index) {
-//  size_t i = 0;
-//
-//  for (TabIter it = tabs_.begin(); it != tabs_.end(); ++it, ++i) {
-//    if ((*it)->page->Page_Window() == window) {
-//      if (index != NULL) {
-//        *index = i;
-//      }
-//      return (*it);
-//    }
-//  }
-//
-//  return NULL;
-//}
-
 void BookCtrl::ActivatePage(TabIter it) {
   if (it == tabs_.end()) {
     return;

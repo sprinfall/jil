@@ -21,7 +21,6 @@ set(SRCS
     binding_config.h
     book_ctrl.cc
     book_ctrl.h
-    book_page.cc
     book_page.h
     book_frame.cc
     book_frame.h

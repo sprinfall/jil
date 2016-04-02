@@ -207,8 +207,6 @@ protected:
   TabIter TabByPos(int pos_x);
   BookPage* PageByPos(int pos_x);
 
-  //Tab* GetTabByWindow(wxWindow* window, size_t* index = NULL);
-
   void ActivatePage(TabIter it);
   bool RemovePage(TabIter it);
 
