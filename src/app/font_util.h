@@ -2,6 +2,7 @@
 #define JIL_FONT_UTIL_H_
 #pragma once
 
+#include <list>
 #include <set>
 #include "wx/font.h"
 #include "wx/fontenum.h"
@@ -30,12 +31,12 @@ const int kDefaultFontSize = 10;
 #endif
 
 // Usage:
-// FontEnumerator fe;
+// OrderedFontEnumerator fe;
 // fe.EnumerateFacenames(wxFONTENCODING_SYSTEM, true);
 // if (fe.facenames.empty()) {
 //   ...
 // }
-class FontEnumerator : public wxFontEnumerator {
+class OrderedFontEnumerator : public wxFontEnumerator {
 public:
   virtual bool OnFacename(const wxString& facename) override {
     if (facename[0] != wxT('@')) {

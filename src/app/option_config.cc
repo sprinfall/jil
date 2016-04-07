@@ -243,6 +243,7 @@ static void ValidateFonts(wxFont fonts[FONT_COUNT]) {
 
   if (!fonts[FONT_TABS].IsOk()) {
     wxFont gui_font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+    wxString face_name = gui_font.GetFaceName();
     NormalizeFont(gui_font);
     fonts[FONT_TABS] = gui_font;
   }

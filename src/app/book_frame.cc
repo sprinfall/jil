@@ -44,7 +44,6 @@
 #include "app/i18n_strings.h"
 #include "app/navigation_dialog.h"
 #include "app/page_window.h"
-#include "app/preferences.h"
 #include "app/save.h"
 #include "app/session.h"
 #include "app/splitter.h"
@@ -53,6 +52,9 @@
 #include "app/text_book.h"
 #include "app/tool_book.h"
 #include "app/util.h"
+
+#include "app/pref/editor_dialog.h"
+#include "app/pref/global_dialog.h"
 
 namespace jil {
 
@@ -1091,7 +1093,7 @@ void BookFrame::OnGlobalPreferences(wxCommandEvent& WXUNUSED(evt)) {
   // Backup current options.
   Options old_options = *options_;
 
-  PrefGlobalDialog dialog(options_);
+  pref::GlobalDialog dialog(options_);
   dialog.Create(this, wxID_ANY, kTrOptions);
   dialog.CenterOnParent();
 
@@ -1183,7 +1185,7 @@ void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
   editor::Options options = ft_plugin->options();
 
   wxString title = kTrOptions + wxT(" - ") + ft->name;
-  PrefEditorDialog dialog(&options);
+  pref::EditorDialog dialog(&options);
   dialog.Create(this, wxID_ANY, title);
   dialog.CenterOnParent();
 

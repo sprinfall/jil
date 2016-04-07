@@ -17,8 +17,9 @@ const wxFont& GetGlobalFont(int point_size, const wxString& facename, bool bold,
   return *font;
 }
 
+// TODO
 static wxString DoGetDefaultFontName() {
-  FontEnumerator fe;
+  OrderedFontEnumerator fe;
   fe.EnumerateFacenames(wxFONTENCODING_SYSTEM, true);
   if (fe.facenames.empty()) {
     // No fixed-width fonts? Use system font.

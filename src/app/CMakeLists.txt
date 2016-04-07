@@ -14,7 +14,29 @@ if(APPLE)
     link_directories(${LIBCONFIG_LIBRARY_DIR})
 endif()
 
+set(PREF_SRCS
+	pref/common.cc
+	pref/common.h
+	pref/dialog_base.cc
+	pref/dialog_base.h
+	pref/editor_comment_page.cc
+	pref/editor_comment_page.h
+	pref/editor_dialog.cc
+	pref/editor_dialog.h
+	pref/editor_general_page.cc
+	pref/editor_general_page.h
+	pref/editor_indent_page.cc
+	pref/editor_indent_page.h
+	pref/global_dialog.cc
+	pref/global_dialog.h
+	pref/global_font_page.cc
+	pref/global_font_page.h
+	pref/global_general_page.cc
+	pref/global_general_page.h
+	)
+
 set(SRCS
+	${PREF_SRCS}
     app.cc
     app.h
     binding_config.cc
@@ -56,8 +78,6 @@ set(SRCS
     option_list_ctrl.h
     page_window.cc
     page_window.h
-    preferences.cc
-    preferences.h
     save.cc
     save.h
     session.cc
@@ -81,18 +101,25 @@ set(SRCS
     )
 
 set(TARGET_NAME app)
-
 set(TARGET_OUTPUT_NAME Jil)
 
 # Resource files
 if(WIN32)
     set(JIL_RC ${CMAKE_CURRENT_SOURCE_DIR}/app.rc)
 elseif(APPLE)
-    set(JIL_RC ${CMAKE_CURRENT_SOURCE_DIR}/icon/editor.icns)
-    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/icon/editor.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+    set(JIL_RC
+		${CMAKE_CURRENT_SOURCE_DIR}/icon/editor.icns
+		)
+	# Add icons to bundle.
+	set_source_files_properties(${JIL_RC} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 endif()
 
-add_executable(${TARGET_NAME} WIN32 MACOSX_BUNDLE ${JIL_RC} ${SRCS})
+# Include resource files in the target.
+set(SRCS ${SRCS} ${JIL_RC})
+
+add_executable(${TARGET_NAME} WIN32 MACOSX_BUNDLE ${SRCS})
+
+COMMON_TARGET_SETTING(${TARGET_NAME} SRCS)
 
 set(EXTRA_LIBS
     base

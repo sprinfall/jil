@@ -5,3 +5,5 @@ set(SRCS
     )
 
 add_library(base ${SRCS})
+
+COMMON_TARGET_SETTING(base SRCS)

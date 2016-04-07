@@ -44,7 +44,6 @@ extern "C" {
 #include "app/i18n_strings.h"
 #include "app/lex_config.h"
 #include "app/option_config.h"
-#include "app/preferences.h"
 #include "app/status_fields_config.h"
 #include "app/theme_config.h"
 #include "app/util.h"
