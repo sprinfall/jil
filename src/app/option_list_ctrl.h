@@ -87,6 +87,7 @@ public:
   const wxColour& GetColor(ColorId id) const {
     return colors_[id];
   }
+
   void SetColor(ColorId id, const wxColour& color) {
     colors_[id] = color;
   }
@@ -103,7 +104,7 @@ public:
 protected:
   void Init();
 
-  void CheckColors();
+  void InitColors();
 
   editor::OptionPair* GetOptionByRow(int row);
 

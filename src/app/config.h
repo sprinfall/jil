@@ -123,81 +123,25 @@ class Setting {
     return color;
   }
 
-  wxFont GetFont() const {
-    wxFont font;
-    // NOTE: Different platforms have different font description.
-    font.SetNativeFontInfoUserDesc(wxString::FromUTF8(GetString()));
-    return font;
-  }
-
-  void SetFont(const wxFont& font) {
-    // NOTE: Different platforms have different font description.
-    SetString(font.GetNativeFontInfoUserDesc().ToUTF8().data());
-  }
-
   // For group setting.
 
-  int GetInt(const char* name) const {
-    int value = 0;
-    config_setting_lookup_int(ref_, name, &value);
-    return value;
-  }
+  int GetInt(const char* name) const;
+  void SetInt(const char* name, int i);
 
-  void SetInt(const char* name, int i) {
-    Setting child_setting = Get(name, kInt, true);
-    child_setting.SetInt(i);
-  }
+  bool GetBool(const char* name) const;
+  void SetBool(const char* name, bool b);
 
-  bool GetBool(const char* name) const {
-    int b = 0;
-    config_setting_lookup_bool(ref_, name, &b);
-    return b != 0;
-  }
+  double GetFloat(const char* name) const;
+  void SetFloat(const char* name, double f);
 
-  void SetBool(const char* name, bool b) {
-    Setting child_setting = Get(name, kBool, true);
-    child_setting.SetBool(b);
-  }
+  const char* GetString(const char* name) const;
+  void SetString(const char* name, const char* str);
 
-  double GetFloat(const char* name) const {
-    double value = 0.0f;
-    config_setting_lookup_float(ref_, name, &value);
-    return value;
-  }
+  wxColour GetColor(const char* name) const;
 
-  void SetFloat(const char* name, double f) {
-    Setting child_setting = Get(name, kFloat, true);
-    child_setting.SetFloat(f);
-  }
-
-  const char* GetString(const char* name) const {
-    const char* str = "";
-    config_setting_lookup_string(ref_, name, &str);
-    return str;
-  }
-
-  void SetString(const char* name, const char* str) {
-    Setting child_setting = Get(name, kString, true);
-    child_setting.SetString(str);
-  }
-
-  wxColour GetColor(const char* name) const {
-    wxColour color;
-    color.Set(wxString::FromAscii(GetString(name)));
-    return color;
-  }
-
-  wxFont GetFont(const char* name) const {
-    wxFont font;
-    // NOTE: Different platforms have different font description.
-    font.SetNativeFontInfoUserDesc(wxString::FromUTF8(GetString(name)));
-    return font;
-  }
-
-  void SetFont(const char* name, const wxFont& font) {
-    // NOTE: Different platforms have different font description.
-    SetString(name, font.GetNativeFontInfoUserDesc().ToUTF8().data());
-  }
+  // NOTE: Don't return wxFont directly, let the user decide it.
+  bool GetFont(const char* name, wxString* face_name, int* point_size) const;
+  void SetFont(const char* name, const wxFont& font);
 
   void AsMap(SettingMap* setting_map) const;
 

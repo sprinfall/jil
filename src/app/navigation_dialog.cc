@@ -54,8 +54,7 @@ bool NavigationDialog::Create(wxWindow* parent, wxWindowID id) {
     SetBackgroundColour(theme_->GetColor(COLOR_BG));
   }
 
-  title_font_ = GetFont();
-  title_font_.SetWeight(wxFONTWEIGHT_BOLD);
+  title_font_ = GetFont().Bold();
 
   return true;
 }

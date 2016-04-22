@@ -202,7 +202,7 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
   text_book_->set_theme(theme_->GetTheme(THEME_TEXT_BOOK));
   text_book_->set_page_theme(theme_->GetTheme(THEME_TEXT_PAGE));
   text_book_->set_binding(binding_);
-  text_book_->Create(splitter_, wxID_ANY);  // TODO: Specify an ID?
+  text_book_->Create(splitter_, ID_TEXT_BOOK);
   text_book_->SetTabFont(options_->fonts[FONT_TABS]);
 
   Connect(text_book_->GetId(), kEvtBookPageChange, wxCommandEventHandler(BookFrame::OnTextBookPageChange));
@@ -211,7 +211,7 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
   // Create tool book.
   tool_book_ = new ToolBook();
   tool_book_->set_theme(theme_->GetTheme(THEME_TEXT_BOOK));
-  tool_book_->Create(splitter_, wxID_ANY);
+  tool_book_->Create(splitter_, ID_TOOL_BOOK);
   tool_book_->SetTabFont(options_->fonts[FONT_TABS]);
   tool_book_->Hide();
   Connect(tool_book_->GetId(), kEvtBookPageChange, wxCommandEventHandler(BookFrame::OnToolBookPageChange));
@@ -226,7 +226,7 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
   }
   splitter_->SetSplitRoot(split_root);
 
-  // Create status line.
+  // Create status bar.
   status_bar_ = new StatusBar;
   status_bar_->set_theme(theme_->GetTheme(THEME_STATUS_BAR));
   status_bar_->SetFields(wxGetApp().status_fields());

@@ -27,6 +27,8 @@ set(PREF_SRCS
 	pref/editor_general_page.h
 	pref/editor_indent_page.cc
 	pref/editor_indent_page.h
+        pref/font_list_ctrl.cc
+        pref/font_list_ctrl.h
 	pref/global_dialog.cc
 	pref/global_dialog.h
 	pref/global_font_page.cc

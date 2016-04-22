@@ -17,6 +17,75 @@ Setting Setting::Get(const char* name, int type, bool recreate) {
   return child;
 }
 
+
+// For group setting.
+
+int Setting::GetInt(const char* name) const {
+  int value = 0;
+  config_setting_lookup_int(ref_, name, &value);
+  return value;
+}
+
+void Setting::SetInt(const char* name, int i) {
+  Setting child_setting = Get(name, kInt, true);
+  child_setting.SetInt(i);
+}
+
+bool Setting::GetBool(const char* name) const {
+  int b = 0;
+  config_setting_lookup_bool(ref_, name, &b);
+  return b != 0;
+}
+
+void Setting::SetBool(const char* name, bool b) {
+  Setting child_setting = Get(name, kBool, true);
+  child_setting.SetBool(b);
+}
+
+double Setting::GetFloat(const char* name) const {
+  double value = 0.0f;
+  config_setting_lookup_float(ref_, name, &value);
+  return value;
+}
+
+void Setting::SetFloat(const char* name, double f) {
+  Setting child_setting = Get(name, kFloat, true);
+  child_setting.SetFloat(f);
+}
+
+const char* Setting::GetString(const char* name) const {
+  const char* str = "";
+  config_setting_lookup_string(ref_, name, &str);
+  return str;
+}
+
+void Setting::SetString(const char* name, const char* str) {
+  Setting child_setting = Get(name, kString, true);
+  child_setting.SetString(str);
+}
+
+wxColour Setting::GetColor(const char* name) const {
+  wxColour color;
+  color.Set(wxString::FromAscii(GetString(name)));
+  return color;
+}
+
+bool Setting::GetFont(const char* name, wxString* face_name, int* point_size) const {
+  Setting font_setting = Get(name);
+  if (font_setting && font_setting.type() == kGroup) {
+    *face_name = wxString::FromUTF8(font_setting.GetString("name"));
+    *point_size = font_setting.GetInt("size");
+    return true;
+  }
+  return false;
+}
+
+void Setting::SetFont(const char* name, const wxFont& font) {
+  Setting font_setting = Get(name, kGroup, true);
+  font_setting.SetString("name", font.GetFaceName().ToUTF8().data());
+  font_setting.SetInt("size", font.GetPointSize());
+}
+
 void Setting::AsMap(SettingMap* setting_map) const {
   if (ref_ == NULL) {
     return;

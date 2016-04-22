@@ -34,9 +34,7 @@ int ValidateInt(int i, int min, int max) {
 wxStaticText* CreateStaticText(wxWindow* parent, const wxString& label, bool bold) {
   wxStaticText* static_text = new wxStaticText(parent, wxID_ANY, label);
   if (bold) {
-    wxFont font = static_text->GetFont();
-    font.SetWeight(wxFONTWEIGHT_BOLD);
-    static_text->SetFont(font);
+    static_text->SetFont(static_text->GetFont().Bold());
   }
   return static_text;
 }

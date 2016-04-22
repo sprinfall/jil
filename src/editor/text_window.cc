@@ -1986,10 +1986,10 @@ void TextWindow::SetRendererStyle(Renderer& renderer, const StyleValue* style_va
     // Font
     wxFont font = text_area_->GetFont();
     if ((style_value->font() & Style::kBold) != 0) {
-      font.SetWeight(wxFONTWEIGHT_BOLD);
+      font.MakeBold();
     }
     if ((style_value->font() & Style::kItalic) != 0) {
-      font.SetStyle(wxFONTSTYLE_ITALIC);
+      font.MakeItalic();
     }
     renderer.SetFont(font);
 

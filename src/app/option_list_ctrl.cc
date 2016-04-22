@@ -16,14 +16,10 @@ EVT_MOUSE_CAPTURE_LOST(OlcHeadPanel::OnMouseCaptureLost)
 END_EVENT_TABLE()
 
 OlcHeadPanel::OlcHeadPanel(OptionListCtrl* option_list_ctrl, wxWindowID id)
-: wxPanel(option_list_ctrl, id)
-, option_list_ctrl_(option_list_ctrl) {
-
+    : wxPanel(option_list_ctrl, id)
+    , option_list_ctrl_(option_list_ctrl) {
   SetBackgroundStyle(wxBG_STYLE_CUSTOM);
-
-  wxFont font = GetFont();
-  font.SetWeight(wxFONTWEIGHT_BOLD);
-  SetFont(font);
+  SetFont(GetFont().Bold());
 }
 
 OlcHeadPanel::~OlcHeadPanel() {
@@ -50,9 +46,8 @@ EVT_LEFT_DOWN(OlcBodyPanel::OnMouseLeftDown)
 END_EVENT_TABLE()
 
 OlcBodyPanel::OlcBodyPanel(OptionListCtrl* option_list_ctrl, wxWindowID id)
-: wxPanel(option_list_ctrl, id)
-, option_list_ctrl_(option_list_ctrl) {
-
+    : wxPanel(option_list_ctrl, id)
+    , option_list_ctrl_(option_list_ctrl) {
   SetBackgroundColour(GetParent()->GetBackgroundColour());
   SetBackgroundStyle(wxBG_STYLE_PAINT);
 }
@@ -104,9 +99,9 @@ bool OptionListCtrl::Create(wxWindow* parent, int id, const wxSize& size, long s
   SetBackgroundColour(parent->GetBackgroundColour());
   SetBackgroundStyle(wxBG_STYLE_PAINT);
 
-  SetWindowStyleFlag(wxBORDER_SIMPLE);
+  SetWindowStyleFlag(wxBORDER_STATIC);
 
-  CheckColors();
+  InitColors();
 
   row_height_ = row_padding_.y + GetCharHeight() + row_padding_.y + 1;  // + 1 for row bar
 
@@ -167,19 +162,23 @@ void OptionListCtrl::Init() {
   text_ctrl_ = NULL;
 }
 
-void OptionListCtrl::CheckColors() {
-  if (!GetColor(COLOR_HEAD_FG).IsOk()) {
-    SetColor(COLOR_HEAD_FG, *wxWHITE);
-  }
+// TODO
+void OptionListCtrl::InitColors() {
+  //if (!GetColor(COLOR_HEAD_FG).IsOk()) {
+  //  SetColor(COLOR_HEAD_FG, *wxWHITE);
+  //}
+  SetColor(COLOR_HEAD_FG, wxSystemSettings::GetColour(wxSYS_COLOUR_CAPTIONTEXT));
 
-  if (!GetColor(COLOR_HEAD_BG).IsOk()) {
-    SetColor(COLOR_HEAD_BG, wxColour(85, 85, 85));
-  }
+  //if (!GetColor(COLOR_HEAD_BG).IsOk()) {
+  //  SetColor(COLOR_HEAD_BG, wxColour(85, 85, 85));
+  //}
+  SetColor(COLOR_HEAD_BG, wxSystemSettings::GetColour(wxSYS_COLOUR_ACTIVECAPTION));
 
-  if (!GetColor(COLOR_HEAD_BORDER).IsOk()) {
-    SetColor(COLOR_HEAD_BORDER, *wxLIGHT_GREY);
-  }
-
+  //if (!GetColor(COLOR_HEAD_BORDER).IsOk()) {
+  //  SetColor(COLOR_HEAD_BORDER, *wxLIGHT_GREY);
+  //}
+  SetColor(COLOR_HEAD_BORDER, wxSystemSettings::GetColour(wxSYS_COLOUR_ACTIVEBORDER));
+  
   if (!GetColor(COLOR_BODY_FG).IsOk()) {
     SetColor(COLOR_BODY_FG, *wxBLACK);
   }

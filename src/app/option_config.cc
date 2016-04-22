@@ -192,6 +192,34 @@ static bool GetInt(const SettingMap& settings, const char* key, int* value) {
   return false;
 }
 
+// <fonts_setting> = {
+//    <name> = { name = "Consolas"; size = 10; };
+// };
+static wxFont GetFont(Setting fonts_setting, const char* name) {
+  assert(fonts_setting);
+
+  wxString face_name;
+  int point_size = 0;
+
+  if (!fonts_setting.GetFont(name, &face_name, &point_size)) {
+    return wxNullFont;
+  }
+
+  if (face_name.IsEmpty()) {
+    return wxNullFont;
+  }
+
+  if (point_size == 0) {
+    point_size = kDefaultFontSize;
+  } else if (point_size < kMinFontSize) {
+    point_size = kMinFontSize;
+  } else if (point_size > kMaxFontSize) {
+    point_size = kMaxFontSize;
+  }
+
+  return GetGlobalFont(point_size, face_name);
+}
+
 static void GetOptionTable(Setting setting, editor::OptionTable* option_table) {
   if (!setting) {
     return;
@@ -276,12 +304,11 @@ static void ParseGlobalOptions(const Setting& setting, Options* options) {
   // Fonts
   Setting fonts_setting = GetSetting(setting_map, OPT_G_FONTS, Setting::kGroup);
   if (fonts_setting) {
-    options->fonts[FONT_TEXT] = fonts_setting.GetFont(OPT_F_TEXT);
-    options->fonts[FONT_LINE_NR] = fonts_setting.GetFont(OPT_F_LINE_NR);
-    options->fonts[FONT_TABS] = fonts_setting.GetFont(OPT_F_TABS);
-    options->fonts[FONT_STATUS_BAR] = fonts_setting.GetFont(OPT_F_STATUS_BAR);
+    options->fonts[FONT_TEXT] = GetFont(fonts_setting, OPT_F_TEXT);
+    options->fonts[FONT_LINE_NR] = GetFont(fonts_setting, OPT_F_LINE_NR);
+    options->fonts[FONT_TABS] = GetFont(fonts_setting, OPT_F_TABS);
+    options->fonts[FONT_STATUS_BAR] = GetFont(fonts_setting, OPT_F_STATUS_BAR);
   }
-
   ValidateFonts(options->fonts);
 
   GetInt(setting_map, OPT_I_LINE_PADDING, &options->line_padding);
