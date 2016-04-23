@@ -1,5 +1,5 @@
-#ifndef JIL_OPTION_LIST_CTRL_H
-#define JIL_OPTION_LIST_CTRL_H
+#ifndef JIL_PREF_OPTION_LIST_CTRL_H
+#define JIL_PREF_OPTION_LIST_CTRL_H
 #pragma once
 
 // A replacement of wxPropertyGrid.
@@ -13,6 +13,7 @@
 class wxTextCtrl;
 
 namespace jil {
+namespace pref {
 
 class OptionListCtrl;
 
@@ -48,10 +49,15 @@ public:
   OlcBodyPanel(OptionListCtrl* option_list_ctrl, wxWindowID id);
   virtual ~OlcBodyPanel();
 
+  virtual bool AcceptsFocus() const override {
+    return true;
+  }
+
 protected:
   void OnSize(wxSizeEvent& evt);
   void OnPaint(wxPaintEvent& evt);
   void OnMouseLeftDown(wxMouseEvent& evt);
+  void OnFocusChange(wxFocusEvent& evt);
 
 private:
   OptionListCtrl* option_list_ctrl_;
@@ -68,9 +74,10 @@ public:
     COLOR_HEAD_BG,
     COLOR_HEAD_BORDER,
     COLOR_BODY_BG,
-    COLOR_BODY_BG_SELECT,
+    COLOR_BODY_BG_HL,
+    COLOR_BODY_BG_HL_NOFOCUS,
     COLOR_BODY_FG,
-    COLOR_BODY_FG_SELECT,
+    COLOR_BODY_FG_HL,
     COLOR_BODY_BORDER,
     COLOR_COUNT
   };
@@ -82,6 +89,7 @@ public:
   bool Create(wxWindow* parent,
               wxWindowID id,
               const wxSize& size = wxDefaultSize,
+              bool with_head = true,
               long style = wxScrolledWindowStyle);
 
   const wxColour& GetColor(ColorId id) const {
@@ -120,6 +128,7 @@ protected:
   void OnBodySize(wxSizeEvent& evt);
   void OnBodyPaint(wxDC& dc);
   void OnBodyMouseLeftDown(wxMouseEvent& evt);
+  void OnBodyFocusChange(wxFocusEvent& evt);
 
   bool IsEditing() const;
   void StartEditing(int row);
@@ -174,6 +183,7 @@ private:
   wxTextCtrl* text_ctrl_;
 };
 
+}  // namespace pref
 }  // namespace jil
 
-#endif  // JIL_OPTION_LIST_CTRL_H
+#endif  // JIL_PREF_OPTION_LIST_CTRL_H

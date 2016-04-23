@@ -13,11 +13,13 @@
 #include "editor/option.h"
 
 #include "app/defs.h"
-#include "app/option_list_ctrl.h"
+#include "app/pref/option_list_ctrl.h"
 #include "app/pref/common.h"
 
 namespace jil {
 namespace pref {
+
+static const wxSize kOptionListSize(-1, 120);
 
 Editor_IndentPage::Editor_IndentPage(editor::Options* options)
   : options_(options) {
@@ -135,10 +137,13 @@ void Editor_IndentPage::CreateTabsSection(wxSizer* top_vsizer) {
 }
 
 void Editor_IndentPage::CreateDynamicSection(wxSizer* top_vsizer) {
-  top_vsizer->Add(CreateSeparator(this, _("Dynamic options"), true), wxSizerFlags().Expand().Border(wxALL));
+  top_vsizer->AddSpacer(10);
+
+  wxSizer* sep_hsizer = CreateSeparator(this, _("Dynamic options"), true);
+  top_vsizer->Add(sep_hsizer, wxSizerFlags().Expand().Border(wxALL));
 
   option_list_ctrl_ = new OptionListCtrl();
-  option_list_ctrl_->Create(this, wxID_ANY, wxSize(-1, 120));
+  option_list_ctrl_->Create(this, wxID_ANY, kOptionListSize, false);
 
   top_vsizer->Add(option_list_ctrl_, wxSizerFlags().Expand().Border(wxALL));
 }

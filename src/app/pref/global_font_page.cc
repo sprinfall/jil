@@ -20,8 +20,15 @@
 #include "app/pref/common.h"
 #include "app/pref/font_list_ctrl.h"
 
+#define FONT_LABEL_TEXT "Text Editor"
+#define FONT_LABEL_LINE_NR "Line Number"
+#define FONT_LABEL_TABS "Tabs"
+#define FONT_LABEL_STATUS_BAR "Status Bar"
+
 namespace jil {
 namespace pref {
+
+static const wxSize kFontListSize(-1, 150);
 
 BEGIN_EVENT_TABLE(Global_FontPage, wxPanel)
 EVT_LIST_ITEM_SELECTED(ID_FONT_LIST_CTRL, Global_FontPage::OnFontListSelectionChange)
@@ -51,12 +58,6 @@ bool Global_FontPage::Create(wxWindow* parent, wxWindowID id) {
 }
 
 bool Global_FontPage::TransferDataToWindow() {
-
-#define FONT_LABEL_TEXT "Text Editor"
-#define FONT_LABEL_LINE_NR "Line Number"
-#define FONT_LABEL_TABS "Tabs"
-#define FONT_LABEL_STATUS_BAR "Status Bar"
-
   // English labels.
   wxString labels[FONT_COUNT] = {
     wxT(FONT_LABEL_TEXT),
@@ -77,7 +78,6 @@ bool Global_FontPage::TransferDataToWindow() {
     wxString label = labels[i];
 
     // Append the localized label if it's different from the English one.
-    // TODO: Test
     if (tr_labels[i] != label) {
       label += wxT(" | ");
       label += tr_labels[i];
@@ -87,6 +87,9 @@ bool Global_FontPage::TransferDataToWindow() {
   }
 
   font_list_ctrl_->UpdateSizes();
+
+  SetFontToWindow(wxNullFont);
+
   return true;
 }
 
@@ -120,7 +123,7 @@ void Global_FontPage::CreateTypeSection(wxSizer* top_vsizer) {
   wxStaticText* label = new wxStaticText(this, wxID_ANY, _("GUI elements:"));
 
   font_list_ctrl_ = new FontListCtrl;
-  font_list_ctrl_->Create(this, ID_FONT_LIST_CTRL, wxSize(-1, 150));  // TODO: size
+  font_list_ctrl_->Create(this, ID_FONT_LIST_CTRL, kFontListSize);
 
   top_vsizer->Add(label, wxSizerFlags().Left().Border(wxLEFT|wxTOP));
   top_vsizer->Add(font_list_ctrl_, wxSizerFlags(1).Expand().Border(wxALL));
@@ -130,14 +133,14 @@ void Global_FontPage::CreateFontSection(wxSizer* top_vsizer) {
   bool fixed_width_only = false;
 
   wxStaticText* name_label = new wxStaticText(this, wxID_ANY, _("Name:"));
-  name_combo_box_ = new wxComboBox(this, ID_FONT_NAME_COMBOBOX/*, wxEmptyString, wxDefaultPosition, kStrTextSize*/);
+  name_combo_box_ = new wxComboBox(this, ID_FONT_NAME_COMBOBOX);
   InitNameComboBox(name_combo_box_, fixed_width_only);  // TODO: Slow to list fonts.
 
   wxStaticText* size_label = new wxStaticText(this, wxID_ANY, _("Size:"));
   size_combo_box_ = new wxComboBox(this, ID_FONT_SIZE_COMBOBOX, wxEmptyString, wxDefaultPosition, kNumTextSize);
   InitSizeComboBox(size_combo_box_);
 
-  fixed_width_check_box_ = new wxCheckBox(this, ID_FONT_FIXED_WIDTH_ONLY_CHECKBOX, wxT("Fixed width only"));
+  fixed_width_check_box_ = new wxCheckBox(this, ID_FONT_FIXED_WIDTH_ONLY_CHECKBOX, _("Fixed width only"));
   fixed_width_check_box_->SetValue(fixed_width_only);
 
   wxBoxSizer* name_vsizer = new wxBoxSizer(wxVERTICAL);
@@ -149,6 +152,7 @@ void Global_FontPage::CreateFontSection(wxSizer* top_vsizer) {
   size_vsizer->Add(size_combo_box_, wxSizerFlags().Expand().Border(wxTOP));
 
   wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+  // Size proportion: 3 : 1
   hsizer->Add(name_vsizer, wxSizerFlags(3));
   hsizer->Add(size_vsizer, wxSizerFlags(1).Border(wxLEFT, 20));
   top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
@@ -186,10 +190,15 @@ void Global_FontPage::SetFontToWindow(const wxFont& font) {
 
     wxString size_str = wxString::Format(wxT("%d"), font.GetPointSize());
     size_combo_box_->SetValue(size_str);
+
+    name_combo_box_->Enable(true);
+    size_combo_box_->Enable(true);
   } else {
-    // Clear values.
     name_combo_box_->SetValue(wxEmptyString);
     size_combo_box_->SetValue(wxEmptyString);
+
+    name_combo_box_->Enable(false);
+    size_combo_box_->Enable(false);
   }
 }
 

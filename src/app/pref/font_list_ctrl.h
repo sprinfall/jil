@@ -2,11 +2,10 @@
 #define JIL_PREF_FONT_LIST_CTRL_H_
 #pragma once
 
-// wxListEvent
-// EVT_LIST_ITEM_SELECTED(id, func)
-// wxEVT_LIST_ITEM_SELECTED
-// EVT_LIST_ITEM_DESELECTED(id, func)
-// wxEVT_LIST_ITEM_DESELECTED
+// NOTE:
+// FontListCtrl emits the same event class (wxListEvent) as wxListCtrl:
+//   - Event types: wxEVT_LIST_ITEM_SELECTED, wxEVT_LIST_ITEM_DESELECTED
+//   - Macros: EVT_LIST_ITEM_SELECTED, EVT_LIST_ITEM_DESELECTED
 
 #include <vector>
 #include "wx/scrolwin.h"
@@ -25,7 +24,7 @@ public:
     COLOR_FG,
     COLOR_FG_HL,
     COLOR_BORDER,
-    COLOR_COUNT
+    COLOR_COUNT,
   };
 
 public:
@@ -67,13 +66,9 @@ protected:
   void InitColors();
 
   void OnSize(wxSizeEvent& evt);
-
   void OnPaint(wxPaintEvent& evt);
-
   void OnMouseLeftDown(wxMouseEvent& evt);
-
-  void OnSetFocus(wxFocusEvent& evt);
-  void OnKillFocus(wxFocusEvent& evt);
+  void OnFocusChange(wxFocusEvent& evt);
 
   void PostEvent(int index, bool select);
 

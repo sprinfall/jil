@@ -7,11 +7,11 @@ namespace jil {
 namespace pref {
 
 BEGIN_EVENT_TABLE(FontListCtrl, wxScrolledWindow)
-EVT_SIZE(FontListCtrl::OnSize)
-EVT_PAINT(FontListCtrl::OnPaint)
-EVT_LEFT_DOWN(FontListCtrl::OnMouseLeftDown)
-EVT_SET_FOCUS(FontListCtrl::OnSetFocus)
-EVT_KILL_FOCUS(FontListCtrl::OnKillFocus)
+EVT_SIZE        (FontListCtrl::OnSize)
+EVT_PAINT       (FontListCtrl::OnPaint)
+EVT_LEFT_DOWN   (FontListCtrl::OnMouseLeftDown)
+EVT_SET_FOCUS   (FontListCtrl::OnFocusChange)
+EVT_KILL_FOCUS  (FontListCtrl::OnFocusChange)
 END_EVENT_TABLE()
 
 FontListCtrl::FontListCtrl()
@@ -34,7 +34,7 @@ bool FontListCtrl::Create(wxWindow* parent, wxWindowID id, const wxSize& size, l
 
   int cw = GetCharWidth();
   int ch = GetCharHeight();
-  padding_.Set(cw, cw/2+1);
+  padding_.Set(cw, cw / 2 + 1);
 
   SetScrollbars(cw, ch, 1, 1);
 
@@ -83,7 +83,7 @@ void FontListCtrl::InitColors() {
   SetColor(COLOR_BG_HL_NOFOCUS, wxSystemSettings::GetColour(wxSYS_COLOUR_BTNSHADOW));
   SetColor(COLOR_FG, wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOXTEXT));
   SetColor(COLOR_FG_HL, wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT));
-  SetColor(COLOR_BORDER, wxColour(225, 215, 225));  // TODO: wxSYS_COLOUR_ACTIVEBORDER
+  SetColor(COLOR_BORDER, wxSystemSettings::GetColour(wxSYS_COLOUR_ACTIVEBORDER));
 }
 
 void FontListCtrl::OnSize(wxSizeEvent& evt) {
@@ -120,18 +120,18 @@ void FontListCtrl::OnPaint(wxPaintEvent& evt) {
     int row_y = y + padding_.y;
 
     if (i == selected_index_) {
-      dc.SetTextForeground(fg_hl_color);
+      wxPen pen = dc.GetPen();  // Backup pen.
       dc.SetPen(*wxTRANSPARENT_PEN);
       dc.SetBrush(HasFocus() ? bg_hl_color : bg_hl_nofocus_color);
+      dc.SetTextForeground(fg_hl_color);
 
-      wxRect row_rect(rect.x + 1, y, rect.width - 1, row.h);
-      dc.DrawRectangle(row_rect);
+      dc.DrawRectangle(rect.x + 1, y, rect.width - 1, row.h);
 
       dc.DrawText(row.label, x + padding_.x, row_y);
 
       // Restore
       dc.SetTextForeground(fg_color);
-      dc.SetPen(border_color);
+      dc.SetPen(pen);
     } else {
       dc.DrawText(row.label, x + padding_.x, row_y);
     }
@@ -182,15 +182,7 @@ void FontListCtrl::OnMouseLeftDown(wxMouseEvent& evt) {
   }
 }
 
-void FontListCtrl::OnSetFocus(wxFocusEvent& evt) {
-  evt.Skip();
-
-  if (selected_index_ != wxNOT_FOUND) {
-    Refresh();
-  }
-}
-
-void FontListCtrl::OnKillFocus(wxFocusEvent& evt) {
+void FontListCtrl::OnFocusChange(wxFocusEvent& evt) {
   evt.Skip();
 
   if (selected_index_ != wxNOT_FOUND) {

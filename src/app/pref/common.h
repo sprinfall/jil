@@ -32,7 +32,7 @@ enum Id {
 
 static const wxSize kMinComboBoxSize(120, -1);
 static const wxSize kNumTextSize(100, -1);
-static const wxSize kStrTextSize(180, -1);
+static const wxSize kStrTextSize(280, -1);
 
 // Add or remove a flag from the flags.
 void UpdateFlag(int& flags, int flag, bool enable);

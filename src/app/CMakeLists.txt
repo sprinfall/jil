@@ -27,14 +27,16 @@ set(PREF_SRCS
 	pref/editor_general_page.h
 	pref/editor_indent_page.cc
 	pref/editor_indent_page.h
-        pref/font_list_ctrl.cc
-        pref/font_list_ctrl.h
+	pref/font_list_ctrl.cc
+	pref/font_list_ctrl.h
 	pref/global_dialog.cc
 	pref/global_dialog.h
 	pref/global_font_page.cc
 	pref/global_font_page.h
 	pref/global_general_page.cc
 	pref/global_general_page.h
+    pref/option_list_ctrl.cc
+    pref/option_list_ctrl.h
 	)
 
 set(SRCS
@@ -76,8 +78,6 @@ set(SRCS
     option.h
     option_config.cc
     option_config.h
-    option_list_ctrl.cc
-    option_list_ctrl.h
     page_window.cc
     page_window.h
     save.cc

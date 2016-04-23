@@ -1,4 +1,4 @@
-#include "app/option_list_ctrl.h"
+#include "app/pref/option_list_ctrl.h"
 #include "wx/dcbuffer.h"
 #include "wx/log.h"
 #include "wx/sizer.h"
@@ -6,6 +6,7 @@
 #include "ui/util.h"
 
 namespace jil {
+namespace pref {
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -19,7 +20,6 @@ OlcHeadPanel::OlcHeadPanel(OptionListCtrl* option_list_ctrl, wxWindowID id)
     : wxPanel(option_list_ctrl, id)
     , option_list_ctrl_(option_list_ctrl) {
   SetBackgroundStyle(wxBG_STYLE_CUSTOM);
-  SetFont(GetFont().Bold());
 }
 
 OlcHeadPanel::~OlcHeadPanel() {
@@ -31,10 +31,12 @@ void OlcHeadPanel::OnPaint(wxPaintEvent& evt) {
 }
 
 void OlcHeadPanel::OnMouseEvents(wxMouseEvent& evt) {
+  evt.Skip();
   option_list_ctrl_->OnHeadMouse(evt);
 }
 
 void OlcHeadPanel::OnMouseCaptureLost(wxMouseCaptureLostEvent& evt) {
+  // Do nothing.
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -43,12 +45,13 @@ BEGIN_EVENT_TABLE(OlcBodyPanel, wxPanel)
 EVT_SIZE(OlcBodyPanel::OnSize)
 EVT_PAINT(OlcBodyPanel::OnPaint)
 EVT_LEFT_DOWN(OlcBodyPanel::OnMouseLeftDown)
+EVT_SET_FOCUS(OlcBodyPanel::OnFocusChange)
+EVT_KILL_FOCUS(OlcBodyPanel::OnFocusChange)
 END_EVENT_TABLE()
 
 OlcBodyPanel::OlcBodyPanel(OptionListCtrl* option_list_ctrl, wxWindowID id)
     : wxPanel(option_list_ctrl, id)
     , option_list_ctrl_(option_list_ctrl) {
-  SetBackgroundColour(GetParent()->GetBackgroundColour());
   SetBackgroundStyle(wxBG_STYLE_PAINT);
 }
 
@@ -74,6 +77,11 @@ void OlcBodyPanel::OnMouseLeftDown(wxMouseEvent& evt) {
   option_list_ctrl_->OnBodyMouseLeftDown(evt);
 }
 
+void OlcBodyPanel::OnFocusChange(wxFocusEvent& evt) {
+  evt.Skip();
+  option_list_ctrl_->OnBodyFocusChange(evt);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 BEGIN_EVENT_TABLE(OptionListCtrl, wxScrolledWindow)
@@ -91,7 +99,7 @@ OptionListCtrl::~OptionListCtrl() {
   options_.clear();
 }
 
-bool OptionListCtrl::Create(wxWindow* parent, int id, const wxSize& size, long style) {
+bool OptionListCtrl::Create(wxWindow* parent, int id, const wxSize& size, bool with_head, long style) {
   if (!wxScrolledWindow::Create(parent, id, wxDefaultPosition, size, style)) {
     return false;
   }
@@ -105,8 +113,10 @@ bool OptionListCtrl::Create(wxWindow* parent, int id, const wxSize& size, long s
 
   row_height_ = row_padding_.y + GetCharHeight() + row_padding_.y + 1;  // + 1 for row bar
 
-  head_panel_ = new OlcHeadPanel(this, wxID_ANY);
-  head_panel_->SetBackgroundColour(GetColor(COLOR_HEAD_BG));
+  if (with_head) {
+    head_panel_ = new OlcHeadPanel(this, wxID_ANY);
+    head_panel_->SetBackgroundColour(GetColor(COLOR_HEAD_BG));
+  }
 
   body_panel_ = new OlcBodyPanel(this, wxID_ANY);
   body_panel_->SetBackgroundColour(GetColor(COLOR_BODY_BG));
@@ -151,6 +161,9 @@ void OptionListCtrl::Init() {
   created_ = false;
   batch_ = false;
 
+  head_panel_ = NULL;
+  body_panel_ = NULL;
+
   row_padding_.Set(3, 3);
   row_height_ = 0;
 
@@ -162,38 +175,16 @@ void OptionListCtrl::Init() {
   text_ctrl_ = NULL;
 }
 
-// TODO
 void OptionListCtrl::InitColors() {
-  //if (!GetColor(COLOR_HEAD_FG).IsOk()) {
-  //  SetColor(COLOR_HEAD_FG, *wxWHITE);
-  //}
   SetColor(COLOR_HEAD_FG, wxSystemSettings::GetColour(wxSYS_COLOUR_CAPTIONTEXT));
-
-  //if (!GetColor(COLOR_HEAD_BG).IsOk()) {
-  //  SetColor(COLOR_HEAD_BG, wxColour(85, 85, 85));
-  //}
   SetColor(COLOR_HEAD_BG, wxSystemSettings::GetColour(wxSYS_COLOUR_ACTIVECAPTION));
-
-  //if (!GetColor(COLOR_HEAD_BORDER).IsOk()) {
-  //  SetColor(COLOR_HEAD_BORDER, *wxLIGHT_GREY);
-  //}
   SetColor(COLOR_HEAD_BORDER, wxSystemSettings::GetColour(wxSYS_COLOUR_ACTIVEBORDER));
-  
-  if (!GetColor(COLOR_BODY_FG).IsOk()) {
-    SetColor(COLOR_BODY_FG, *wxBLACK);
-  }
-
-  if (!GetColor(COLOR_BODY_BG).IsOk()) {
-    SetColor(COLOR_BODY_BG, *wxWHITE);
-  }
-
-  if (!GetColor(COLOR_BODY_BG_SELECT).IsOk()) {
-    SetColor(COLOR_BODY_BG_SELECT, wxColour(175, 175, 175));
-  }
-   
-  if (!GetColor(COLOR_BODY_BORDER).IsOk()) {
-    SetColor(COLOR_BODY_BORDER, *wxLIGHT_GREY);
-  }
+  SetColor(COLOR_BODY_FG, wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOXTEXT));
+  SetColor(COLOR_BODY_FG_HL, wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT));
+  SetColor(COLOR_BODY_BG, wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOX));
+  SetColor(COLOR_BODY_BG_HL, wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT));
+  SetColor(COLOR_BODY_BG_HL_NOFOCUS, wxSystemSettings::GetColour(wxSYS_COLOUR_BTNSHADOW));
+  SetColor(COLOR_BODY_BORDER, wxSystemSettings::GetColour(wxSYS_COLOUR_ACTIVEBORDER));
 }
 
 editor::OptionPair* OptionListCtrl::GetOptionByRow(int row) {
@@ -267,8 +258,13 @@ void OptionListCtrl::OnBodySize(wxSizeEvent& evt) {
 void OptionListCtrl::OnBodyPaint(wxDC& dc) {
   PrepareDC(dc);
 
-  dc.SetPen(wxPen(GetColor(COLOR_BODY_BORDER)));
-  dc.SetTextForeground(GetColor(COLOR_BODY_FG));
+  wxColour bg_hl_color = GetColor(COLOR_BODY_BG_HL);
+  wxColour bg_hl_nofocus_color = GetColor(COLOR_BODY_BG_HL_NOFOCUS);
+  wxColour fg_color = GetColor(COLOR_BODY_FG);
+  wxColour fg_hl_color = GetColor(COLOR_BODY_FG_HL);
+
+  dc.SetTextForeground(fg_color);
+  dc.SetPen(GetColor(COLOR_BODY_BORDER));
 
   const wxRect rect = body_panel_->GetClientRect();
   int y = rect.y;
@@ -284,11 +280,13 @@ void OptionListCtrl::OnBodyPaint(wxDC& dc) {
       Column& column = columns_[col];
 
       if (row == selected_row_) {
-        wxPen pen = dc.GetPen();
+        wxPen pen = dc.GetPen();  // Backup
         dc.SetPen(*wxTRANSPARENT_PEN);
-        dc.SetBrush(wxBrush(GetColor(COLOR_BODY_BG_SELECT)));
+        dc.SetBrush(body_panel_->HasFocus() ? bg_hl_color : bg_hl_nofocus_color);
+
         dc.DrawRectangle(x, y, column.width, row_height_ - 1);
-        dc.SetPen(pen);
+
+        dc.SetPen(pen);  // Restore
       }
 
       wxString text;
@@ -298,9 +296,17 @@ void OptionListCtrl::OnBodyPaint(wxDC& dc) {
         text = option_pair->value.ToString();
       }
 
+      if (row == selected_row_) {
+        dc.SetTextForeground(fg_hl_color);
+      }
+
       wxRect text_rect(x, y, column.width, row_height_);
       text_rect.Deflate(row_padding_);
       ui::DrawTextInRect(dc, text, text_rect);
+
+      if (row == selected_row_) {
+        dc.SetTextForeground(fg_color);  // Restore
+      }
 
       x += column.width;
 
@@ -350,6 +356,12 @@ void OptionListCtrl::OnBodyMouseLeftDown(wxMouseEvent& evt) {
     if (selected_row_ != 0) {
       RefreshRow(selected_row_);
     }
+  }
+}
+
+void OptionListCtrl::OnBodyFocusChange(wxFocusEvent& evt) {
+  if (selected_row_ != 0) {
+    RefreshRow(selected_row_);
   }
 }
 
@@ -468,11 +480,16 @@ void OptionListCtrl::UpdateLayout() {
   const wxRect rect = GetClientRect();
 
   int y = rect.y;
+  int w = rect.width + 1;
+  int h = rect.height;
 
-  head_panel_->SetSize(rect.x, y, rect.width + 1, row_height_);
-  y += row_height_;
+  if (head_panel_ != NULL) {
+    head_panel_->SetSize(rect.x, y, w, row_height_);
+    y += row_height_;
+    h -= row_height_;
+  }
 
-  body_panel_->SetSize(rect.x, y, rect.width + 1, rect.height - row_height_);
+  body_panel_->SetSize(rect.x, y, w, h);
 
   UpdateVirtualSize();
 
@@ -489,4 +506,5 @@ void OptionListCtrl::UpdateVirtualSize() {
   body_panel_->SetVirtualSize(vsize);
 }
 
+}  // namespace pref
 }  // namespace jil

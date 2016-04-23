@@ -14,9 +14,9 @@ namespace editor {
 class Options;
 }  // namespace editor
 
-class OptionListCtrl;
-
 namespace pref {
+
+class OptionListCtrl;
 
 class Editor_IndentPage : public wxPanel {
 public:
