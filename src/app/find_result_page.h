@@ -9,6 +9,11 @@
 
 namespace jil {
 
+BEGIN_DECLARE_EVENT_TYPES()
+// Check GetInt(), which returns enum FindResultPage::EventType, for the details.
+DECLARE_EVENT_TYPE(kFindResultPageEvent, 0)
+END_DECLARE_EVENT_TYPES()
+
 class FindResultPage : public editor::TextWindow, public BookPage {
   DECLARE_CLASS(FindResultPage)
 
@@ -16,6 +21,9 @@ public:
   // Detailed event types of kFindResultPageEvent.
   enum {
     kLocalizeEvent = 1,
+
+    // Find result page is destroyed.
+    kDestroyEvent,
   };
 
 public:
@@ -48,11 +56,6 @@ protected:
 
   void PostEvent(int event_type);
 };
-
-BEGIN_DECLARE_EVENT_TYPES()
-// Check GetInt(), which returns enum FindResultPage::EventType, for the details.
-DECLARE_EVENT_TYPE(kFindResultPageEvent, 0)
-END_DECLARE_EVENT_TYPES()
 
 }  // namespace jil
 

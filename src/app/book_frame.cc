@@ -41,6 +41,7 @@
 #include "app/defs.h"
 #include "app/find_result_page.h"
 #include "app/find_panel.h"
+#include "app/find_thread.h"
 #include "app/i18n_strings.h"
 #include "app/navigation_dialog.h"
 #include "app/page_window.h"
@@ -62,6 +63,8 @@ typedef std::list<editor::TextRange> TextRangeList;
 
 static const editor::TextPoint kPointBegin(0, 1);
 
+////////////////////////////////////////////////////////////////////////////////
+
 // Drop files to book frame to open.
 class FileDropTarget : public wxFileDropTarget {
  public:
@@ -77,45 +80,6 @@ class FileDropTarget : public wxFileDropTarget {
  private:
   BookFrame* book_frame_;
 };
-
-////////////////////////////////////////////////////////////////////////////////
-
-FindThread::FindThread(BookFrame* handler)
-    : wxThread(wxTHREAD_DETACHED), handler_(handler) {
-}
-
-wxThread::ExitCode FindThread::Entry() {
-  if (str_.empty()) {
-    return static_cast<wxThread::ExitCode>(0);
-  }
-
-  size_t count = files_.GetCount();
-  for (size_t i = 0; i < count; ++i) {
-    if (TestDestroy()) {
-      break;
-    }
-
-    int new_fr_lines = handler_->AsyncFindInFile(str_, flags_, files_[i]);
-    QueueEvent(new_fr_lines, files_[i]);  // Update
-  }
-
-  QueueEvent(wxNOT_FOUND, wxEmptyString);  // Finish
-
-  return static_cast<wxThread::ExitCode>(0);
-}
-
-FindThread::~FindThread() {
-  // The thread is being destroyed; make sure not to leave dangling pointers around.
-  wxCriticalSectionLocker locker(handler_->find_thread_cs_);
-  handler_->find_thread_ = NULL;
-}
-
-void FindThread::QueueEvent(int new_fr_lines, const wxString& file) {
-  wxThreadEvent* evt = new wxThreadEvent(wxEVT_THREAD, ID_FIND_THREAD_EVENT);
-  evt->SetString(file);
-  evt->SetInt(new_fr_lines);
-  wxQueueEvent(handler_, evt);
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -246,10 +210,6 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
 }
 
 BookFrame::~BookFrame() {
-  // TODO: Check the destroy order.
-  if (fr_buffer_ != NULL) {
-  }
-  //wxDELETE(fr_buffer_);
 }
 
 bool BookFrame::Destroy() {
@@ -797,9 +757,7 @@ void BookFrame::FindAllInFolders(const std::wstring& str,
 int BookFrame::AsyncFindInFile(const std::wstring& str,
                                int flags,
                                const wxString& file) {
-  wxCriticalSectionLocker lock(fr_cs_); // TODO
-
-  editor::Coord line_count = fr_buffer_->LineCount();
+  editor::Coord old_line_count = fr_buffer_->LineCount();
 
   wxFileName fn(file);
   TextPage* text_page = TextPageByFileName(fn);
@@ -815,8 +773,7 @@ int BookFrame::AsyncFindInFile(const std::wstring& str,
     }
   }
 
-  int new_fr_lines = fr_buffer_->LineCount() - line_count;
-  return new_fr_lines;
+  return fr_buffer_->LineCount() - old_line_count;
 }
 
 //------------------------------------------------------------------------------
@@ -843,17 +800,6 @@ void BookFrame::Init() {
   find_thread_ = NULL;
 
   recent_files_menu_ = NULL;
-}
-
-void BookFrame::CreateFrBuffer() {
-  editor::FileType fr_ft(kFindResultFtId, wxEmptyString);
-  editor::FtPlugin* fr_ft_plugin = wxGetApp().GetFtPlugin(fr_ft);
-
-  fr_buffer_ = new editor::TextBuffer(0, fr_ft_plugin, options_->file_encoding);
-  fr_buffer_->set_file_name_object(wxFileName::FileName(kTrPageFindResult + wxT(".txt")));
-
-  // Don't scan lex! We set the lex elements manually.
-  fr_buffer_->set_scan_lex(false);
 }
 
 //------------------------------------------------------------------------------
@@ -1387,29 +1333,8 @@ void BookFrame::OnThemeUpdateUI(wxUpdateUIEvent& evt) {
 //       - FindResultPage::~FindResultPage()
 //       - TextWindow::~TextWindow()
 void BookFrame::OnClose(wxCloseEvent& evt) {
-  {
-    wxCriticalSectionLocker locker(find_thread_cs_);
-
-    if (find_thread_ != NULL) {  // Does the thread still exist?
-      if (find_thread_->Delete() != wxTHREAD_NO_ERROR) {
-        wxLogError("Can't delete find thread!");
-      }
-    }
-  }
-
-  // Exit from the critical section to give the thread the possibility to
-  // enter its destructor (which is guarded with find_thread_cs_).
-  while (true) {
-    {
-      // Was the ~FindThread() executed?
-      wxCriticalSectionLocker locker(find_thread_cs_);
-      if (find_thread_ == NULL) {
-        break;
-      }
-    }
-    // Wait for thread completion.
-    wxThread::This()->Sleep(1);
-  }
+  StopFindThread();
+  DeleteFrBuffer();
 
   // Remember opened files.
   session_->ClearOpenedFiles();
@@ -1667,69 +1592,74 @@ void BookFrame::HandleTextWindowGetFocus(wxCommandEvent& evt) {
 }
 
 void BookFrame::OnFindResultPageEvent(wxCommandEvent& evt) {
-  using namespace editor;
-
-  FindResultPage* fr_page = GetFindResultPage(false);
-  if (fr_page == NULL) {
-    return;
-  }
-
   int type = evt.GetInt();
 
   if (type == FindResultPage::kLocalizeEvent) {
-    Coord fr_ln = fr_page->caret_point().y;
-
-    TextBuffer* fr_buffer = fr_page->buffer();
-    TextLine* fr_line = fr_buffer->Line(fr_ln);
-
-    const boost::any& any = fr_line->extra_data();
-    if (any.empty()) {
-      return;
+    FindResultPage* fr_page = GetFindResultPage(false);
+    if (fr_page != NULL) {
+      HandleFindResultPageLocalize(fr_page);
     }
+  } else if (type == FindResultPage::kDestroyEvent) {
+    HandleFindResultPageDestroy();
+  }
+}
 
-    FrExtraData fr_extra_data;
+void BookFrame::HandleFindResultPageLocalize(FindResultPage* fr_page) {
+  using namespace editor;
 
-    try {
-      fr_extra_data = boost::any_cast<FrExtraData>(any);
-    } catch (boost::bad_any_cast&) {
-      return;
+  TextBuffer* fr_buffer = fr_page->buffer();
+  TextLine* fr_line = fr_buffer->Line(fr_page->caret_point().y);
+
+  const boost::any& any = fr_line->extra_data();
+  if (any.empty()) {
+    return;
+  }
+
+  FrExtraData fr_extra_data;
+  try {
+    fr_extra_data = boost::any_cast<FrExtraData>(any);
+  } catch (boost::bad_any_cast&) {
+    return;
+  }
+
+  TextPage* text_page = NULL;
+
+  if (!fr_extra_data.file_path.IsEmpty()) {
+    wxFileName fn(fr_extra_data.file_path);
+    text_page = TextPageByFileName(fn);
+
+    if (text_page != NULL) {
+      // The page might not be active, activate it.
+      text_book_->ActivatePage(text_page);
+      text_book_->SetFocus();
+    } else {
+      // The page is closed, reopen it.
+      text_page = DoOpenFile(fn, true, false, true, true);
     }
+  } else if (fr_extra_data.buffer_id) {
+    // The buffer has no file path, a new buffer.
+    text_page = TextPageByBufferId(fr_extra_data.buffer_id);
 
-    TextPage* text_page = NULL;
-
-    if (!fr_extra_data.file_path.IsEmpty()) {
-      wxFileName fn(fr_extra_data.file_path);
-      text_page = TextPageByFileName(fn);
-
-      if (text_page != NULL) {
-        // The page might not be active, activate it.
-        text_book_->ActivatePage(text_page);
-        text_book_->SetFocus();
-      } else {
-        // The page is closed, reopen it.
-        text_page = DoOpenFile(fn, true, false, true, true);
-      }
-    } else if (fr_extra_data.buffer_id) {
-      // The buffer has no file path, a new buffer.
-      text_page = TextPageByBufferId(fr_extra_data.buffer_id);
-
-      if (text_page != NULL) {
-        // The page might not be active, activate it.
-        text_book_->ActivatePage(text_page);
-        text_book_->SetFocus();
-      }
-    }
-
-    if (text_page == NULL) {
-      return;
-    }
-
-    // Go to the source line.
-    Coord ln = text_page->buffer()->LineNrFromId(fr_extra_data.line_id);
-    if (ln != kInvCoord) {
-      text_book_->page_window()->Goto(ln);
+    if (text_page != NULL) {
+      // The page might not be active, activate it.
+      text_book_->ActivatePage(text_page);
+      text_book_->SetFocus();
     }
   }
+
+  if (text_page == NULL) {
+    return;
+  }
+
+  // Go to the source line.
+  Coord ln = text_page->buffer()->LineNrFromId(fr_extra_data.line_id);
+  if (ln != kInvCoord) {
+    text_book_->page_window()->Goto(ln);
+  }
+}
+
+void BookFrame::HandleFindResultPageDestroy() {
+  StopFindThread();
 }
 
 void BookFrame::OnStatusFieldClick(wxCommandEvent& evt) {
@@ -2362,6 +2292,49 @@ void BookFrame::OnFindThreadEvent(wxThreadEvent& evt) {
   wxString file = evt.GetString();
   wxString msg = wxString::Format(kTrSearchInFile, file);
   ShowStatusMessage(msg);
+}
+
+void BookFrame::StopFindThread() {
+  {
+    wxCriticalSectionLocker locker(find_thread_cs_);
+    if (find_thread_ != NULL) {  // Does the thread still exist?
+      if (find_thread_->Delete() != wxTHREAD_NO_ERROR) {
+        wxLogError("Can't delete find thread!");
+      }
+      wxLogDebug("Find thread is deleted.");
+    }
+  }
+
+  // Exit from the critical section to give the thread the possibility to
+  // enter its destructor (which is guarded with find_thread_cs_).
+  while (true) {
+    {
+      // Was the ~FindThread() executed?
+      wxCriticalSectionLocker locker(find_thread_cs_);
+      if (find_thread_ == NULL) {
+        break;
+      }
+    }
+    // Wait for thread completion.
+    wxMilliSleep(1);
+  }
+}
+
+void BookFrame::CreateFrBuffer() {
+  editor::FileType fr_ft(kFindResultFtId, wxEmptyString);
+  editor::FtPlugin* fr_ft_plugin = wxGetApp().GetFtPlugin(fr_ft);
+
+  fr_buffer_ = new editor::TextBuffer(0, fr_ft_plugin, options_->file_encoding);
+  fr_buffer_->set_file_name_object(wxFileName::FileName(kTrPageFindResult + wxT(".txt")));
+
+  // Don't scan lex! We set the lex elements manually.
+  fr_buffer_->set_scan_lex(false);
+}
+
+void BookFrame::DeleteFrBuffer() {
+  if (fr_buffer_ != NULL) {
+    wxDELETE(fr_buffer_);
+  }
 }
 
 //------------------------------------------------------------------------------

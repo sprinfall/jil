@@ -49,6 +49,7 @@ void FindResultPage::Page_Activate(bool active) {
 }
 
 void FindResultPage::Page_Close() {
+  PostEvent(kDestroyEvent);
   Destroy();
 }
 

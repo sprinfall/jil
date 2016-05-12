@@ -62,6 +62,7 @@ public:
   std::vector<TextPage*> StackTextPages() const;
 
 protected:
+  void Init();
   void CreatePageWindow();
 
   virtual void HandleTabMouseLeftDown(wxMouseEvent& evt);

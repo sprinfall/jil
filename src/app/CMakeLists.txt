@@ -15,32 +15,32 @@ if(APPLE)
 endif()
 
 set(PREF_SRCS
-	pref/common.cc
-	pref/common.h
-	pref/dialog_base.cc
-	pref/dialog_base.h
-	pref/editor_comment_page.cc
-	pref/editor_comment_page.h
-	pref/editor_dialog.cc
-	pref/editor_dialog.h
-	pref/editor_general_page.cc
-	pref/editor_general_page.h
-	pref/editor_indent_page.cc
-	pref/editor_indent_page.h
-	pref/font_list_ctrl.cc
-	pref/font_list_ctrl.h
-	pref/global_dialog.cc
-	pref/global_dialog.h
-	pref/global_font_page.cc
-	pref/global_font_page.h
-	pref/global_general_page.cc
-	pref/global_general_page.h
+    pref/common.cc
+    pref/common.h
+    pref/dialog_base.cc
+    pref/dialog_base.h
+    pref/editor_comment_page.cc
+    pref/editor_comment_page.h
+    pref/editor_dialog.cc
+    pref/editor_dialog.h
+    pref/editor_general_page.cc
+    pref/editor_general_page.h
+    pref/editor_indent_page.cc
+    pref/editor_indent_page.h
+    pref/font_list_ctrl.cc
+    pref/font_list_ctrl.h
+    pref/global_dialog.cc
+    pref/global_dialog.h
+    pref/global_font_page.cc
+    pref/global_font_page.h
+    pref/global_general_page.cc
+    pref/global_general_page.h
     pref/option_list_ctrl.cc
     pref/option_list_ctrl.h
-	)
+    )
 
 set(SRCS
-	${PREF_SRCS}
+    ${PREF_SRCS}
     app.cc
     app.h
     binding_config.cc
@@ -59,6 +59,8 @@ set(SRCS
     find_result_page.h
     find_panel.cc
     find_panel.h
+    find_thread.cc
+    find_thread.h
     font_util.cc
     font_util.h
     ft_config.cc
@@ -110,10 +112,10 @@ if(WIN32)
     set(JIL_RC ${CMAKE_CURRENT_SOURCE_DIR}/app.rc)
 elseif(APPLE)
     set(JIL_RC
-		${CMAKE_CURRENT_SOURCE_DIR}/icon/editor.icns
-		)
-	# Add icons to bundle.
-	set_source_files_properties(${JIL_RC} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+        ${CMAKE_CURRENT_SOURCE_DIR}/icon/editor.icns
+        )
+    # Add icons to bundle.
+    set_source_files_properties(${JIL_RC} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 endif()
 
 # Include resource files in the target.

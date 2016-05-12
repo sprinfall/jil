@@ -37,12 +37,7 @@ EVT_TEXT_WINDOW(ID_TEXT_WINDOW, TextBook::OnTextWindowEvent)
 END_EVENT_TABLE()
 
 TextBook::TextBook() {
-  options_ = NULL;
-  style_ = NULL;
-  binding_ = NULL;
-  
-  placeholder_page_ = NULL;
-  page_window_ = NULL;
+  Init();
 }
 
 TextBook::~TextBook() {
@@ -105,6 +100,15 @@ std::vector<TextPage*> TextBook::TextPages() const {
 
 std::vector<TextPage*> TextBook::StackTextPages() const {
   return TextPagesFromTabs(stack_tabs_);
+}
+
+void TextBook::Init() {
+  options_ = NULL;
+  style_ = NULL;
+  binding_ = NULL;
+
+  placeholder_page_ = NULL;
+  page_window_ = NULL;
 }
 
 void TextBook::CreatePageWindow() {

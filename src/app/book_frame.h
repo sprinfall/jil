@@ -8,7 +8,6 @@
 #include "wx/arrstr.h"
 #include "wx/filename.h"
 #include "wx/frame.h"
-#include "wx/thread.h"
 
 #include "editor/binding.h"
 #include "editor/compile_config.h"
@@ -33,10 +32,10 @@ class TextWindow;
 }  // namespace editor
 
 class BookCtrl;
-class BookFrame;
 class BookPage;
 class FindResultPage;
 class FindPanel;
+class FindThread;
 class PageWindow;
 class Session;
 class Splitter;
@@ -45,42 +44,6 @@ class StatusBar;
 class TextBook;
 class TextPage;
 class ToolBook;
-
-////////////////////////////////////////////////////////////////////////////////
-// Thread for Find All.
-
-class FindThread : public wxThread {
-public:
-  explicit FindThread(BookFrame* handler);
-  virtual ~FindThread();
-
-  void set_str(const std::wstring& str) {
-    str_ = str;
-  }
-
-  void set_flags(int flags) {
-    flags_ = flags;
-  }
-
-  // TODO: Avoid copy
-  void set_files(const wxArrayString& files) {
-    files_ = files;
-  }
-
-protected:
-  virtual ExitCode Entry() override;
-
-  void QueueEvent(int new_fr_lines, const wxString& file);
-
-private:
-  BookFrame* handler_;
-
-  std::wstring str_;  // Find this string.
-  int flags_;  // Find flags.
-  wxArrayString files_;  // Find in these files.
-};
-
-////////////////////////////////////////////////////////////////////////////////
 
 class BookFrame : public wxFrame {
   DECLARE_EVENT_TABLE()
@@ -209,16 +172,15 @@ public:
                         const wxArrayString& folders);
 
   // Find string in the file from another thread (async).
-  // NOTE: Don't call/trigger GUI operations.
-  // Return the number of new lines added to find result buffer.
+  // NOTE: Don't call or trigger any GUI operation (e.g., refresh).
+  // Return the number of new lines added to the find result buffer.
+  // See FindThread.
   int AsyncFindInFile(const std::wstring& str,
                       int flags,
                       const wxString& file);
 
 protected:
   void Init();
-
-  void CreateFrBuffer();
 
   void OnSize(wxSizeEvent& evt);
 
@@ -313,6 +275,9 @@ protected:
   // Handle events from find result page.
   void OnFindResultPageEvent(wxCommandEvent& evt);
 
+  void HandleFindResultPageLocalize(FindResultPage* fr_page);
+  void HandleFindResultPageDestroy();
+
   // Status field event handler.
   void OnStatusFieldClick(wxCommandEvent& evt);
 
@@ -405,6 +370,12 @@ private:
   void ClearFindResult(FindResultPage* fr_page);
 
   void OnFindThreadEvent(wxThreadEvent& evt);
+
+  // Terminate find thread if it's running.
+  void StopFindThread();
+
+  void CreateFrBuffer();
+  void DeleteFrBuffer();
 
   //----------------------------------------------------------------------------
   // Menu
@@ -504,9 +475,8 @@ private:
   int page_type_;
 
   // Find result buffer.
+  // Always keep a find result buffer to simplify the handling of find thread.
   editor::TextBuffer* fr_buffer_;
-
-  wxCriticalSection fr_cs_;
 
   std::wstring find_str_;
   int find_flags_;  // Find flags exluding kFind_Reversely.

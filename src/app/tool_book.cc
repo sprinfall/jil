@@ -83,7 +83,6 @@ void ToolBook::DoRemoveAll(Tab* tab) {
   }
 }
 
-
 void ToolBook::OnMenuClose(wxCommandEvent& evt) {
   RemoveActivePage();
 }

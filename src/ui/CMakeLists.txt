@@ -13,8 +13,6 @@ set(SRCS
     button_style.h
     color.cc
     color.h
-    combo_box.cc
-    combo_box.h
     label.cc
     label.h
     static_box.cc
