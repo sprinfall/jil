@@ -2,6 +2,7 @@
 #include "wx/dcbuffer.h"
 #include "wx/log.h"
 #include "wx/sizer.h"
+#include "wx/settings.h"
 #include "wx/textctrl.h"
 #include "ui/util.h"
 

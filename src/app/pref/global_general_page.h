@@ -8,6 +8,7 @@
 
 class wxCheckBox;
 class wxComboBox;
+class wxSpinCtrl;
 
 namespace jil {
 

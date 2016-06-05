@@ -105,7 +105,7 @@ set(SRCS
     )
 
 set(TARGET_NAME app)
-set(TARGET_OUTPUT_NAME Jil)
+set(TARGET_OUTPUT_NAME jil)
 
 # Resource files
 if(WIN32)
@@ -183,4 +183,20 @@ elseif(APPLE)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/jilfiles/theme DESTINATION ${MAC_INSTALL_RES_DIR})
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/jilfiles/ftplugin DESTINATION ${MAC_INSTALL_RES_DIR})
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/src/app/icon DESTINATION ${MAC_INSTALL_RES_DIR})
+elseif(UNIX)
+    set(UNIX_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/${TARGET_OUTPUT_NAME})
+
+    message(STATUS "Unix install dir: " ${UNIX_INSTALL_DIR})
+
+    # TODO: the installed executable file has no execution permission.
+    install(FILES ${PROJECT_BINARY_DIR}/src/app/${TARGET_OUTPUT_NAME} DESTINATION ${UNIX_INSTALL_DIR})
+
+    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/options.cfg DESTINATION ${UNIX_INSTALL_DIR})
+    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/binding.cfg DESTINATION ${UNIX_INSTALL_DIR})
+    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/file_types.cfg DESTINATION ${UNIX_INSTALL_DIR})
+    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/status_fields.cfg DESTINATION ${UNIX_INSTALL_DIR})
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/jilfiles/theme DESTINATION ${UNIX_INSTALL_DIR})
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/jilfiles/ftplugin DESTINATION ${UNIX_INSTALL_DIR})
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/src/app/icon DESTINATION ${UNIX_INSTALL_DIR})
 endif()
+

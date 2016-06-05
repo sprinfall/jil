@@ -143,8 +143,8 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
   assert(session_ != NULL);
   assert(theme_);
   assert(style_ != NULL);
-  assert(binding_ != NULL); 
-  
+  assert(binding_ != NULL);
+
   if (!wxFrame::Create(parent, id, title)) {
     return false;
   }
@@ -1350,7 +1350,7 @@ void BookFrame::OnClose(wxCloseEvent& evt) {
   RemoveAllTextPages(true, NULL);
 
   if (text_book_->PageCount() > 0) {
-    return; 
+    return;
   }
 
   session_->set_recent_files(recent_files_);
@@ -1892,7 +1892,7 @@ void BookFrame::OnStatusFileTypeMenu(wxCommandEvent& evt) {
   editor::TextBuffer* buffer = ActiveBuffer();
   if (buffer == NULL) {
     return;
-  } 
+  }
 
   const editor::FileType* ft = app.GetFileType(index);
   if (ft->id != buffer->ft_plugin()->id()) {
@@ -2594,7 +2594,7 @@ bool BookFrame::GetEditMenuState(int menu_id) {
   BookPage* page = GetCurrentPage();
   if (page != NULL) {
     return page->Page_EditMenuState(menu_id);
-  } 
+  }
   return false;
 }
 
@@ -2679,7 +2679,8 @@ void BookFrame::UpdateRecentFilesMenu() {
   std::list<wxString>::iterator it = recent_files_.begin();
   for (size_t i = 0; i < expected_count; ++i, ++it) {
     int id = ID_MENU_FILE_RECENT_FILE_0 + i;
-    wxString label = wxString::Format(wxT("%d. "), i) + *it;
+    // NOTE (2016-06-05): Assert fail if use "%d" instead of "%lu" in Linux.
+    wxString label = wxString::Format(wxT("%lu. "), i) + *it;
     recent_files_menu_->SetLabel(id, label);
   }
 }
@@ -2709,7 +2710,7 @@ TextPage* BookFrame::TextPageByBufferId(size_t buffer_id) const {
 
 void BookFrame::RemoveAllTextPages(bool from_destroy, const TextPage* except_page) {
   std::vector<TextPage*> text_pages = text_book_->TextPages();
-  
+
   // If any buffer is modified, ask for save.
 
   for (TextPage* text_page : text_pages) {
