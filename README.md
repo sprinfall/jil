@@ -2,6 +2,8 @@
 
 Yet another text editor developed with C++ and wxWidgets.
 
+[[https://github.com/sprinfall/jil/blob/master/doc/screenshots/main%20window.png|alt=main_window]]
+
 ## Advantages
 
 * Cross platform (Windows, Linux and Mac).
