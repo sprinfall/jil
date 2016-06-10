@@ -2,7 +2,7 @@
 
 Yet another text editor developed with C++ and wxWidgets.
 
-[[https://github.com/sprinfall/jil/blob/master/doc/screenshots/main%20window.png|alt=main_window]]
+![alt main_window](doc/screenshots/main.png)
 
 ## Advantages
 
