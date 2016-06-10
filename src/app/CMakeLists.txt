@@ -152,6 +152,10 @@ endif()
 
 # Installation
 
+message(STATUS "[debug] Project binary dir: " ${PROJECT_BINARY_DIR})
+message(STATUS "[debug] Project source dir: " ${PROJECT_SOURCE_DIR})
+message(STATUS "[debug] CMake install prefix: " ${CMAKE_INSTALL_PREFIX})
+
 if(WIN32)
     install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/options.cfg DESTINATION .)
     install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/binding.cfg DESTINATION .)
@@ -184,19 +188,16 @@ elseif(APPLE)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/jilfiles/ftplugin DESTINATION ${MAC_INSTALL_RES_DIR})
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/src/app/icon DESTINATION ${MAC_INSTALL_RES_DIR})
 elseif(UNIX)
-    set(UNIX_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/${TARGET_OUTPUT_NAME})
+    # Install executable to ${CMAKE_INSTALL_PREFIX}.
+    install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION .)
 
-    message(STATUS "Unix install dir: " ${UNIX_INSTALL_DIR})
-
-    # TODO: the installed executable file has no execution permission.
-    install(FILES ${PROJECT_BINARY_DIR}/src/app/${TARGET_OUTPUT_NAME} DESTINATION ${UNIX_INSTALL_DIR})
-
-    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/options.cfg DESTINATION ${UNIX_INSTALL_DIR})
-    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/binding.cfg DESTINATION ${UNIX_INSTALL_DIR})
-    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/file_types.cfg DESTINATION ${UNIX_INSTALL_DIR})
-    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/status_fields.cfg DESTINATION ${UNIX_INSTALL_DIR})
-    install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/jilfiles/theme DESTINATION ${UNIX_INSTALL_DIR})
-    install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/jilfiles/ftplugin DESTINATION ${UNIX_INSTALL_DIR})
-    install(DIRECTORY ${PROJECT_SOURCE_DIR}/src/app/icon DESTINATION ${UNIX_INSTALL_DIR})
+    # Install resource files to the same directory.
+    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/options.cfg DESTINATION .)
+    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/binding.cfg DESTINATION .)
+    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/file_types.cfg DESTINATION .)
+    install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/status_fields.cfg DESTINATION .)
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/jilfiles/theme DESTINATION .)
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/jilfiles/ftplugin DESTINATION .)
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/src/app/icon DESTINATION .)
 endif()
 
