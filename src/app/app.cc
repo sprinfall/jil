@@ -53,7 +53,7 @@ IMPLEMENT_WXWIN_MAIN
 namespace jil {
 
 ////////////////////////////////////////////////////////////////////////////////
- 
+
 static const wxChar   kDotChar            = wxT('.');
 static const wxString kSpaceStr           = wxT(" ");
 
@@ -335,7 +335,8 @@ bool App::OnInit() {
   // Make sure the user data dir exists.
   wxString user_data_dir = UserDataDir();
   if (!wxDir::Exists(user_data_dir)) {
-    wxMkdir(user_data_dir, 777);
+    wxMkdir(user_data_dir, 0777);
+    wxLogDebug(wxT("Make user data dir: %s"), user_data_dir);
   }
 
   // Set log target to file.
