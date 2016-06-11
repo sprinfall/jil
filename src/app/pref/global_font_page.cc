@@ -235,12 +235,12 @@ void Global_FontPage::OnSizeComboBox(wxCommandEvent& evt) {
 
   wxFont& font = fonts_[font_type];
 
-  long size = kDefaultFontSize;
+  long size = GetDefaultFontSize();
   if (!size_combo_box_->GetValue().ToLong(&size)) {
     return;
   }
   if (size < kMinFontSize || size > kMaxFontSize) {
-    size = kDefaultFontSize;
+    size = GetDefaultFontSize();
   }
   font.SetPointSize(static_cast<int>(size));
 

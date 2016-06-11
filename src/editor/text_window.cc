@@ -76,7 +76,7 @@ TextWindow::TextWindow(TextBuffer* buffer)
     : buffer_(buffer) {
   Init();
 }
-  
+
 bool TextWindow::Create(wxWindow* parent, wxWindowID id, bool hide) {
   assert(theme_);
   assert(style_ != NULL);
@@ -188,7 +188,7 @@ void TextWindow::SetTextFont(const wxFont& font) {
 
   UpdateLineHeight();
   HandleLineHeightChange();
-  
+
   text_area_->Refresh();
 }
 
@@ -1006,7 +1006,7 @@ void TextWindow::DoWrap() {
       wrap_helper_.reset();
     }
   }
-  
+
   if (wrap_changed) {
     UpdateTextSize();
   }
@@ -1740,7 +1740,7 @@ void TextWindow::DrawWrappedTextLineWithoutLex(Renderer& renderer, Coord ln, int
         DrawTextLinePiece(renderer, line->data(), part3.begin(), part3.end(), Lex(), _x, text_y, chars);
       }
     }
-   
+
     y += line_height_;
   }
 }

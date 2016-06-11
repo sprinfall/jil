@@ -1,6 +1,7 @@
 #include "app/font_util.h"
 #include <set>
 #include "wx/gdicmn.h"
+#include "wx/log.h"
 #include "wx/settings.h"
 
 namespace jil {
@@ -48,8 +49,21 @@ static wxString DoGetDefaultFontName() {
 }
 
 wxString GetDefaultFontName() {
-  static wxString font = DoGetDefaultFontName();
-  return font;
+  static wxString name = DoGetDefaultFontName();
+  return name;
+}
+
+// NOTE:
+// According to wxGTK's poor implementation of wxSystemSettings::GetFont, you
+// cannot get the system fixed-width font under GTK+.
+static int DoGetDefaultFontSize() {
+  wxFont font = wxSystemSettings::GetFont(wxSYS_SYSTEM_FIXED_FONT);
+  return font.GetPointSize();
+}
+
+int GetDefaultFontSize() {
+  static int size = DoGetDefaultFontSize();
+  return size;
 }
 
 }  // namespace jil

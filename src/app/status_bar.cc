@@ -21,7 +21,7 @@ DEFINE_EVENT_TYPE(kEvtStatusFieldClick);
 BEGIN_EVENT_TABLE(StatusBar, wxPanel)
 EVT_PAINT     (StatusBar::OnPaint)
 EVT_SIZE      (StatusBar::OnSize)
-EVT_LEFT_DOWN (StatusBar::OnMouseLeftDown)
+EVT_LEFT_UP   (StatusBar::OnMouseLeftUp)
 EVT_TIMER     (ID_STATUS_MSG_TIMER, StatusBar::OnMsgTimer)
 END_EVENT_TABLE()
 
@@ -185,7 +185,7 @@ void StatusBar::SetMessage(const wxString& msg, int time_ms) {
   } else {
     msg_ = msg;
     RefreshFieldByIndex(0);
-    
+
     if (time_ms > 0) {
       msg_timer_->StartOnce(time_ms);
     }
@@ -289,16 +289,13 @@ void StatusBar::OnSize(wxSizeEvent& evt) {
   Refresh();
 }
 
-void StatusBar::OnMouseLeftDown(wxMouseEvent& evt) {
-  const FieldInfo* field_info = GetFieldByPos(evt.GetPosition().x);
-  if (field_info == NULL) {
-    return;
-  }
+void StatusBar::OnMouseLeftUp(wxMouseEvent& evt) {
+  evt.Skip();
 
-  wxCommandEvent field_click_evt(kEvtStatusFieldClick, GetId());
-  field_click_evt.SetEventObject(this);
-  field_click_evt.SetInt(field_info->id);
-  GetParent()->GetEventHandler()->AddPendingEvent(field_click_evt);
+  // NOTE (GTK):
+  // Don't do this in mouse left down handler, otherwise the popup menu will
+  // disappear immediately after mouse left up if the cursor is inside the menu.
+  PostFieldClickEvent(evt.GetPosition());
 }
 
 void StatusBar::OnMsgTimer(wxTimerEvent& evt) {
@@ -382,6 +379,18 @@ const StatusBar::FieldInfo* StatusBar::GetFieldById(FieldId id) const {
     }
   }
   return NULL;
+}
+
+void StatusBar::PostFieldClickEvent(const wxPoint& pos) {
+  const FieldInfo* field_info = GetFieldByPos(pos.x);
+  if (field_info == NULL) {
+    return;
+  }
+
+  wxCommandEvent field_click_evt(kEvtStatusFieldClick, GetId());
+  field_click_evt.SetEventObject(this);
+  field_click_evt.SetInt(field_info->id);
+  GetParent()->GetEventHandler()->AddPendingEvent(field_click_evt);
 }
 
 }  // namespace jil

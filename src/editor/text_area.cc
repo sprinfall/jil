@@ -48,6 +48,7 @@ void TextArea::ScrollWindow(int dx, int dy, const wxRect* rect) {
 void TextArea::OnPaint(wxPaintEvent& evt) {
   wxAutoBufferedPaintDC dc(this);
 #if !wxALWAYS_NATIVE_DOUBLE_BUFFER
+  wxLogDebug("TextArea native double buffer");
   dc.SetBackground(GetBackgroundColour());
   dc.Clear();
 #endif

@@ -1670,6 +1670,10 @@ void BookFrame::OnStatusFieldClick(wxCommandEvent& evt) {
 
   int field_id = evt.GetInt();
 
+  // ISSUE (GTK):
+  // The popup menu's background color doesn't follow the system theme.
+  // The menu bar doesn't have this issue.
+
   switch (field_id) {
     case StatusBar::kField_TabOptions:
       PopupStatusTabOptionsMenu();

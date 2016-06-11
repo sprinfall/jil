@@ -79,7 +79,7 @@ public:
   void set_theme(const editor::SharedTheme& theme) {
     theme_ = theme;
   }
-   
+
   virtual bool SetFont(const wxFont& font) override;
 
   void AddField(FieldId id, wxAlignment align, SizeType size_type, int size_value);
@@ -108,7 +108,8 @@ protected:
   void OnPaint(wxPaintEvent& evt);
 
   void OnSize(wxSizeEvent& evt);
-  void OnMouseLeftDown(wxMouseEvent& evt);
+
+  void OnMouseLeftUp(wxMouseEvent& evt);
 
   void OnMsgTimer(wxTimerEvent& evt);
 
@@ -129,6 +130,8 @@ private:
   const FieldInfo* GetFieldByPos(int pos_x) const;
 
   const FieldInfo* GetFieldById(FieldId id) const;
+
+  void PostFieldClickEvent(const wxPoint& pos);
 
 private:
   editor::SharedTheme theme_;

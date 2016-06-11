@@ -42,7 +42,7 @@ TextBook::TextBook() {
 
 TextBook::~TextBook() {
   //page_window_->SetPage(placeholder_page_);
-   
+
   if (!tabs_.empty()) {
     for (Tab* tab : tabs_) {
       delete tab->page;

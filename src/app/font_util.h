@@ -19,15 +19,16 @@ const wxFont& GetGlobalFont(int point_size,
 // Get a default preferred font.
 wxString GetDefaultFontName();
 
+// Get the default font point size.
+int GetDefaultFontSize();
+
 // Font point sizes.
 #if defined (__WXOSX__)
 const int kMinFontSize = 8;
 const int kMaxFontSize = 36;
-const int kDefaultFontSize = 12;
 #else
 const int kMinFontSize = 6;
 const int kMaxFontSize = 24;
-const int kDefaultFontSize = 10;
 #endif
 
 // Usage:

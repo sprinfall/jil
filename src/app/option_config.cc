@@ -210,7 +210,7 @@ static wxFont GetFont(Setting fonts_setting, const char* name) {
   }
 
   if (point_size == 0) {
-    point_size = kDefaultFontSize;
+    point_size = GetDefaultFontSize();
   } else if (point_size < kMinFontSize) {
     point_size = kMinFontSize;
   } else if (point_size > kMaxFontSize) {
@@ -262,7 +262,7 @@ static void NormalizeFont(wxFont& font) {
 
 static void ValidateFonts(wxFont fonts[FONT_COUNT]) {
   if (!fonts[FONT_TEXT].IsOk()) {
-    fonts[FONT_TEXT] = GetGlobalFont(kDefaultFontSize, GetDefaultFontName());
+    fonts[FONT_TEXT] = GetGlobalFont(GetDefaultFontSize(), GetDefaultFontName());
   }
 
   if (!fonts[FONT_LINE_NR].IsOk()) {
