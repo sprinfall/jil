@@ -9,6 +9,7 @@
 #define BOOK_FRAME        "book_frame"
 #define FIND_PANEL        "find_panel"
 #define RECT              "rect"
+#define SIZE              "size"
 #define MAXIMIZED         "maximized"
 
 #define SPLIT             "split"
@@ -33,6 +34,29 @@
 #define RECENT_FILES      "recent_files"
 
 namespace jil {
+
+static bool GetSize(Setting parent, const char* name, wxSize* size) {
+  Setting size_setting = parent.Get(name);
+  if (!size_setting) {
+    return false;
+  }
+
+  if (size_setting.type() != Setting::kArray || size_setting.size() != 2) {
+    return false;
+  }
+
+  size->x = size_setting[0].GetInt();
+  size->y = size_setting[1].GetInt();
+
+  return true;
+}
+
+static void SetSize(Setting parent, const char* name, const wxSize& size) {
+  parent.Remove(name);
+  Setting size_setting = parent.Add(name, Setting::kArray);
+  size_setting.Add(NULL, Setting::kInt).SetInt(size.x);
+  size_setting.Add(NULL, Setting::kInt).SetInt(size.y);
+}
 
 static bool GetRect(Setting parent, const char* name, wxRect* rect) {
   Setting rect_setting = parent.Get(name);
@@ -113,7 +137,12 @@ bool Session::Load(const wxString& file) {
 
   Setting bf_setting = root_setting.Get(BOOK_FRAME, Setting::kGroup);
   if (bf_setting) {
+#if defined (__WXGTK__)
+    GetSize(bf_setting, SIZE, &book_frame_size_);
+#else
     GetRect(bf_setting, RECT, &book_frame_rect_);
+#endif  // __WXGTK__
+
     book_frame_maximized_ = bf_setting.GetBool(MAXIMIZED);
   }
 
@@ -182,9 +211,15 @@ bool Session::Save(const wxString& file) {
 
   Setting bf_setting = root_setting.Add(BOOK_FRAME, Setting::kGroup);
 
+#if defined (__WXGTK__)
+  if (book_frame_size_ != wxDefaultSize) {
+    SetSize(bf_setting, SIZE, book_frame_size_);
+  }
+#else
   if (!book_frame_rect_.IsEmpty()) {
     SetRect(bf_setting, RECT, book_frame_rect_);
   }
+#endif  // __WXGTK__
 
   bf_setting.SetBool(MAXIMIZED, book_frame_maximized_);
 

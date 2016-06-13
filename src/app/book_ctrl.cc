@@ -33,19 +33,27 @@ END_EVENT_TABLE()
 
 BookTabArea::BookTabArea(BookCtrl* book_ctrl, wxWindowID id)
     : wxPanel(book_ctrl, id)
+#if defined(__WXMSW__)
     , book_ctrl_(book_ctrl)
     , tip_handler_(NULL) {
+#else
+    , book_ctrl_(book_ctrl) {
+#endif
+
   SetBackgroundStyle(wxBG_STYLE_PAINT);
   SetCursor(wxCursor(wxCURSOR_ARROW));
 }
 
 BookTabArea::~BookTabArea() {
+#if defined(__WXMSW__)
   if (tip_handler_ != NULL) {
     PopEventHandler();
     delete tip_handler_;
   }
+#endif
 }
 
+#if defined(__WXMSW__)
 void BookTabArea::SetToolTipEx(const wxString& tooltip) {
   if (tip_handler_ == NULL) {
     tip_handler_ = new editor::TipHandler(this);
@@ -54,6 +62,7 @@ void BookTabArea::SetToolTipEx(const wxString& tooltip) {
   }
   tip_handler_->SetTip(tooltip);
 }
+#endif
 
 wxSize BookTabArea::DoGetBestSize() const {
   return book_ctrl_->CalcTabAreaBestSize();
@@ -713,7 +722,11 @@ void BookCtrl::OnTabMouseMotion(wxMouseEvent& evt) {
     tooltip = (*it)->page->Page_Description();
   }
 
+#if defined(__WXMSW__)
   tab_area_->SetToolTipEx(tooltip);
+#else
+  tab_area_->SetToolTip(tooltip);
+#endif
 }
 
 void BookCtrl::OnTabMouseRightDown(wxMouseEvent& evt) {

@@ -218,12 +218,28 @@ bool BookFrame::Destroy() {
 
 bool BookFrame::Show(bool show) {
   // Restore last state.
+#if defined (__WXGTK__)
+  wxSize size = session_->book_frame_size();
+  if (size.x <= 0 || size.y <= 0) {
+    // Initial size: screen size * 0.75
+    wxRect rect;
+    wxClientDisplayRect(&rect.x, &rect.y, &rect.width, &rect.height);
+    size = rect.GetSize() * 0.75;
+  }
+  // NOTE: In wxGTK, SetSize takes the size as client size. That's why we
+  // save client size to session. See OnClose().
+  // The x, y can't be 0. Using 1 moves the window to the top left of the
+  // screen client area (not including the launcher and top panel).
+  SetSize(1, 1, size.x, size.y);
+#else
   wxRect rect = session_->book_frame_rect();
   if (rect.IsEmpty()) {
+    // Initial size: screen size * 0.75
     wxClientDisplayRect(&rect.x, &rect.y, &rect.width, &rect.height);
     rect.Deflate(rect.width * 0.125, rect.height * 0.125);
   }
   SetSize(rect);
+#endif  // __WXGTK__
 
   if (session_->book_frame_maximized()) {
     Maximize();
@@ -506,7 +522,11 @@ void BookFrame::FullScreen() {
 
   // Save the screen rect for session in case exits from full screen mode.
   if (show) {
+#if defined (__WXGTK__)
+    last_client_size_ = GetClientSize();
+#else
     last_screen_rect_ = GetScreenRect();
+#endif  // __WXGTK__
   }
 
   ShowFullScreen(show, style);
@@ -1361,9 +1381,19 @@ void BookFrame::OnClose(wxCloseEvent& evt) {
     session_->set_book_frame_maximized(false);
 
     if (IsFullScreen()) {
+#if defined (__WXGTK__)
+      session_->set_book_frame_size(last_client_size_);
+#else
       session_->set_book_frame_rect(last_screen_rect_);
+#endif  // __WXGTK__
     } else {
+#if defined (__WXGTK__)
+      // NOTE: In wxGTK, what SetSize accepts is actually the client size. So
+      // we save client size to session.
+      session_->set_book_frame_size(GetClientSize());
+#else
       session_->set_book_frame_rect(GetScreenRect());
+#endif  // __WXGTK__
     }
   }
 

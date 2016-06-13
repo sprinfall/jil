@@ -1,4 +1,5 @@
 #include "app/navigation_dialog.h"
+#include "wx/button.h"
 #include "wx/dcbuffer.h"
 #include "wx/dcclient.h"
 #include "wx/log.h"
@@ -10,7 +11,7 @@
 #include "app/text_page.h"
 
 #define kTrTextPages _("Text Pages")
- 
+
 namespace jil {
 
 static const int kMarginX = 10;
@@ -28,6 +29,7 @@ EVT_CLOSE         (NavigationDialog::OnClose)
 EVT_ACTIVATE      (NavigationDialog::OnActivate)
 EVT_LEFT_UP       (NavigationDialog::OnMouseLeftUp)
 EVT_MOTION        (NavigationDialog::OnMouseMotion)
+// EVT_CHAR_HOOK     (NavigationDialog::OnKeyDown)
 EVT_KEY_DOWN      (NavigationDialog::OnKeyDown)
 EVT_KEY_UP        (NavigationDialog::OnKeyUp)
 EVT_NAVIGATION_KEY(NavigationDialog::OnNavigationKey)
@@ -44,11 +46,14 @@ NavigationDialog::~NavigationDialog() {
 }
 
 bool NavigationDialog::Create(wxWindow* parent, wxWindowID id) {
-  if (!wxDialog::Create(parent, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0)) {
+  long style = wxDEFAULT_DIALOG_STYLE | wxWANTS_CHARS;
+  wxString title = _("Switch Page");
+
+  if (!wxDialog::Create(parent, id, title, wxDefaultPosition, wxDefaultSize, style)) {
     return false;
   }
 
-  SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+  SetBackgroundStyle(wxBG_STYLE_PAINT);
 
   if (theme_->GetColor(COLOR_BG).IsOk()) {
     SetBackgroundColour(theme_->GetColor(COLOR_BG));
@@ -76,6 +81,11 @@ void NavigationDialog::SetTextPages(const std::vector<TextPage*>& text_pages, bo
   } else {
     select_index_ = text_pages.size() - 1;  // The last
   }
+}
+
+bool NavigationDialog::DoNavigateIn(int flags) {
+  wxLogDebug("do navigate in");
+  return wxDialog::DoNavigateIn(flags);
 }
 
 void NavigationDialog::OnPaint(wxPaintEvent& evt) {
@@ -160,6 +170,7 @@ void NavigationDialog::OnMouseMotion(wxMouseEvent& evt) {
 }
 
 void NavigationDialog::OnKeyDown(wxKeyEvent& evt) {
+  wxLogDebug("on key down");
   if (evt.GetKeyCode() == WXK_ESCAPE) {
     Close();
   } else {
@@ -176,6 +187,7 @@ void NavigationDialog::OnKeyUp(wxKeyEvent& evt) {
 }
 
 void NavigationDialog::OnNavigationKey(wxNavigationKeyEvent& evt) {
+  wxLogDebug("on navigation key");
   if (evt.IsFromTab()) {
     if (evt.GetDirection()) {  // Forward
       ++select_index_;

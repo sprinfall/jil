@@ -30,12 +30,25 @@ public:
   //----------------------------------------------------------------------------
   // Book frame
 
+#if defined (__WXGTK__)
+
+  wxSize book_frame_size() const {
+    return book_frame_size_;
+  }
+  void set_book_frame_size(const wxSize& size) {
+    book_frame_size_ = size;
+  }
+
+#else
+
   wxRect book_frame_rect() const {
     return book_frame_rect_;
   }
   void set_book_frame_rect(const wxRect& rect) {
     book_frame_rect_ = rect;
   }
+
+#endif  // __WXGTK__
 
   bool book_frame_maximized() const {
     return book_frame_maximized_;
@@ -142,7 +155,17 @@ private:
   SplitNode* RestoreSplitTree(Setting setting);
 
 private:
+#if defined (__WXGTK__)
+  // NOTE:
+  // A typical Linux desktop program doesn't (or can't) remember its position.
+  // wxWidgets doesn't handle the window size correctly in GTK, either.
+  // After SetSize(), GetScreenRect() or GetRect() returns a different size
+  // from the one just set.
+  wxSize book_frame_size_;
+#else
   wxRect book_frame_rect_;
+#endif  // __WXGTK__
+
   bool book_frame_maximized_;
 
   std::list<wxString> find_strings_;

@@ -495,8 +495,13 @@ private:
   std::list<wxString> recent_files_;
   wxMenu* recent_files_menu_;
 
+#if defined (__WXGTK__)
+  // Client size before show full screen.
+  wxSize last_client_size_;
+#else
   // Screen rect before show full screen.
   wxRect last_screen_rect_;
+#endif  // __WXGTK__
 };
 
 }  // namespace jil

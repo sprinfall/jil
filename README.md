@@ -23,21 +23,32 @@ The build system of Jil Text is based on CMake, with which you can generate Visu
 
 ### Linux (Ubuntu)
 
-Install CMake:
+**CMake**
+
 ```
 $ sudo apt install cmake cmake-qt-gui
 ```
 The GUI version "cmake-qt-gui" is optional.
 
-Install C++ Boost Library:
+**C++ Boost Library**
 ```
 $ sudo apt install libboost-dev
 ```
 
-Install wxWidgets:
+**wxWidgets**
+
+Install with apt:
 ```
 $ sudo apt install libwxgtk3.0-dev
 ```
+Or download the source code and build it yourself:
+```
+$ ./configure --with-gtk=3 --disable-shared
+$ make
+$ sudo make install
+```
+
+**Generate Makefiles**
 
 Suppose the source code is cloned to ~/jil, create a build directory next to it:
 ```
@@ -49,6 +60,8 @@ Generate Unix makefiles with CMake:
 $ cd ~/jilbuild
 $ cmake -G"Unix Makefiles" -DCMAKE_INSTALL_PREFIX=~/jilbuild/src/app ../jil
 ```
+
+**Build & Install**
 
 Now build it with make:
 

@@ -20,9 +20,11 @@ class wxMemoryDC;
 
 namespace jil {
 
+#if defined(__WXMSW__)
 namespace editor {
 class TipHandler;
 }  // namespace editor
+#endif  // __WXMSW__
 
 class BookCtrl;
 class BookPage;
@@ -42,10 +44,12 @@ public:
     return false;
   }
 
+#if defined(__WXMSW__)
   void SetToolTipEx(const wxString& tooltip);
+#endif
 
 protected:
-  virtual wxSize DoGetBestSize() const;
+  virtual wxSize DoGetBestSize() const override;
 
   void OnSize(wxSizeEvent& evt);
   void OnPaint(wxPaintEvent& evt);
@@ -54,7 +58,10 @@ protected:
 
 private:
   BookCtrl* book_ctrl_;
+
+#if defined(__WXMSW__)
   editor::TipHandler* tip_handler_;
+#endif
 };
 
 ////////////////////////////////////////////////////////////////////////////////

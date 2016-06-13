@@ -25,6 +25,7 @@ public:
 
 public:
   explicit NavigationDialog(const editor::SharedTheme& theme);
+
   virtual ~NavigationDialog();
 
   bool Create(wxWindow* parent, wxWindowID id);
@@ -48,6 +49,8 @@ public:
   }
 
 protected:
+  virtual bool DoNavigateIn(int flags) override;
+
   void OnPaint(wxPaintEvent& evt);
   void OnClose(wxCloseEvent& evt);
   void OnActivate(wxActivateEvent& evt);
