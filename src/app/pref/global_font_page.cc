@@ -23,8 +23,6 @@
 namespace jil {
 namespace pref {
 
-static const wxSize kFontListSize(-1, 150);
-
 BEGIN_EVENT_TABLE(Global_FontPage, wxPanel)
 EVT_LIST_ITEM_SELECTED(ID_FONT_LIST_CTRL, Global_FontPage::OnFontListSelectionChange)
 EVT_LIST_ITEM_DESELECTED(ID_FONT_LIST_CTRL, Global_FontPage::OnFontListSelectionChange)
@@ -84,10 +82,12 @@ bool Global_FontPage::TransferDataToWindow() {
       label += label_sep + tr_labels[i];
     }
 
-    font_list_ctrl_->AddFont(fonts_[i], label);
+    font_list_ctrl_->InsertItem(i, label);
+
+    //font_list_ctrl_->AddFont(fonts_[i], label);
   }
 
-  font_list_ctrl_->UpdateSizes();
+  //font_list_ctrl_->UpdateSizes();
 
   SetFontToWindow(wxNullFont);
 
@@ -123,8 +123,13 @@ void Global_FontPage::CreateControls() {
 void Global_FontPage::CreateTypeSection(wxSizer* top_vsizer) {
   wxStaticText* label = new wxStaticText(this, wxID_ANY, _("GUI elements:"));
 
-  font_list_ctrl_ = new FontListCtrl;
-  font_list_ctrl_->Create(this, ID_FONT_LIST_CTRL/*, kFontListSize*/);
+  //static const wxSize kFontListSize(-1, 150);
+  //font_list_ctrl_ = new FontListCtrl;
+  //font_list_ctrl_->Create(this, ID_FONT_LIST_CTRL/*, kFontListSize*/);
+
+  long style = wxLC_LIST | wxLC_NO_HEADER | wxLC_SINGLE_SEL;
+  font_list_ctrl_ = new wxListCtrl(this, ID_FONT_LIST_CTRL, wxDefaultPosition, wxDefaultSize, style);
+  font_list_ctrl_->AppendColumn(wxEmptyString);
 
   top_vsizer->Add(label, wxSizerFlags().Left().Border(wxLEFT|wxTOP));
   top_vsizer->Add(font_list_ctrl_, wxSizerFlags(1).Expand().Border(wxALL));
@@ -133,39 +138,30 @@ void Global_FontPage::CreateTypeSection(wxSizer* top_vsizer) {
 void Global_FontPage::CreateFontSection(wxSizer* top_vsizer) {
   bool fixed_width_only = false;
 
-  wxStaticText* name_label = new wxStaticText(this, wxID_ANY, _("Name:"));
   name_combo_box_ = new wxComboBox(this, ID_FONT_NAME_COMBOBOX);
   InitNameComboBox(name_combo_box_, fixed_width_only);  // TODO: Slow to list fonts.
 
-  wxStaticText* size_label = new wxStaticText(this, wxID_ANY, _("Size:"));
   size_combo_box_ = new wxComboBox(this, ID_FONT_SIZE_COMBOBOX, wxEmptyString, wxDefaultPosition, kNumTextSize);
   InitSizeComboBox(size_combo_box_);
 
   fixed_width_check_box_ = new wxCheckBox(this, ID_FONT_FIXED_WIDTH_ONLY_CHECKBOX, _("Fixed width only"));
   fixed_width_check_box_->SetValue(fixed_width_only);
 
-  wxBoxSizer* name_vsizer = new wxBoxSizer(wxVERTICAL);
-  name_vsizer->Add(name_label);
-  name_vsizer->Add(name_combo_box_, wxSizerFlags().Expand().Border(wxTOP));
-
-  wxBoxSizer* size_vsizer = new wxBoxSizer(wxVERTICAL);
-  size_vsizer->Add(size_label);
-  size_vsizer->Add(size_combo_box_, wxSizerFlags().Expand().Border(wxTOP));
-
   wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
   // Size proportion: 3 : 1
-  hsizer->Add(name_vsizer, wxSizerFlags(3));
-  hsizer->Add(size_vsizer, wxSizerFlags(1).Border(wxLEFT, 20));
+  hsizer->Add(name_combo_box_, wxSizerFlags(3));
+  hsizer->Add(size_combo_box_, wxSizerFlags(1).Border(wxLEFT, 10));
   top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
 
   top_vsizer->Add(fixed_width_check_box_, wxSizerFlags().Expand().Border(wxALL));
 }
 
+// TODO
 FontType Global_FontPage::GetSelectedFontType() const {
-  int index = font_list_ctrl_->selected_index();
-  if (index >= 0 && index < FONT_COUNT) {
-    return static_cast<FontType>(index);
-  }
+  //int index = font_list_ctrl_->selected_index();
+  //if (index >= 0 && index < FONT_COUNT) {
+  //  return static_cast<FontType>(index);
+  //}
   return FONT_COUNT;
 }
 
@@ -218,14 +214,14 @@ void Global_FontPage::OnNameComboBox(wxCommandEvent& evt) {
     return;
   }
 
-  wxFont& font = fonts_[font_type];
+  //wxFont& font = fonts_[font_type];
 
-  wxString name = name_combo_box_->GetValue();
-  if (!font.SetFaceName(name)) {
-    return;
-  }
+  //wxString name = name_combo_box_->GetValue();
+  //if (!font.SetFaceName(name)) {
+  //  return;
+  //}
 
-  font_list_ctrl_->SetFont(font_type, font);
+  //font_list_ctrl_->SetFont(font_type, font);
 }
 
 void Global_FontPage::OnSizeComboBox(wxCommandEvent& evt) {
@@ -245,7 +241,7 @@ void Global_FontPage::OnSizeComboBox(wxCommandEvent& evt) {
   }
   font.SetPointSize(static_cast<int>(size));
 
-  font_list_ctrl_->SetFont(font_type, font);
+  //font_list_ctrl_->SetFont(font_type, font);
 }
 
 void Global_FontPage::OnFixedWidthOnlyCheckBox(wxCommandEvent& evt) {
@@ -261,10 +257,10 @@ void Global_FontPage::OnResetButton(wxCommandEvent& evt) {
   InitFonts();
 
   // Update font list ctrl.
-  for (int i = 0; i < FONT_COUNT; ++i) {
-    font_list_ctrl_->SetFont(i, fonts_[i]);
-  }
-  font_list_ctrl_->UpdateSizes();
+  //for (int i = 0; i < FONT_COUNT; ++i) {
+  //  font_list_ctrl_->SetFont(i, fonts_[i]);
+  //}
+  //font_list_ctrl_->UpdateSizes();
 
   // Update font name and size combo boxes.
   FontType font_type = GetSelectedFontType();

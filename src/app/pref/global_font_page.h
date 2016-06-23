@@ -8,6 +8,7 @@
 
 class wxCheckBox;
 class wxComboBox;
+class wxListCtrl;
 class wxListEvent;
 
 namespace jil {
@@ -55,7 +56,9 @@ private:
 
   wxFont fonts_[FONT_COUNT];
 
-  FontListCtrl* font_list_ctrl_;
+  //FontListCtrl* 
+  ;
+  wxListCtrl* font_list_ctrl_;
 
   wxComboBox* name_combo_box_;
   wxComboBox* size_combo_box_;
