@@ -65,10 +65,14 @@ public:
 protected:
   void InitColors();
 
+  //virtual wxSize DoGetBestSize() const override;
+
   void OnSize(wxSizeEvent& evt);
   void OnPaint(wxPaintEvent& evt);
   void OnMouseLeftDown(wxMouseEvent& evt);
   void OnFocusChange(wxFocusEvent& evt);
+
+  void DrawSelectedRow(wxDC& dc, const wxRect& row_rect, const wxString& label);
 
   void PostEvent(int index, bool select);
 
@@ -83,6 +87,8 @@ private:
   };
 
   std::vector<Row> rows_;
+
+  //int max_row_width_;
 
   // 0-based index of the current selection.
   // No selection if it's wxNOT_FOUND (-1).

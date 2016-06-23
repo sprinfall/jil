@@ -30,7 +30,7 @@ bool FontListCtrl::Create(wxWindow* parent, wxWindowID id, const wxSize& size, l
   SetBackgroundColour(GetColor(COLOR_BG));
   SetBackgroundStyle(wxBG_STYLE_PAINT);
 
-  SetWindowStyleFlag(wxBORDER_STATIC);
+  SetWindowStyleFlag(wxBORDER_SIMPLE);
 
   int cw = GetCharWidth();
   int ch = GetCharHeight();
@@ -58,6 +58,7 @@ void FontListCtrl::SetFont(int index, const wxFont& font) {
 }
 
 void FontListCtrl::UpdateSizes() {
+  int w = 0;
   int h = 0;
   wxClientDC dc(this);
    
@@ -66,14 +67,22 @@ void FontListCtrl::UpdateSizes() {
 
     dc.SetFont(row.font);
     wxSize label_size = dc.GetTextExtent(row.label);
-    row.h = label_size.y + padding_.y * 2;
 
+    row.h = label_size.y + padding_.y * 2;
     row.y = h;
+
+    int row_width = label_size.x + padding_.x * 2;
+    if (w < row_width) {
+      w = row_width;
+    }
 
     h += row.h;
   }
 
-  SetVirtualSize(wxSize(-1, h));
+  wxSize best_size(w, h);
+  //SetInitialSize(best_size);
+
+  SetVirtualSize(best_size);
   AdjustScrollbars();
 }
 
@@ -86,6 +95,18 @@ void FontListCtrl::InitColors() {
   SetColor(COLOR_BORDER, wxSystemSettings::GetColour(wxSYS_COLOUR_ACTIVEBORDER));
 }
 
+//wxSize FontListCtrl::DoGetBestSize() const {
+//  if (rows_.empty()) {
+//    return wxDefaultSize;
+//  }
+//
+//  int best_height = 0;
+//  for (size_t i = 0; i < rows_.size(); ++i) {
+//    best_height += rows_[i].h;
+//  }
+//  return wxSize(best_height, max_row_width_);
+//}
+
 void FontListCtrl::OnSize(wxSizeEvent& evt) {
   UpdateSizes();
   Refresh();
@@ -93,23 +114,15 @@ void FontListCtrl::OnSize(wxSizeEvent& evt) {
 
 void FontListCtrl::OnPaint(wxPaintEvent& evt) {
   wxAutoBufferedPaintDC dc(this);
-  dc.SetBackground(wxBrush(GetBackgroundColour()));
+  dc.SetBackground(GetBackgroundColour());
   dc.Clear();
 
   PrepareDC(dc);
 
-  wxColour bg_hl_color = GetColor(COLOR_BG_HL);
-  wxColour bg_hl_nofocus_color = GetColor(COLOR_BG_HL_NOFOCUS);
-  wxColour fg_color = GetColor(COLOR_FG);
-  wxColour fg_hl_color = GetColor(COLOR_FG_HL);
-  wxColour border_color = GetColor(COLOR_BORDER);
-
-  dc.SetTextForeground(fg_color);
-  dc.SetPen(border_color);
+  dc.SetTextForeground(GetColor(COLOR_FG));
+  dc.SetPen(GetColor(COLOR_BORDER));
 
   wxRect rect = GetClientRect();
-
-  int x = rect.x;
   int y = rect.y;
 
   for (size_t i = 0; i < rows_.size(); ++i) {
@@ -117,30 +130,36 @@ void FontListCtrl::OnPaint(wxPaintEvent& evt) {
 
     dc.SetFont(row.font);
 
-    int row_y = y + padding_.y;
-
     if (i == selected_index_) {
-      wxPen pen = dc.GetPen();  // Backup pen.
-      dc.SetPen(*wxTRANSPARENT_PEN);
-      dc.SetBrush(HasFocus() ? bg_hl_color : bg_hl_nofocus_color);
-      dc.SetTextForeground(fg_hl_color);
-
-      dc.DrawRectangle(rect.x + 1, y, rect.width - 1, row.h);
-
-      dc.DrawText(row.label, x + padding_.x, row_y);
-
-      // Restore
-      dc.SetTextForeground(fg_color);
-      dc.SetPen(pen);
+      wxRect row_rect = wxRect(rect.x, y, rect.width, row.h);
+      DrawSelectedRow(dc, row_rect, row.label);
     } else {
-      dc.DrawText(row.label, x + padding_.x, row_y);
+      dc.DrawText(row.label, rect.x + padding_.x, y + padding_.y);
     }
 
     y += row.h;
 
     // Border
-    dc.DrawLine(rect.x, y, rect.GetRight(), y);
+    int border_y = y - 1;
+    dc.DrawLine(rect.x, border_y, rect.GetRight(), border_y);
   }
+}
+
+void FontListCtrl::DrawSelectedRow(wxDC& dc, const wxRect& row_rect, const wxString& label) {
+  // Backup
+  wxPen pen = dc.GetPen();
+
+  wxColour hl_color = GetColor(HasFocus() ? COLOR_BG_HL : COLOR_BG_HL_NOFOCUS);
+  dc.SetPen(hl_color);
+  dc.SetBrush(hl_color);
+  dc.DrawRectangle(row_rect);
+
+  dc.SetTextForeground(GetColor(COLOR_FG_HL));
+  dc.DrawText(label, row_rect.x + padding_.x, row_rect.y + padding_.y);
+
+  // Restore
+  dc.SetTextForeground(GetColor(COLOR_FG));
+  dc.SetPen(pen);
 }
 
 void FontListCtrl::OnMouseLeftDown(wxMouseEvent& evt) {

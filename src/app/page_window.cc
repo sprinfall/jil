@@ -42,6 +42,11 @@ void PageWindow::SetPage(TextPage* page) {
 
     HandleTextChange();
     UpdateCaretPosition();
+
+    // NOTE: Don't do this inside SetState().
+    // Scroll to view start AFTER set virtual size.
+    Scroll(page_->state()->view_start);
+
     Refresh();
 
     buffer_->AttachListener(this);
@@ -169,7 +174,9 @@ void PageWindow::SetState(PageState* state) {
   caret_point_ = state->caret_point;
   max_caret_x_ = state->max_caret_x;
 
-  Scroll(state->view_start);
+  // NOTE:
+  // Don't scroll to the view_start right now.
+  // Scroll after set virtual size.
 
   selection_ = state->selection;
 

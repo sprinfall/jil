@@ -20,11 +20,6 @@
 #include "app/pref/common.h"
 #include "app/pref/font_list_ctrl.h"
 
-#define FONT_LABEL_TEXT "Text Editor"
-#define FONT_LABEL_LINE_NR "Line Number"
-#define FONT_LABEL_TABS "Tabs"
-#define FONT_LABEL_STATUS_BAR "Status Bar"
-
 namespace jil {
 namespace pref {
 
@@ -57,6 +52,11 @@ bool Global_FontPage::Create(wxWindow* parent, wxWindowID id) {
   return true;
 }
 
+#define FONT_LABEL_TEXT "Text Editor"
+#define FONT_LABEL_LINE_NR "Line Number"
+#define FONT_LABEL_TABS "Tabs"
+#define FONT_LABEL_STATUS_BAR "Status Bar"
+
 bool Global_FontPage::TransferDataToWindow() {
   // English labels.
   wxString labels[FONT_COUNT] = {
@@ -74,13 +74,14 @@ bool Global_FontPage::TransferDataToWindow() {
     _(FONT_LABEL_STATUS_BAR),
   };
 
+  wxString label_sep = wxT(" | ");
+
   for (int i = 0; i < FONT_COUNT; ++i) {
     wxString label = labels[i];
 
-    // Append the localized label if it's different from the English one.
+    // Append localized label if it's different from the English one.
     if (tr_labels[i] != label) {
-      label += wxT(" | ");
-      label += tr_labels[i];
+      label += label_sep + tr_labels[i];
     }
 
     font_list_ctrl_->AddFont(fonts_[i], label);
@@ -123,7 +124,7 @@ void Global_FontPage::CreateTypeSection(wxSizer* top_vsizer) {
   wxStaticText* label = new wxStaticText(this, wxID_ANY, _("GUI elements:"));
 
   font_list_ctrl_ = new FontListCtrl;
-  font_list_ctrl_->Create(this, ID_FONT_LIST_CTRL, kFontListSize);
+  font_list_ctrl_->Create(this, ID_FONT_LIST_CTRL/*, kFontListSize*/);
 
   top_vsizer->Add(label, wxSizerFlags().Left().Border(wxLEFT|wxTOP));
   top_vsizer->Add(font_list_ctrl_, wxSizerFlags(1).Expand().Border(wxALL));

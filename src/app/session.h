@@ -32,7 +32,7 @@ public:
 
 #if defined (__WXGTK__)
 
-  wxSize book_frame_size() const {
+  const wxSize& book_frame_size() const {
     return book_frame_size_;
   }
   void set_book_frame_size(const wxSize& size) {
@@ -41,7 +41,7 @@ public:
 
 #else
 
-  wxRect book_frame_rect() const {
+  const wxRect& book_frame_rect() const {
     return book_frame_rect_;
   }
   void set_book_frame_rect(const wxRect& rect) {
