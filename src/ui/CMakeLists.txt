@@ -17,6 +17,8 @@ set(SRCS
     label.h
     static_box.cc
     static_box.h
+    string_list_ctrl.cc
+    string_list_ctrl.h
     text_button.cc
     text_button.h
     util.cc

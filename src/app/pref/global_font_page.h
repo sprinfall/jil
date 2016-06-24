@@ -6,18 +6,20 @@
 #include "wx/panel.h"
 #include "app/defs.h"  // FONT_COUNT
 
+class wxButton;
 class wxCheckBox;
 class wxComboBox;
-class wxListCtrl;
 class wxListEvent;
 
 namespace jil {
 
 class Options;
 
-namespace pref {
+namespace ui {
+class StringListCtrl;
+}  // namespace ui
 
-class FontListCtrl;
+namespace pref {
 
 class Global_FontPage : public wxPanel {
   DECLARE_EVENT_TABLE()
@@ -49,21 +51,21 @@ protected:
   void OnNameComboBox(wxCommandEvent& evt);
   void OnSizeComboBox(wxCommandEvent& evt);
   void OnFixedWidthOnlyCheckBox(wxCommandEvent& evt);
-  void OnResetButton(wxCommandEvent& evt);
+  void OnUseDefaultButton(wxCommandEvent& evt);
 
 private:
   Options* options_;
 
   wxFont fonts_[FONT_COUNT];
 
-  //FontListCtrl* 
-  ;
-  wxListCtrl* font_list_ctrl_;
+  ui::StringListCtrl* font_list_ctrl_;
 
   wxComboBox* name_combo_box_;
   wxComboBox* size_combo_box_;
 
   wxCheckBox* fixed_width_check_box_;
+
+  wxButton* use_default_button_;
 
   // TODO: Cache the font list.
   std::set<wxString> font_facenames_;

@@ -7,6 +7,7 @@
 #include "wx/font.h"
 #include "wx/fontenum.h"
 #include "wx/string.h"
+#include "app/defs.h"
 
 namespace jil {
 
@@ -21,6 +22,10 @@ wxString GetDefaultFontName();
 
 // Get the default font point size.
 int GetDefaultFontSize();
+
+void NormalizeFont(wxFont& font);
+
+wxFont GetDefaultFont(FontType font_type);
 
 // Font point sizes.
 #if defined (__WXOSX__)

@@ -1,8 +1,12 @@
 #include "app/font_util.h"
+
 #include <set>
+
 #include "wx/gdicmn.h"
 #include "wx/log.h"
 #include "wx/settings.h"
+
+#include "app/defs.h"
 
 namespace jil {
 
@@ -57,6 +61,7 @@ wxString GetDefaultFontName() {
 // According to wxGTK's poor implementation of wxSystemSettings::GetFont, you
 // cannot get the system fixed-width font under GTK+.
 static int DoGetDefaultFontSize() {
+  // TODO: Check the font size for wxSYS_SYSTEM_FIXED_FONT in Windows.
   wxFont font = wxSystemSettings::GetFont(wxSYS_SYSTEM_FIXED_FONT);
   return font.GetPointSize();
 }
@@ -64,6 +69,35 @@ static int DoGetDefaultFontSize() {
 int GetDefaultFontSize() {
   static int size = DoGetDefaultFontSize();
   return size;
+}
+
+void NormalizeFont(wxFont& font) {
+  if (font.GetWeight() != wxFONTWEIGHT_NORMAL) {
+    font.SetWeight(wxFONTWEIGHT_NORMAL);
+  }
+
+  if (font.GetStyle() != wxFONTSTYLE_NORMAL) {
+    font.SetStyle(wxFONTSTYLE_NORMAL);
+  }
+}
+
+static void InitDefaultFonts(wxFont fonts[FONT_COUNT]) {
+  fonts[FONT_TEXT] = GetGlobalFont(GetDefaultFontSize(), GetDefaultFontName());
+  fonts[FONT_LINE_NR] = fonts[FONT_TEXT];
+
+  wxFont gui_font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+  NormalizeFont(gui_font);
+
+  fonts[FONT_TABS] = gui_font;
+  fonts[FONT_STATUS_BAR] = gui_font;
+}
+
+wxFont GetDefaultFont(FontType font_type) {
+  wxFont fonts[FONT_COUNT];
+  if (!fonts[0].IsOk()) {
+    InitDefaultFonts(fonts);
+  }
+  return fonts[font_type];
 }
 
 }  // namespace jil

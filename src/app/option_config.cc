@@ -250,34 +250,15 @@ static void GetOptionTable(Setting setting, editor::OptionTable* option_table) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-static void NormalizeFont(wxFont& font) {
-  if (font.GetWeight() != wxFONTWEIGHT_NORMAL) {
-    font.SetWeight(wxFONTWEIGHT_NORMAL);
-  }
-
-  if (font.GetStyle() != wxFONTSTYLE_NORMAL) {
-    font.SetStyle(wxFONTSTYLE_NORMAL);
+static void ValidateFont(wxFont fonts[FONT_COUNT], FontType font_type) {
+  if (!fonts[font_type].IsOk()) {
+    fonts[font_type] = GetDefaultFont(font_type);
   }
 }
 
 static void ValidateFonts(wxFont fonts[FONT_COUNT]) {
-  if (!fonts[FONT_TEXT].IsOk()) {
-    fonts[FONT_TEXT] = GetGlobalFont(GetDefaultFontSize(), GetDefaultFontName());
-  }
-
-  if (!fonts[FONT_LINE_NR].IsOk()) {
-    fonts[FONT_LINE_NR] = fonts[FONT_TEXT];
-  }
-
-  if (!fonts[FONT_TABS].IsOk()) {
-    wxFont gui_font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
-    wxString face_name = gui_font.GetFaceName();
-    NormalizeFont(gui_font);
-    fonts[FONT_TABS] = gui_font;
-  }
-
-  if (!fonts[FONT_STATUS_BAR].IsOk()) {
-    fonts[FONT_STATUS_BAR] = fonts[FONT_TABS];
+  for (int i = 0; i < FONT_COUNT; ++i) {
+    ValidateFont(fonts, static_cast<FontType>(i));
   }
 }
 

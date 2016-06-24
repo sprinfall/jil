@@ -1,9 +1,9 @@
-#ifndef JIL_PREF_FONT_LIST_CTRL_H_
-#define JIL_PREF_FONT_LIST_CTRL_H_
+#ifndef JIL_UI_STRING_LIST_CTRL_H_
+#define JIL_UI_STRING_LIST_CTRL_H_
 #pragma once
 
 // NOTE:
-// FontListCtrl emits the same event class (wxListEvent) as wxListCtrl:
+// StringListCtrl emits the same event class (wxListEvent) as wxListCtrl:
 //   - Event types: wxEVT_LIST_ITEM_SELECTED, wxEVT_LIST_ITEM_DESELECTED
 //   - Macros: EVT_LIST_ITEM_SELECTED, EVT_LIST_ITEM_DESELECTED
 
@@ -11,16 +11,15 @@
 #include "wx/scrolwin.h"
 
 namespace jil {
-namespace pref {
+namespace ui {
 
-class FontListCtrl : public wxScrolledWindow {
+class StringListCtrl : public wxScrolledWindow {
   DECLARE_EVENT_TABLE()
 
 public:
   enum ColorId {
     COLOR_BG = 0,
     COLOR_BG_HL,
-    COLOR_BG_HL_NOFOCUS,
     COLOR_FG,
     COLOR_FG_HL,
     COLOR_BORDER,
@@ -28,8 +27,8 @@ public:
   };
 
 public:
-  FontListCtrl();
-  virtual ~FontListCtrl();
+  StringListCtrl();
+  virtual ~StringListCtrl();
 
   virtual bool AcceptsFocus() const override {
     return true;
@@ -48,14 +47,12 @@ public:
     colors_[id] = color;
   }
 
-  void AddFont(const wxFont& font, const wxString& label);
-
-  void SetFont(int index, const wxFont& font);
+  void AppendString(const wxString& string);
 
   void UpdateSizes();
 
   int GetCount() const {
-    return static_cast<int>(rows_.size());
+    return static_cast<int>(strings_.size());
   }
 
   int selected_index() const {
@@ -65,7 +62,7 @@ public:
 protected:
   void InitColors();
 
-  //virtual wxSize DoGetBestSize() const override;
+  virtual wxSize DoGetBestSize() const override;
 
   void OnSize(wxSizeEvent& evt);
   void OnPaint(wxPaintEvent& evt);
@@ -79,25 +76,17 @@ protected:
 private:
   wxColour colors_[COLOR_COUNT];
 
-  struct Row {
-    wxFont font;
-    wxString label;
-    int y;
-    int h;
-  };
-
-  std::vector<Row> rows_;
-
-  //int max_row_width_;
+  std::vector<wxString> strings_;
 
   // 0-based index of the current selection.
   // No selection if it's wxNOT_FOUND (-1).
   int selected_index_;
 
-  wxSize padding_;
+  wxSize raw_padding_;
+  wxSize row_size_;
 };
 
-}  // namespace pref
+}  // namespace ui
 }  // namespace jil
 
-#endif  // JIL_PREF_FONT_LIST_CTRL_H_
+#endif  // JIL_UI_STRING_LIST_CTRL_H_

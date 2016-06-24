@@ -13,12 +13,12 @@
 #include "editor/option.h"
 #include "editor/util.h"
 
+#include "ui/string_list_ctrl.h"
+
 #include "app/font_util.h"
 #include "app/option.h"
 #include "app/util.h"
-
 #include "app/pref/common.h"
-#include "app/pref/font_list_ctrl.h"
 
 namespace jil {
 namespace pref {
@@ -29,7 +29,7 @@ EVT_LIST_ITEM_DESELECTED(ID_FONT_LIST_CTRL, Global_FontPage::OnFontListSelection
 EVT_COMBOBOX(ID_FONT_NAME_COMBOBOX, Global_FontPage::OnNameComboBox)
 EVT_COMBOBOX(ID_FONT_SIZE_COMBOBOX, Global_FontPage::OnSizeComboBox)
 EVT_CHECKBOX(ID_FONT_FIXED_WIDTH_ONLY_CHECKBOX, Global_FontPage::OnFixedWidthOnlyCheckBox)
-EVT_BUTTON(ID_FONT_RESET_BUTTON, Global_FontPage::OnResetButton)
+EVT_BUTTON(ID_FONT_USE_DEFAULT_BUTTON, Global_FontPage::OnUseDefaultButton)
 END_EVENT_TABLE()
 
 Global_FontPage::Global_FontPage(Options* options)
@@ -50,47 +50,9 @@ bool Global_FontPage::Create(wxWindow* parent, wxWindowID id) {
   return true;
 }
 
-#define FONT_LABEL_TEXT "Text Editor"
-#define FONT_LABEL_LINE_NR "Line Number"
-#define FONT_LABEL_TABS "Tabs"
-#define FONT_LABEL_STATUS_BAR "Status Bar"
-
 bool Global_FontPage::TransferDataToWindow() {
-  // English labels.
-  wxString labels[FONT_COUNT] = {
-    wxT(FONT_LABEL_TEXT),
-    wxT(FONT_LABEL_LINE_NR),
-    wxT(FONT_LABEL_TABS),
-    wxT(FONT_LABEL_STATUS_BAR),
-  };
-
-  // Localized labels.
-  wxString tr_labels[FONT_COUNT] = {
-    _(FONT_LABEL_TEXT),
-    _(FONT_LABEL_LINE_NR),
-    _(FONT_LABEL_TABS),
-    _(FONT_LABEL_STATUS_BAR),
-  };
-
-  wxString label_sep = wxT(" | ");
-
-  for (int i = 0; i < FONT_COUNT; ++i) {
-    wxString label = labels[i];
-
-    // Append localized label if it's different from the English one.
-    if (tr_labels[i] != label) {
-      label += label_sep + tr_labels[i];
-    }
-
-    font_list_ctrl_->InsertItem(i, label);
-
-    //font_list_ctrl_->AddFont(fonts_[i], label);
-  }
-
-  //font_list_ctrl_->UpdateSizes();
-
   SetFontToWindow(wxNullFont);
-
+  use_default_button_->Enable(false);
   return true;
 }
 
@@ -113,26 +75,34 @@ void Global_FontPage::CreateControls() {
   CreateTypeSection(top_vsizer);
   CreateFontSection(top_vsizer);
 
-  wxButton* reset_button = new wxButton(this, ID_FONT_RESET_BUTTON, _("Reset All"));
-  top_vsizer->Add(reset_button, wxSizerFlags().Right().Border(wxRIGHT));
+  use_default_button_ = new wxButton(this, ID_FONT_USE_DEFAULT_BUTTON, _("Use Default"));
+  top_vsizer->Add(use_default_button_, wxSizerFlags().Right().Border(wxRIGHT));
   top_vsizer->AddSpacer(10);
 
   SetSizerAndFit(top_vsizer);
 }
 
 void Global_FontPage::CreateTypeSection(wxSizer* top_vsizer) {
-  wxStaticText* label = new wxStaticText(this, wxID_ANY, _("GUI elements:"));
+  wxStaticText* label = new wxStaticText(this, wxID_ANY, _("Display items:"));
 
-  //static const wxSize kFontListSize(-1, 150);
-  //font_list_ctrl_ = new FontListCtrl;
-  //font_list_ctrl_->Create(this, ID_FONT_LIST_CTRL/*, kFontListSize*/);
+  font_list_ctrl_ = new ui::StringListCtrl;
+  font_list_ctrl_->Create(this, ID_FONT_LIST_CTRL);
 
-  long style = wxLC_LIST | wxLC_NO_HEADER | wxLC_SINGLE_SEL;
-  font_list_ctrl_ = new wxListCtrl(this, ID_FONT_LIST_CTRL, wxDefaultPosition, wxDefaultSize, style);
-  font_list_ctrl_->AppendColumn(wxEmptyString);
+  wxString tr_labels[FONT_COUNT] = {
+    _("Text Editor"),
+    _("Line Number"),
+    _("Tabs"),
+    _("Status Bar"),
+  };
+
+  for (int i = 0; i < FONT_COUNT; ++i) {
+    font_list_ctrl_->AppendString(tr_labels[i]);
+  }
+
+  font_list_ctrl_->UpdateSizes();
 
   top_vsizer->Add(label, wxSizerFlags().Left().Border(wxLEFT|wxTOP));
-  top_vsizer->Add(font_list_ctrl_, wxSizerFlags(1).Expand().Border(wxALL));
+  top_vsizer->Add(font_list_ctrl_, wxSizerFlags().Expand().Border(wxALL));
 }
 
 void Global_FontPage::CreateFontSection(wxSizer* top_vsizer) {
@@ -148,20 +118,18 @@ void Global_FontPage::CreateFontSection(wxSizer* top_vsizer) {
   fixed_width_check_box_->SetValue(fixed_width_only);
 
   wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-  // Size proportion: 3 : 1
-  hsizer->Add(name_combo_box_, wxSizerFlags(3));
-  hsizer->Add(size_combo_box_, wxSizerFlags(1).Border(wxLEFT, 10));
+  hsizer->Add(name_combo_box_);
+  hsizer->Add(size_combo_box_, wxSizerFlags().Border(wxLEFT, 10));
   top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
 
   top_vsizer->Add(fixed_width_check_box_, wxSizerFlags().Expand().Border(wxALL));
 }
 
-// TODO
 FontType Global_FontPage::GetSelectedFontType() const {
-  //int index = font_list_ctrl_->selected_index();
-  //if (index >= 0 && index < FONT_COUNT) {
-  //  return static_cast<FontType>(index);
-  //}
+  int index = font_list_ctrl_->selected_index();
+  if (index >= 0 && index < FONT_COUNT) {
+    return static_cast<FontType>(index);
+  }
   return FONT_COUNT;
 }
 
@@ -203,8 +171,10 @@ void Global_FontPage::OnFontListSelectionChange(wxListEvent& evt) {
   FontType font_type = GetSelectedFontType();
   if (font_type != FONT_COUNT) {
     SetFontToWindow(fonts_[font_type]);
+    use_default_button_->Enable(true);
   } else {
     SetFontToWindow(wxNullFont);
+    use_default_button_->Enable(false);
   }
 }
 
@@ -214,14 +184,12 @@ void Global_FontPage::OnNameComboBox(wxCommandEvent& evt) {
     return;
   }
 
-  //wxFont& font = fonts_[font_type];
+  wxFont& font = fonts_[font_type];
 
-  //wxString name = name_combo_box_->GetValue();
-  //if (!font.SetFaceName(name)) {
-  //  return;
-  //}
-
-  //font_list_ctrl_->SetFont(font_type, font);
+  wxString name = name_combo_box_->GetValue();
+  if (!font.SetFaceName(name)) {
+    return;
+  }
 }
 
 void Global_FontPage::OnSizeComboBox(wxCommandEvent& evt) {
@@ -240,8 +208,6 @@ void Global_FontPage::OnSizeComboBox(wxCommandEvent& evt) {
     size = GetDefaultFontSize();
   }
   font.SetPointSize(static_cast<int>(size));
-
-  //font_list_ctrl_->SetFont(font_type, font);
 }
 
 void Global_FontPage::OnFixedWidthOnlyCheckBox(wxCommandEvent& evt) {
@@ -253,18 +219,12 @@ void Global_FontPage::OnFixedWidthOnlyCheckBox(wxCommandEvent& evt) {
   name_combo_box_->SetValue(value);
 }
 
-void Global_FontPage::OnResetButton(wxCommandEvent& evt) {
-  InitFonts();
-
-  // Update font list ctrl.
-  //for (int i = 0; i < FONT_COUNT; ++i) {
-  //  font_list_ctrl_->SetFont(i, fonts_[i]);
-  //}
-  //font_list_ctrl_->UpdateSizes();
-
-  // Update font name and size combo boxes.
+void Global_FontPage::OnUseDefaultButton(wxCommandEvent& evt) {
   FontType font_type = GetSelectedFontType();
   if (font_type != FONT_COUNT) {
+    fonts_[font_type] = GetDefaultFont(font_type);
+
+    // Update font name and size combo boxes.
     SetFontToWindow(fonts_[font_type]);
   }
 }
