@@ -64,7 +64,6 @@ protected:
 
   virtual wxSize DoGetBestSize() const override;
 
-  void OnSize(wxSizeEvent& evt);
   void OnPaint(wxPaintEvent& evt);
   void OnMouseLeftDown(wxMouseEvent& evt);
   void OnFocusChange(wxFocusEvent& evt);

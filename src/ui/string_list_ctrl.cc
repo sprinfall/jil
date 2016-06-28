@@ -7,7 +7,6 @@ namespace jil {
 namespace ui {
 
 BEGIN_EVENT_TABLE(StringListCtrl, wxScrolledWindow)
-EVT_SIZE        (StringListCtrl::OnSize)
 EVT_PAINT       (StringListCtrl::OnPaint)
 EVT_LEFT_DOWN   (StringListCtrl::OnMouseLeftDown)
 EVT_SET_FOCUS   (StringListCtrl::OnFocusChange)
@@ -30,7 +29,7 @@ bool StringListCtrl::Create(wxWindow* parent, wxWindowID id, const wxSize& size,
   SetBackgroundColour(GetColor(COLOR_BG));
   SetBackgroundStyle(wxBG_STYLE_PAINT);
 
-  SetWindowStyleFlag(wxBORDER_SIMPLE);
+  SetWindowStyleFlag(wxBORDER_STATIC);
 
   UpdateSizes();
 
@@ -75,7 +74,7 @@ void StringListCtrl::InitColors() {
   SetColor(COLOR_BG_HL, wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT));
   SetColor(COLOR_FG, wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOXTEXT));
   SetColor(COLOR_FG_HL, wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT));
-  SetColor(COLOR_BORDER, wxSystemSettings::GetColour(wxSYS_COLOUR_ACTIVEBORDER));
+  //SetColor(COLOR_BORDER, wxSystemSettings::GetColour(wxSYS_COLOUR_ACTIVEBORDER));
 }
 
 wxSize StringListCtrl::DoGetBestSize() const {
@@ -83,11 +82,6 @@ wxSize StringListCtrl::DoGetBestSize() const {
     return wxDefaultSize;
   }
   return wxSize(row_size_.x, row_size_.y * (strings_.size() + 1));
-}
-
-void StringListCtrl::OnSize(wxSizeEvent& evt) {
-  //AdjustScrollbars();  // TODO
-  evt.Skip();
 }
 
 void StringListCtrl::OnPaint(wxPaintEvent& evt) {
@@ -98,7 +92,7 @@ void StringListCtrl::OnPaint(wxPaintEvent& evt) {
   PrepareDC(dc);
 
   dc.SetTextForeground(GetColor(COLOR_FG));
-  dc.SetPen(GetColor(COLOR_BORDER));
+  //dc.SetPen(GetColor(COLOR_BORDER));
   dc.SetFont(GetFont());
 
   wxRect rect = GetClientRect();
@@ -113,10 +107,6 @@ void StringListCtrl::OnPaint(wxPaintEvent& evt) {
     }
 
     y += row_size_.y;
-
-    // Border
-    //int border_y = y - 1;
-    //dc.DrawLine(rect.x, border_y, rect.GetRight(), border_y);
   }
 }
 

@@ -2,12 +2,12 @@
 #define JIL_PREF_GLOBAL_FONT_PAGE_H_
 #pragma once
 
-#include <set>
+#include <map>
 #include "wx/panel.h"
+#include "wx/odcombo.h"
 #include "app/defs.h"  // FONT_COUNT
 
 class wxButton;
-class wxCheckBox;
 class wxComboBox;
 class wxListEvent;
 
@@ -16,6 +16,7 @@ namespace jil {
 class Options;
 
 namespace ui {
+class BoldItemComboBox;
 class StringListCtrl;
 }  // namespace ui
 
@@ -41,7 +42,7 @@ protected:
 
   FontType GetSelectedFontType() const;
 
-  void InitNameComboBox(wxComboBox* combo_box, bool fixed_width_only);
+  void InitNameComboBox(ui::BoldItemComboBox* combo_box);
   void InitSizeComboBox(wxComboBox* combo_box);
 
   void SetFontToWindow(const wxFont& font);
@@ -50,7 +51,6 @@ protected:
 
   void OnNameComboBox(wxCommandEvent& evt);
   void OnSizeComboBox(wxCommandEvent& evt);
-  void OnFixedWidthOnlyCheckBox(wxCommandEvent& evt);
   void OnUseDefaultButton(wxCommandEvent& evt);
 
 private:
@@ -60,15 +60,10 @@ private:
 
   ui::StringListCtrl* font_list_ctrl_;
 
-  wxComboBox* name_combo_box_;
+  ui::BoldItemComboBox* name_combo_box_;
   wxComboBox* size_combo_box_;
 
-  wxCheckBox* fixed_width_check_box_;
-
   wxButton* use_default_button_;
-
-  // TODO: Cache the font list.
-  std::set<wxString> font_facenames_;
 };
 
 }  // namespace pref

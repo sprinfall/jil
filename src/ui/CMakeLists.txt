@@ -7,6 +7,8 @@ set(SRCS
     bitmap_button.h
     bitmap_toggle_button.cc
     bitmap_toggle_button.h
+    bold_item_combo_box.cc
+    bold_item_combo_box.h
     button_base.cc
     button_base.h
     button_style.cc

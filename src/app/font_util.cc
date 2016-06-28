@@ -61,8 +61,12 @@ wxString GetDefaultFontName() {
 // According to wxGTK's poor implementation of wxSystemSettings::GetFont, you
 // cannot get the system fixed-width font under GTK+.
 static int DoGetDefaultFontSize() {
-  // TODO: Check the font size for wxSYS_SYSTEM_FIXED_FONT in Windows.
+#if defined (__WXMSW__)
+  wxFont font = wxSystemSettings::GetFont(wxSYS_ANSI_FIXED_FONT);
+#else
   wxFont font = wxSystemSettings::GetFont(wxSYS_SYSTEM_FIXED_FONT);
+#endif
+
   return font.GetPointSize();
 }
 

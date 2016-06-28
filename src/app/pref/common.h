@@ -22,7 +22,6 @@ enum Id {
   ID_FONT_LIST_CTRL,
   ID_FONT_NAME_COMBOBOX,
   ID_FONT_SIZE_COMBOBOX,
-  ID_FONT_FIXED_WIDTH_ONLY_CHECKBOX,
   ID_FONT_USE_DEFAULT_BUTTON,
 
   ID_TAB_STOP_TEXTCTRL,
@@ -32,6 +31,7 @@ enum Id {
 
 static const wxSize kMinComboBoxSize(120, -1);
 static const wxSize kNumTextSize(100, -1);
+static const wxSize kSmallNumTextSize(60, -1);
 static const wxSize kStrTextSize(280, -1);
 
 // Add or remove a flag from the flags.

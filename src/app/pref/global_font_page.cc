@@ -3,6 +3,7 @@
 #include "wx/button.h"
 #include "wx/checkbox.h"
 #include "wx/combobox.h"
+#include "wx/dc.h"
 #include "wx/fontutil.h"
 #include "wx/listctrl.h"
 #include "wx/sizer.h"
@@ -13,6 +14,7 @@
 #include "editor/option.h"
 #include "editor/util.h"
 
+#include "ui/bold_item_combo_box.h"
 #include "ui/string_list_ctrl.h"
 
 #include "app/font_util.h"
@@ -28,7 +30,6 @@ EVT_LIST_ITEM_SELECTED(ID_FONT_LIST_CTRL, Global_FontPage::OnFontListSelectionCh
 EVT_LIST_ITEM_DESELECTED(ID_FONT_LIST_CTRL, Global_FontPage::OnFontListSelectionChange)
 EVT_COMBOBOX(ID_FONT_NAME_COMBOBOX, Global_FontPage::OnNameComboBox)
 EVT_COMBOBOX(ID_FONT_SIZE_COMBOBOX, Global_FontPage::OnSizeComboBox)
-EVT_CHECKBOX(ID_FONT_FIXED_WIDTH_ONLY_CHECKBOX, Global_FontPage::OnFixedWidthOnlyCheckBox)
 EVT_BUTTON(ID_FONT_USE_DEFAULT_BUTTON, Global_FontPage::OnUseDefaultButton)
 END_EVENT_TABLE()
 
@@ -75,7 +76,7 @@ void Global_FontPage::CreateControls() {
   CreateTypeSection(top_vsizer);
   CreateFontSection(top_vsizer);
 
-  use_default_button_ = new wxButton(this, ID_FONT_USE_DEFAULT_BUTTON, _("Use Default"));
+  use_default_button_ = new wxButton(this, ID_FONT_USE_DEFAULT_BUTTON, _("Use default font"));
   top_vsizer->Add(use_default_button_, wxSizerFlags().Right().Border(wxRIGHT));
   top_vsizer->AddSpacer(10);
 
@@ -106,23 +107,20 @@ void Global_FontPage::CreateTypeSection(wxSizer* top_vsizer) {
 }
 
 void Global_FontPage::CreateFontSection(wxSizer* top_vsizer) {
-  bool fixed_width_only = false;
+  name_combo_box_ = new ui::BoldItemComboBox(this, ID_FONT_NAME_COMBOBOX);
+  InitNameComboBox(name_combo_box_);
 
-  name_combo_box_ = new wxComboBox(this, ID_FONT_NAME_COMBOBOX);
-  InitNameComboBox(name_combo_box_, fixed_width_only);  // TODO: Slow to list fonts.
-
-  size_combo_box_ = new wxComboBox(this, ID_FONT_SIZE_COMBOBOX, wxEmptyString, wxDefaultPosition, kNumTextSize);
+  size_combo_box_ = new wxComboBox(this,
+                                   ID_FONT_SIZE_COMBOBOX,
+                                   wxEmptyString,
+                                   wxDefaultPosition,
+                                   kSmallNumTextSize);
   InitSizeComboBox(size_combo_box_);
 
-  fixed_width_check_box_ = new wxCheckBox(this, ID_FONT_FIXED_WIDTH_ONLY_CHECKBOX, _("Fixed width only"));
-  fixed_width_check_box_->SetValue(fixed_width_only);
-
   wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-  hsizer->Add(name_combo_box_);
+  hsizer->Add(name_combo_box_, wxSizerFlags(1));
   hsizer->Add(size_combo_box_, wxSizerFlags().Border(wxLEFT, 10));
   top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
-
-  top_vsizer->Add(fixed_width_check_box_, wxSizerFlags().Expand().Border(wxALL));
 }
 
 FontType Global_FontPage::GetSelectedFontType() const {
@@ -133,12 +131,22 @@ FontType Global_FontPage::GetSelectedFontType() const {
   return FONT_COUNT;
 }
 
-void Global_FontPage::InitNameComboBox(wxComboBox* combo_box, bool fixed_width_only) {
+// TODO: Slow to list fonts.
+void Global_FontPage::InitNameComboBox(ui::BoldItemComboBox* combo_box) {
+  OrderedFontEnumerator fixed_fe;
+  fixed_fe.EnumerateFacenames(wxFONTENCODING_SYSTEM, true);
+  fixed_fe.facenames;
+
   OrderedFontEnumerator fe;
-  fe.EnumerateFacenames(wxFONTENCODING_SYSTEM, fixed_width_only);
+  fe.EnumerateFacenames(wxFONTENCODING_SYSTEM, false);
+
   std::set<wxString>::iterator it = fe.facenames.begin();
-  for (; it != fe.facenames.end(); ++it) {
-    combo_box->Append(*it);
+  for (const wxString& facename : fe.facenames) {
+    if (fixed_fe.facenames.find(facename) != fixed_fe.facenames.end()) {
+      combo_box->Append(facename, true);
+    } else {
+      combo_box->Append(facename, false);
+    }
   }
 }
 
@@ -208,15 +216,6 @@ void Global_FontPage::OnSizeComboBox(wxCommandEvent& evt) {
     size = GetDefaultFontSize();
   }
   font.SetPointSize(static_cast<int>(size));
-}
-
-void Global_FontPage::OnFixedWidthOnlyCheckBox(wxCommandEvent& evt) {
-  wxString value = name_combo_box_->GetValue();
-
-  name_combo_box_->Clear();
-  InitNameComboBox(name_combo_box_, evt.IsChecked());
-
-  name_combo_box_->SetValue(value);
 }
 
 void Global_FontPage::OnUseDefaultButton(wxCommandEvent& evt) {
