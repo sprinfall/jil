@@ -52,6 +52,10 @@ public:
     return page_window_;
   }
 
+  TextPage* placeholder_page() const {
+    return placeholder_page_;
+  }
+
   // Add a page for the buffer.
   // Return the new created page.
   TextPage* AddPage(editor::TextBuffer* buffer, bool active);

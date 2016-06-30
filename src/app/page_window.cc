@@ -53,6 +53,10 @@ void PageWindow::SetPage(TextPage* page) {
   }
 }
 
+bool PageWindow::IsPagePlaceholder() const {
+  return page_->buffer()->id() == kPlaceholderBufferId;
+}
+
 //------------------------------------------------------------------------------
 
 void PageWindow::GetEditMenu(wxMenu* menu) {
@@ -60,14 +64,10 @@ void PageWindow::GetEditMenu(wxMenu* menu) {
   AppendMenuItem(menu, ID_MENU_EDIT_REDO, kTrEditRedo);
   menu->AppendSeparator();
 
-  //------------------------------------
-
   AppendMenuItem(menu, ID_MENU_EDIT_CUT, kTrEditCut);
   AppendMenuItem(menu, ID_MENU_EDIT_COPY, kTrEditCopy);
   AppendMenuItem(menu, ID_MENU_EDIT_PASTE, kTrEditPaste);
   menu->AppendSeparator();
-
-  //------------------------------------
 
   wxMenu* indent_menu = new wxMenu;
   AppendMenuItem(indent_menu, ID_MENU_EDIT_INCREASE_INDENT, kTrEditIncreaseIndent);
@@ -75,20 +75,18 @@ void PageWindow::GetEditMenu(wxMenu* menu) {
   AppendMenuItem(indent_menu, ID_MENU_EDIT_AUTO_INDENT, kTrEditAutoIndent);
   menu->AppendSubMenu(indent_menu, kTrEditIndent);
 
-  //------------------------------------
-
   wxMenu* comment_menu = new wxMenu;
   AppendMenuItem(comment_menu, ID_MENU_EDIT_COMMENT, kTrEditComment);
   AppendMenuItem(comment_menu, ID_MENU_EDIT_UNCOMMENT, kTrEditUncomment);
   menu->AppendSubMenu(comment_menu, kTrEditComment);
   menu->AppendSeparator();
 
-  //------------------------------------
-
-  AppendMenuItem(menu, ID_MENU_EDIT_FIND, kTrEditFind);
-  AppendMenuItem(menu, ID_MENU_EDIT_REPLACE, kTrEditReplace);
-  AppendMenuItem(menu, ID_MENU_EDIT_FIND_NEXT, kTrEditFindNext);
-  AppendMenuItem(menu, ID_MENU_EDIT_FIND_PREV, kTrEditFindPrev);
+  wxMenu* find_menu = new wxMenu;
+  AppendMenuItem(find_menu, ID_MENU_EDIT_FIND, kTrEditFind);
+  AppendMenuItem(find_menu, ID_MENU_EDIT_REPLACE, kTrEditReplace);
+  AppendMenuItem(find_menu, ID_MENU_EDIT_FIND_NEXT, kTrEditFindNext);
+  AppendMenuItem(find_menu, ID_MENU_EDIT_FIND_PREV, kTrEditFindPrev);
+  menu->AppendSubMenu(find_menu, kTrEditFindReplace);
   menu->AppendSeparator();
 
   AppendMenuItem(menu, ID_MENU_EDIT_GO_TO, kTrEditGoTo);

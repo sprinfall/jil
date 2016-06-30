@@ -18,6 +18,8 @@ public:
 
   void SetPage(TextPage* page);
 
+  bool IsPagePlaceholder() const;
+
   void GetEditMenu(wxMenu* menu);
   bool GetEditMenuState(int menu_id);
   bool GetFileMenuState(int menu_id, wxString* text);

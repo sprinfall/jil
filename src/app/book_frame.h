@@ -269,8 +269,8 @@ protected:
   // Handle events from text window.
   void OnTextWindowEvent(wxCommandEvent& evt);
 
-  // Handle text window get focus event.
-  void HandleTextWindowGetFocus(wxCommandEvent& evt);
+  // Create edit menu items according to current page.
+  void RecreateEditMenu();
 
   // Handle events from find result page.
   void OnFindResultPageEvent(wxCommandEvent& evt);
@@ -490,6 +490,9 @@ private:
 #if JIL_ENABLE_LEADER_KEY
   editor::Key leader_key_;
 #endif  // JIL_ENABLE_LEADER_KEY
+
+  // Edit menu will be updated according to the current page.
+  wxMenu* edit_menu_;
 
   // File menu -> Recent Files
   std::list<wxString> recent_files_;

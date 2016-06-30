@@ -202,6 +202,8 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
   status_bar_->SetFieldValue(StatusBar::kField_Cwd, wxGetCwd(), false);
 
   LoadMenus();
+  RecreateEditMenu();
+
   SetAccelForVoidCmds();
 
   SetDropTarget(new FileDropTarget(this));
@@ -210,6 +212,7 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
 }
 
 BookFrame::~BookFrame() {
+  DeleteFrBuffer();
 }
 
 bool BookFrame::Destroy() {
@@ -819,6 +822,7 @@ void BookFrame::Init() {
   find_flags_ = 0;
   find_thread_ = NULL;
 
+  edit_menu_ = NULL;
   recent_files_menu_ = NULL;
 }
 
@@ -1354,7 +1358,6 @@ void BookFrame::OnThemeUpdateUI(wxUpdateUIEvent& evt) {
 //       - TextWindow::~TextWindow()
 void BookFrame::OnClose(wxCloseEvent& evt) {
   StopFindThread();
-  DeleteFrBuffer();
 
   // Remember opened files.
   session_->ClearOpenedFiles();
@@ -1550,7 +1553,9 @@ void BookFrame::OnTextWindowEvent(wxCommandEvent& evt) {
   int type = evt.GetInt();
 
   if (type == TextWindow::kGetFocusEvent) {
-    HandleTextWindowGetFocus(evt);
+    // NOTE: Don't try to get the focused page from evt.GetEventObject().
+    // A window could be destroyed immediately after it gets focus.
+    RecreateEditMenu();
     return;
   }
 
@@ -1589,35 +1594,23 @@ void BookFrame::OnTextWindowEvent(wxCommandEvent& evt) {
   status_bar_->Refresh();
 }
 
-// Update menus according to the focused text window.
-// TODO: Update Edit menus after close last text window?
-void BookFrame::HandleTextWindowGetFocus(wxCommandEvent& evt) {
-  wxMenuBar* menu_bar = GetMenuBar();
-  if (menu_bar == NULL) {
+void BookFrame::RecreateEditMenu() {
+  if (edit_menu_ == NULL) {
     return;
   }
 
-  // TODO: Use Remove/Insert instead?
-  wxMenu* edit_menu = menu_bar->GetMenu(1);
-  if (edit_menu == NULL) {
-    return;
+  BookPage* current_page = GetCurrentPage();
+  if (current_page == NULL) {
+    current_page = text_book_->placeholder_page();
   }
 
-  // NOTE: Don't try to get the focused page from evt.GetEventObject().
-  // A window could be destroyed immediately after it gets focus.
-  BookPage* focused_page = GetFocusedPage();
-  if (focused_page == NULL) {
-    return;
-  }
-
-  int page_type = focused_page->Page_Type();
-
-  if (page_type != page_type_) {
-    page_type_ = page_type;
-    wxLogDebug("Current page type: %d", page_type_);
-
-    ClearMenuItems(edit_menu);
-    focused_page->Page_EditMenu(edit_menu);
+  if (current_page != NULL) {
+    int page_type = current_page->Page_Type();
+    if (page_type != page_type_) {
+      page_type_ = page_type;
+      ClearMenuItems(edit_menu_);
+      current_page->Page_EditMenu(edit_menu_);
+    }
   }
 }
 
@@ -2460,47 +2453,10 @@ void BookFrame::LoadMenus() {
 
   //------------------------------------
   // Edit
+  // Not loaded here. See RecreateEditMenu.
 
-  wxMenu* edit_menu = new wxMenu;
-
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_UNDO, kTrEditUndo);
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_REDO, kTrEditRedo);
-  edit_menu->AppendSeparator();
-
-  //------------------------------------
-
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_CUT, kTrEditCut);
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_COPY, kTrEditCopy);
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_PASTE, kTrEditPaste);
-  edit_menu->AppendSeparator();
-
-  //------------------------------------
-
-  wxMenu* indent_menu = new wxMenu;
-  AppendMenuItem(indent_menu, ID_MENU_EDIT_INCREASE_INDENT, kTrEditIncreaseIndent);
-  AppendMenuItem(indent_menu, ID_MENU_EDIT_DECREASE_INDENT, kTrEditDecreaseIndent);
-  AppendMenuItem(indent_menu, ID_MENU_EDIT_AUTO_INDENT, kTrEditAutoIndent);
-  edit_menu->AppendSubMenu(indent_menu, kTrEditIndent);
-
-  //------------------------------------
-
-  wxMenu* comment_menu = new wxMenu;
-  AppendMenuItem(comment_menu, ID_MENU_EDIT_COMMENT, kTrEditComment);
-  AppendMenuItem(comment_menu, ID_MENU_EDIT_UNCOMMENT, kTrEditUncomment);
-  edit_menu->AppendSubMenu(comment_menu, kTrEditComment);
-  edit_menu->AppendSeparator();
-
-  //------------------------------------
-
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_FIND, kTrEditFind);
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_REPLACE, kTrEditReplace);
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_FIND_NEXT, kTrEditFindNext);
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_FIND_PREV, kTrEditFindPrev);
-  edit_menu->AppendSeparator();
-
-  AppendMenuItem(edit_menu, ID_MENU_EDIT_GO_TO, kTrEditGoTo);
-
-  menu_bar->Append(edit_menu, kTrMenuEdit);
+  edit_menu_ = new wxMenu;
+  menu_bar->Append(edit_menu_, kTrMenuEdit);
 
   //------------------------------------
   // View

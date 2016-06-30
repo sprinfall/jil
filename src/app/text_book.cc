@@ -116,11 +116,10 @@ void TextBook::CreatePageWindow() {
 
   // TODO: Txt ft has wrap infos, avoid this.
   FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(kTxtFt);
-  TextBuffer* buffer = new TextBuffer(kPlaceholderBufferId, ft_plugin, options_->file_encoding);
-  placeholder_page_ = new TextPage(buffer);
+  TextBuffer* placeholder_buffer = new TextBuffer(kPlaceholderBufferId, ft_plugin, options_->file_encoding);
+  placeholder_page_ = new TextPage(placeholder_buffer);
 
   page_window_ = new PageWindow(placeholder_page_);
-
   placeholder_page_->set_page_window(page_window_);
 
   page_window_->set_style(style_);

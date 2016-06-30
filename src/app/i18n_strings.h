@@ -95,6 +95,7 @@
 #define kTrEditAutoIndent     _("&Auto Indent")
 #define kTrEditComment        _("&Comment")
 #define kTrEditUncomment      _("&Uncomment")
+#define kTrEditFindReplace    _("&Find && Replace")
 #define kTrEditFind           _("&Find")
 #define kTrEditReplace        _("Rep&lace")
 #define kTrEditFindNext       _("Find &Next")
