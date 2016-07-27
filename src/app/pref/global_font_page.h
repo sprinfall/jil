@@ -42,7 +42,7 @@ protected:
 
   FontType GetSelectedFontType() const;
 
-  void InitNameComboBox(ui::BoldItemComboBox* combo_box);
+  void InitNameComboBox(wxComboBox* combo_box);
   void InitSizeComboBox(wxComboBox* combo_box);
 
   void SetFontToWindow(const wxFont& font);
@@ -60,7 +60,7 @@ private:
 
   ui::StringListCtrl* font_list_ctrl_;
 
-  ui::BoldItemComboBox* name_combo_box_;
+  wxComboBox* name_combo_box_;
   wxComboBox* size_combo_box_;
 
   wxButton* use_default_button_;

@@ -71,8 +71,8 @@ EVT_BUTTON(ID_FP_FIND_ALL_BUTTON, FindPanel::OnFindAll)
 EVT_BUTTON(ID_FP_REPLACE_BUTTON, FindPanel::OnReplace)
 EVT_BUTTON(ID_FP_REPLACE_ALL_BUTTON, FindPanel::OnReplaceAll)
 
-EVT_TEXT(ID_FP_FIND_COMBOBOX, FindPanel::OnFindText)
-EVT_TEXT_ENTER(ID_FP_FIND_COMBOBOX, FindPanel::OnFindTextEnter)
+EVT_TEXT(ID_FP_FIND_TEXTCTRL, FindPanel::OnFindText)
+EVT_TEXT_ENTER(ID_FP_FIND_TEXTCTRL, FindPanel::OnFindTextEnter)
 END_EVENT_TABLE()
 
 FindPanel::FindPanel()
@@ -143,15 +143,11 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   //------------------------------------
 
-  find_combobox_ = new wxComboBox(this, ID_FP_FIND_COMBOBOX);
-  find_combobox_->SetWindowStyleFlag(wxTE_PROCESS_ENTER);
-  InitFindComboBox();
+  find_text_ctrl_ = new wxTextCtrl(this, ID_FP_FIND_TEXTCTRL);
+  find_text_ctrl_->SetWindowStyleFlag(wxTE_PROCESS_ENTER);
 
-  //------------------------------------
-
-  replace_combobox_ = new wxComboBox(this, ID_FP_REPLACE_COMBOBOX);
-  replace_combobox_->SetWindowStyleFlag(wxTE_PROCESS_ENTER);
-  InitReplaceComboBox();
+  replace_text_ctrl_ = new wxTextCtrl(this, ID_FP_REPLACE_TEXTCTRL);
+  replace_text_ctrl_->SetWindowStyleFlag(wxTE_PROCESS_ENTER);
 
   //------------------------------------
 
@@ -190,9 +186,9 @@ void FindPanel::UpdateLayout() {
 void FindPanel::SetFocus() {
   wxPanel::SetFocus();
 
-  find_combobox_->SetFocus();
-  if (!find_combobox_->GetValue().IsEmpty()) {
-    find_combobox_->SelectAll();
+  find_text_ctrl_->SetFocus();
+  if (!find_text_ctrl_->GetValue().IsEmpty()) {
+    find_text_ctrl_->SelectAll();
   }
 }
 
@@ -242,8 +238,8 @@ void FindPanel::OnMenuFolders(wxCommandEvent& evt) {
 }
 
 void FindPanel::SetFindString(const wxString& find_string) {
-  find_combobox_->SetValue(find_string);
-  find_combobox_->SelectAll();
+  find_text_ctrl_->SetValue(find_string);
+  find_text_ctrl_->SelectAll();
   AddFindString(find_string);
 }
 
@@ -294,7 +290,7 @@ void FindPanel::OnFind(wxCommandEvent& evt) {
 }
 
 void FindPanel::OnFindAll(wxCommandEvent& evt) {
-  wxString find_str = find_combobox_->GetValue();
+  wxString find_str = find_text_ctrl_->GetValue();
   if (find_str.IsEmpty()) {
     return;
   }
@@ -329,7 +325,7 @@ void FindPanel::OnReplaceAll(wxCommandEvent& evt) {
 
 void FindPanel::OnFindText(wxCommandEvent& evt) {
   if (location_ == kCurrentPage) {
-    wxString find_str = find_combobox_->GetValue();
+    wxString find_str = find_text_ctrl_->GetValue();
     book_frame_->FindInActivePageIncrementally(find_str.ToStdWstring(), flags_);
   }
 }
@@ -343,7 +339,7 @@ void FindPanel::OnFindTextEnter(wxCommandEvent& evt) {
 void FindPanel::HandleFind() {
   assert(location_ == kCurrentPage);
 
-  wxString find_str = find_combobox_->GetValue();
+  wxString find_str = find_text_ctrl_->GetValue();
   if (find_str.IsEmpty()) {
     return;
   }
@@ -354,11 +350,11 @@ void FindPanel::HandleFind() {
 }
 
 void FindPanel::HandleReplace(bool all) {
-  wxString find_str = find_combobox_->GetValue();
+  wxString find_str = find_text_ctrl_->GetValue();
   if (!find_str.IsEmpty()) {
     AddFindString(find_str);
 
-    wxString replace_str = replace_combobox_->GetValue();
+    wxString replace_str = replace_text_ctrl_->GetValue();
     if (!replace_str.IsEmpty()) {
       AddReplaceString(replace_str);
     }
@@ -382,29 +378,29 @@ void FindPanel::SetLocation(FindLocation location) {
 }
 
 void FindPanel::InitFindComboBox() {
-  const std::list<wxString>& find_strings = session_->find_strings();
-  for (const wxString& str : find_strings) {
-    find_combobox_->Append(str);
-  }
+  //const std::list<wxString>& find_strings = session_->find_strings();
+  //for (const wxString& str : find_strings) {
+  //  find_combobox_->Append(str);
+  //}
 
-  if (!find_combobox_->IsListEmpty()) {
-    find_combobox_->Select(0);
-  }
+  //if (!find_combobox_->IsListEmpty()) {
+  //  find_combobox_->Select(0);
+  //}
 
-  if (!find_strings.empty()) {
-    find_combobox_->SetValue(find_strings.front());
-  }
+  //if (!find_strings.empty()) {
+  //  find_combobox_->SetValue(find_strings.front());
+  //}
 }
 
 void FindPanel::InitReplaceComboBox() {
-  const std::list<wxString>& replace_strings = session_->replace_strings();
-  for (const wxString& str : replace_strings) {
-    replace_combobox_->Append(str);
-  }
+  //const std::list<wxString>& replace_strings = session_->replace_strings();
+  //for (const wxString& str : replace_strings) {
+  //  replace_text_ctrl_->Append(str);
+  //}
 
-  if (!replace_combobox_->IsListEmpty()) {
-    replace_combobox_->Select(0);
-  }
+  //if (!replace_text_ctrl_->IsListEmpty()) {
+  //  replace_text_ctrl_->Select(0);
+  //}
 }
 
 // TODO: If a folder includes another folder...
@@ -438,30 +434,30 @@ void FindPanel::AddFolder(const wxString& folder) {
 void FindPanel::AddFindString(const wxString& string) {
   if (session_->AddFindString(string)) {
     // The find string is new. Simply push to find combobox at front.
-    find_combobox_->Insert(string, 0);
+    //find_combobox_->Insert(string, 0);
   } else {
     // Move the find string to front in the find combobox.
-    int old_index = find_combobox_->FindString(string, true);
-    if (old_index != wxNOT_FOUND) {
-      find_combobox_->Delete(old_index);
-    }
-    find_combobox_->Insert(string, 0);
-    find_combobox_->Select(0);
+    //int old_index = find_combobox_->FindString(string, true);
+    //if (old_index != wxNOT_FOUND) {
+    //  find_combobox_->Delete(old_index);
+    //}
+    //find_combobox_->Insert(string, 0);
+    //find_combobox_->Select(0);
   }
 }
 
 void FindPanel::AddReplaceString(const wxString& string) {
   if (session_->AddReplaceString(string)) {
     // The replace string is new. Simply push to replace combobox at front.
-    replace_combobox_->Insert(string, 0);
+    //replace_text_ctrl_->Insert(string, 0);
   } else {
     // Move the find string to front in the replace combobox.
-    int old_index = replace_combobox_->FindString(string, true);
-    if (old_index != wxNOT_FOUND) {
-      replace_combobox_->Delete(old_index);
-    }
-    replace_combobox_->Insert(string, 0);
-    replace_combobox_->Select(0);
+    //int old_index = replace_text_ctrl_->FindString(string, true);
+    //if (old_index != wxNOT_FOUND) {
+    //  replace_text_ctrl_->Delete(old_index);
+    //}
+    //replace_text_ctrl_->Insert(string, 0);
+    //replace_text_ctrl_->Select(0);
   }
 }
 
@@ -482,6 +478,9 @@ void FindPanel::LayoutAsReplace() {
 }
 
 void FindPanel::CommonLayout(bool with_replace) {
+  wxSizer* vsizer = GetSizer();
+  vsizer->Clear(false);
+
   wxSizer* head_vsizer = CommonLayoutHead(with_replace);
   wxSizer* body_vsizer = CommonLayoutBody(with_replace);
   wxSizer* foot_vsizer = CommonLayoutFoot(with_replace);
@@ -491,8 +490,6 @@ void FindPanel::CommonLayout(bool with_replace) {
   ctrl_hsizer->Add(body_vsizer, 1, wxEXPAND | wxLEFT, kPaddingX);
   ctrl_hsizer->Add(foot_vsizer, 0, wxEXPAND | wxLEFT, kPaddingX);
 
-  wxSizer* vsizer = GetSizer();
-  vsizer->Clear(false);
   vsizer->AddSpacer(2);  // Top borders
   vsizer->Add(ctrl_hsizer, 0, wxEXPAND | wxALL, kPaddingX);
 
@@ -533,13 +530,13 @@ wxSizer* FindPanel::CommonLayoutBody(bool with_replace) {
   }
 
   wxSizer* find_body_hsizer = new wxBoxSizer(wxHORIZONTAL);
-  find_body_hsizer->Add(find_combobox_, 1, wxALIGN_CV);
+  find_body_hsizer->Add(find_text_ctrl_, 1, wxALIGN_CV);
   body_vsizer->Add(find_body_hsizer, 1, wxEXPAND);
 
   if (with_replace) {
     body_vsizer->AddSpacer(kPaddingY);
     wxSizer* replace_body_hsizer = new wxBoxSizer(wxHORIZONTAL);
-    replace_body_hsizer->Add(replace_combobox_, 1, wxALIGN_CV);
+    replace_body_hsizer->Add(replace_text_ctrl_, 1, wxALIGN_CV);
     body_vsizer->Add(replace_body_hsizer, 1, wxEXPAND);
   }
 
@@ -588,7 +585,7 @@ void FindPanel::AddOptionButtons(wxSizer* hsizer) {
 }
 
 void FindPanel::ShowReplace(bool show) {
-  replace_combobox_->Show(show);
+  replace_text_ctrl_->Show(show);
   replace_button_->Show(show && location_ == kCurrentPage);
   replace_all_button_->Show(show);
 }

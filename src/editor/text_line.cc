@@ -371,7 +371,7 @@ IndentProp TextLine::GetIndentProp() const {
   }
 
   prop.type = data_[0] == kTabChar ? kTabIndent : kSpaceIndent;
-  for (size_t i = 1; i < prop.length; ++i) {
+  for (int i = 1; i < prop.length; ++i) {
     if (data_[i] != data_[0]) {
       prop.type = kMixedIndent;
       break;

@@ -14,7 +14,6 @@
 #include "editor/option.h"
 #include "editor/util.h"
 
-#include "ui/bold_item_combo_box.h"
 #include "ui/string_list_ctrl.h"
 
 #include "app/font_util.h"
@@ -107,7 +106,7 @@ void Global_FontPage::CreateTypeSection(wxSizer* top_vsizer) {
 }
 
 void Global_FontPage::CreateFontSection(wxSizer* top_vsizer) {
-  name_combo_box_ = new ui::BoldItemComboBox(this, ID_FONT_NAME_COMBOBOX);
+  name_combo_box_ = new wxComboBox(this, ID_FONT_NAME_COMBOBOX);
   InitNameComboBox(name_combo_box_);
 
   size_combo_box_ = new wxComboBox(this,
@@ -132,21 +131,12 @@ FontType Global_FontPage::GetSelectedFontType() const {
 }
 
 // TODO: Slow to list fonts.
-void Global_FontPage::InitNameComboBox(ui::BoldItemComboBox* combo_box) {
-  OrderedFontEnumerator fixed_fe;
-  fixed_fe.EnumerateFacenames(wxFONTENCODING_SYSTEM, true);
-  fixed_fe.facenames;
-
+void Global_FontPage::InitNameComboBox(wxComboBox* combo_box) {
   OrderedFontEnumerator fe;
   fe.EnumerateFacenames(wxFONTENCODING_SYSTEM, false);
 
-  std::set<wxString>::iterator it = fe.facenames.begin();
   for (const wxString& facename : fe.facenames) {
-    if (fixed_fe.facenames.find(facename) != fixed_fe.facenames.end()) {
-      combo_box->Append(facename, true);
-    } else {
-      combo_box->Append(facename, false);
-    }
+    combo_box->Append(facename);
   }
 }
 

@@ -62,7 +62,11 @@ wxString GetDefaultFontName() {
 // cannot get the system fixed-width font under GTK+.
 static int DoGetDefaultFontSize() {
 #if defined (__WXMSW__)
-  wxFont font = wxSystemSettings::GetFont(wxSYS_ANSI_FIXED_FONT);
+  // NOTE:
+  // System: Win7; the text size in Display settings are Medium (125%).
+  //   - wxSYS_ANSI_FIXED_FONT -> 7  (too small)
+  //   - wxSYS_SYSTEM_FIXED_FONT -> 12  (a little large)
+  wxFont font = wxSystemSettings::GetFont(wxSYS_SYSTEM_FIXED_FONT);
 #else
   wxFont font = wxSystemSettings::GetFont(wxSYS_SYSTEM_FIXED_FONT);
 #endif

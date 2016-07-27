@@ -3,6 +3,7 @@
 #pragma once
 
 // Find & replace panel.
+// TODO: Allow to set font.
 
 #include "wx/control.h"
 #include "wx/panel.h"
@@ -204,8 +205,8 @@ private:
   ui::BitmapToggleButton* case_sensitive_tbutton_;
   ui::BitmapToggleButton* match_word_tbutton_;
 
-  wxComboBox* find_combobox_;
-  wxComboBox* replace_combobox_;
+  wxTextCtrl* find_text_ctrl_;
+  wxTextCtrl* replace_text_ctrl_;
 
   ui::TextButton* find_button_;
   ui::TextButton* find_all_button_;

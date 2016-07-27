@@ -15,8 +15,7 @@ add_definitions(-DUNICODE -D_UNICODE)
 
 # Require "qa" and "xml" for debug report.
 if(MSVC)
-    # adv for testing wxPropertySheetDialog
-    find_package(wxWidgets REQUIRED COMPONENTS core base qa xml adv)
+    find_package(wxWidgets REQUIRED COMPONENTS core base qa xml)
 else()
     # Require "net" for create server/client between two instances.
     find_package(wxWidgets REQUIRED COMPONENTS core base net qa xml)
