@@ -2,10 +2,12 @@
 #define JIL_PREF_GLOBAL_FONT_PAGE_H_
 #pragma once
 
-#include <map>
+#include <set>
+#include <vector>
 #include "wx/panel.h"
-#include "wx/odcombo.h"
-#include "app/defs.h"  // FONT_COUNT
+#include "wx/thread.h"
+#include "app/defs.h"
+#include "app/font_util.h"
 
 class wxButton;
 class wxComboBox;
@@ -22,7 +24,7 @@ class StringListCtrl;
 
 namespace pref {
 
-class Global_FontPage : public wxPanel {
+class Global_FontPage : public wxPanel, public wxThreadHelper {
   DECLARE_EVENT_TABLE()
 
 public:
@@ -34,16 +36,19 @@ public:
   virtual bool TransferDataToWindow() override;
   virtual bool TransferDataFromWindow() override;
 
+  void EnumerateFonts();
+
 protected:
+  virtual wxThread::ExitCode Entry() override;
+
+  void OnThreadUpdate(wxThreadEvent& evt);
+
   void InitFonts();
   void CreateControls();
   void CreateTypeSection(wxSizer* top_vsizer);
   void CreateFontSection(wxSizer* top_vsizer);
 
   FontType GetSelectedFontType() const;
-
-  void InitNameComboBox(wxComboBox* combo_box);
-  void InitSizeComboBox(wxComboBox* combo_box);
 
   void SetFontToWindow(const wxFont& font);
 
@@ -57,6 +62,8 @@ private:
   Options* options_;
 
   wxFont fonts_[FONT_COUNT];
+
+  std::vector<wxString> font_names_;
 
   ui::StringListCtrl* font_list_ctrl_;
 

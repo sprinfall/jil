@@ -9,6 +9,7 @@
 #include "wx/panel.h"
 #include "ui/button_style.h"
 #include "editor/theme.h"
+#include "app/compile_config.h"
 #include "app/defs.h"
 
 class wxComboBox;
@@ -127,9 +128,13 @@ protected:
   void OnLocationButtonClick(wxCommandEvent& evt);
   void OnAddFolderButtonClick(wxCommandEvent& evt);
 
+#if JIL_BMP_BUTTON_FIND_OPTIONS
   void OnUseRegexToggle(wxCommandEvent& evt);
   void OnCaseSensitiveToggle(wxCommandEvent& evt);
   void OnMatchWordToggle(wxCommandEvent& evt);
+#else
+  void OnOptionsLabel(wxCommandEvent& evt);
+#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
 
   void OnFind(wxCommandEvent& evt);
   void OnFindAll(wxCommandEvent& evt);
@@ -201,9 +206,14 @@ private:
   ui::BitmapButton* add_folder_button_;
 
   ui::BitmapButton* location_button_;
+
+#if JIL_BMP_BUTTON_FIND_OPTIONS
   ui::BitmapToggleButton* use_regex_tbutton_;
   ui::BitmapToggleButton* case_sensitive_tbutton_;
   ui::BitmapToggleButton* match_word_tbutton_;
+#else
+  ui::Label* options_label_;
+#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
 
   wxTextCtrl* find_text_ctrl_;
   wxTextCtrl* replace_text_ctrl_;

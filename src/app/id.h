@@ -5,6 +5,7 @@
 // Window ID, menu ID, etc.
 
 #include "wx/defs.h"
+#include "app/compile_config.h"
 #include "app/defs.h"
 
 namespace jil {
@@ -34,9 +35,13 @@ enum {
   ID_FP_FIND_TEXTCTRL,
   ID_FP_REPLACE_TEXTCTRL,
   ID_FP_LOCATION_BUTTON,
+#if JIL_BMP_BUTTON_FIND_OPTIONS
   ID_FP_USE_REGEX_TBUTTON,
   ID_FP_CASE_SENSITIVE_TBUTTON,
   ID_FP_MATCH_WORD_TBUTTON,
+#else
+  ID_FP_OPTIONS_LABEL,
+#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
   ID_FP_FIND_BUTTON,
   ID_FP_FIND_ALL_BUTTON,
   ID_FP_REPLACE_BUTTON,

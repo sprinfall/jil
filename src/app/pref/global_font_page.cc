@@ -1,11 +1,14 @@
 #include "app/pref/global_font_page.h"
 
+#include <algorithm>
+
 #include "wx/button.h"
 #include "wx/checkbox.h"
 #include "wx/combobox.h"
 #include "wx/dc.h"
 #include "wx/fontutil.h"
 #include "wx/listctrl.h"
+#include "wx/log.h"
 #include "wx/sizer.h"
 #include "wx/statline.h"
 #include "wx/stattext.h"
@@ -16,13 +19,30 @@
 
 #include "ui/string_list_ctrl.h"
 
-#include "app/font_util.h"
 #include "app/option.h"
 #include "app/util.h"
 #include "app/pref/common.h"
 
 namespace jil {
 namespace pref {
+
+static const wxString kFixedFontNameSuffix = wxT(" *");
+
+////////////////////////////////////////////////////////////////////////////////
+
+class FontEnumerator : public wxFontEnumerator {
+public:
+  virtual bool OnFacename(const wxString& facename) override {
+    if (facename[0] != wxT('@')) {
+      facenames->push_back(facename);
+    }
+    return true;
+  }
+
+  std::vector<wxString>* facenames;
+};
+
+////////////////////////////////////////////////////////////////////////////////
 
 BEGIN_EVENT_TABLE(Global_FontPage, wxPanel)
 EVT_LIST_ITEM_SELECTED(ID_FONT_LIST_CTRL, Global_FontPage::OnFontListSelectionChange)
@@ -38,6 +58,12 @@ Global_FontPage::Global_FontPage(Options* options)
 }
 
 Global_FontPage::~Global_FontPage() {
+  Unbind(wxEVT_THREAD, &Global_FontPage::OnThreadUpdate, this);
+
+  if (GetThread() != NULL && GetThread()->IsRunning()) {
+    wxLogWarning(wxT("Wait for the font enumeration thread to complete..."));
+    GetThread()->Wait();
+  }
 }
 
 bool Global_FontPage::Create(wxWindow* parent, wxWindowID id) {
@@ -46,6 +72,8 @@ bool Global_FontPage::Create(wxWindow* parent, wxWindowID id) {
   }
 
   CreateControls();
+
+  Bind(wxEVT_THREAD, &Global_FontPage::OnThreadUpdate, this);
 
   return true;
 }
@@ -61,6 +89,66 @@ bool Global_FontPage::TransferDataFromWindow() {
     options_->fonts[i] = fonts_[i];
   }
   return true;
+}
+
+void Global_FontPage::EnumerateFonts() {
+  if (!font_names_.empty()) {
+    return;
+  }
+
+  if (CreateThread(wxTHREAD_JOINABLE) != wxTHREAD_NO_ERROR) {
+    wxLogError("Can't create the font enum thread!");
+    return;
+  }
+
+  if (GetThread()->Run() != wxTHREAD_NO_ERROR) {
+    wxLogError("Can't run the font enum thread!");
+    return;
+  }
+}
+
+wxThread::ExitCode Global_FontPage::Entry() {
+  FontEnumerator fe;
+
+  // Enumerate all font names.
+  fe.facenames = &font_names_;
+  fe.EnumerateFacenames(wxFONTENCODING_SYSTEM, false);
+
+  // Sort the font names.
+  std::sort(font_names_.begin(), font_names_.end());
+
+  // Enumerate fixed font names.
+  std::vector<wxString> fixed_font_names;
+  fe.facenames = &fixed_font_names;
+  fe.EnumerateFacenames(wxFONTENCODING_SYSTEM, true);
+
+  // Append " *" to the fixed font names.
+  std::vector<wxString>::iterator it;
+  for (wxString& font_name : fixed_font_names) {
+    it = std::lower_bound(font_names_.begin(), font_names_.end(), font_name);
+    if (it != font_names_.end()) {
+      *it = font_name + kFixedFontNameSuffix;
+    }
+  }
+
+  wxQueueEvent(GetEventHandler(), new wxThreadEvent());
+  return (wxThread::ExitCode)0;
+}
+
+void Global_FontPage::OnThreadUpdate(wxThreadEvent& evt) {
+  // Performance Notes (Win7 64bit, Jil 32-bit):
+  //
+  // 1. combo_box->Append(font_names_.size(), &font_names_[0]);
+  //
+  // 2. for (const wxString& name : font_names_) {
+  //      combo_box->Append(name);
+  //    }
+  //
+  // Result (in ms):
+  // 1. Debug: 23   Release: 20
+  // 2. Debug: 826  Release: 433
+
+  name_combo_box_->Append(font_names_.size(), &font_names_[0]);
 }
 
 void Global_FontPage::InitFonts() {
@@ -107,14 +195,17 @@ void Global_FontPage::CreateTypeSection(wxSizer* top_vsizer) {
 
 void Global_FontPage::CreateFontSection(wxSizer* top_vsizer) {
   name_combo_box_ = new wxComboBox(this, ID_FONT_NAME_COMBOBOX);
-  InitNameComboBox(name_combo_box_);
 
   size_combo_box_ = new wxComboBox(this,
                                    ID_FONT_SIZE_COMBOBOX,
                                    wxEmptyString,
                                    wxDefaultPosition,
                                    kSmallNumTextSize);
-  InitSizeComboBox(size_combo_box_);
+  wxArrayString sizes;
+  for (int i = kMinFontSize; i <= kMaxFontSize; ++i) {
+    sizes.Add(wxString::Format(wxT("%d"), i));
+  }
+  size_combo_box_->Append(sizes.size(), &sizes[0]);
 
   wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
   hsizer->Add(name_combo_box_, wxSizerFlags(1));
@@ -130,29 +221,10 @@ FontType Global_FontPage::GetSelectedFontType() const {
   return FONT_COUNT;
 }
 
-// TODO: Slow to list fonts.
-void Global_FontPage::InitNameComboBox(wxComboBox* combo_box) {
-  OrderedFontEnumerator fe;
-  fe.EnumerateFacenames(wxFONTENCODING_SYSTEM, false);
-
-  for (const wxString& facename : fe.facenames) {
-    combo_box->Append(facename);
-  }
-}
-
-void Global_FontPage::InitSizeComboBox(wxComboBox* combo_box) {
-  for (int i = kMinFontSize; i <= kMaxFontSize; ++i) {
-    combo_box->Append(wxString::Format(wxT("%d"), i));
-  }
-}
-
 void Global_FontPage::SetFontToWindow(const wxFont& font) {
   if (font.IsOk()) {
-    wxString face_name = font.GetFaceName();
-    name_combo_box_->SetValue(face_name);
-
-    wxString size_str = wxString::Format(wxT("%d"), font.GetPointSize());
-    size_combo_box_->SetValue(size_str);
+    name_combo_box_->SetValue(font.GetFaceName());
+    size_combo_box_->SetValue(wxString::Format(wxT("%d"), font.GetPointSize()));
 
     name_combo_box_->Enable(true);
     size_combo_box_->Enable(true);
@@ -185,6 +257,9 @@ void Global_FontPage::OnNameComboBox(wxCommandEvent& evt) {
   wxFont& font = fonts_[font_type];
 
   wxString name = name_combo_box_->GetValue();
+  if (name.EndsWith(kFixedFontNameSuffix)) {
+    name.RemoveLast(kFixedFontNameSuffix.Length());
+  }
   if (!font.SetFaceName(name)) {
     return;
   }

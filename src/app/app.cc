@@ -336,7 +336,6 @@ bool App::OnInit() {
   wxString user_data_dir = UserDataDir();
   if (!wxDir::Exists(user_data_dir)) {
     wxMkdir(user_data_dir, 0777);
-    wxLogDebug(wxT("Make user data dir: %s"), user_data_dir);
   }
 
   // Set log target to file.

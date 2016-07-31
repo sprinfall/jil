@@ -4,6 +4,8 @@
 
 #include "app/pref/dialog_base.h"
 
+class wxBookCtrlEvent;
+
 namespace jil {
 
 class Options;
@@ -12,6 +14,8 @@ namespace pref {
 
 // Global preferences dialog.
 class GlobalDialog : public DialogBase {
+  DECLARE_EVENT_TABLE()
+
 public:
   explicit GlobalDialog(Options* options);
   virtual ~GlobalDialog();
@@ -21,6 +25,8 @@ protected:
 
   wxWindow* CreateGeneralPage();
   wxWindow* CreateFontPage();
+
+  void OnNotebookPageChanged(wxBookCtrlEvent& evt);
 
 private:
   Options* options_;

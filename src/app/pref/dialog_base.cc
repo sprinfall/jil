@@ -1,6 +1,7 @@
 #include "app/pref/dialog_base.h"
 #include "wx/notebook.h"
 #include "wx/sizer.h"
+#include "app/pref/common.h"
 
 namespace jil {
 namespace pref {
@@ -24,7 +25,7 @@ bool DialogBase::Create(wxWindow* parent, wxWindowID id, const wxString& title) 
     return false;
   }
 
-  notebook_ = new wxNotebook(this, wxID_ANY);
+  notebook_ = new wxNotebook(this, ID_NOTEBOOK);
 
   AddPages();
 

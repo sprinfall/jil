@@ -28,6 +28,7 @@
 #define kTrCurrentPage        _("Current Page")
 #define kTrAllPages           _("All Pages")
 #define kTrFolders            _("Folders")
+#define kTrOptions            _("Options")
 
 #define kTrLocation           _("Choose location")
 #define kTrUseRegex           _("Use regular expression")
@@ -62,9 +63,13 @@ EVT_MENU(ID_FP_MENU_FOLDERS, FindPanel::OnMenuFolders)
 EVT_BUTTON(ID_FP_LOCATION_BUTTON, FindPanel::OnLocationButtonClick)
 EVT_BUTTON(ID_FP_ADD_FOLDER_BUTTON, FindPanel::OnAddFolderButtonClick)
 
+#if JIL_BMP_BUTTON_FIND_OPTIONS
 EVT_TOGGLEBUTTON(ID_FP_USE_REGEX_TBUTTON, FindPanel::OnUseRegexToggle)
 EVT_TOGGLEBUTTON(ID_FP_CASE_SENSITIVE_TBUTTON, FindPanel::OnCaseSensitiveToggle)
 EVT_TOGGLEBUTTON(ID_FP_MATCH_WORD_TBUTTON, FindPanel::OnMatchWordToggle)
+#else
+EVT_BUTTON(ID_FP_OPTIONS_LABEL, FindPanel::OnOptionsLabel)
+#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
 
 EVT_BUTTON(ID_FP_FIND_BUTTON, FindPanel::OnFind)
 EVT_BUTTON(ID_FP_FIND_ALL_BUTTON, FindPanel::OnFindAll)
@@ -127,6 +132,7 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   location_button_ = NewBitmapButton(ID_FP_LOCATION_BUTTON, IMAGE_LOCATION);
   location_button_->SetToolTip(kTrLocation);
 
+#if JIL_BMP_BUTTON_FIND_OPTIONS
   use_regex_tbutton_ = NewBitmapToggleButton(ID_FP_USE_REGEX_TBUTTON, IMAGE_USE_REGEX);
   use_regex_tbutton_->SetToolTip(kTrUseRegex);
 
@@ -140,6 +146,10 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   use_regex_tbutton_->set_toggle(GetBit(flags_, kFind_UseRegex));
   case_sensitive_tbutton_->set_toggle(GetBit(flags_, kFind_CaseSensitive));
   match_word_tbutton_->set_toggle(GetBit(flags_, kFind_MatchWord));
+#else
+  options_label_ = new ui::Label(this, ID_FP_OPTIONS_LABEL, kTrOptions);
+  options_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
+#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
 
   //------------------------------------
 
@@ -206,9 +216,9 @@ void FindPanel::OnPaint(wxPaintEvent& evt) {
   wxRect bg_rect(update_rect.x, 0, update_rect.width, 0);
   bg_rect.y = rect.y + 2;
   bg_rect.height = rect.height - 2;
-  wxColour bg_top = theme_->GetColor(COLOR_BG_TOP);
-  wxColour bg_bottom = theme_->GetColor(COLOR_BG_BOTTOM);
-  dc.GradientFillLinear(bg_rect, bg_bottom, bg_top, wxNORTH);
+  //wxColour bg_top = theme_->GetColor(COLOR_BG_TOP);
+  //wxColour bg_bottom = theme_->GetColor(COLOR_BG_BOTTOM);
+  //dc.GradientFillLinear(bg_rect, bg_bottom, bg_top, wxNORTH);
 
   // Borders
   int border_y = rect.y;
@@ -271,6 +281,8 @@ void FindPanel::OnAddFolderButtonClick(wxCommandEvent& evt) {
   }
 }
 
+#if JIL_BMP_BUTTON_FIND_OPTIONS
+
 void FindPanel::OnUseRegexToggle(wxCommandEvent& evt) {
   flags_ = SetBit(flags_, kFind_UseRegex, evt.IsChecked());
 }
@@ -282,6 +294,13 @@ void FindPanel::OnCaseSensitiveToggle(wxCommandEvent& evt) {
 void FindPanel::OnMatchWordToggle(wxCommandEvent& evt) {
   flags_ = SetBit(flags_, kFind_MatchWord, evt.IsChecked());
 }
+
+#else
+
+void FindPanel::OnOptionsLabel(wxCommandEvent& evt) {
+}
+
+#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
 
 void FindPanel::OnFind(wxCommandEvent& evt) {
   if (location_ == kCurrentPage) {
@@ -579,9 +598,14 @@ wxSizer* FindPanel::CommonLayoutFoot(bool with_replace) {
 
 void FindPanel::AddOptionButtons(wxSizer* hsizer) {
   hsizer->Add(location_button_, 0, wxALIGN_CV, 0);
+
+#if JIL_BMP_BUTTON_FIND_OPTIONS
   hsizer->Add(use_regex_tbutton_, 0, wxALIGN_CV | wxLEFT, 5);
   hsizer->Add(case_sensitive_tbutton_, 0, wxALIGN_CV | wxLEFT, 2);
   hsizer->Add(match_word_tbutton_, 0, wxALIGN_CV | wxLEFT, 2);
+#else
+  hsizer->Add(options_label_, 0, wxALIGN_CV | wxLEFT, 2);
+#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
 }
 
 void FindPanel::ShowReplace(bool show) {

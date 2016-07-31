@@ -3,7 +3,7 @@
 #pragma once
 
 // A replacement of wxStaticText.
-// The difference is that Label emits wxEVT_COMMAND_BUTTON_CLICKED on click.
+// The difference is that Label emits wxEVT_BUTTON on click.
 // So it can be used as button.
 
 #include "wx/control.h"

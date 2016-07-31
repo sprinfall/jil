@@ -1,11 +1,16 @@
 #include "app/pref/global_dialog.h"
 #include "wx/notebook.h"
 
+#include "app/pref/common.h"
 #include "app/pref/global_general_page.h"
 #include "app/pref/global_font_page.h"
 
 namespace jil {
 namespace pref {
+
+BEGIN_EVENT_TABLE(GlobalDialog, DialogBase)
+EVT_NOTEBOOK_PAGE_CHANGED(ID_NOTEBOOK, GlobalDialog::OnNotebookPageChanged)
+END_EVENT_TABLE()
 
 GlobalDialog::GlobalDialog(Options* options)
     : options_(options) {
@@ -41,6 +46,18 @@ wxWindow* GlobalDialog::CreateFontPage() {
 
   page->Create(notebook_);
   return page;
+}
+
+void GlobalDialog::OnNotebookPageChanged(wxBookCtrlEvent& evt) {
+  int selection = evt.GetSelection();
+  if (selection == 1) {
+    // Enumerate system fonts if necessary.
+    wxWindow* page = notebook_->GetPage(1);
+    Global_FontPage* font_page = dynamic_cast<Global_FontPage*>(page);
+    if (font_page != NULL) {
+      font_page->EnumerateFonts();
+    }
+  }
 }
 
 }  // namespace pref

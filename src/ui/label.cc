@@ -71,7 +71,7 @@ void Label::OnLeftUp(wxMouseEvent& evt) {
     ReleaseMouse();
   }
 
-  wxCommandEvent click_evt(wxEVT_COMMAND_BUTTON_CLICKED, GetId());
+  wxCommandEvent click_evt(wxEVT_BUTTON, GetId());
   click_evt.SetEventObject(this);
   GetParent()->GetEventHandler()->AddPendingEvent(click_evt);
 }
