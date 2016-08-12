@@ -189,11 +189,15 @@ bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style)
     }
   }
   // Load images.
+  fp_theme->SetImage(FindPanel::IMAGE_HISTORY, GetImage(image_dir, wxT("fp_history")));
+#if JIL_BMP_BUTTON_FIND_OPTIONS
   fp_theme->SetImage(FindPanel::IMAGE_LOCATION, GetImage(image_dir, wxT("fp_location")));
   fp_theme->SetImage(FindPanel::IMAGE_CASE_SENSITIVE, GetImage(image_dir, wxT("fp_case_sensitive")));
   fp_theme->SetImage(FindPanel::IMAGE_MATCH_WORD, GetImage(image_dir, wxT("fp_match_word")));
   fp_theme->SetImage(FindPanel::IMAGE_USE_REGEX, GetImage(image_dir, wxT("fp_use_regex")));
-  fp_theme->SetImage(FindPanel::IMAGE_ADD, GetImage(image_dir, wxT("fp_add")));
+#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
+  fp_theme->SetImage(FindPanel::IMAGE_FOLDERS, GetImage(image_dir, wxT("fp_folders")));
+  fp_theme->SetImage(FindPanel::IMAGE_ADD_FOLDER, GetImage(image_dir, wxT("fp_add_folder")));
 
   theme->SetTheme(THEME_FIND_PANEL, fp_theme);
 

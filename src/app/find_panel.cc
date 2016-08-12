@@ -8,13 +8,14 @@
 #include "wx/log.h"
 #include "wx/menu.h"
 #include "wx/sizer.h"
-#include "wx/stattext.h"
+#include "wx/statbmp.h"
 #include "wx/textctrl.h"
 
 #include "ui/bitmap_button.h"
 #include "ui/bitmap_toggle_button.h"
 #include "ui/color.h"
 #include "ui/label.h"
+#include "ui/separator.h"
 #include "ui/text_button.h"
 
 #include "editor/text_buffer.h"
@@ -30,7 +31,7 @@
 #define kTrFolders            _("Folders")
 #define kTrOptions            _("Options")
 
-#define kTrLocation           _("Choose location")
+#define kTrLocation           _("Location")
 #define kTrUseRegex           _("Use regular expression")
 #define kTrCaseSensitive      _("Case sensitive")
 #define kTrMatchWord          _("Match whole word")
@@ -42,7 +43,7 @@
 
 namespace jil {
 
-const int kPaddingX = 5;
+const int kPaddingX = 7;
 const int kPaddingY = 2;
 
 static const wxChar kFolderSp = wxT(';');
@@ -54,30 +55,40 @@ DEFINE_EVENT_TYPE(kFindPanelLayoutEvent)
 IMPLEMENT_DYNAMIC_CLASS(FindPanel, wxPanel);
 
 BEGIN_EVENT_TABLE(FindPanel, wxPanel)
-EVT_PAINT(FindPanel::OnPaint)
+EVT_PAINT         (FindPanel::OnPaint)
 
-EVT_MENU(ID_FP_MENU_CURRENT_PAGE, FindPanel::OnMenuCurrentPage)
-EVT_MENU(ID_FP_MENU_ALL_PAGES, FindPanel::OnMenuAllPages)
-EVT_MENU(ID_FP_MENU_FOLDERS, FindPanel::OnMenuFolders)
+EVT_MENU          (ID_FP_MENU_CURRENT_PAGE,       FindPanel::OnMenuCurrentPage)
+EVT_MENU          (ID_FP_MENU_ALL_PAGES,          FindPanel::OnMenuAllPages)
+EVT_MENU          (ID_FP_MENU_FOLDERS,            FindPanel::OnMenuFolders)
 
-EVT_BUTTON(ID_FP_LOCATION_BUTTON, FindPanel::OnLocationButtonClick)
-EVT_BUTTON(ID_FP_ADD_FOLDER_BUTTON, FindPanel::OnAddFolderButtonClick)
+EVT_BUTTON        (ID_FP_ADD_FOLDER_BUTTON,       FindPanel::OnAddFolderButtonClick)
 
 #if JIL_BMP_BUTTON_FIND_OPTIONS
-EVT_TOGGLEBUTTON(ID_FP_USE_REGEX_TBUTTON, FindPanel::OnUseRegexToggle)
-EVT_TOGGLEBUTTON(ID_FP_CASE_SENSITIVE_TBUTTON, FindPanel::OnCaseSensitiveToggle)
-EVT_TOGGLEBUTTON(ID_FP_MATCH_WORD_TBUTTON, FindPanel::OnMatchWordToggle)
+
+EVT_BUTTON        (ID_FP_LOCATION_BUTTON,         FindPanel::OnLocationClick)
+
+EVT_TOGGLEBUTTON  (ID_FP_USE_REGEX_TBUTTON,       FindPanel::OnUseRegexToggle)
+EVT_TOGGLEBUTTON  (ID_FP_CASE_SENSITIVE_TBUTTON,  FindPanel::OnCaseSensitiveToggle)
+EVT_TOGGLEBUTTON  (ID_FP_MATCH_WORD_TBUTTON,      FindPanel::OnMatchWordToggle)
+
 #else
-EVT_BUTTON(ID_FP_OPTIONS_LABEL, FindPanel::OnOptionsLabel)
+
+EVT_BUTTON        (ID_FP_LOCATION_LABEL,          FindPanel::OnLocationClick)  // TODO
+EVT_BUTTON        (ID_FP_OPTIONS_LABEL,           FindPanel::OnOptionsLabel)
+
+EVT_MENU          (ID_FP_MENU_USE_REGEX,          FindPanel::OnMenuUseRegex)
+EVT_MENU          (ID_FP_MENU_CASE_SENSITIVE,     FindPanel::OnMenuCaseSensitive)
+EVT_MENU          (ID_FP_MENU_MATCH_WORD,         FindPanel::OnMenuMatchWord)
+
 #endif  // JIL_BMP_BUTTON_FIND_OPTIONS
 
-EVT_BUTTON(ID_FP_FIND_BUTTON, FindPanel::OnFind)
-EVT_BUTTON(ID_FP_FIND_ALL_BUTTON, FindPanel::OnFindAll)
-EVT_BUTTON(ID_FP_REPLACE_BUTTON, FindPanel::OnReplace)
-EVT_BUTTON(ID_FP_REPLACE_ALL_BUTTON, FindPanel::OnReplaceAll)
+EVT_BUTTON        (ID_FP_FIND_BUTTON,             FindPanel::OnFind)
+EVT_BUTTON        (ID_FP_FIND_ALL_BUTTON,         FindPanel::OnFindAll)
+EVT_BUTTON        (ID_FP_REPLACE_BUTTON,          FindPanel::OnReplace)
+EVT_BUTTON        (ID_FP_REPLACE_ALL_BUTTON,      FindPanel::OnReplaceAll)
 
-EVT_TEXT(ID_FP_FIND_TEXTCTRL, FindPanel::OnFindText)
-EVT_TEXT_ENTER(ID_FP_FIND_TEXTCTRL, FindPanel::OnFindTextEnter)
+EVT_TEXT          (ID_FP_FIND_TEXTCTRL,           FindPanel::OnFindText)
+EVT_TEXT_ENTER    (ID_FP_FIND_TEXTCTRL,           FindPanel::OnFindTextEnter)
 END_EVENT_TABLE()
 
 FindPanel::FindPanel()
@@ -117,22 +128,23 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   //----------------------------------------------------------------------------
 
-  folders_label_ = new wxStaticText(this, ID_FP_FOLDERS_LABEL, kTrFolders);
-  folders_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
-  folders_label_->Hide();
+  folders_bitmap_ = new wxStaticBitmap(this, ID_FP_FOLDERS_LABEL, theme_->GetImage(IMAGE_FOLDERS));
+  folders_bitmap_->SetForegroundColour(theme_->GetColor(COLOR_FG));
+  folders_bitmap_->Hide();
 
   folders_text_ctrl_ = new wxTextCtrl(this, ID_FP_FOLDERS_TEXTCTRL);
   folders_text_ctrl_->Hide();
 
-  add_folder_button_ = NewBitmapButton(ID_FP_ADD_FOLDER_BUTTON, IMAGE_ADD);
+  add_folder_button_ = NewBitmapButton(ID_FP_ADD_FOLDER_BUTTON, IMAGE_ADD_FOLDER);
   add_folder_button_->Hide();
 
   //----------------------------------------------------------------------------
 
+#if JIL_BMP_BUTTON_FIND_OPTIONS
+
   location_button_ = NewBitmapButton(ID_FP_LOCATION_BUTTON, IMAGE_LOCATION);
   location_button_->SetToolTip(kTrLocation);
 
-#if JIL_BMP_BUTTON_FIND_OPTIONS
   use_regex_tbutton_ = NewBitmapToggleButton(ID_FP_USE_REGEX_TBUTTON, IMAGE_USE_REGEX);
   use_regex_tbutton_->SetToolTip(kTrUseRegex);
 
@@ -146,9 +158,20 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   use_regex_tbutton_->set_toggle(GetBit(flags_, kFind_UseRegex));
   case_sensitive_tbutton_->set_toggle(GetBit(flags_, kFind_CaseSensitive));
   match_word_tbutton_->set_toggle(GetBit(flags_, kFind_MatchWord));
+
 #else
+
+  location_label_ = new ui::Label(this, ID_FP_LOCATION_LABEL, kTrLocation);
+  location_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
+  location_label_->SetCursor(wxCursor(wxCURSOR_HAND));
+
+  sep_ = new ui::Separator(this, 1, false);
+  sep_->SetColor(theme_->GetColor(COLOR_FG));
+
   options_label_ = new ui::Label(this, ID_FP_OPTIONS_LABEL, kTrOptions);
   options_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
+  options_label_->SetCursor(wxCursor(wxCURSOR_HAND));
+
 #endif  // JIL_BMP_BUTTON_FIND_OPTIONS
 
   //------------------------------------
@@ -156,8 +179,12 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   find_text_ctrl_ = new wxTextCtrl(this, ID_FP_FIND_TEXTCTRL);
   find_text_ctrl_->SetWindowStyleFlag(wxTE_PROCESS_ENTER);
 
+  find_history_button_ = NewBitmapButton(wxID_ANY, IMAGE_HISTORY);
+
   replace_text_ctrl_ = new wxTextCtrl(this, ID_FP_REPLACE_TEXTCTRL);
   replace_text_ctrl_->SetWindowStyleFlag(wxTE_PROCESS_ENTER);
+
+  replace_history_button_ = NewBitmapButton(wxID_ANY, IMAGE_HISTORY);
 
   //------------------------------------
 
@@ -253,13 +280,23 @@ void FindPanel::SetFindString(const wxString& find_string) {
   AddFindString(find_string);
 }
 
-void FindPanel::OnLocationButtonClick(wxCommandEvent& evt) {
+void FindPanel::OnAddFolderButtonClick(wxCommandEvent& evt) {
+  wxString default_path = wxGetCwd();
+  long style = wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST;
+  wxDirDialog dlg(this, wxDirSelectorPromptStr, default_path, style);
+
+  if (dlg.ShowModal() == wxID_OK) {
+    AddFolder(dlg.GetPath());
+  }
+}
+
+void FindPanel::OnLocationClick(wxCommandEvent& evt) {
   wxMenu menu;
 
   menu.AppendCheckItem(ID_FP_MENU_CURRENT_PAGE, kTrCurrentPage);
   menu.AppendCheckItem(ID_FP_MENU_ALL_PAGES, kTrAllPages);
   menu.AppendCheckItem(ID_FP_MENU_FOLDERS, kTrFolders);
-  
+
   if (location_ == kCurrentPage) {
     menu.Check(ID_FP_MENU_CURRENT_PAGE, true);
   } else if (location_ == kAllPages) {
@@ -269,16 +306,6 @@ void FindPanel::OnLocationButtonClick(wxCommandEvent& evt) {
   }
 
   PopupMenu(&menu, ScreenToClient(wxGetMousePosition()));
-}
-
-void FindPanel::OnAddFolderButtonClick(wxCommandEvent& evt) {
-  wxString default_path = wxGetCwd();
-  long style = wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST;
-  wxDirDialog dlg(this, wxDirSelectorPromptStr, default_path, style);
-
-  if (dlg.ShowModal() == wxID_OK) {
-    AddFolder(dlg.GetPath());
-  }
 }
 
 #if JIL_BMP_BUTTON_FIND_OPTIONS
@@ -298,6 +325,35 @@ void FindPanel::OnMatchWordToggle(wxCommandEvent& evt) {
 #else
 
 void FindPanel::OnOptionsLabel(wxCommandEvent& evt) {
+  wxMenu menu;
+
+  menu.AppendCheckItem(ID_FP_MENU_USE_REGEX, kTrUseRegex);
+  menu.AppendCheckItem(ID_FP_MENU_CASE_SENSITIVE, kTrCaseSensitive);
+  menu.AppendCheckItem(ID_FP_MENU_MATCH_WORD, kTrMatchWord);
+
+  if (GetBit(flags_, kFind_UseRegex)) {
+    menu.Check(ID_FP_MENU_USE_REGEX, true);
+  }
+  if (GetBit(flags_, kFind_CaseSensitive)) {
+    menu.Check(ID_FP_MENU_CASE_SENSITIVE, true);
+  }
+  if (GetBit(flags_, kFind_MatchWord)) {
+    menu.Check(ID_FP_MENU_MATCH_WORD, true);
+  }
+
+  PopupMenu(&menu, ScreenToClient(wxGetMousePosition()));
+}
+
+void FindPanel::OnMenuUseRegex(wxCommandEvent& evt) {
+  flags_ = SetBit(flags_, kFind_UseRegex, evt.IsChecked());
+}
+
+void FindPanel::OnMenuCaseSensitive(wxCommandEvent& evt) {
+  flags_ = SetBit(flags_, kFind_CaseSensitive, evt.IsChecked());
+}
+
+void FindPanel::OnMenuMatchWord(wxCommandEvent& evt) {
+  flags_ = SetBit(flags_, kFind_MatchWord, evt.IsChecked());
 }
 
 #endif  // JIL_BMP_BUTTON_FIND_OPTIONS
@@ -520,14 +576,28 @@ wxSizer* FindPanel::CommonLayoutHead(bool with_replace) {
 
   if (location_ == kFolders) {
     wxSizer* location_head_hsizer = new wxBoxSizer(wxHORIZONTAL);
-    location_head_hsizer->AddStretchSpacer(1);
-    location_head_hsizer->Add(folders_label_, 0, wxALIGN_CV);
+    location_head_hsizer->AddStretchSpacer(1);  // Make the label right-aligned.
+    location_head_hsizer->Add(folders_bitmap_, 0, wxALIGN_CV);
     head_vsizer->Add(location_head_hsizer, 1, wxEXPAND);
     head_vsizer->AddSpacer(kPaddingY);
   }
 
   wxSizer* find_head_hsizer = new wxBoxSizer(wxHORIZONTAL);
-  AddOptionButtons(find_head_hsizer);
+
+  int cw = GetCharWidth();
+
+#if JIL_BMP_BUTTON_FIND_OPTIONS
+  find_head_hsizer->Add(location_button_, 0, wxALIGN_CV);
+  find_head_hsizer->Add(use_regex_tbutton_, 0, wxALIGN_CV | wxLEFT, cw);
+  find_head_hsizer->Add(case_sensitive_tbutton_, 0, wxALIGN_CV | wxLEFT, 2);
+  find_head_hsizer->Add(match_word_tbutton_, 0, wxALIGN_CV | wxLEFT, 2);
+#else
+  find_head_hsizer->Add(location_label_, 0, wxALIGN_CV);
+  find_head_hsizer->AddSpacer(cw);
+  find_head_hsizer->Add(sep_, 0, wxEXPAND | wxTB, 7);
+  find_head_hsizer->Add(options_label_, 0, wxALIGN_CV | wxLEFT, cw);
+#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
+
   head_vsizer->Add(find_head_hsizer, 1, wxEXPAND);
 
   if (with_replace) {
@@ -573,6 +643,7 @@ wxSizer* FindPanel::CommonLayoutFoot(bool with_replace) {
   }
 
   wxSizer* find_foot_hsizer = new wxBoxSizer(wxHORIZONTAL);
+  find_foot_hsizer->Add(find_history_button_, 0, wxALIGN_CV | wxRIGHT, kPaddingX);
   if (find_button_->IsShown()) {
     find_foot_hsizer->Add(find_button_, 0, wxALIGN_CV);
     find_foot_hsizer->Add(find_all_button_, 0, wxALIGN_CV | wxLEFT, kPaddingX);
@@ -584,6 +655,7 @@ wxSizer* FindPanel::CommonLayoutFoot(bool with_replace) {
   if (with_replace) {
     foot_vsizer->AddSpacer(kPaddingY);
     wxSizer* replace_foot_hsizer = new wxBoxSizer(wxHORIZONTAL);
+    replace_foot_hsizer->Add(replace_history_button_, 0, wxALIGN_CV | wxRIGHT, kPaddingX);
     if (replace_button_->IsShown()) {
       replace_foot_hsizer->Add(replace_button_, 0, wxALIGN_CV);
       replace_foot_hsizer->Add(replace_all_button_, 0, wxALIGN_CV | wxLEFT, kPaddingX);
@@ -596,18 +668,6 @@ wxSizer* FindPanel::CommonLayoutFoot(bool with_replace) {
   return foot_vsizer;
 }
 
-void FindPanel::AddOptionButtons(wxSizer* hsizer) {
-  hsizer->Add(location_button_, 0, wxALIGN_CV, 0);
-
-#if JIL_BMP_BUTTON_FIND_OPTIONS
-  hsizer->Add(use_regex_tbutton_, 0, wxALIGN_CV | wxLEFT, 5);
-  hsizer->Add(case_sensitive_tbutton_, 0, wxALIGN_CV | wxLEFT, 2);
-  hsizer->Add(match_word_tbutton_, 0, wxALIGN_CV | wxLEFT, 2);
-#else
-  hsizer->Add(options_label_, 0, wxALIGN_CV | wxLEFT, 2);
-#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
-}
-
 void FindPanel::ShowReplace(bool show) {
   replace_text_ctrl_->Show(show);
   replace_button_->Show(show && location_ == kCurrentPage);
@@ -615,7 +675,7 @@ void FindPanel::ShowReplace(bool show) {
 }
 
 void FindPanel::ShowFolders(bool show) {
-  folders_label_->Show(show);
+  folders_bitmap_->Show(show);
   folders_text_ctrl_->Show(show);
   add_folder_button_->Show(show);
 }

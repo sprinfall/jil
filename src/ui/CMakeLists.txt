@@ -15,6 +15,7 @@ set(SRCS
     color.h
     label.cc
     label.h
+    separator.h
     static_box.cc
     static_box.h
     string_list_ctrl.cc

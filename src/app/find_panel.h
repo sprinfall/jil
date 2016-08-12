@@ -13,7 +13,7 @@
 #include "app/defs.h"
 
 class wxComboBox;
-class wxStaticText;
+class wxStaticBitmap;
 class wxTextCtrl;
 
 namespace jil {
@@ -22,6 +22,7 @@ namespace ui {
 class BitmapButton;
 class BitmapToggleButton;
 class Label;
+class Separator;
 class TextButton;
 }  // namespace ui
 
@@ -61,11 +62,15 @@ public:
   };
 
   enum ImageId {
-    IMAGE_LOCATION = 0,
+    IMAGE_HISTORY = 0,
+#if JIL_BMP_BUTTON_FIND_OPTIONS
+    IMAGE_LOCATION,
     IMAGE_CASE_SENSITIVE,
     IMAGE_MATCH_WORD,
     IMAGE_USE_REGEX,
-    IMAGE_ADD,
+#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
+    IMAGE_FOLDERS,
+    IMAGE_ADD_FOLDER,
     IMAGES,
   };
 
@@ -125,8 +130,9 @@ protected:
   void OnMenuAllPages(wxCommandEvent& evt);
   void OnMenuFolders(wxCommandEvent& evt);
 
-  void OnLocationButtonClick(wxCommandEvent& evt);
   void OnAddFolderButtonClick(wxCommandEvent& evt);
+
+  void OnLocationClick(wxCommandEvent& evt);
 
 #if JIL_BMP_BUTTON_FIND_OPTIONS
   void OnUseRegexToggle(wxCommandEvent& evt);
@@ -134,6 +140,9 @@ protected:
   void OnMatchWordToggle(wxCommandEvent& evt);
 #else
   void OnOptionsLabel(wxCommandEvent& evt);
+  void OnMenuUseRegex(wxCommandEvent& evt);
+  void OnMenuCaseSensitive(wxCommandEvent& evt);
+  void OnMenuMatchWord(wxCommandEvent& evt);
 #endif  // JIL_BMP_BUTTON_FIND_OPTIONS
 
   void OnFind(wxCommandEvent& evt);
@@ -173,8 +182,6 @@ private:
   wxSizer* CommonLayoutBody(bool with_replace);
   wxSizer* CommonLayoutFoot(bool with_replace);
 
-  void AddOptionButtons(wxSizer* hsizer);
-
   void ShowReplace(bool show);
   void ShowFolders(bool show);
 
@@ -201,22 +208,26 @@ private:
 
   FindLocation location_;
 
-  wxStaticText* folders_label_;
+  wxStaticBitmap* folders_bitmap_;
   wxTextCtrl* folders_text_ctrl_;
   ui::BitmapButton* add_folder_button_;
 
-  ui::BitmapButton* location_button_;
-
 #if JIL_BMP_BUTTON_FIND_OPTIONS
+  ui::BitmapButton* location_button_;
   ui::BitmapToggleButton* use_regex_tbutton_;
   ui::BitmapToggleButton* case_sensitive_tbutton_;
   ui::BitmapToggleButton* match_word_tbutton_;
 #else
+  ui::Label* location_label_;
+  ui::Separator* sep_;
   ui::Label* options_label_;
 #endif  // JIL_BMP_BUTTON_FIND_OPTIONS
 
   wxTextCtrl* find_text_ctrl_;
+  ui::BitmapButton* find_history_button_;
+
   wxTextCtrl* replace_text_ctrl_;
+  ui::BitmapButton* replace_history_button_;
 
   ui::TextButton* find_button_;
   ui::TextButton* find_all_button_;

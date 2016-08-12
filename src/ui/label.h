@@ -26,10 +26,6 @@ public:
     accept_focus_ = accept_focus;
   }
 
-  void set_border_color(const wxColour& border_color) {
-    border_color_ = border_color;
-  }
-
 protected:
   void DeterminePadding();
 
@@ -43,7 +39,6 @@ protected:
 private:
   bool accept_focus_;
   wxSize padding_;
-  wxColour border_color_;
 };
 
 }  // namespace ui

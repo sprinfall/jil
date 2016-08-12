@@ -29,14 +29,13 @@ Label::~Label() {
 // Determine padding by char width.
 void Label::DeterminePadding() {
   int cw = GetCharWidth();
-  padding_.Set(cw, cw / 2);
+  padding_.Set(0, cw / 2);
 }
 
 wxSize Label::DoGetBestSize() const {
   wxSize best_size;
   GetTextExtent(GetLabel(), &best_size.x, &best_size.y);
   best_size.IncBy(padding_.x * 2, padding_.y * 2);
-  best_size.IncBy(1, 1);  // Border
   return best_size;
 }
 
@@ -46,12 +45,6 @@ void Label::OnPaint(wxPaintEvent& evt) {
   dc.Clear();
 
   const wxRect client_rect = GetClientRect();
-
-  if (border_color_.IsOk()) {
-    dc.SetPen(wxPen(border_color_, 1));
-    dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    dc.DrawRectangle(client_rect);
-  }
 
   dc.SetTextForeground(GetForegroundColour());
   dc.SetFont(GetFont());
