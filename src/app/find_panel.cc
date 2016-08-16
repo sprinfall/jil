@@ -52,6 +52,54 @@ DEFINE_EVENT_TYPE(kFindPanelLayoutEvent)
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// Customized text ctrl for find and replace input.
+// The command event kEvtTextHistory is posted when up or down key is pressed.
+
+BEGIN_DECLARE_EVENT_TYPES()
+DECLARE_EVENT_TYPE(kEvtTextHistory, -1)
+END_DECLARE_EVENT_TYPES()
+
+DEFINE_EVENT_TYPE(kEvtTextHistory)
+
+#define EVT_TEXT_HISTORY(id, func)\
+  DECLARE_EVENT_TABLE_ENTRY(kEvtTextHistory, id, -1,\
+  wxCommandEventHandler(func), (wxObject*)NULL),
+
+class TextCtrl : public wxTextCtrl {
+  DECLARE_DYNAMIC_CLASS(TextCtrl)
+  DECLARE_NO_COPY_CLASS(TextCtrl)
+  DECLARE_EVENT_TABLE()
+
+public:
+  TextCtrl() {
+  }
+
+  TextCtrl(wxWindow* parent, wxWindowID id, const wxString& value = wxEmptyString)
+      : wxTextCtrl(parent, id, value) {
+    SetWindowStyleFlag(wxTE_PROCESS_ENTER);
+    SetLayoutDirection(wxLayout_LeftToRight);
+  }
+
+protected:
+  void OnKeyUp(wxKeyEvent& evt) {
+    int code = evt.GetKeyCode();
+    if (code == WXK_UP || code == WXK_DOWN) {
+      wxCommandEvent cmd_evt(kEvtTextHistory, GetId());
+      cmd_evt.SetEventObject(this);
+      GetParent()->GetEventHandler()->AddPendingEvent(cmd_evt);
+      evt.Skip();
+    }
+  }
+};
+
+IMPLEMENT_DYNAMIC_CLASS(TextCtrl, wxTextCtrl)
+
+BEGIN_EVENT_TABLE(TextCtrl, wxTextCtrl)
+EVT_KEY_UP(TextCtrl::OnKeyUp)
+END_EVENT_TABLE();
+
+////////////////////////////////////////////////////////////////////////////////
+
 IMPLEMENT_DYNAMIC_CLASS(FindPanel, wxPanel);
 
 BEGIN_EVENT_TABLE(FindPanel, wxPanel)
@@ -89,20 +137,23 @@ EVT_BUTTON        (ID_FP_REPLACE_ALL_BUTTON,      FindPanel::OnReplaceAll)
 
 EVT_TEXT          (ID_FP_FIND_TEXTCTRL,           FindPanel::OnFindText)
 EVT_TEXT_ENTER    (ID_FP_FIND_TEXTCTRL,           FindPanel::OnFindTextEnter)
+
+EVT_TEXT_HISTORY  (ID_FP_FIND_TEXTCTRL,           FindPanel::OnFindTextHistory)
+EVT_TEXT_HISTORY  (ID_FP_REPLACE_TEXTCTRL,        FindPanel::OnReplaceTextHistory)
+
+EVT_MENU_RANGE    (ID_MENU_FIND_HISTORY_BEGIN,\
+                   ID_MENU_FIND_HISTORY_END,\
+                   FindPanel::OnFindTextHistoryMenu)
+
+EVT_MENU_RANGE    (ID_MENU_REPLACE_HISTORY_BEGIN, \
+                   ID_MENU_REPLACE_HISTORY_END, \
+                   FindPanel::OnReplaceTextHistoryMenu)
 END_EVENT_TABLE()
 
 FindPanel::FindPanel()
     : book_frame_(NULL)
     , session_(NULL)
     , mode_(kFindMode)
-    , flags_(0)
-    , location_(kCurrentPage) {
-}
-
-FindPanel::FindPanel(Session* session, int mode)
-    : book_frame_(NULL)
-    , session_(session)
-    , mode_(mode)
     , flags_(0)
     , location_(kCurrentPage) {
 }
@@ -176,15 +227,9 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   //------------------------------------
 
-  find_text_ctrl_ = new wxTextCtrl(this, ID_FP_FIND_TEXTCTRL);
-  find_text_ctrl_->SetWindowStyleFlag(wxTE_PROCESS_ENTER);
+  find_text_ctrl_ = new TextCtrl(this, ID_FP_FIND_TEXTCTRL);
 
-  find_history_button_ = NewBitmapButton(wxID_ANY, IMAGE_HISTORY);
-
-  replace_text_ctrl_ = new wxTextCtrl(this, ID_FP_REPLACE_TEXTCTRL);
-  replace_text_ctrl_->SetWindowStyleFlag(wxTE_PROCESS_ENTER);
-
-  replace_history_button_ = NewBitmapButton(wxID_ANY, IMAGE_HISTORY);
+  replace_text_ctrl_ = new TextCtrl(this, ID_FP_REPLACE_TEXTCTRL);
 
   //------------------------------------
 
@@ -209,6 +254,7 @@ FindPanel::~FindPanel() {
 
 bool FindPanel::Destroy() {
   session_->set_find_flags(flags_);
+  session_->set_find_location(location_);
   return wxPanel::Destroy();
 }
 
@@ -411,6 +457,60 @@ void FindPanel::OnFindTextEnter(wxCommandEvent& evt) {
   }
 }
 
+void FindPanel::OnFindTextHistory(wxCommandEvent& evt) {
+  const std::list<wxString>& find_strings = session_->find_strings();
+  ShowHistoryMenu(find_strings, ID_MENU_FIND_HISTORY_BEGIN, find_text_ctrl_);
+}
+
+void FindPanel::OnReplaceTextHistory(wxCommandEvent& evt) {
+  const std::list<wxString>& replace_strings = session_->replace_strings();
+  ShowHistoryMenu(replace_strings, ID_MENU_REPLACE_HISTORY_BEGIN, replace_text_ctrl_);
+}
+
+void FindPanel::ShowHistoryMenu(const std::list<wxString>& history_strings,
+                                int id_begin,
+                                wxTextCtrl* text_ctrl) {
+  if (history_strings.empty()) {
+    return;
+  }
+
+  wxMenu menu;
+
+  int menu_id = id_begin;
+
+  for (const wxString& str : history_strings) {
+    menu.Append(menu_id, str);
+    ++menu_id;
+  }
+
+  wxPoint pos = text_ctrl->GetScreenPosition();
+  PopupMenu(&menu, ScreenToClient(pos));
+}
+
+void FindPanel::OnFindTextHistoryMenu(wxCommandEvent& evt) {
+  const std::list<wxString>& find_strings = session_->find_strings();
+  HandleHistoryMenu(find_strings, evt.GetId(), find_text_ctrl_);
+}
+
+void FindPanel::OnReplaceTextHistoryMenu(wxCommandEvent& evt) {
+  const std::list<wxString>& replace_strings = session_->replace_strings();
+  HandleHistoryMenu(replace_strings, evt.GetId(), replace_text_ctrl_);
+}
+
+void FindPanel::HandleHistoryMenu(const std::list<wxString>& history_strings,
+                                  int menu_id,
+                                  wxTextCtrl* text_ctrl) {
+  size_t index = static_cast<size_t>(menu_id - ID_MENU_FIND_HISTORY_BEGIN);
+  if (index >= history_strings.size()) {
+    return;
+  }
+
+  std::list<wxString>::const_iterator it = history_strings.begin();
+  std::advance(it, index);
+  text_ctrl->SetValue(*it);
+  text_ctrl->SetInsertionPointEnd();
+}
+
 void FindPanel::HandleFind() {
   assert(location_ == kCurrentPage);
 
@@ -452,32 +552,6 @@ void FindPanel::SetLocation(FindLocation location) {
   }
 }
 
-void FindPanel::InitFindComboBox() {
-  //const std::list<wxString>& find_strings = session_->find_strings();
-  //for (const wxString& str : find_strings) {
-  //  find_combobox_->Append(str);
-  //}
-
-  //if (!find_combobox_->IsListEmpty()) {
-  //  find_combobox_->Select(0);
-  //}
-
-  //if (!find_strings.empty()) {
-  //  find_combobox_->SetValue(find_strings.front());
-  //}
-}
-
-void FindPanel::InitReplaceComboBox() {
-  //const std::list<wxString>& replace_strings = session_->replace_strings();
-  //for (const wxString& str : replace_strings) {
-  //  replace_text_ctrl_->Append(str);
-  //}
-
-  //if (!replace_text_ctrl_->IsListEmpty()) {
-  //  replace_text_ctrl_->Select(0);
-  //}
-}
-
 // TODO: If a folder includes another folder...
 void FindPanel::AddFolder(const wxString& folder) {
   wxString folders_str = folders_text_ctrl_->GetValue();
@@ -507,33 +581,11 @@ void FindPanel::AddFolder(const wxString& folder) {
 }
 
 void FindPanel::AddFindString(const wxString& string) {
-  if (session_->AddFindString(string)) {
-    // The find string is new. Simply push to find combobox at front.
-    //find_combobox_->Insert(string, 0);
-  } else {
-    // Move the find string to front in the find combobox.
-    //int old_index = find_combobox_->FindString(string, true);
-    //if (old_index != wxNOT_FOUND) {
-    //  find_combobox_->Delete(old_index);
-    //}
-    //find_combobox_->Insert(string, 0);
-    //find_combobox_->Select(0);
-  }
+  session_->AddFindString(string);
 }
 
 void FindPanel::AddReplaceString(const wxString& string) {
-  if (session_->AddReplaceString(string)) {
-    // The replace string is new. Simply push to replace combobox at front.
-    //replace_text_ctrl_->Insert(string, 0);
-  } else {
-    // Move the find string to front in the replace combobox.
-    //int old_index = replace_text_ctrl_->FindString(string, true);
-    //if (old_index != wxNOT_FOUND) {
-    //  replace_text_ctrl_->Delete(old_index);
-    //}
-    //replace_text_ctrl_->Insert(string, 0);
-    //replace_text_ctrl_->Select(0);
-  }
+  session_->AddReplaceString(string);
 }
 
 void FindPanel::LayoutAsFind() {
@@ -643,7 +695,6 @@ wxSizer* FindPanel::CommonLayoutFoot(bool with_replace) {
   }
 
   wxSizer* find_foot_hsizer = new wxBoxSizer(wxHORIZONTAL);
-  find_foot_hsizer->Add(find_history_button_, 0, wxALIGN_CV | wxRIGHT, kPaddingX);
   if (find_button_->IsShown()) {
     find_foot_hsizer->Add(find_button_, 0, wxALIGN_CV);
     find_foot_hsizer->Add(find_all_button_, 0, wxALIGN_CV | wxLEFT, kPaddingX);
@@ -655,7 +706,7 @@ wxSizer* FindPanel::CommonLayoutFoot(bool with_replace) {
   if (with_replace) {
     foot_vsizer->AddSpacer(kPaddingY);
     wxSizer* replace_foot_hsizer = new wxBoxSizer(wxHORIZONTAL);
-    replace_foot_hsizer->Add(replace_history_button_, 0, wxALIGN_CV | wxRIGHT, kPaddingX);
+    //replace_foot_hsizer->Add(replace_history_button_, 0, wxALIGN_CV | wxRIGHT, kPaddingX);
     if (replace_button_->IsShown()) {
       replace_foot_hsizer->Add(replace_button_, 0, wxALIGN_CV);
       replace_foot_hsizer->Add(replace_all_button_, 0, wxALIGN_CV | wxLEFT, kPaddingX);
@@ -670,6 +721,7 @@ wxSizer* FindPanel::CommonLayoutFoot(bool with_replace) {
 
 void FindPanel::ShowReplace(bool show) {
   replace_text_ctrl_->Show(show);
+  //replace_history_button_->Show(show);
   replace_button_->Show(show && location_ == kCurrentPage);
   replace_all_button_->Show(show);
 }

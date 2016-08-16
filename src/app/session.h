@@ -60,7 +60,7 @@ public:
   //----------------------------------------------------------------------------
   // Find panel
 
-  void set_find_history_limit_(size_t find_history_limit) {
+  void set_find_history_limit(size_t find_history_limit) {
     find_history_limit_ = find_history_limit;
   }
 

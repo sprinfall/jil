@@ -1,5 +1,4 @@
 #include "app/option_config.h"
-#include <string>
 #include <vector>
 #include "boost/algorithm/string.hpp"
 #include "uchardet/nscore.h"
@@ -12,7 +11,6 @@
 #include "app/config.h"
 #include "app/defs.h"
 #include "app/font_util.h"
-#include "app/option.h"
 
 namespace jil {
 
@@ -24,6 +22,7 @@ namespace jil {
 const char* const OPT_S_CJK = "cjk";
 const char* const OPT_S_FILE_ENCODING = "file_encoding";
 const char* const OPT_S_THEME = "theme";
+const char* const OPT_S_ICON_SIZE = "icon_size";
 const char* const OPT_G_FONTS = "fonts";
 const char* const OPT_F_TEXT = "text";
 const char* const OPT_F_LINE_NR = "line_nr";
@@ -53,7 +52,7 @@ const char* const OPT_B_RESPECT_INDENT = "respect_indent";
 ////////////////////////////////////////////////////////////////////////////////
 // Helper functions.
 
-static int ParseCjk(const std::string& cjk) {
+static int StrToCjkFilters(const std::string& cjk) {
   if (cjk.empty()) {
     return 0;
   }
@@ -80,7 +79,7 @@ static int ParseCjk(const std::string& cjk) {
   return cjk_filters;
 }
 
-static std::string CjkToStr(int cjk_filters) {
+static std::string CjkFiltersToStr(int cjk_filters) {
   std::string cjk_str;
 
   if ((cjk_filters & NS_FILTER_CHINESE) == NS_FILTER_CHINESE) {
@@ -135,6 +134,30 @@ static int AdjustCjkByLocale(int cjk_filters) {
   }
 
   return cjk_filters;
+}
+
+#define kIconSmallStr "small"
+#define kIconMediumStr "medium"
+#define kIconLargeStr "large"
+
+static IconSize StrToIconSize(const std::string& str) {
+  if (str == kIconSmallStr) {
+    return kIconSmall;
+  } else if (str == kIconLargeStr) {
+    return kIconLarge;
+  } else {
+    return kIconMedium;
+  }
+}
+
+std::string IconSizeToStr(IconSize icon_size) {
+  if (icon_size == kIconSmall) {
+    return kIconSmallStr;
+  } else if (icon_size == kIconLarge) {
+    return kIconLargeStr;
+  } else {
+    return kIconMediumStr;
+  }
 }
 
 static Setting GetSetting(const SettingMap& settings, const char* key, Setting::Type type) {
@@ -270,7 +293,7 @@ static void ParseGlobalOptions(const Setting& setting, Options* options) {
   std::string cjk_str;
   GetString(setting_map, OPT_S_CJK, &cjk_str);
   if (!cjk_str.empty()) {
-    options->cjk_filters = ParseCjk(cjk_str);
+    options->cjk_filters = StrToCjkFilters(cjk_str);
   }
   options->cjk_filters = AdjustCjkByLocale(options->cjk_filters);
 
@@ -298,6 +321,10 @@ static void ParseGlobalOptions(const Setting& setting, Options* options) {
 
   GetWxString(setting_map, OPT_S_THEME, &options->theme);
 
+  std::string icon_size_str;
+  GetString(setting_map, OPT_S_ICON_SIZE, &icon_size_str);
+  options->icon_size = StrToIconSize(icon_size_str);
+
   GetBool(setting_map, OPT_B_RESTORE_FILES, &options->restore_files);
   GetBool(setting_map, OPT_B_SHOW_PATH, &options->show_path);
 }
@@ -323,12 +350,13 @@ bool SaveGlobalOptionsFile(const wxString& file, const Options& options) {
   Config config;
   Setting root_setting = config.Root();
 
-  std::string cjk_str = CjkToStr(options.cjk_filters);
-  root_setting.SetString(OPT_S_CJK, cjk_str.c_str());
+  root_setting.SetString(OPT_S_CJK, CjkFiltersToStr(options.cjk_filters).c_str());
 
   root_setting.SetString(OPT_S_FILE_ENCODING, options.file_encoding.name.c_str());
 
   root_setting.SetString(OPT_S_THEME, options.theme.ToUTF8().data());
+
+  root_setting.SetString(OPT_S_ICON_SIZE, IconSizeToStr(options.icon_size).c_str());
 
   Setting fonts_setting = root_setting.Add(OPT_G_FONTS, Setting::kGroup);
   fonts_setting.SetFont(OPT_F_TEXT, options.fonts[FONT_TEXT]);

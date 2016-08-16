@@ -15,6 +15,7 @@
 #include "app/book_ctrl.h"
 #include "app/book_frame.h"
 #include "app/find_panel.h"
+#include "app/option_config.h"
 #include "app/status_bar.h"
 
 namespace jil {
@@ -108,20 +109,25 @@ static wxBitmap GetImage(const wxString& dir, const wxString& name) {
 }
 
 // TODO: Error handling
-// TODO: Rename theme_file
-bool LoadThemeFile(const wxString& theme_file, SharedTheme& theme, Style* style) {
-  if (!wxDir::Exists(theme_file)) {
-    wxLogError(wxT("The theme folder '%s' doesn't exist!"), theme_file);
+bool LoadThemeFile(const wxString& theme_folder,
+                   IconSize icon_size,
+                   SharedTheme& theme,
+                   Style* style) {
+  if (!wxDir::Exists(theme_folder)) {
+    wxLogError(wxT("The theme folder '%s' doesn't exist!"), theme_folder);
     return false;
   }
 
-  wxString image_dir = theme_file + wxFILE_SEP_PATH + wxT("image") + wxFILE_SEP_PATH;
+  wxString theme_dir = theme_folder + wxFILE_SEP_PATH;
 
-  wxString color_file = theme_file + wxFILE_SEP_PATH + wxT("color.cfg");
+  wxString image_dir = theme_dir + wxT("image") + wxFILE_SEP_PATH;
+  image_dir += wxString::FromAscii(IconSizeToStr(icon_size).c_str()) + wxFILE_SEP_PATH;
+
+  wxString color_file = theme_dir + wxT("color.cfg");
 
   Config cfg;
   if (!cfg.Load(color_file)) {
-    wxLogError(wxT("Failed to parse theme/color file: %s!"), theme_file);
+    wxLogError(wxT("Failed to parse theme/color file: %s!"), theme_folder);
     return false;
   }
 

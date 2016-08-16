@@ -3,6 +3,7 @@
 #pragma once
 
 #include "editor/theme.h"
+#include "app/option.h"
 
 // Load theme file.
 
@@ -14,7 +15,11 @@ namespace editor {
 class Style;
 }
 
-bool LoadThemeFile(const wxString& theme_file, editor::SharedTheme& theme, editor::Style* style);
+// \param theme_folder The root dir of a theme.
+bool LoadThemeFile(const wxString& theme_folder,
+                   IconSize icon_size,
+                   editor::SharedTheme& theme,
+                   editor::Style* style);
 
 }  // namespace jil
 

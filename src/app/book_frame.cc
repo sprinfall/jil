@@ -1944,7 +1944,9 @@ void BookFrame::ShowFindPanel(int mode) {
   Freeze();
 
   if (find_panel_ == NULL) {
-    find_panel_ = new FindPanel(session_, mode);
+    find_panel_ = new FindPanel();
+    find_panel_->set_session(session_);
+    find_panel_->set_mode(mode);
     // Hide to avoid flicker.
     // NOTE: Hide() can be called before the window is created.
     find_panel_->Hide();

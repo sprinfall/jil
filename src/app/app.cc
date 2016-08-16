@@ -524,7 +524,7 @@ bool App::SaveUserEditorOptions(const wxString& ft_id, const editor::Options& op
 bool App::ReloadTheme(const wxString& theme_name) {
   wxString theme_file = ResourceFile(kThemeDir, theme_name + kCfgExt);
 
-  if (!LoadThemeFile(theme_file, theme_, style_)) {
+  if (!LoadThemeFile(theme_file, options_.icon_size, theme_, style_)) {
     ShowError(wxString::Format(kTrCfgFileLoadFail, theme_file));
     return false;
   }
@@ -720,7 +720,7 @@ bool App::LoadTheme() {
 
   wxString theme_file = ResourceFile(kThemeDir, theme_name);
 
-  if (!LoadThemeFile(theme_file, theme_, style_)) {
+  if (!LoadThemeFile(theme_file, options_.icon_size, theme_, style_)) {
     ShowError(wxString::Format(kTrCfgFileLoadFail, theme_file));
     return false;
   }

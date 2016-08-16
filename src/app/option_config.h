@@ -2,9 +2,11 @@
 #define JIL_OPTION_CONFIG_H_
 #pragma once
 
-// Parse option settings.
+#include <string>
+#include "wx/string.h"
+#include "app/option.h"
 
-class wxString;
+// Parse option settings.
 
 namespace jil {
 
@@ -15,6 +17,8 @@ class Options;
 }  // namespace editor
 
 class Options;
+
+std::string IconSizeToStr(IconSize icon_size);
 
 bool LoadGlobalOptionsFile(const wxString& file, Options* options);
 bool SaveGlobalOptionsFile(const wxString& file, const Options& options);

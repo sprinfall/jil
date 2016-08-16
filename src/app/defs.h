@@ -36,6 +36,8 @@
 #define FF_DIAPLAY_NAME_LF wxT("Unix (LF, \\n)")
 #define FF_DIAPLAY_NAME_CR wxT("Mac OS 9 (CR, \\r)")
 
+#define kFindHistoryLimit 10
+
 namespace jil {
 
 enum FindFlag {

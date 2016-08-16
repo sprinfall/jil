@@ -5,6 +5,7 @@
 // Find & replace panel.
 // TODO: Allow to set font.
 
+#include <list>
 #include "wx/control.h"
 #include "wx/panel.h"
 #include "ui/button_style.h"
@@ -81,7 +82,6 @@ public:
 
 public:
   FindPanel();
-  FindPanel(Session* session, int mode);
 
   bool Create(BookFrame* book_frame, wxWindowID id);
 
@@ -153,18 +153,24 @@ protected:
   void OnFindText(wxCommandEvent& evt);
   void OnFindTextEnter(wxCommandEvent& evt);
 
+  void OnFindTextHistory(wxCommandEvent& evt);
+  void OnReplaceTextHistory(wxCommandEvent& evt);
+  void ShowHistoryMenu(const std::list<wxString>& history_strings,
+                       int id_begin,
+                       wxTextCtrl* text_ctrl);
+
+  void OnFindTextHistoryMenu(wxCommandEvent& evt);
+  void OnReplaceTextHistoryMenu(wxCommandEvent& evt);
+  void HandleHistoryMenu(const std::list<wxString>& history_strings,
+                         int menu_id,
+                         wxTextCtrl* text_ctrl);
+
   void HandleFind();
   void HandleReplace(bool all);
 
   void SetLocation(FindLocation location);
 
 private:
-  // Initialize find combobox with find history.
-  void InitFindComboBox();
-
-  // Initialize replace combobox with replace history.
-  void InitReplaceComboBox();
-
   // Append a folder to folders text ctrl.
   void AddFolder(const wxString& folder);
 
@@ -224,7 +230,6 @@ private:
 #endif  // JIL_BMP_BUTTON_FIND_OPTIONS
 
   wxTextCtrl* find_text_ctrl_;
-  ui::BitmapButton* find_history_button_;
 
   wxTextCtrl* replace_text_ctrl_;
   ui::BitmapButton* replace_history_button_;

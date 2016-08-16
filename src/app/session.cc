@@ -111,7 +111,7 @@ static void SetStringArray(Setting parent, const char* name, const std::list<wxS
 
 Session::Session()
     : book_frame_maximized_(false)
-    , find_history_limit_(10)
+    , find_history_limit_(kFindHistoryLimit)
     , find_flags_(0)
     , find_location_(kCurrentPage)
     , show_options_(false)
