@@ -113,7 +113,7 @@
 
 #define kTrPrefsGlobal        _("&Global")
 #define kTrPrefsEditor        _("&Syntax Specific")
-#define kTrToolsTheme         _("&Theme")
+#define kTrPrefsTheme         _("&Theme")
 
 #define kTrHelpViewOnline     _("&View Online Help")
 

@@ -16,45 +16,20 @@ EditorDialog::~EditorDialog() {
 }
 
 void EditorDialog::AddPages() {
-  notebook_->AddPage(CreateGeneralPage(), _("General"), true);
-  notebook_->AddPage(CreateIndentPage(), _("Indent"), false);
-  notebook_->AddPage(CreateCommentPage(), _("Comment"), false);
-}
-
-wxWindow* EditorDialog::CreateGeneralPage() {
-  Editor_GeneralPage* page = new Editor_GeneralPage(options_);
+  Editor_GeneralPage* general_page = new Editor_GeneralPage(options_);
+  Editor_IndentPage* indent_page = new Editor_IndentPage(options_);
+  Editor_CommentPage* comment_page = new Editor_CommentPage(options_);
 
   wxColour theme_bg_colour = notebook_->GetThemeBackgroundColour();
   if (theme_bg_colour.IsOk()) {
-    page->SetBackgroundColour(theme_bg_colour);
+    general_page->SetBackgroundColour(theme_bg_colour);
+    indent_page->SetBackgroundColour(theme_bg_colour);
+    comment_page->SetBackgroundColour(theme_bg_colour);
   }
 
-  page->Create(notebook_);
-  return page;
-}
-
-wxWindow* EditorDialog::CreateIndentPage() {
-  Editor_IndentPage* page = new Editor_IndentPage(options_);
-
-  wxColour theme_bg_colour = notebook_->GetThemeBackgroundColour();
-  if (theme_bg_colour.IsOk()) {
-    page->SetBackgroundColour(theme_bg_colour);
-  }
-
-  page->Create(notebook_);
-  return page;
-}
-
-wxWindow* EditorDialog::CreateCommentPage() {
-  Editor_CommentPage* page = new Editor_CommentPage(options_);
-
-  wxColour theme_bg_colour = notebook_->GetThemeBackgroundColour();
-  if (theme_bg_colour.IsOk()) {
-    page->SetBackgroundColour(theme_bg_colour);
-  }
-
-  page->Create(notebook_);
-  return page;
+  notebook_->AddPage(general_page, _("General"), true);
+  notebook_->AddPage(indent_page, _("Indent"), false);
+  notebook_->AddPage(comment_page, _("Comment"), false);
 }
 
 }  // namespace pref

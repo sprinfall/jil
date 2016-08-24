@@ -522,9 +522,9 @@ bool App::SaveUserEditorOptions(const wxString& ft_id, const editor::Options& op
 }
 
 bool App::ReloadTheme(const wxString& theme_name) {
-  wxString theme_file = ResourceFile(kThemeDir, theme_name + kCfgExt);
+  wxString theme_file = ResourceFile(kThemeDir, theme_name);
 
-  if (!LoadThemeFile(theme_file, options_.icon_size, theme_, style_)) {
+  if (!LoadThemeFile(theme_file, options_.icon_resolution, theme_, style_)) {
     ShowError(wxString::Format(kTrCfgFileLoadFail, theme_file));
     return false;
   }
@@ -710,17 +710,19 @@ bool App::LoadTheme() {
   wxString theme_name = options_.theme;
   if (theme_name.empty()) {
     theme_name = theme_names_.front();
+    options_.theme = theme_name;
     wxLogWarning(wxT("The theme is not specified, '%s' will be used."), theme_name);
   } else if (std::find(theme_names_.begin(), theme_names_.end(), theme_name) == theme_names_.end()) {
     wxLogWarning(wxT("The specified theme '%s' doesn't exist, '%s' will be used instead."),
                  theme_name,
                  theme_names_.front());
     theme_name = theme_names_.front();
+    options_.theme = theme_name;
   }
 
   wxString theme_file = ResourceFile(kThemeDir, theme_name);
 
-  if (!LoadThemeFile(theme_file, options_.icon_size, theme_, style_)) {
+  if (!LoadThemeFile(theme_file, options_.icon_resolution, theme_, style_)) {
     ShowError(wxString::Format(kTrCfgFileLoadFail, theme_file));
     return false;
   }

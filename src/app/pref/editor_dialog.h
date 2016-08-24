@@ -21,10 +21,6 @@ public:
 protected:
   virtual void AddPages() override;
 
-  wxWindow* CreateGeneralPage();
-  wxWindow* CreateIndentPage();
-  wxWindow* CreateCommentPage();
-
 private:
   editor::Options* options_;
 };

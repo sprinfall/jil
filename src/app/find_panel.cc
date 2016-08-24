@@ -173,14 +173,15 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   }
 
   SetBackgroundStyle(wxBG_STYLE_PAINT);
+
   SetBackgroundColour(theme_->GetColor(COLOR_BG_TOP));
 
+  button_style_.reset(new ui::ButtonStyle);
   InitButtonStyle();
 
   //----------------------------------------------------------------------------
 
-  folders_bitmap_ = new wxStaticBitmap(this, ID_FP_FOLDERS_LABEL, theme_->GetImage(IMAGE_FOLDERS));
-  folders_bitmap_->SetForegroundColour(theme_->GetColor(COLOR_FG));
+  folders_bitmap_ = new wxStaticBitmap(this, ID_FP_FOLDERS_LABEL, wxNullBitmap);
   folders_bitmap_->Hide();
 
   folders_text_ctrl_ = new wxTextCtrl(this, ID_FP_FOLDERS_TEXTCTRL);
@@ -213,14 +214,11 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 #else
 
   location_label_ = new ui::Label(this, ID_FP_LOCATION_LABEL, kTrLocation);
-  location_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
   location_label_->SetCursor(wxCursor(wxCURSOR_HAND));
 
   sep_ = new ui::Separator(this, 1, false);
-  sep_->SetColor(theme_->GetColor(COLOR_FG));
 
   options_label_ = new ui::Label(this, ID_FP_OPTIONS_LABEL, kTrOptions);
-  options_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
   options_label_->SetCursor(wxCursor(wxCURSOR_HAND));
 
 #endif  // JIL_BMP_BUTTON_FIND_OPTIONS
@@ -228,7 +226,6 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   //------------------------------------
 
   find_text_ctrl_ = new TextCtrl(this, ID_FP_FIND_TEXTCTRL);
-
   replace_text_ctrl_ = new TextCtrl(this, ID_FP_REPLACE_TEXTCTRL);
 
   //------------------------------------
@@ -237,6 +234,11 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   find_all_button_ = NewTextButton(ID_FP_FIND_ALL_BUTTON, kTrFindAll);
   replace_button_ = NewTextButton(ID_FP_REPLACE_BUTTON, kTrReplace);
   replace_all_button_ = NewTextButton(ID_FP_REPLACE_ALL_BUTTON, kTrReplaceAll);
+
+  //------------------------------------
+
+  // Apply colors and bitmaps.
+  ReapplyTheme();
 
   //------------------------------------
 
@@ -324,6 +326,29 @@ void FindPanel::SetFindString(const wxString& find_string) {
   find_text_ctrl_->SetValue(find_string);
   find_text_ctrl_->SelectAll();
   AddFindString(find_string);
+}
+
+void FindPanel::ReapplyTheme() {
+  assert(theme_);
+
+  InitButtonStyle();
+
+  folders_bitmap_->SetBitmap(theme_->GetImage(IMAGE_FOLDERS));
+  folders_bitmap_->SetForegroundColour(theme_->GetColor(COLOR_FG));
+
+  add_folder_button_->SetBitmap(theme_->GetImage(IMAGE_ADD_FOLDER));
+
+#if JIL_BMP_BUTTON_FIND_OPTIONS
+  location_button_->SetBitmap(theme_->GetImage(IMAGE_LOCATION));
+  use_regex_tbutton_->SetBitmap(theme_->GetImage(IMAGE_USE_REGEX));
+  case_sensitive_tbutton_->SetBitmap(theme_->GetImage(IMAGE_CASE_SENSITIVE));
+  match_word_tbutton_->SetBitmap(theme_->GetImage(IMAGE_MATCH_WORD));
+#else
+  location_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
+  sep_->SetColor(theme_->GetColor(COLOR_FG));
+  options_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
+#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
+
 }
 
 void FindPanel::OnAddFolderButtonClick(wxCommandEvent& evt) {
@@ -733,8 +758,6 @@ void FindPanel::ShowFolders(bool show) {
 }
 
 void FindPanel::InitButtonStyle() {
-  button_style_.reset(new ui::ButtonStyle);
-
   editor::SharedTheme button_theme = theme_->GetTheme(THEME_BUTTON);
   if (!button_theme) {
     return;
@@ -755,7 +778,7 @@ void FindPanel::InitButtonStyle() {
 ui::BitmapButton* FindPanel::NewBitmapButton(int id, ImageId image_id) {
   ui::BitmapButton* button = new ui::BitmapButton(button_style_);
   button->Create(this, id);
-  button->SetBitmap(theme_->GetImage(image_id));
+  //button->SetBitmap(theme_->GetImage(image_id));
   button->set_user_best_size(wxSize(24, 24));  // TODO
   return button;
 }
@@ -763,7 +786,7 @@ ui::BitmapButton* FindPanel::NewBitmapButton(int id, ImageId image_id) {
 ui::BitmapToggleButton* FindPanel::NewBitmapToggleButton(int id, ImageId image_id) {
   ui::BitmapToggleButton* button = new ui::BitmapToggleButton(button_style_);
   button->Create(this, id);
-  button->SetBitmap(theme_->GetImage(image_id));
+  //button->SetBitmap(theme_->GetImage(image_id));
   button->set_user_best_size(wxSize(24, 24));  // TODO
   return button;
 }

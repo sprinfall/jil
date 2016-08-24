@@ -33,6 +33,8 @@ set(PREF_SRCS
     pref/global_font_page.h
     pref/global_general_page.cc
     pref/global_general_page.h
+    pref/global_theme_page.cc
+    pref/global_theme_page.h
     pref/option_list_ctrl.cc
     pref/option_list_ctrl.h
     )

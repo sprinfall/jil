@@ -106,7 +106,7 @@ EVT_MENU_RANGE(ID_MENU_TOOLS_BEGIN, ID_MENU_TOOLS_END - 1, BookFrame::OnMenuTool
 
 EVT_MENU(wxID_PREFERENCES, BookFrame::OnGlobalPreferences)
 EVT_MENU_RANGE(ID_MENU_PREFS_EDITOR_BEGIN, ID_MENU_PREFS_EDITOR_END - 1, BookFrame::OnEditorPreferences)
-EVT_MENU_RANGE(ID_MENU_THEME_BEGIN, ID_MENU_THEME_END - 1, BookFrame::OnTheme)
+EVT_MENU_RANGE(ID_MENU_THEME_BEGIN, ID_MENU_THEME_END - 1, BookFrame::OnMenuTheme)
 
 EVT_MENU_RANGE(ID_MENU_HELP_BEGIN, ID_MENU_HELP_END - 1, BookFrame::OnMenuHelp)
 
@@ -1108,6 +1108,11 @@ void BookFrame::ApplyGlobalOptionChanges(const Options& old_options) {
     status_bar_->SetFont(options_->fonts[FONT_STATUS_BAR]);
     UpdateLayout();
   }
+
+  if (options_->theme != old_options.theme ||
+      options_->icon_resolution != old_options.icon_resolution) {
+    ReloadTheme(options_->theme);
+  }
 }
 
 void BookFrame::ApplyLinePadding(int line_padding) {
@@ -1224,21 +1229,27 @@ void BookFrame::ApplyEditorOptionChanges(const wxString& ft_id,
   }
 }
 
-void BookFrame::OnTheme(wxCommandEvent& evt) {
+void BookFrame::OnMenuTheme(wxCommandEvent& evt) {
   App& app = wxGetApp();
 
   int index = evt.GetId() - ID_MENU_THEME_BEGIN;
   wxString theme_name = app.GetTheme(index);
-  if (theme_name == options_->theme) {
-    return;
-  }
-
-  if (!app.ReloadTheme(theme_name)) {
+  if (theme_name != options_->theme) {
     return;
   }
 
   options_->theme = theme_name;
   app.SaveUserGlobalOptions();
+
+  ReloadTheme(theme_name);
+}
+
+void BookFrame::ReloadTheme(const wxString& theme_name) {
+  App& app = wxGetApp();
+
+  if (!app.ReloadTheme(theme_name)) {
+    return;
+  }
 
   // Apply theme.
 
@@ -1256,6 +1267,11 @@ void BookFrame::OnTheme(wxCommandEvent& evt) {
   }
 
   status_bar_->Refresh();
+
+  if (find_panel_ != NULL) {
+    find_panel_->ReapplyTheme();
+    find_panel_->UpdateLayout();
+  }
 }
 
 void BookFrame::OnQuit(wxCommandEvent& WXUNUSED(evt)) {
@@ -1815,9 +1831,9 @@ void BookFrame::PopupStatusEncodingMenu() {
 
 void BookFrame::PopupStatusFileFormatMenu() {
   wxMenu menu;
-  menu.Append(ID_MENU_FILE_FORMAT_CRLF, FF_DIAPLAY_NAME_CRLF);
-  menu.Append(ID_MENU_FILE_FORMAT_LF, FF_DIAPLAY_NAME_LF);
-  menu.Append(ID_MENU_FILE_FORMAT_CR, FF_DIAPLAY_NAME_CR);
+  menu.AppendCheckItem(ID_MENU_FILE_FORMAT_CRLF, FF_DIAPLAY_NAME_CRLF);
+  menu.AppendCheckItem(ID_MENU_FILE_FORMAT_LF, FF_DIAPLAY_NAME_LF);
+  menu.AppendCheckItem(ID_MENU_FILE_FORMAT_CR, FF_DIAPLAY_NAME_CR);
   PopupMenu(&menu, ScreenToClient(wxGetMousePosition()));
 }
 
@@ -2412,7 +2428,7 @@ void BookFrame::LoadMenus() {
   // Theme
   wxMenu* theme_menu = new wxMenu;
   InitThemeMenu(theme_menu);
-  osx_apple_menu->Insert(5, wxID_ANY, kTrToolsTheme, theme_menu);
+  osx_apple_menu->Insert(5, wxID_ANY, kTrPrefsTheme, theme_menu);
 
 #endif  // defined (__WXOSX__)
 
@@ -2492,7 +2508,7 @@ void BookFrame::LoadMenus() {
 
   // Theme
   wxMenu* theme_menu = new wxMenu;
-  prefs_menu->AppendSubMenu(theme_menu, kTrToolsTheme);
+  prefs_menu->AppendSubMenu(theme_menu, kTrPrefsTheme);
   InitThemeMenu(theme_menu);
 
 #endif  // !defined (__WXOSX__)

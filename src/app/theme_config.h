@@ -17,7 +17,7 @@ class Style;
 
 // \param theme_folder The root dir of a theme.
 bool LoadThemeFile(const wxString& theme_folder,
-                   IconSize icon_size,
+                   Resolution icon_size,
                    editor::SharedTheme& theme,
                    editor::Style* style);
 

@@ -43,9 +43,7 @@ public:
     Refresh();
   }
 
-  void SetBitmap(const wxBitmap& bitmap) {
-    bitmap_ = bitmap;
-  }
+  void SetBitmap(const wxBitmap& bitmap);
 
 protected:
   virtual wxSize DoGetBestSize() const override;

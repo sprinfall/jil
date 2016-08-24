@@ -217,7 +217,8 @@ protected:
                                 const editor::Options& options,
                                 const editor::Options& old_options);
 
-  void OnTheme(wxCommandEvent& evt);
+  void OnMenuTheme(wxCommandEvent& evt);
+  void ReloadTheme(const wxString& theme_name);
 
   void OnQuit(wxCommandEvent& evt);
 

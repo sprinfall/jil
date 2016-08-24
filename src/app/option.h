@@ -15,11 +15,11 @@ namespace jil {
 const int kMinLinePadding = 1;
 const int kMaxLinePadding = 9;
 
-// Different sizes of theme icons/images for different resolutions.
-enum IconSize {
-  kIconSmall = 0, // For low resolution.
-  kIconMedium,    // For normal resolution.
-  kIconLarge,     // For high resolution.
+// Different resolutions of theme icons/images.
+enum Resolution {
+  kLowResolution = 0,
+  kMediumResolution,
+  kHighResolution,
 };
 
 // Global options.
@@ -31,7 +31,7 @@ public:
 
   void Init() {
     cjk_filters = 0;
-    icon_size = kIconMedium;
+    icon_resolution = kMediumResolution;
     line_padding = 1;
     switch_cwd = false;
     restore_files = true;
@@ -49,7 +49,8 @@ public:
   // Theme name.
   wxString theme;
 
-  IconSize icon_size;
+  // Resolution of theme icons/images.
+  Resolution icon_resolution;
 
   // Spacing at the top and bottom of a line.
   int line_padding;

@@ -110,7 +110,7 @@ static wxBitmap GetImage(const wxString& dir, const wxString& name) {
 
 // TODO: Error handling
 bool LoadThemeFile(const wxString& theme_folder,
-                   IconSize icon_size,
+                   Resolution icon_size,
                    SharedTheme& theme,
                    Style* style) {
   if (!wxDir::Exists(theme_folder)) {
@@ -121,7 +121,7 @@ bool LoadThemeFile(const wxString& theme_folder,
   wxString theme_dir = theme_folder + wxFILE_SEP_PATH;
 
   wxString image_dir = theme_dir + wxT("image") + wxFILE_SEP_PATH;
-  image_dir += wxString::FromAscii(IconSizeToStr(icon_size).c_str()) + wxFILE_SEP_PATH;
+  image_dir += wxString::FromAscii(ResolutionToStr(icon_size).c_str()) + wxFILE_SEP_PATH;
 
   wxString color_file = theme_dir + wxT("color.cfg");
 
@@ -180,7 +180,12 @@ bool LoadThemeFile(const wxString& theme_folder,
   }
 
   // Find panel
-  SharedTheme fp_theme(new Theme(FindPanel::THEMES, FindPanel::COLORS, FindPanel::IMAGES));
+  SharedTheme fp_theme = theme->GetTheme(THEME_FIND_PANEL);
+  if (!fp_theme) {
+    fp_theme.reset(new Theme(FindPanel::THEMES, FindPanel::COLORS, FindPanel::IMAGES));
+    theme->SetTheme(THEME_FIND_PANEL, fp_theme);
+  }
+
   Setting fp_setting = root.Get("find_panel", Setting::kGroup);
   if (fp_setting) {
     fp_theme->SetColor(FindPanel::COLOR_FG, fp_setting.GetColor("fg"));

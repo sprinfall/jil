@@ -23,9 +23,6 @@ public:
 protected:
   virtual void AddPages() override;
 
-  wxWindow* CreateGeneralPage();
-  wxWindow* CreateFontPage();
-
   void OnNotebookPageChanged(wxBookCtrlEvent& evt);
 
 private:

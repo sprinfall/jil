@@ -4,6 +4,7 @@
 #include "app/pref/common.h"
 #include "app/pref/global_general_page.h"
 #include "app/pref/global_font_page.h"
+#include "app/pref/global_theme_page.h"
 
 namespace jil {
 namespace pref {
@@ -20,32 +21,24 @@ GlobalDialog::~GlobalDialog() {
 }
 
 void GlobalDialog::AddPages() {
-  notebook_->AddPage(CreateGeneralPage(), _("General"), true);
-  notebook_->AddPage(CreateFontPage(), _("Font"), false);
-}
-
-wxWindow* GlobalDialog::CreateGeneralPage() {
-  Global_GeneralPage* page = new Global_GeneralPage(options_);
+  Global_GeneralPage* general_page = new Global_GeneralPage(options_);
+  Global_FontPage* font_page = new Global_FontPage(options_);
+  Global_ThemePage* theme_page = new Global_ThemePage(options_);
 
   wxColour theme_bg_colour = notebook_->GetThemeBackgroundColour();
   if (theme_bg_colour.IsOk()) {
-    page->SetBackgroundColour(theme_bg_colour);
+    general_page->SetBackgroundColour(theme_bg_colour);
+    font_page->SetBackgroundColour(theme_bg_colour);
+    theme_page->SetBackgroundColour(theme_bg_colour);
   }
 
-  page->Create(notebook_);
-  return page;
-}
+  general_page->Create(notebook_);
+  font_page->Create(notebook_);
+  theme_page->Create(notebook_);
 
-wxWindow* GlobalDialog::CreateFontPage() {
-  Global_FontPage* page = new Global_FontPage(options_);
-
-  wxColour theme_bg_colour = notebook_->GetThemeBackgroundColour();
-  if (theme_bg_colour.IsOk()) {
-    page->SetBackgroundColour(theme_bg_colour);
-  }
-
-  page->Create(notebook_);
-  return page;
+  notebook_->AddPage(general_page, _("General"), true);
+  notebook_->AddPage(font_page, _("Font"), false);
+  notebook_->AddPage(theme_page, _("Theme"), false);
 }
 
 void GlobalDialog::OnNotebookPageChanged(wxBookCtrlEvent& evt) {

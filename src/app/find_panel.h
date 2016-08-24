@@ -123,6 +123,8 @@ public:
 
   void SetFindString(const wxString& find_string);
 
+  void ReapplyTheme();
+
 protected:
   void OnPaint(wxPaintEvent& evt);
 

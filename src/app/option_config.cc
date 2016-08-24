@@ -136,27 +136,27 @@ static int AdjustCjkByLocale(int cjk_filters) {
   return cjk_filters;
 }
 
-#define kIconSmallStr "small"
-#define kIconMediumStr "medium"
-#define kIconLargeStr "large"
+#define kLowResolutionStr     "low"
+#define kMediumResolutionStr  "medium"
+#define kHighResolutionStr    "high"
 
-static IconSize StrToIconSize(const std::string& str) {
-  if (str == kIconSmallStr) {
-    return kIconSmall;
-  } else if (str == kIconLargeStr) {
-    return kIconLarge;
+static Resolution StrToResolution(const std::string& str) {
+  if (str == kLowResolutionStr) {
+    return kLowResolution;
+  } else if (str == kHighResolutionStr) {
+    return kHighResolution;
   } else {
-    return kIconMedium;
+    return kMediumResolution;
   }
 }
 
-std::string IconSizeToStr(IconSize icon_size) {
-  if (icon_size == kIconSmall) {
-    return kIconSmallStr;
-  } else if (icon_size == kIconLarge) {
-    return kIconLargeStr;
+std::string ResolutionToStr(Resolution resolution) {
+  if (resolution == kLowResolution) {
+    return kLowResolutionStr;
+  } else if (resolution == kHighResolution) {
+    return kHighResolutionStr;
   } else {
-    return kIconMediumStr;
+    return kMediumResolutionStr;
   }
 }
 
@@ -321,9 +321,9 @@ static void ParseGlobalOptions(const Setting& setting, Options* options) {
 
   GetWxString(setting_map, OPT_S_THEME, &options->theme);
 
-  std::string icon_size_str;
-  GetString(setting_map, OPT_S_ICON_SIZE, &icon_size_str);
-  options->icon_size = StrToIconSize(icon_size_str);
+  std::string resolution_str;
+  GetString(setting_map, OPT_S_ICON_SIZE, &resolution_str);
+  options->icon_resolution = StrToResolution(resolution_str);
 
   GetBool(setting_map, OPT_B_RESTORE_FILES, &options->restore_files);
   GetBool(setting_map, OPT_B_SHOW_PATH, &options->show_path);
@@ -356,7 +356,7 @@ bool SaveGlobalOptionsFile(const wxString& file, const Options& options) {
 
   root_setting.SetString(OPT_S_THEME, options.theme.ToUTF8().data());
 
-  root_setting.SetString(OPT_S_ICON_SIZE, IconSizeToStr(options.icon_size).c_str());
+  root_setting.SetString(OPT_S_ICON_SIZE, ResolutionToStr(options.icon_resolution).c_str());
 
   Setting fonts_setting = root_setting.Add(OPT_G_FONTS, Setting::kGroup);
   fonts_setting.SetFont(OPT_F_TEXT, options.fonts[FONT_TEXT]);

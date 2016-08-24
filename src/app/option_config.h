@@ -18,7 +18,7 @@ class Options;
 
 class Options;
 
-std::string IconSizeToStr(IconSize icon_size);
+std::string ResolutionToStr(Resolution resolution);
 
 bool LoadGlobalOptionsFile(const wxString& file, Options* options);
 bool SaveGlobalOptionsFile(const wxString& file, const Options& options);
