@@ -178,7 +178,6 @@ void Global_FontPage::CreateTypeSection(wxSizer* top_vsizer) {
 
   wxString tr_labels[FONT_COUNT] = {
     _("Text Editor"),
-    _("Line Number"),
     _("Tabs"),
     _("Status Bar"),
   };

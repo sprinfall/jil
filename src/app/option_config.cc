@@ -25,7 +25,6 @@ const char* const OPT_S_THEME = "theme";
 const char* const OPT_S_ICON_SIZE = "icon_size";
 const char* const OPT_G_FONTS = "fonts";
 const char* const OPT_F_TEXT = "text";
-const char* const OPT_F_LINE_NR = "line_nr";
 const char* const OPT_F_TABS = "tabs";
 const char* const OPT_F_STATUS_BAR = "status_bar";
 const char* const OPT_I_LINE_PADDING = "line_padding";
@@ -309,7 +308,6 @@ static void ParseGlobalOptions(const Setting& setting, Options* options) {
   Setting fonts_setting = GetSetting(setting_map, OPT_G_FONTS, Setting::kGroup);
   if (fonts_setting) {
     options->fonts[FONT_TEXT] = GetFont(fonts_setting, OPT_F_TEXT);
-    options->fonts[FONT_LINE_NR] = GetFont(fonts_setting, OPT_F_LINE_NR);
     options->fonts[FONT_TABS] = GetFont(fonts_setting, OPT_F_TABS);
     options->fonts[FONT_STATUS_BAR] = GetFont(fonts_setting, OPT_F_STATUS_BAR);
   }
@@ -360,7 +358,6 @@ bool SaveGlobalOptionsFile(const wxString& file, const Options& options) {
 
   Setting fonts_setting = root_setting.Add(OPT_G_FONTS, Setting::kGroup);
   fonts_setting.SetFont(OPT_F_TEXT, options.fonts[FONT_TEXT]);
-  fonts_setting.SetFont(OPT_F_LINE_NR, options.fonts[FONT_LINE_NR]);
   fonts_setting.SetFont(OPT_F_TABS, options.fonts[FONT_TABS]);
   fonts_setting.SetFont(OPT_F_STATUS_BAR, options.fonts[FONT_STATUS_BAR]);
 

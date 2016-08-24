@@ -182,6 +182,9 @@ void TextWindow::SetFocus() {
 
 void TextWindow::SetTextFont(const wxFont& font) {
   text_area_->SetOwnFont(font);
+  line_nr_area_->SetOwnFont(font);
+
+  int old_line_nr_width = line_nr_width_;
 
   text_extent_->SetFont(font);
   char_size_ = text_extent_->char_size();
@@ -189,13 +192,6 @@ void TextWindow::SetTextFont(const wxFont& font) {
   UpdateLineHeight();
   HandleLineHeightChange();
 
-  text_area_->Refresh();
-}
-
-void TextWindow::SetLineNrFont(const wxFont& font) {
-  line_nr_area_->SetOwnFont(font);
-
-  int old_line_nr_width = line_nr_width_;
   UpdateLineNrWidth();
 
   // If the line number width changes, layout the areas.
@@ -203,6 +199,7 @@ void TextWindow::SetLineNrFont(const wxFont& font) {
     LayoutAreas();
   }
 
+  text_area_->Refresh();
   line_nr_area_->Refresh();
 }
 

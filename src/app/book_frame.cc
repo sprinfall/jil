@@ -1095,10 +1095,6 @@ void BookFrame::ApplyGlobalOptionChanges(const Options& old_options) {
     ApplyTextFont(options_->fonts[FONT_TEXT]);
   }
 
-  if (options_->fonts[FONT_LINE_NR] != old_options.fonts[FONT_LINE_NR]) {
-    ApplyLineNrFont(options_->fonts[FONT_LINE_NR]);
-  }
-
   if (options_->fonts[FONT_TABS] != old_options.fonts[FONT_TABS]) {
     text_book_->SetTabFont(options_->fonts[FONT_TABS]);
     tool_book_->SetTabFont(options_->fonts[FONT_TABS]);
@@ -1133,15 +1129,6 @@ void BookFrame::ApplyTextFont(const wxFont& font) {
   }
 }
 
-void BookFrame::ApplyLineNrFont(const wxFont& font) {
-  text_book_->page_window()->SetLineNrFont(font);
-
-  FindResultPage* fr_page = GetFindResultPage(false);
-  if (fr_page != NULL) {
-    fr_page->SetLineNrFont(font);
-  }
-}
-
 void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
   App& app = wxGetApp();
 
@@ -1153,7 +1140,7 @@ void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
   const editor::FileType* ft = app.GetFileType(index);
   editor::FtPlugin* ft_plugin = app.GetFtPlugin(*ft);
 
-  // Backup the old optinos.
+  // Backup the old options.
   editor::Options old_options = ft_plugin->options();
 
   // This will be the new options.
@@ -2048,7 +2035,6 @@ FindResultPage* BookFrame::GetFindResultPage(bool create) {
   fr_page->Create(tool_book_->page_area(), ID_FIND_RESULT_PAGE, true);
 
   fr_page->SetTextFont(options_->fonts[FONT_TEXT]);
-  fr_page->SetLineNrFont(options_->fonts[FONT_LINE_NR]);
   fr_page->SetLinePadding(options_->line_padding);
 
   Connect(fr_page->GetId(),

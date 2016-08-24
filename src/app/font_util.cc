@@ -91,7 +91,6 @@ void NormalizeFont(wxFont& font) {
 
 static void InitDefaultFonts(wxFont fonts[FONT_COUNT]) {
   fonts[FONT_TEXT] = GetGlobalFont(GetDefaultFontSize(), GetDefaultFontName());
-  fonts[FONT_LINE_NR] = fonts[FONT_TEXT];
 
   wxFont gui_font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
   NormalizeFont(gui_font);

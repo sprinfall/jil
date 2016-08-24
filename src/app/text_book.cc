@@ -130,7 +130,6 @@ void TextBook::CreatePageWindow() {
 
   // TODO: SetTextFont causes Refresh, avoid it.
   page_window_->SetTextFont(options_->fonts[FONT_TEXT]);
-  page_window_->SetLineNrFont(options_->fonts[FONT_LINE_NR]);
   page_window_->SetLinePadding(options_->line_padding);
 
   page_window_->set_font_range(FontRange(kMinFontSize, kMaxFontSize));

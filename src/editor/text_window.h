@@ -108,7 +108,6 @@ public:
   //----------------------------------------------------------------------------
 
   void SetTextFont(const wxFont& font);
-  void SetLineNrFont(const wxFont& font);
 
   void SetLinePadding(int line_padding);
 

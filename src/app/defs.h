@@ -103,7 +103,6 @@ enum PageType {
 
 enum FontType {
   FONT_TEXT = 0,
-  FONT_LINE_NR,
   FONT_TABS,
   FONT_STATUS_BAR,
   FONT_COUNT,
