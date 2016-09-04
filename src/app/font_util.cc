@@ -97,6 +97,7 @@ static void InitDefaultFonts(wxFont fonts[FONT_COUNT]) {
 
   fonts[FONT_TABS] = gui_font;
   fonts[FONT_STATUS_BAR] = gui_font;
+  fonts[FONT_FIND_PANEL] = gui_font;
 }
 
 wxFont GetDefaultFont(FontType font_type) {

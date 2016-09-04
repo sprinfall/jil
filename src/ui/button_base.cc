@@ -21,7 +21,6 @@ END_EVENT_TABLE()
 
 ButtonBase::ButtonBase(SharedButtonStyle style)
     : style_(style)
-    , padding_(10, 7)
     , pressed_(false)
     , hover_(false)
     , accepts_focus_(true) {
@@ -42,6 +41,8 @@ bool ButtonBase::Create(wxWindow* parent, wxWindowID id, const wxString& label) 
   SetBackgroundStyle(wxBG_STYLE_PAINT);
   SetBackgroundColour(parent->GetBackgroundColour());
 
+  InitPadding();
+
   return true;
 }
 
@@ -51,6 +52,12 @@ bool ButtonBase::Enable(bool enable) {
     return true;
   }
   return false;
+}
+
+void ButtonBase::InitPadding() {
+  // Determine padding by char width.
+  int cw = GetCharWidth();
+  padding_.Set(cw, cw / 2);
 }
 
 void ButtonBase::OnPaint(wxPaintEvent& evt) {

@@ -34,6 +34,8 @@ public:
   }
 
 protected:
+  void InitPadding();
+
   virtual ButtonStyle::State GetState() const = 0;
 
   virtual void DrawForeground(wxDC& dc, ButtonStyle::State state) = 0;

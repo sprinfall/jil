@@ -96,6 +96,9 @@ public:
 
   virtual void SetFocus() override;
 
+  // Override to set font to child windows too.
+  virtual bool SetFont(const wxFont& font) override;
+
   void set_theme(const editor::SharedTheme& theme) {
     theme_ = theme;
   }
@@ -195,8 +198,8 @@ private:
 
   void InitButtonStyle();
 
-  ui::BitmapButton* NewBitmapButton(int id, ImageId image_id);
-  ui::BitmapToggleButton* NewBitmapToggleButton(int id, ImageId image_id);
+  ui::BitmapButton* NewBitmapButton(int id);
+  ui::BitmapToggleButton* NewBitmapToggleButton(int id);
   ui::TextButton* NewTextButton(int id, const wxString& label);
 
   void PostLayoutEvent();
@@ -232,14 +235,14 @@ private:
 #endif  // JIL_BMP_BUTTON_FIND_OPTIONS
 
   wxTextCtrl* find_text_ctrl_;
-
   wxTextCtrl* replace_text_ctrl_;
-  ui::BitmapButton* replace_history_button_;
 
   ui::TextButton* find_button_;
   ui::TextButton* find_all_button_;
   ui::TextButton* replace_button_;
   ui::TextButton* replace_all_button_;
+
+  wxSize bitmap_button_best_size_;
 };
 
 }  // namespace jil

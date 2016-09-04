@@ -198,7 +198,6 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
   status_bar_->Create(this, ID_STATUS_BAR);
 
   status_bar_->SetFont(options_->fonts[FONT_STATUS_BAR]);
-
   status_bar_->SetFieldValue(StatusBar::kField_Cwd, wxGetCwd(), false);
 
   LoadMenus();
@@ -1087,6 +1086,8 @@ void BookFrame::ApplyGlobalOptionChanges(const Options& old_options) {
     }
   }
 
+  bool need_update_layout = false;
+
   if (options_->line_padding != old_options.line_padding) {
     ApplyLinePadding(options_->line_padding);
   }
@@ -1102,12 +1103,23 @@ void BookFrame::ApplyGlobalOptionChanges(const Options& old_options) {
 
   if (options_->fonts[FONT_STATUS_BAR] != old_options.fonts[FONT_STATUS_BAR]) {
     status_bar_->SetFont(options_->fonts[FONT_STATUS_BAR]);
-    UpdateLayout();
+    need_update_layout = true;
+  }
+
+  if (find_panel_ != NULL) {
+    if (options_->fonts[FONT_FIND_PANEL] != old_options.fonts[FONT_FIND_PANEL]) {
+      find_panel_->SetFont(options_->fonts[FONT_FIND_PANEL]);
+      need_update_layout = true;
+    }
   }
 
   if (options_->theme != old_options.theme ||
       options_->icon_resolution != old_options.icon_resolution) {
     ReloadTheme(options_->theme);
+  }
+
+  if (need_update_layout) {
+    UpdateLayout();
   }
 }
 
@@ -1955,6 +1967,9 @@ void BookFrame::ShowFindPanel(int mode) {
     find_panel_->Hide();
     find_panel_->set_theme(theme_->GetTheme(THEME_FIND_PANEL));
     find_panel_->Create(this, ID_FIND_PANEL);
+
+    find_panel_->SetFont(options_->fonts[FONT_FIND_PANEL]);
+
   } else {
     find_panel_->set_mode(mode);
     find_panel_->UpdateLayout();

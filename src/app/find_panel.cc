@@ -187,23 +187,26 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   folders_text_ctrl_ = new wxTextCtrl(this, ID_FP_FOLDERS_TEXTCTRL);
   folders_text_ctrl_->Hide();
 
-  add_folder_button_ = NewBitmapButton(ID_FP_ADD_FOLDER_BUTTON, IMAGE_ADD_FOLDER);
+  int height = folders_text_ctrl_->GetBestSize().GetHeight();
+  bitmap_button_best_size_.Set(height, height);
+
+  add_folder_button_ = NewBitmapButton(ID_FP_ADD_FOLDER_BUTTON);
   add_folder_button_->Hide();
 
   //----------------------------------------------------------------------------
 
 #if JIL_BMP_BUTTON_FIND_OPTIONS
 
-  location_button_ = NewBitmapButton(ID_FP_LOCATION_BUTTON, IMAGE_LOCATION);
+  location_button_ = NewBitmapButton(ID_FP_LOCATION_BUTTON);
   location_button_->SetToolTip(kTrLocation);
 
-  use_regex_tbutton_ = NewBitmapToggleButton(ID_FP_USE_REGEX_TBUTTON, IMAGE_USE_REGEX);
+  use_regex_tbutton_ = NewBitmapToggleButton(ID_FP_USE_REGEX_TBUTTON);
   use_regex_tbutton_->SetToolTip(kTrUseRegex);
 
-  case_sensitive_tbutton_ = NewBitmapToggleButton(ID_FP_CASE_SENSITIVE_TBUTTON, IMAGE_CASE_SENSITIVE);
+  case_sensitive_tbutton_ = NewBitmapToggleButton(ID_FP_CASE_SENSITIVE_TBUTTON);
   case_sensitive_tbutton_->SetToolTip(kTrCaseSensitive);
 
-  match_word_tbutton_ = NewBitmapToggleButton(ID_FP_MATCH_WORD_TBUTTON, IMAGE_MATCH_WORD);
+  match_word_tbutton_ = NewBitmapToggleButton(ID_FP_MATCH_WORD_TBUTTON);
   match_word_tbutton_->SetToolTip(kTrMatchWord);
 
   // Initialize toggle button states.
@@ -277,6 +280,21 @@ void FindPanel::SetFocus() {
   }
 }
 
+bool FindPanel::SetFont(const wxFont& font) {
+  bool result = wxPanel::SetFont(font);
+
+  wxWindowList& children = wxWindow::GetChildren(); 
+  for (size_t i = 0; i < children.GetCount(); ++i) {
+    children[i]->SetFont(font);
+    //children[i]->InvalidateBestSize();  // Seems not necessary.
+    children[i]->Refresh();  // !
+  }
+
+  Layout();
+
+  return result;
+}
+
 void FindPanel::OnPaint(wxPaintEvent& evt) {
   wxAutoBufferedPaintDC dc(this);
 #if !wxALWAYS_NATIVE_DOUBLE_BUFFER
@@ -291,9 +309,6 @@ void FindPanel::OnPaint(wxPaintEvent& evt) {
   wxRect bg_rect(update_rect.x, 0, update_rect.width, 0);
   bg_rect.y = rect.y + 2;
   bg_rect.height = rect.height - 2;
-  //wxColour bg_top = theme_->GetColor(COLOR_BG_TOP);
-  //wxColour bg_bottom = theme_->GetColor(COLOR_BG_BOTTOM);
-  //dc.GradientFillLinear(bg_rect, bg_bottom, bg_top, wxNORTH);
 
   // Borders
   int border_y = rect.y;
@@ -721,24 +736,24 @@ wxSizer* FindPanel::CommonLayoutFoot(bool with_replace) {
 
   wxSizer* find_foot_hsizer = new wxBoxSizer(wxHORIZONTAL);
   if (find_button_->IsShown()) {
-    find_foot_hsizer->Add(find_button_, 0, wxALIGN_CV);
-    find_foot_hsizer->Add(find_all_button_, 0, wxALIGN_CV | wxLEFT, kPaddingX);
+    find_foot_hsizer->Add(find_button_, 1, wxALIGN_CV);
+    find_foot_hsizer->Add(find_all_button_, 1, wxALIGN_CV | wxLEFT, kPaddingX);
   } else {
-    find_foot_hsizer->Add(find_all_button_, 0, wxALIGN_CV);
+    find_foot_hsizer->Add(find_all_button_, 1, wxALIGN_CV);
   }
-  foot_vsizer->Add(find_foot_hsizer, 1);
+  foot_vsizer->Add(find_foot_hsizer, 1, wxEXPAND);
 
   if (with_replace) {
     foot_vsizer->AddSpacer(kPaddingY);
     wxSizer* replace_foot_hsizer = new wxBoxSizer(wxHORIZONTAL);
     //replace_foot_hsizer->Add(replace_history_button_, 0, wxALIGN_CV | wxRIGHT, kPaddingX);
     if (replace_button_->IsShown()) {
-      replace_foot_hsizer->Add(replace_button_, 0, wxALIGN_CV);
-      replace_foot_hsizer->Add(replace_all_button_, 0, wxALIGN_CV | wxLEFT, kPaddingX);
+      replace_foot_hsizer->Add(replace_button_, 1, wxALIGN_CV);
+      replace_foot_hsizer->Add(replace_all_button_, 1, wxALIGN_CV | wxLEFT, kPaddingX);
     } else {
-      replace_foot_hsizer->Add(replace_all_button_, 0, wxALIGN_CV);
+      replace_foot_hsizer->Add(replace_all_button_, 1, wxALIGN_CV);
     }
-    foot_vsizer->Add(replace_foot_hsizer, 1);
+    foot_vsizer->Add(replace_foot_hsizer, 1, wxEXPAND);
   }
 
   return foot_vsizer;
@@ -775,26 +790,23 @@ void FindPanel::InitButtonStyle() {
   button_style_->Fix();
 }
 
-ui::BitmapButton* FindPanel::NewBitmapButton(int id, ImageId image_id) {
+ui::BitmapButton* FindPanel::NewBitmapButton(int id) {
   ui::BitmapButton* button = new ui::BitmapButton(button_style_);
   button->Create(this, id);
-  //button->SetBitmap(theme_->GetImage(image_id));
-  button->set_user_best_size(wxSize(24, 24));  // TODO
+  button->set_user_best_size(bitmap_button_best_size_);
   return button;
 }
 
-ui::BitmapToggleButton* FindPanel::NewBitmapToggleButton(int id, ImageId image_id) {
+ui::BitmapToggleButton* FindPanel::NewBitmapToggleButton(int id) {
   ui::BitmapToggleButton* button = new ui::BitmapToggleButton(button_style_);
   button->Create(this, id);
-  //button->SetBitmap(theme_->GetImage(image_id));
-  button->set_user_best_size(wxSize(24, 24));  // TODO
+  button->set_user_best_size(bitmap_button_best_size_);
   return button;
 }
 
 ui::TextButton* FindPanel::NewTextButton(int id, const wxString& label) {
   ui::TextButton* button = new ui::TextButton(button_style_);
   button->Create(this, id, label);
-  button->SetMinSize(wxSize(80, -1));  // TODO
   return button;
 }
 

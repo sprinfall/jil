@@ -27,6 +27,7 @@ const char* const OPT_G_FONTS = "fonts";
 const char* const OPT_F_TEXT = "text";
 const char* const OPT_F_TABS = "tabs";
 const char* const OPT_F_STATUS_BAR = "status_bar";
+const char* const OPT_F_FIND_PANEL = "find_panel";
 const char* const OPT_I_LINE_PADDING = "line_padding";
 const char* const OPT_B_SWITCH_CWD = "switch_cwd";
 const char* const OPT_B_RESTORE_FILES = "restore_files";
@@ -310,6 +311,7 @@ static void ParseGlobalOptions(const Setting& setting, Options* options) {
     options->fonts[FONT_TEXT] = GetFont(fonts_setting, OPT_F_TEXT);
     options->fonts[FONT_TABS] = GetFont(fonts_setting, OPT_F_TABS);
     options->fonts[FONT_STATUS_BAR] = GetFont(fonts_setting, OPT_F_STATUS_BAR);
+    options->fonts[FONT_FIND_PANEL] = GetFont(fonts_setting, OPT_F_FIND_PANEL);
   }
   ValidateFonts(options->fonts);
 
@@ -360,6 +362,7 @@ bool SaveGlobalOptionsFile(const wxString& file, const Options& options) {
   fonts_setting.SetFont(OPT_F_TEXT, options.fonts[FONT_TEXT]);
   fonts_setting.SetFont(OPT_F_TABS, options.fonts[FONT_TABS]);
   fonts_setting.SetFont(OPT_F_STATUS_BAR, options.fonts[FONT_STATUS_BAR]);
+  fonts_setting.SetFont(OPT_F_FIND_PANEL, options.fonts[FONT_FIND_PANEL]);
 
   root_setting.SetInt(OPT_I_LINE_PADDING, options.line_padding);
 

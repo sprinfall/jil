@@ -105,6 +105,7 @@ enum FontType {
   FONT_TEXT = 0,
   FONT_TABS,
   FONT_STATUS_BAR,
+  FONT_FIND_PANEL,
   FONT_COUNT,
 };
 

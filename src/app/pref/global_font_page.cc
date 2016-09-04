@@ -180,6 +180,7 @@ void Global_FontPage::CreateTypeSection(wxSizer* top_vsizer) {
     _("Text Editor"),
     _("Tabs"),
     _("Status Bar"),
+    _("Find Panel"),
   };
 
   for (int i = 0; i < FONT_COUNT; ++i) {

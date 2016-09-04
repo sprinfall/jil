@@ -20,14 +20,14 @@ Label::Label(wxWindow* parent, wxWindowID id, const wxString& label)
 
   SetLabel(label);
 
-  DeterminePadding();
+  InitPadding();
 }
 
 Label::~Label() {
 }
 
-// Determine padding by char width.
-void Label::DeterminePadding() {
+void Label::InitPadding() {
+  // Determine padding by char width.
   int cw = GetCharWidth();
   padding_.Set(0, cw / 2);
 }

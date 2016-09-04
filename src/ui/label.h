@@ -27,7 +27,7 @@ public:
   }
 
 protected:
-  void DeterminePadding();
+  void InitPadding();
 
   virtual wxSize DoGetBestSize() const override;
 
