@@ -28,6 +28,7 @@ class TextButton;
 }  // namespace ui
 
 class BookFrame;
+class FindTextCtrl;
 class Session;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -96,7 +97,7 @@ public:
 
   virtual void SetFocus() override;
 
-  // Override to set font to child windows too.
+  // Override to also set font to child windows (text controls).
   virtual bool SetFont(const wxFont& font) override;
 
   void set_theme(const editor::SharedTheme& theme) {
@@ -175,6 +176,11 @@ protected:
 
   void SetLocation(FindLocation location);
 
+  // Check if the given regex is valid or not.
+  bool IsRegexValid(const std::wstring& re_str) const;
+
+  void UpdateFindTextFgColor();
+
 private:
   // Append a folder to folders text ctrl.
   void AddFolder(const wxString& folder);
@@ -234,8 +240,8 @@ private:
   ui::Label* options_label_;
 #endif  // JIL_BMP_BUTTON_FIND_OPTIONS
 
-  wxTextCtrl* find_text_ctrl_;
-  wxTextCtrl* replace_text_ctrl_;
+  FindTextCtrl* find_text_ctrl_;
+  FindTextCtrl* replace_text_ctrl_;
 
   ui::TextButton* find_button_;
   ui::TextButton* find_all_button_;
@@ -243,6 +249,11 @@ private:
   ui::TextButton* replace_all_button_;
 
   wxSize bitmap_button_best_size_;
+
+  // Foreground colors for find text control.
+  // When find using regex, the text will highlighted if the regex is invalid.
+  wxColour fg_color_;
+  wxColour invalid_fg_color_;
 };
 
 }  // namespace jil

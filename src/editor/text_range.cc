@@ -41,6 +41,14 @@ CharRange CharRange::Intersect(const CharRange& rhs) const {
   return result;
 }
 
+CharRange& CharRange::Shift(Coord off) {
+  begin_ += off;
+  if (end_ != kInvCoord) {
+    end_ += off;
+  }
+  return *this;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void LineRange::Set(Coord first, Coord last) {

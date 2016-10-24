@@ -106,6 +106,14 @@ Coord TextLine::FindLastChar(wchar_t c, bool ignore_comment, Coord off) const {
   return i;
 }
 
+Coord TextLine::FindChar(wchar_t c, Coord off) const {
+  size_t i = data_.find(c, off);
+  if (i == std::wstring::npos) {
+    return kInvCoord;
+  }
+  return CoordCast(i);
+}
+
 bool TextLine::IsEmpty(bool ignore_space) const {
   if (ignore_space) {
     return data_.find_first_not_of(L" \t") == std::wstring::npos;
@@ -325,6 +333,30 @@ Coord TextLine::UnpairedLeftKey(wchar_t l_key, wchar_t r_key, Coord off) const {
 
   return kInvCoord;
 }
+
+//------------------------------------------------------------------------------
+// Find Regex
+
+bool TextLine::FindRegex(const std::wregex& re, Coord off, CharRange* char_range) const {
+  assert(off <= data_.size());
+
+  typedef std::wstring::const_iterator Iter;
+
+  Iter begin(data_.begin() + off);
+  Iter end(data_.end());
+
+  std::match_results<Iter> m;
+  if (std::regex_search(begin, end, m, re)) {
+    char_range->Set(m[0].first - begin, m[0].second - begin);
+    char_range->Shift(off);
+    return true;
+  }
+
+  return false;
+}
+
+//------------------------------------------------------------------------------
+// Indent
 
 Coord TextLine::GetIndent(int tab_stop) const {
   Coord spaces = 0;

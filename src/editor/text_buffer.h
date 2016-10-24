@@ -7,10 +7,12 @@
 #include <list>
 #include <map>
 #include <deque>
+
 #include "wx/datetime.h"
 #include "wx/string.h"
 #include "wx/filename.h"
 #include "wx/fontenc.h"
+
 #include "editor/compile_config.h"
 #include "editor/defs.h"
 #include "editor/option.h"
@@ -59,6 +61,7 @@ public:
   // Use deque instead of vector for faster line insert & delete operations.
   typedef std::deque<TextLine*> TextLines;
 
+#if JIL_FIND_REGEX_ACROSS_LINES
   //----------------------------------------------------------------------------
   // CharIterator - Iterate text buffer char by char.
 
@@ -104,6 +107,7 @@ public:
     CharIterator operator++(int);
     CharIterator operator--(int);
   };
+#endif  // JIL_FIND_REGEX_ACROSS_LINES
 
   //----------------------------------------------------------------------------
 
@@ -134,6 +138,8 @@ public:
     return TextRange(point_begin(), point_end());
   }
 
+#if JIL_FIND_REGEX_ACROSS_LINES
+
   CharIterator CharBegin();
   const CharIterator CharBegin() const;
 
@@ -151,6 +157,8 @@ public:
     l_it += (point.y - 1);
     return CharIterator(l_it, point.x);
   }
+
+#endif  // JIL_FIND_REGEX_ACROSS_LINES
 
   //----------------------------------------------------------------------------
 
@@ -558,8 +566,9 @@ private:
   // Find a regex string in the given range.
   TextRange FindRegexString(const std::wstring& str,
                             const TextRange& range,
-                            bool case_sensitive,
-                            bool match_word) const;
+                            bool case_sensitive) const;
+
+  TextRange FindRegex(const std::wregex& re, const TextRange& range) const;
 
   // Find all occurrences of a plain string in the given range.
   void FindPlainStringAll(const std::wstring& str,
@@ -571,8 +580,18 @@ private:
   void FindRegexStringAll(const std::wstring& str,
                           const TextRange& range,
                           bool case_sensitive,
-                          bool match_word,
                           std::list<TextRange>* result_ranges) const;
+
+  void FindRegexAll(const std::wregex& re,
+                    const TextRange& range,
+                    std::list<TextRange>* result_ranges) const;
+
+  // Find regex all in the given line.
+  void FindRegexAll(const TextLine* line,
+                    Coord ln,
+                    Coord off,
+                    const std::wregex& re,
+                    std::list<TextRange>* result_ranges) const;
 
   // Find a plain string inside the given line.
   bool FindLineString(TextLines::const_iterator line_it,

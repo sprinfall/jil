@@ -16,7 +16,7 @@ class BookPage {
 public:
   enum Flag {
     kModified = 1,
-    kNewCreated,
+    kNewCreated = 2,
   };
 
   virtual ~BookPage() {

@@ -27,6 +27,10 @@ void EditorDialog::AddPages() {
     comment_page->SetBackgroundColour(theme_bg_colour);
   }
 
+  general_page->Create(notebook_);
+  indent_page->Create(notebook_);
+  comment_page->Create(notebook_);
+
   notebook_->AddPage(general_page, _("General"), true);
   notebook_->AddPage(indent_page, _("Indent"), false);
   notebook_->AddPage(comment_page, _("Comment"), false);

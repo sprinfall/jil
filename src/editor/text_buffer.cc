@@ -181,22 +181,6 @@ static bool SplitLines(const std::wstring& text, size_t i, size_t* count, size_t
 }
 #endif  // JIL_SPLIT_LINES_WITH_FUNC
 
-static std::wstring AddRegexWordBoundary(const std::wstring& str) {
-  const std::wstring kBoundary = L"\\b";
-
-  std::wstring adjusted_str = str;
-
-  if (!boost::starts_with(str, kBoundary)) {
-    adjusted_str = kBoundary + adjusted_str;
-  }
-
-  if (!boost::ends_with(str, kBoundary)) {
-    adjusted_str += kBoundary;
-  }
-
-  return adjusted_str;
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 
 // If wxWidgets pre-defines the conv, reuse it and don't delete it. E.g., reuse
@@ -346,6 +330,8 @@ static FileError ReadFile(const wxString& file_path,
 
 ////////////////////////////////////////////////////////////////////////////////
 
+#if JIL_FIND_REGEX_ACROSS_LINES
+
 wchar_t TextBuffer::CharIterator::operator*() const {
   TextLine* line = *y_;
   if (x_ >= line->Length()) {
@@ -388,6 +374,8 @@ TextBuffer::CharIterator TextBuffer::CharIterator::operator--(int) {
   --*this;
   return tmp;
 }
+
+#endif  // JIL_FIND_REGEX_ACROSS_LINES
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -521,6 +509,8 @@ FileError TextBuffer::SaveFile() {
 
 //------------------------------------------------------------------------------
 
+#if JIL_FIND_REGEX_ACROSS_LINES
+
 TextBuffer::CharIterator TextBuffer::CharBegin() {
   assert(!lines_.empty());
   return CharIterator(lines_.begin(), 0);
@@ -544,6 +534,8 @@ const TextBuffer::CharIterator TextBuffer::CharEnd() const {
   --y;
   return CharIterator(y, (*y)->Length());
 }
+
+#endif  // JIL_FIND_REGEX_ACROSS_LINES
 
 //------------------------------------------------------------------------------
 
@@ -1356,7 +1348,7 @@ TextRange TextBuffer::FindString(const std::wstring& str,
   assert(range.line_first() <= LineCount());
 
   if (use_regex) {
-    return FindRegexString(str, range, case_sensitive, match_word);
+    return FindRegexString(str, range, case_sensitive);
   } else {
     if (reversely) {
       return FindPlainStringReversely(str, range, case_sensitive, match_word);
@@ -1378,7 +1370,7 @@ void TextBuffer::FindStringAll(const std::wstring& str,
   if (!use_regex) {
     FindPlainStringAll(str, range, case_sensitive, match_word, result_ranges);
   } else {
-    FindRegexStringAll(str, range, case_sensitive, match_word, result_ranges);
+    FindRegexStringAll(str, range, case_sensitive, result_ranges);
   }
 }
 
@@ -2093,34 +2085,66 @@ TextRange TextBuffer::FindPlainStringReversely(const std::wstring& str,
 
 TextRange TextBuffer::FindRegexString(const std::wstring& str,
                                       const TextRange& range,
-                                      bool case_sensitive,
-                                      bool match_word) const {
+                                      bool case_sensitive) const {
   std::wregex::flag_type re_flags = std::wregex::ECMAScript;
   if (!case_sensitive) {
     re_flags |= std::wregex::icase;
   }
 
-  std::wstring adjusted_str = str;
-  if (match_word) {
-    adjusted_str = AddRegexWordBoundary(str);
-  }
-
   try {
     // NOTE: Throw std::regex_error if the supplied regular expression is not valid.
-    std::wregex e(adjusted_str, re_flags);
-
-    CharIterator c_begin(CharIteratorFromPoint(range.point_begin()));
-    CharIterator c_end(CharEnd());
-    std::match_results<CharIterator> m;
-    std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
-
-    if (std::regex_search(c_begin, c_end, m, e, flags)) {
-      return TextRange(PointFromCharIterator(m[0].first), PointFromCharIterator(m[0].second));
-    }
+    std::wregex re(str, re_flags);
+    return FindRegex(re, range);
   } catch (std::regex_error& e) {
     // Invalid regular expression!
     wxLogError(e.what());
   }
+
+  return TextRange();
+}
+
+TextRange TextBuffer::FindRegex(const std::wregex& re, const TextRange& range) const {
+#if JIL_FIND_REGEX_ACROSS_LINES
+  CharIterator c_begin(CharIteratorFromPoint(range.point_begin()));
+  CharIterator c_end(CharEnd());
+  std::match_results<CharIterator> m;
+  std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
+
+  if (std::regex_search(c_begin, c_end, m, re, flags)) {
+    return TextRange(PointFromCharIterator(m[0].first), PointFromCharIterator(m[0].second));
+  }
+#else
+  const TextPoint& p_begin = range.point_begin();
+  const TextPoint& p_end = range.point_end();
+
+  Coord ln = p_begin.y;
+  CharRange char_range;
+
+  // Find in first line.
+  if (!Line(ln)->FindRegex(re, p_begin.x, &char_range)) {
+    ++ln;
+
+    if (range.LineCount() > 1) {
+      // Find in middle lines.
+      for (; ln < p_end.y; ++ln) {
+        if (Line(ln)->FindRegex(re, 0, &char_range)) {
+          break;
+        }
+      }
+
+      if (char_range.IsEmpty()) {
+        // Find in last line.
+        Line(ln)->FindRegex(re, 0, &char_range);
+      }
+    }
+  }
+
+  if (!char_range.IsEmpty()) {
+    TextPoint p_begin(char_range.begin(), ln);
+    TextPoint p_end(char_range.end(), ln);
+    return TextRange(p_begin, p_end);
+  }
+#endif  // JIL_FIND_REGEX_ACROSS_LINES
 
   return TextRange();
 }
@@ -2157,42 +2181,86 @@ void TextBuffer::FindPlainStringAll(const std::wstring& str,
 void TextBuffer::FindRegexStringAll(const std::wstring& str,
                                     const TextRange& range,
                                     bool case_sensitive,
-                                    bool match_word,
                                     std::list<TextRange>* result_ranges) const {
   std::wregex::flag_type re_flags = std::wregex::ECMAScript;
   if (!case_sensitive) {
     re_flags |= std::wregex::icase;
   }
 
-  std::wstring adjusted_str = str;
-  if (match_word) {
-    adjusted_str = AddRegexWordBoundary(str);
-  }
-
   try {
     // NOTE: Throw std::regex_error if the supplied regular expression is not valid.
-    std::wregex e(adjusted_str, re_flags);
-
-    CharIterator c_begin = CharIteratorFromPoint(range.point_begin());
-    CharIterator c_end = CharEnd();
-    std::match_results<CharIterator> m;
-    std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
-
-    while (true) {
-      if (!std::regex_search(c_begin, c_end, m, e, flags)) {
-        break;
-      }
-
-      TextPoint point_begin = PointFromCharIterator(m[0].first);
-      TextPoint point_end = PointFromCharIterator(m[0].second);
-
-      result_ranges->push_back(TextRange(point_begin, point_end));
-
-      c_begin = m[0].second;
-    }
+    std::wregex re(str, re_flags);
+    FindRegexAll(re, range, result_ranges);
   } catch (std::regex_error& e) {
     // Invalid regular expression!
     wxLogError(e.what());
+  }
+}
+
+void TextBuffer::FindRegexAll(const std::wregex& re,
+                              const TextRange& range,
+                              std::list<TextRange>* result_ranges) const {
+#if JIL_FIND_REGEX_ACROSS_LINES
+  CharIterator c_begin = CharIteratorFromPoint(range.point_begin());
+  CharIterator c_end = CharEnd();
+  std::match_results<CharIterator> m;
+  std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
+
+  while (true) {
+    if (!std::regex_search(c_begin, c_end, m, re, flags)) {
+      break;
+    }
+
+    TextPoint point_begin = PointFromCharIterator(m[0].first);
+    TextPoint point_end = PointFromCharIterator(m[0].second);
+
+    result_ranges->push_back(TextRange(point_begin, point_end));
+
+    c_begin = m[0].second;
+  }
+#else
+  const TextPoint& p_begin = range.point_begin();
+  const TextPoint& p_end = range.point_end();
+
+  // TODO: Add a private function GetLineIter(ln)
+
+  // NOTE: Iterate
+  Coord ln = p_begin.y;
+  TextLines::const_iterator it = lines_.begin() + (p_begin.y - 1);
+
+  // Find in first line.
+  FindRegexAll(*it, ln, p_begin.x, re, result_ranges);
+
+  if (range.LineCount() > 1) {
+    ++it;
+    ++ln;
+
+    // Find in middle lines.
+    TextLines::const_iterator last_it = lines_.begin() + (p_end.y - 1);
+    for (; it != last_it; ++it, ++ln) {
+      FindRegexAll(*it, ln, 0, re, result_ranges);
+    }
+
+    // Find in last line.
+    FindRegexAll(*it, ln, 0, re, result_ranges);
+  }
+#endif  // JIL_FIND_REGEX_ACROSS_LINES
+}
+
+void TextBuffer::FindRegexAll(const TextLine* line,
+                              Coord ln,
+                              Coord off,
+                              const std::wregex& re,
+                              std::list<TextRange>* result_ranges) const {
+  CharRange char_range;
+  while (off < line->Length() && line->FindRegex(re, off, &char_range)) {
+    if (!char_range.IsEmpty()) {
+      TextPoint p_begin(char_range.begin(), ln);
+      TextPoint p_end(char_range.end(), ln);
+      result_ranges->push_back(TextRange(p_begin, p_end));
+    }
+
+    off = char_range.end();
   }
 }
 

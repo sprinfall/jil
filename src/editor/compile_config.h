@@ -13,6 +13,11 @@
 //   - relite::Regex: 16ms
 #define JIL_LEX_USE_RELITE 1
 
+// Find regex string across lines (not fully implemented).
+// When enabled, support to use "\n" in a regex string.
+// When disabled, regex string will always be searched line by line.
+#define JIL_FIND_REGEX_ACROSS_LINES 0
+
 // Rectangle selection. Not fully implemented.
 #define JIL_ENABLE_RECT_SELECT 0
 

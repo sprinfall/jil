@@ -65,19 +65,25 @@ DEFINE_EVENT_TYPE(kEvtTextHistory)
   DECLARE_EVENT_TABLE_ENTRY(kEvtTextHistory, id, -1,\
   wxCommandEventHandler(func), (wxObject*)NULL),
 
-class TextCtrl : public wxTextCtrl {
-  DECLARE_DYNAMIC_CLASS(TextCtrl)
-  DECLARE_NO_COPY_CLASS(TextCtrl)
+class FindTextCtrl : public wxTextCtrl {
+  DECLARE_DYNAMIC_CLASS(FindTextCtrl)
+  DECLARE_NO_COPY_CLASS(FindTextCtrl)
   DECLARE_EVENT_TABLE()
 
 public:
-  TextCtrl() {
+  FindTextCtrl() {
   }
 
-  TextCtrl(wxWindow* parent, wxWindowID id, const wxString& value = wxEmptyString)
+  FindTextCtrl(wxWindow* parent, wxWindowID id, const wxString& value = wxEmptyString)
       : wxTextCtrl(parent, id, value) {
     SetWindowStyleFlag(wxTE_PROCESS_ENTER);
     SetLayoutDirection(wxLayout_LeftToRight);
+  }
+
+  void UseBoldFont(bool bold) {
+    wxFont font = GetFont();
+    font.SetWeight(bold ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL);
+    SetFont(font);
   }
 
 protected:
@@ -92,10 +98,10 @@ protected:
   }
 };
 
-IMPLEMENT_DYNAMIC_CLASS(TextCtrl, wxTextCtrl)
+IMPLEMENT_DYNAMIC_CLASS(FindTextCtrl, wxTextCtrl)
 
-BEGIN_EVENT_TABLE(TextCtrl, wxTextCtrl)
-EVT_KEY_UP(TextCtrl::OnKeyUp)
+BEGIN_EVENT_TABLE(FindTextCtrl, wxTextCtrl)
+EVT_KEY_UP(FindTextCtrl::OnKeyUp)
 END_EVENT_TABLE();
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -228,8 +234,12 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   //------------------------------------
 
-  find_text_ctrl_ = new TextCtrl(this, ID_FP_FIND_TEXTCTRL);
-  replace_text_ctrl_ = new TextCtrl(this, ID_FP_REPLACE_TEXTCTRL);
+  find_text_ctrl_ = new FindTextCtrl(this, ID_FP_FIND_TEXTCTRL);
+  replace_text_ctrl_ = new FindTextCtrl(this, ID_FP_REPLACE_TEXTCTRL);
+
+  // Save normal foreground color.
+  fg_color_ = find_text_ctrl_->GetForegroundColour();
+  invalid_fg_color_ = *wxRED;
 
   //------------------------------------
 
@@ -251,6 +261,12 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   UpdateLayout();
 
+  // Restore last find string.
+  if (!session_->find_strings().empty()) {
+    find_text_ctrl_->SetValue(session_->find_strings().front());
+    UpdateFindTextFgColor();
+  }
+
   return true;
 }
 
@@ -261,14 +277,6 @@ bool FindPanel::Destroy() {
   session_->set_find_flags(flags_);
   session_->set_find_location(location_);
   return wxPanel::Destroy();
-}
-
-void FindPanel::UpdateLayout() {
-  if (mode_ == kFindMode) {
-    LayoutAsFind();
-  } else {
-    LayoutAsReplace();
-  }
 }
 
 void FindPanel::SetFocus() {
@@ -283,16 +291,60 @@ void FindPanel::SetFocus() {
 bool FindPanel::SetFont(const wxFont& font) {
   bool result = wxPanel::SetFont(font);
 
-  wxWindowList& children = wxWindow::GetChildren(); 
-  for (size_t i = 0; i < children.GetCount(); ++i) {
-    children[i]->SetFont(font);
-    //children[i]->InvalidateBestSize();  // Seems not necessary.
-    children[i]->Refresh();  // !
+  find_text_ctrl_->SetFont(font);
+  replace_text_ctrl_->SetFont(font);
+  folders_text_ctrl_->SetFont(font);
+
+  //wxWindowList& children = wxWindow::GetChildren(); 
+  //for (size_t i = 0; i < children.GetCount(); ++i) {
+  //  children[i]->SetFont(font);
+  //  //children[i]->InvalidateBestSize();  // Seems not necessary.
+  //  children[i]->Refresh();  // !
+  //}
+
+  if (GetBit(flags_, kFind_UseRegex)) {
+    find_text_ctrl_->UseBoldFont(true);
   }
 
   Layout();
 
   return result;
+}
+
+void FindPanel::UpdateLayout() {
+  if (mode_ == kFindMode) {
+    LayoutAsFind();
+  } else {
+    LayoutAsReplace();
+  }
+}
+
+void FindPanel::SetFindString(const wxString& find_string) {
+  find_text_ctrl_->SetValue(find_string);
+  find_text_ctrl_->SelectAll();
+  AddFindString(find_string);
+}
+
+void FindPanel::ReapplyTheme() {
+  assert(theme_);
+
+  InitButtonStyle();
+
+  folders_bitmap_->SetBitmap(theme_->GetImage(IMAGE_FOLDERS));
+  folders_bitmap_->SetForegroundColour(theme_->GetColor(COLOR_FG));
+
+  add_folder_button_->SetBitmap(theme_->GetImage(IMAGE_ADD_FOLDER));
+
+#if JIL_BMP_BUTTON_FIND_OPTIONS
+  location_button_->SetBitmap(theme_->GetImage(IMAGE_LOCATION));
+  use_regex_tbutton_->SetBitmap(theme_->GetImage(IMAGE_USE_REGEX));
+  case_sensitive_tbutton_->SetBitmap(theme_->GetImage(IMAGE_CASE_SENSITIVE));
+  match_word_tbutton_->SetBitmap(theme_->GetImage(IMAGE_MATCH_WORD));
+#else
+  location_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
+  sep_->SetColor(theme_->GetColor(COLOR_FG));
+  options_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
+#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
 }
 
 void FindPanel::OnPaint(wxPaintEvent& evt) {
@@ -335,35 +387,6 @@ void FindPanel::OnMenuFolders(wxCommandEvent& evt) {
     wxString cwd = wxGetCwd();
     folders_text_ctrl_->SetValue(cwd);
   }
-}
-
-void FindPanel::SetFindString(const wxString& find_string) {
-  find_text_ctrl_->SetValue(find_string);
-  find_text_ctrl_->SelectAll();
-  AddFindString(find_string);
-}
-
-void FindPanel::ReapplyTheme() {
-  assert(theme_);
-
-  InitButtonStyle();
-
-  folders_bitmap_->SetBitmap(theme_->GetImage(IMAGE_FOLDERS));
-  folders_bitmap_->SetForegroundColour(theme_->GetColor(COLOR_FG));
-
-  add_folder_button_->SetBitmap(theme_->GetImage(IMAGE_ADD_FOLDER));
-
-#if JIL_BMP_BUTTON_FIND_OPTIONS
-  location_button_->SetBitmap(theme_->GetImage(IMAGE_LOCATION));
-  use_regex_tbutton_->SetBitmap(theme_->GetImage(IMAGE_USE_REGEX));
-  case_sensitive_tbutton_->SetBitmap(theme_->GetImage(IMAGE_CASE_SENSITIVE));
-  match_word_tbutton_->SetBitmap(theme_->GetImage(IMAGE_MATCH_WORD));
-#else
-  location_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
-  sep_->SetColor(theme_->GetColor(COLOR_FG));
-  options_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
-#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
-
 }
 
 void FindPanel::OnAddFolderButtonClick(wxCommandEvent& evt) {
@@ -417,21 +440,31 @@ void FindPanel::OnOptionsLabel(wxCommandEvent& evt) {
   menu.AppendCheckItem(ID_FP_MENU_CASE_SENSITIVE, kTrCaseSensitive);
   menu.AppendCheckItem(ID_FP_MENU_MATCH_WORD, kTrMatchWord);
 
-  if (GetBit(flags_, kFind_UseRegex)) {
-    menu.Check(ID_FP_MENU_USE_REGEX, true);
-  }
   if (GetBit(flags_, kFind_CaseSensitive)) {
     menu.Check(ID_FP_MENU_CASE_SENSITIVE, true);
   }
+
   if (GetBit(flags_, kFind_MatchWord)) {
     menu.Check(ID_FP_MENU_MATCH_WORD, true);
+  }
+
+  if (GetBit(flags_, kFind_UseRegex)) {
+    menu.Check(ID_FP_MENU_USE_REGEX, true);
+
+    // You can't just surround the regex string with '\b' to match the whole
+    // word, because '\b' can't match EOL.
+    // So disable "Match Whole Word" when "Use Regex" is on.
+    menu.Enable(ID_FP_MENU_MATCH_WORD, false);
   }
 
   PopupMenu(&menu, ScreenToClient(wxGetMousePosition()));
 }
 
 void FindPanel::OnMenuUseRegex(wxCommandEvent& evt) {
-  flags_ = SetBit(flags_, kFind_UseRegex, evt.IsChecked());
+  bool use_regex = evt.IsChecked();
+  flags_ = SetBit(flags_, kFind_UseRegex, use_regex);
+  find_text_ctrl_->UseBoldFont(use_regex);
+  UpdateFindTextFgColor();
 }
 
 void FindPanel::OnMenuCaseSensitive(wxCommandEvent& evt) {
@@ -447,7 +480,7 @@ void FindPanel::OnMenuMatchWord(wxCommandEvent& evt) {
 void FindPanel::OnFind(wxCommandEvent& evt) {
   if (location_ == kCurrentPage) {
     HandleFind();
-  }
+  }  // else: Not supported.
 }
 
 void FindPanel::OnFindAll(wxCommandEvent& evt) {
@@ -462,10 +495,8 @@ void FindPanel::OnFindAll(wxCommandEvent& evt) {
 
   if (location_ == kCurrentPage) {
     book_frame_->FindAllInActivePage(str, flags_);
-
   } else if (location_ == kAllPages) {
     book_frame_->FindAllInAllPages(str, flags_);
-
   } else if (location_ == kFolders) {
     wxString folders_str = folders_text_ctrl_->GetValue();
     folders_str.Trim(true).Trim(false);
@@ -485,6 +516,8 @@ void FindPanel::OnReplaceAll(wxCommandEvent& evt) {
 }
 
 void FindPanel::OnFindText(wxCommandEvent& evt) {
+  UpdateFindTextFgColor();
+  
   if (location_ == kCurrentPage) {
     wxString find_str = find_text_ctrl_->GetValue();
     book_frame_->FindInActivePageIncrementally(find_str.ToStdWstring(), flags_);
@@ -498,13 +531,15 @@ void FindPanel::OnFindTextEnter(wxCommandEvent& evt) {
 }
 
 void FindPanel::OnFindTextHistory(wxCommandEvent& evt) {
-  const std::list<wxString>& find_strings = session_->find_strings();
-  ShowHistoryMenu(find_strings, ID_MENU_FIND_HISTORY_BEGIN, find_text_ctrl_);
+  ShowHistoryMenu(session_->find_strings(),
+                  ID_MENU_FIND_HISTORY_BEGIN,
+                  find_text_ctrl_);
 }
 
 void FindPanel::OnReplaceTextHistory(wxCommandEvent& evt) {
-  const std::list<wxString>& replace_strings = session_->replace_strings();
-  ShowHistoryMenu(replace_strings, ID_MENU_REPLACE_HISTORY_BEGIN, replace_text_ctrl_);
+  ShowHistoryMenu(session_->replace_strings(),
+                  ID_MENU_REPLACE_HISTORY_BEGIN,
+                  replace_text_ctrl_);
 }
 
 void FindPanel::ShowHistoryMenu(const std::list<wxString>& history_strings,
@@ -589,6 +624,33 @@ void FindPanel::SetLocation(FindLocation location) {
     }
 
     UpdateLayout();
+  }
+}
+
+bool FindPanel::IsRegexValid(const std::wstring& re_str) const {
+  try {
+    std::wregex re(re_str);
+    return true;
+  } catch (std::regex_error&) {
+    return false;
+  }
+}
+
+void FindPanel::UpdateFindTextFgColor() {
+  wxColor color = fg_color_;
+
+  if (GetBit(flags_, kFind_UseRegex)) {
+    wxString str = find_text_ctrl_->GetValue();
+    if (!str.IsEmpty()) {
+      if (!IsRegexValid(str.ToStdWstring())) {
+        color = invalid_fg_color_;
+      }
+    }
+  }
+
+  if (color != find_text_ctrl_->GetForegroundColour()) {
+    find_text_ctrl_->SetForegroundColour(color);
+    find_text_ctrl_->Refresh();
   }
 }
 

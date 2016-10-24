@@ -10,6 +10,8 @@ using namespace jil::editor;
 static const FileType kFtTxt("txt", "Text");
 static const Encoding kEncoding = GetEncodingById(ENCODING_ISO_8859_1);
 
+#if JIL_FIND_REGEX_ACROSS_LINES
+
 TEST(TextBuffer, CharIterator) {
   FtPlugin ft_plugin(kFtTxt);
   TextBuffer buffer(0, &ft_plugin, kEncoding);
@@ -30,6 +32,8 @@ TEST(TextBuffer, CharIterator) {
   EXPECT_EQ(TextPoint(buffer.LineLength(4) - 1, 4),
             buffer.PointFromCharIterator(ci));
 }
+
+#endif  // JIL_FIND_REGEX_ACROSS_LINES
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -259,17 +263,57 @@ TEST(TextBuffer, UnpairedLeftKey) {
   EXPECT_EQ(TextPoint(0, 2), buffer.UnpairedLeftKey(point, L'(', L')', true));
 }
 
-//TEST(TextBuffer, SearchRegEx_CrossLine) {
-//  std::auto_ptr<TextBuffer> buffer(TextBuffer::Create(0, NULL, kEncoding));
-//
-//  std::wstring text = L"1\n22 \"test\n comments\"\n333";
-//  buffer.InsertLine(1, L"1");
-//  buffer.InsertLine(2, L"22 \"test\n comments");
-//  buffer.InsertLine(3, L"3\"33");
-//
-//  FindOptions fo = { true, true, false, true };
-//  TextRange range = buffer.Find(L"(\".*\")", buffer.range(), fo);
-//
-//  EXPECT_EQ(TextPoint(3, 2), range.point_begin());
-//  EXPECT_EQ(TextPoint(1, 3), range.point_end());
-//}
+TEST(TextBuffer, FindStringAll_Regex1) {
+  FtPlugin ft_plugin(kFtTxt);
+  TextBuffer buffer(0, &ft_plugin, kEncoding);
+
+  buffer.AppendLine(L"test test");  // L2
+  buffer.AppendLine(L"");
+  buffer.AppendLine(L" test");
+
+  std::list<TextRange> result_ranges;
+  buffer.FindStringAll(L"test", buffer.range(), true, true, false, &result_ranges);
+
+  EXPECT_EQ(3, result_ranges.size());
+
+  std::list<TextRange>::iterator it = result_ranges.begin();
+  EXPECT_EQ(TextRange(TextPoint(0, 2), TextPoint(4, 2)), *it++);
+  EXPECT_EQ(TextRange(TextPoint(5, 2), TextPoint(9, 2)), *it++);
+  EXPECT_EQ(TextRange(TextPoint(1, 4), TextPoint(5, 4)), *it++);
+}
+
+TEST(TextBuffer, FindStringAll_Regex2) {
+  FtPlugin ft_plugin(kFtTxt);
+  TextBuffer buffer(0, &ft_plugin, kEncoding);
+
+  buffer.AppendLine(L"test test");  // L2
+  buffer.AppendLine(L"");
+  buffer.AppendLine(L" test");
+
+  std::list<TextRange> result_ranges;
+  buffer.FindStringAll(L"t.st", buffer.range(), true, true, false, &result_ranges);
+
+  EXPECT_EQ(3, result_ranges.size());
+
+  std::list<TextRange>::iterator it = result_ranges.begin();
+  EXPECT_EQ(TextRange(TextPoint(0, 2), TextPoint(4, 2)), *it++);
+  EXPECT_EQ(TextRange(TextPoint(5, 2), TextPoint(9, 2)), *it++);
+  EXPECT_EQ(TextRange(TextPoint(1, 4), TextPoint(5, 4)), *it++);
+}
+
+TEST(TextBuffer, FindStringAll_Regex3) {
+  FtPlugin ft_plugin(kFtTxt);
+  TextBuffer buffer(0, &ft_plugin, kEncoding);
+
+  buffer.AppendLine(L"test test");  // L2
+  buffer.AppendLine(L"");
+  buffer.AppendLine(L" test");
+
+  std::list<TextRange> result_ranges;
+  TextRange range(TextPoint(0, 4), TextPoint(kInvCoord, 4));
+  buffer.FindStringAll(L"t.{2}t", range, true, true, false, &result_ranges);
+
+  EXPECT_EQ(1, result_ranges.size());
+
+  EXPECT_EQ(TextRange(TextPoint(1, 4), TextPoint(5, 4)), result_ranges.front());
+}

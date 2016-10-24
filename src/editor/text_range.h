@@ -34,6 +34,8 @@ public:
   CharRange Union(const CharRange& rhs) const;
   CharRange Intersect(const CharRange& rhs) const;
 
+  CharRange& Shift(Coord off);
+
   bool IsEmpty() const {
     return end_ != kInvCoord && begin_ >= end_;
   }

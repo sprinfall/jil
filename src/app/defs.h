@@ -7,6 +7,8 @@
 
 #include "editor/defs.h"
 
+#include "app/compile_config.h"
+
 // App name used for paths, config, and other places the user doesn't see.
 #if defined (__WXMSW__) || defined (__WXMAC__)
 #define kAppName wxT("Jil")
@@ -44,7 +46,7 @@ enum FindFlag {
   kFind_UseRegex = 1,
   kFind_CaseSensitive = 2,
   kFind_MatchWord = 4,
-  kFind_Reversely = 8,  // TODO: Remove
+  kFind_Reversely = 8,
 };
 
 enum FindLocation {

@@ -3,6 +3,7 @@
 #pragma once
 
 #include <list>
+#include <regex>
 #include <string>
 
 #include "boost/any.hpp"
@@ -83,6 +84,9 @@ public:
                      bool ignore_comment,
                      Coord off = kInvCoord) const;
 
+  // Return kInvCoord on failure.
+  Coord FindChar(wchar_t c, Coord off = 0) const;
+
   // Return true if the line is empty.
   // \param ignore_space A line is empty if it has only empty spaces.
   bool IsEmpty(bool ignore_space) const;
@@ -121,6 +125,15 @@ public:
   Coord UnpairedLeftKey(wchar_t l_key,
                         wchar_t r_key,
                         Coord off = kInvCoord) const;
+
+  //----------------------------------------------------------------------------
+  // Find Regex
+
+  // Find the regex from the given offset.
+  bool FindRegex(const std::wregex& re, Coord off, CharRange* char_range) const;
+
+  //----------------------------------------------------------------------------
+  // Indent
 
   // Return the indent as spaces.
   // Tab stop is used to expand the tabs, if any.
