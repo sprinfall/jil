@@ -148,20 +148,15 @@ public:
   //----------------------------------------------------------------------------
   // Find & Replace
 
+  // Set last find string and flags for finding with shortcut keys (menu) later.
+  void SetLastFindStringAndFlags(const std::wstring& str, int flags);
+
   // Find string in the active text page "incrementally".
   // Usually when the user is typing.
   void FindInActivePageIncrementally(const std::wstring& str, int flags);
 
   // Find string in the active text page, select it and update the caret point.
   void FindInActivePage(const std::wstring& str, int flags);
-
-  void ReplaceInActivePage(const std::wstring& str,
-                           const std::wstring& replace_str,
-                           int flags);
-
-  void ReplaceAllInActivePage(const std::wstring& str,
-                              const std::wstring& replace_str,
-                              int flags);
 
   void FindAllInActivePage(const std::wstring& str, int flags);
 
@@ -178,6 +173,23 @@ public:
   int AsyncFindInFile(const std::wstring& str,
                       int flags,
                       const wxString& file);
+
+  void ReplaceInActivePage(const std::wstring& str,
+                           const std::wstring& replace_str,
+                           int flags);
+
+  void ReplaceAllInActivePage(const std::wstring& str,
+                              const std::wstring& replace_str,
+                              int flags);
+
+  void ReplaceAllInAllPages(const std::wstring& str,
+                            const std::wstring& replace_str,
+                            int flags);
+
+  void ReplaceAllInFolders(const std::wstring& str,
+                           const std::wstring& replace_str,
+                           int flags,
+                           const wxArrayString& folders);
 
 protected:
   void Init();
@@ -295,7 +307,7 @@ protected:
 
   // Show message on status bar.
   // See StatusBar::SetMessage() for details.
-  void ShowStatusMessage(const wxString& msg, int time_ms = 0);
+  void ShowStatusMessage(const wxString& msg, int sec = 0);
 
   // Return find panel if it's shown.
   FindPanel* GetFindPanel() const;
@@ -357,9 +369,6 @@ private:
   void AddFrMatchCountLine(editor::TextBuffer* buffer,
                            size_t count,
                            editor::TextBuffer* fr_buffer);
-
-  // Select the result text range, update caret point and scroll to it if necessary.
-  void SelectFindResult(PageWindow* page_window, const editor::TextRange& result_range);
 
   // The find result won't be selected and the caret point won't be updated
   // if it's incremental.
@@ -478,8 +487,8 @@ private:
   // Always keep a find result buffer to simplify the handling of find thread.
   editor::TextBuffer* fr_buffer_;
 
-  std::wstring find_str_;
-  int find_flags_;  // Find flags exluding kFind_Reversely.
+  std::wstring find_str_;  // Last find string.
+  int find_flags_;  // Last find flags (excluding kFind_Reversely).
 
   // A thread searching text in the given folders.
   FindThread* find_thread_;

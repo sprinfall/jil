@@ -159,6 +159,18 @@ protected:
   void OnFindText(wxCommandEvent& evt);
   void OnFindTextEnter(wxCommandEvent& evt);
 
+  // Handle find text change, including:
+  // - Enable find & replace buttons;
+  // - Validate find text and set its foreground color;
+  // - Start an incremental find if the location is current page.
+  // Not only called when find text is really changed, but also when
+  // Use Regex option is switched.
+  void HandleFindTextChange();
+
+  // Find the given string incrementally in the current page.
+  // Please check the location before the call.
+  void FindIncrementally(const wxString& find_wxstr);
+
   void OnFindTextHistory(wxCommandEvent& evt);
   void OnReplaceTextHistory(wxCommandEvent& evt);
   void ShowHistoryMenu(const std::list<wxString>& history_strings,
@@ -179,7 +191,13 @@ protected:
   // Check if the given regex is valid or not.
   bool IsRegexValid(const std::wstring& re_str) const;
 
-  void UpdateFindTextFgColor();
+  bool IsFindStringValid(const wxString& find_wxstr, bool empty_as_valid) const;
+
+  // Set the foreground color of the find text ctrl.
+  void SetFindTextCtrlFgColor(bool valid);
+
+  // Get the folders from control.
+  wxArrayString GetFolders() const;
 
 private:
   // Append a folder to folders text ctrl.
@@ -201,6 +219,9 @@ private:
 
   void ShowReplace(bool show);
   void ShowFolders(bool show);
+
+  // Enable or disable find and replace buttons.
+  void EnableButtons(bool enable);
 
   void InitButtonStyle();
 

@@ -549,6 +549,13 @@ editor::TextBuffer* BookFrame::ActiveBuffer() const {
 //------------------------------------------------------------------------------
 // Find & Replace
 
+void BookFrame::SetLastFindStringAndFlags(const std::wstring& str, int flags) {
+  find_str_ = str;
+
+  // Remove "Reversely" flag.
+  find_flags_ = flags & (~kFind_Reversely);
+}
+
 void BookFrame::FindInActivePageIncrementally(const std::wstring& str, int flags) {
   TextPage* text_page = ActiveTextPage();
   if (text_page == NULL) {
@@ -598,124 +605,15 @@ void BookFrame::FindInActivePage(const std::wstring& str, int flags) {
       // The find result is the same as last time.
       wxString msg_fmt = _("Cannot find more '%s' in the current page.");
       wxString msg = wxString::Format(msg_fmt, wxString(str));
-      ShowStatusMessage(msg, 3000);
+      ShowStatusMessage(msg, 3);
     }
   } else {
     wxString msg_fmt = _("Cannot find '%s' in the current page.");
     wxString msg = wxString::Format(msg_fmt, wxString(str));
-    ShowStatusMessage(msg, 3000);
+    ShowStatusMessage(msg, 3);
   }
 
   SetFindResult(page_window, find_result, false);
-}
-
-void BookFrame::ReplaceInActivePage(const std::wstring& str,
-                                    const std::wstring& replace_str,
-                                    int flags) {
-  using namespace editor;
-
-  TextPage* text_page = ActiveTextPage();
-  if (text_page == NULL) {
-    return;
-  }
-
-  PageWindow* page_window = text_book_->page_window();
-
-  // Backup the selection.
-  Selection selection = page_window->selection();
-
-  TextPoint point = page_window->caret_point();
-
-  // If there's any selected text, the find start point has to be adjusted to
-  // the begin point of the selection.
-  if (!selection.IsEmpty()) {
-    point = selection.begin();
-  }
-
-  TextRange result_range = Find(text_page, str, point, flags, true);
-  if (result_range.IsEmpty()) {
-    return;
-  }
-
-  // If the find result is not the current selection, select it.
-  // TODO: Rect selection.
-  if (result_range != selection.range) {
-    SelectFindResult(page_window, result_range);
-    return;
-  }
-
-  // The find result is the current selection, replace it.
-  page_window->ClearSelection();
-
-  bool grouped = !replace_str.empty();
-  page_window->DeleteSelection(grouped, false);
-  if (!replace_str.empty()) {
-    page_window->InsertString(result_range.point_begin(), replace_str, grouped, false);
-  }
-
-  // Go to next match.
-  point = page_window->caret_point();
-  result_range = Find(text_page, str, point, flags, true);
-
-  if (!result_range.IsEmpty()) {
-    SelectFindResult(page_window, result_range);
-  }
-}
-
-void BookFrame::ReplaceAllInActivePage(const std::wstring& str,
-                                       const std::wstring& replace_str,
-                                       int flags) {
-  using namespace editor;
-
-  TextPage* text_page = ActiveTextPage();
-  if (text_page == NULL) {
-    return;
-  }
-
-  PageWindow* page_window = text_book_->page_window();
-  TextBuffer* buffer = text_page->buffer();
-
-  bool use_regex = GetBit(flags, kFind_UseRegex);
-  bool case_sensitive = GetBit(flags, kFind_CaseSensitive);
-  bool match_word = GetBit(flags, kFind_MatchWord);
-
-  TextRange source_range = buffer->range();
-  TextRange result_range;
-
-  size_t count = 0;
-
-  while (true) {
-    result_range = buffer->FindString(str,
-                                      source_range,
-                                      use_regex,
-                                      case_sensitive,
-                                      match_word,
-                                      false);
-
-    if (result_range.IsEmpty()) {
-      break;
-    }
-
-    if (count == 0) {
-      page_window->Exec(new GroupAction(text_page->buffer()));
-    }
-
-    ++count;
-
-    page_window->DeleteRange(result_range, kForward, false, false, false, false);
-    if (!replace_str.empty()) {
-      page_window->InsertString(result_range.point_begin(), replace_str, false, false);
-    }
-
-    // Update source range and find next.
-    TextPoint point_begin = result_range.point_begin();
-    point_begin.x += CoordCast(replace_str.length());
-    source_range.Set(point_begin, source_range.point_end());
-  }
-
-  if (count > 0) {
-    page_window->Exec(new GroupAction(text_page->buffer()));
-  }
 }
 
 void BookFrame::FindAllInActivePage(const std::wstring& str, int flags) {
@@ -796,6 +694,115 @@ int BookFrame::AsyncFindInFile(const std::wstring& str,
   }
 
   return fr_buffer_->LineCount() - old_line_count;
+}
+
+void BookFrame::ReplaceInActivePage(const std::wstring& str,
+                                    const std::wstring& replace_str,
+                                    int flags) {
+  TextPage* text_page = ActiveTextPage();
+  if (text_page == NULL) {
+    return;
+  }
+
+  PageWindow* page_window = text_book_->page_window();
+
+  // Find start point.
+  editor::TextPoint point = page_window->caret_point();
+
+  // If there's any selection, the start point has to be adjusted to
+  // the begin point of the selection.
+  const editor::Selection& selection = page_window->selection();
+  if (!selection.IsEmpty()) {
+    point = selection.begin();
+  }
+
+  editor::TextRange result_range = Find(text_page, str, point, flags, true);
+  if (result_range.IsEmpty()) {
+    ShowStatusMessage(kTrNoMatching, 1);
+    return;
+  }
+
+  page_window->ClearSelection();
+
+  bool grouped = !replace_str.empty();
+
+  page_window->DeleteRange(result_range, editor::kForward, false, grouped, false, false);
+
+  if (!replace_str.empty()) {
+    page_window->InsertString(result_range.point_begin(), replace_str, grouped, false);
+  }
+
+  // Go to next match.
+  point = page_window->caret_point();
+  result_range = Find(text_page, str, point, flags, true);
+  SetFindResult(page_window, result_range, false);
+}
+
+void BookFrame::ReplaceAllInActivePage(const std::wstring& str,
+                                       const std::wstring& replace_str,
+                                       int flags) {
+  using namespace editor;
+
+  TextPage* text_page = ActiveTextPage();
+  if (text_page == NULL) {
+    return;
+  }
+
+  PageWindow* page_window = text_book_->page_window();
+  TextBuffer* buffer = text_page->buffer();
+
+  bool use_regex = GetBit(flags, kFind_UseRegex);
+  bool case_sensitive = GetBit(flags, kFind_CaseSensitive);
+  bool match_word = GetBit(flags, kFind_MatchWord);
+
+  TextRange source_range = buffer->range();
+  TextRange result_range;
+
+  size_t count = 0;
+
+  while (true) {
+    result_range = buffer->FindString(str,
+                                      source_range,
+                                      use_regex,
+                                      case_sensitive,
+                                      match_word,
+                                      false);
+
+    if (result_range.IsEmpty()) {
+      break;
+    }
+
+    if (count == 0) {
+      page_window->Exec(new GroupAction(text_page->buffer()));
+    }
+
+    ++count;
+
+    page_window->DeleteRange(result_range, kForward, false, false, false, false);
+    if (!replace_str.empty()) {
+      page_window->InsertString(result_range.point_begin(), replace_str, false, false);
+    }
+
+    // Update source range and find next.
+    TextPoint point_begin = result_range.point_begin();
+    point_begin.x += CoordCast(replace_str.length());
+    source_range.Set(point_begin, source_range.point_end());
+  }
+
+  if (count > 0) {
+    page_window->Exec(new GroupAction(text_page->buffer()));
+  }
+}
+
+void BookFrame::ReplaceAllInAllPages(const std::wstring& str,
+                                     const std::wstring& replace_str,
+                                     int flags) {
+}
+
+void BookFrame::ReplaceAllInFolders(const std::wstring& str,
+                                    const std::wstring& replace_str,
+                                    int flags,
+                                    const wxArrayString& folders) {
 }
 
 //------------------------------------------------------------------------------
@@ -1942,8 +1949,8 @@ void BookFrame::OnStatusFileTypeMenu(wxCommandEvent& evt) {
   }
 }
 
-void BookFrame::ShowStatusMessage(const wxString& msg, int time_ms) {
-  status_bar_->SetMessage(msg, time_ms);
+void BookFrame::ShowStatusMessage(const wxString& msg, int sec) {
+  status_bar_->SetMessage(msg, sec * 1000);
 }
 
 FindPanel* BookFrame::GetFindPanel() const {
@@ -2277,19 +2284,6 @@ void BookFrame::AddFrMatchCountLine(editor::TextBuffer* buffer,
   fr_line->AddLexElem(0, fr_line->Length(), editor::Lex(editor::kLexComment));
 }
 
-void BookFrame::SelectFindResult(PageWindow* page_window, const editor::TextRange& result_range) {
-  page_window->SetSelection(result_range, editor::kForward, false);
-
-  // Don't scroll, Goto will scroll.
-  page_window->UpdateCaretPoint(result_range.point_end(), false, false, false);
-
-  // Always scroll to the begin point of the result range. This makes more
-  // sense especially for multiple-line result range (regex find only).
-  // Don't use ScrollToPoint().
-  // TODO: Horizontally scroll if necessary.
-  page_window->Goto(result_range.line_first());
-}
-
 void BookFrame::SetFindResult(PageWindow* page_window,
                               const editor::TextRange& find_result,
                               bool incremental) {
@@ -2321,7 +2315,7 @@ void BookFrame::OnFindThreadEvent(wxThreadEvent& evt) {
 
   if (new_fr_lines == wxNOT_FOUND) {
     // Find thread is completed, clear the status message.
-    ShowStatusMessage(wxEmptyString, 0);
+    ShowStatusMessage(wxEmptyString);
     return;
   }
 

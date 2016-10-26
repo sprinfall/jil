@@ -36,6 +36,9 @@
 
 #define kTrSearchInFile       _("Searching in file '%s'.")
 
+// TODO
+#define kTrNoMatching         _("No matching result.")
+
 #if defined (__WXMSW__)
 #define kTrOptions            _("Options")
 #else

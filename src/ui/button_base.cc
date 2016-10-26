@@ -1,5 +1,6 @@
 #include "ui/button_base.h"
 #include "wx/dcbuffer.h"
+#include "wx/log.h"
 #include "ui/color.h"
 
 namespace jil {
@@ -142,6 +143,8 @@ void ButtonBase::OnPaint(wxPaintEvent& evt) {
 void ButtonBase::OnMouseLeftDown(wxMouseEvent& evt) {
   pressed_ = true;
 
+  wxLogDebug("Left Down");
+
   if (!HasCapture()) {
     CaptureMouse();
   }
@@ -151,6 +154,8 @@ void ButtonBase::OnMouseLeftDown(wxMouseEvent& evt) {
 }
 
 void ButtonBase::OnMouseLeftUp(wxMouseEvent& evt) {
+  wxLogDebug("Left Up");
+
   if (HasCapture()) {
     ReleaseMouse();
 

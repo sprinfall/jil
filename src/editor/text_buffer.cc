@@ -1962,8 +1962,7 @@ TextRange TextBuffer::FindPlainString(const std::wstring& str,
                                       bool match_word) const {
   TextRange result_range;
 
-  TextLines::const_iterator it = lines_.begin();
-  std::advance(it, range.line_first() - 1);
+  TextLines::const_iterator it = GetLineIter(range.line_first());
 
   // The range contains only one line.
   if (range.LineCount() == 1) {
@@ -1990,8 +1989,7 @@ TextRange TextBuffer::FindPlainString(const std::wstring& str,
     return result_range;
   }
 
-  TextLines::const_iterator end_it = lines_.begin();
-  std::advance(end_it, range.point_end().y - 1);
+  TextLines::const_iterator end_it = GetLineIter(range.line_last());
 
   // Find in the middle lines of the range.
   for (++it; it != end_it; ++it) {
@@ -2025,8 +2023,7 @@ TextRange TextBuffer::FindPlainStringReversely(const std::wstring& str,
                                                bool match_word) const {
   TextRange result_range;
 
-  TextLines::const_iterator it = lines_.begin();
-  std::advance(it, range.point_end().y - 1);
+  TextLines::const_iterator it = GetLineIter(range.line_last());
 
   // The range contains only one line.
   if (range.LineCount() == 1) {
@@ -2053,8 +2050,7 @@ TextRange TextBuffer::FindPlainStringReversely(const std::wstring& str,
     return result_range;
   }
 
-  TextLines::const_iterator begin_it = lines_.begin();
-  std::advance(begin_it, range.line_first() - 1);
+  TextLines::const_iterator begin_it = GetLineIter(range.line_first());
 
   // Find in the middle lines of the range.
   for (--it; it != begin_it; --it) {
@@ -2154,8 +2150,7 @@ void TextBuffer::FindPlainStringAll(const std::wstring& str,
                                     bool case_sensitive,
                                     bool match_word,
                                     std::list<TextRange>* result_ranges) const {
-  TextLines::const_iterator it = lines_.begin();
-  std::advance(it, range.line_first() - 1);
+  TextLines::const_iterator it = GetLineIter(range.line_first());
 
   // The range contains only one line.
   if (range.LineCount() == 1) {
@@ -2166,8 +2161,7 @@ void TextBuffer::FindPlainStringAll(const std::wstring& str,
   // Find in the first line of the range.
   FindLineStringAll(it, range.point_begin().x, kInvCoord, str, case_sensitive, match_word, result_ranges);
 
-  TextLines::const_iterator end_it = lines_.begin();
-  std::advance(end_it, range.point_end().y - 1);
+  TextLines::const_iterator end_it = GetLineIter(range.line_last());
 
   // Find in the middle lines of the range.
   for (++it; it != end_it; ++it) {
@@ -2222,11 +2216,10 @@ void TextBuffer::FindRegexAll(const std::wregex& re,
   const TextPoint& p_begin = range.point_begin();
   const TextPoint& p_end = range.point_end();
 
-  // TODO: Add a private function GetLineIter(ln)
+  // NOTE: Use iterator for performance.
 
-  // NOTE: Iterate
   Coord ln = p_begin.y;
-  TextLines::const_iterator it = lines_.begin() + (p_begin.y - 1);
+  TextLines::const_iterator it = GetLineIter(p_begin.y);
 
   // Find in first line.
   FindRegexAll(*it, ln, p_begin.x, re, result_ranges);
@@ -2236,7 +2229,7 @@ void TextBuffer::FindRegexAll(const std::wregex& re,
     ++ln;
 
     // Find in middle lines.
-    TextLines::const_iterator last_it = lines_.begin() + (p_end.y - 1);
+    TextLines::const_iterator last_it = GetLineIter(p_end.y);
     for (; it != last_it; ++it, ++ln) {
       FindRegexAll(*it, ln, 0, re, result_ranges);
     }
@@ -3228,6 +3221,20 @@ void TextBuffer::ClearLineLength() {
     line_length_table_[i] = 0;
   }
   long_line_length_map_.clear();
+}
+
+//------------------------------------------------------------------------------
+
+TextBuffer::TextLines::const_iterator TextBuffer::GetLineIter(Coord ln) const {
+  assert(ln >= 1 && ln <= LineCount());
+
+  TextLines::const_iterator it = lines_.begin();
+
+  if (ln == 1) {
+    return it;
+  } else {
+    return it + (ln - 1);
+  }
 }
 
 }  // namespace editor

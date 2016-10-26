@@ -264,7 +264,7 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   // Restore last find string.
   if (!session_->find_strings().empty()) {
     find_text_ctrl_->SetValue(session_->find_strings().front());
-    UpdateFindTextFgColor();
+    //UpdateFindTextFgColor();  // TODO
   }
 
   return true;
@@ -283,6 +283,7 @@ void FindPanel::SetFocus() {
   wxPanel::SetFocus();
 
   find_text_ctrl_->SetFocus();
+
   if (!find_text_ctrl_->GetValue().IsEmpty()) {
     find_text_ctrl_->SelectAll();
   }
@@ -294,13 +295,6 @@ bool FindPanel::SetFont(const wxFont& font) {
   find_text_ctrl_->SetFont(font);
   replace_text_ctrl_->SetFont(font);
   folders_text_ctrl_->SetFont(font);
-
-  //wxWindowList& children = wxWindow::GetChildren(); 
-  //for (size_t i = 0; i < children.GetCount(); ++i) {
-  //  children[i]->SetFont(font);
-  //  //children[i]->InvalidateBestSize();  // Seems not necessary.
-  //  children[i]->Refresh();  // !
-  //}
 
   if (GetBit(flags_, kFind_UseRegex)) {
     find_text_ctrl_->UseBoldFont(true);
@@ -463,16 +457,28 @@ void FindPanel::OnOptionsLabel(wxCommandEvent& evt) {
 void FindPanel::OnMenuUseRegex(wxCommandEvent& evt) {
   bool use_regex = evt.IsChecked();
   flags_ = SetBit(flags_, kFind_UseRegex, use_regex);
+
   find_text_ctrl_->UseBoldFont(use_regex);
-  UpdateFindTextFgColor();
+
+  // A valid find text might become invalid after Use Regex option is
+  // switched on.
+  HandleFindTextChange();
 }
 
 void FindPanel::OnMenuCaseSensitive(wxCommandEvent& evt) {
   flags_ = SetBit(flags_, kFind_CaseSensitive, evt.IsChecked());
+
+  if (location_ == kCurrentPage) {
+    FindIncrementally(find_text_ctrl_->GetValue());
+  }
 }
 
 void FindPanel::OnMenuMatchWord(wxCommandEvent& evt) {
   flags_ = SetBit(flags_, kFind_MatchWord, evt.IsChecked());
+
+  if (location_ == kCurrentPage) {
+    FindIncrementally(find_text_ctrl_->GetValue());
+  }
 }
 
 #endif  // JIL_BMP_BUTTON_FIND_OPTIONS
@@ -484,31 +490,34 @@ void FindPanel::OnFind(wxCommandEvent& evt) {
 }
 
 void FindPanel::OnFindAll(wxCommandEvent& evt) {
-  wxString find_str = find_text_ctrl_->GetValue();
-  if (find_str.IsEmpty()) {
+  wxString find_wxstr = find_text_ctrl_->GetValue();
+  if (find_wxstr.IsEmpty()) {
+    book_frame_->SetLastFindStringAndFlags(L"", flags_);
     return;
   }
 
-  AddFindString(find_str);
+  AddFindString(find_wxstr);
 
-  std::wstring str = find_str.ToStdWstring();
+  std::wstring find_str = find_wxstr.ToStdWstring();
+
+  book_frame_->SetLastFindStringAndFlags(find_str, flags_);
 
   if (location_ == kCurrentPage) {
-    book_frame_->FindAllInActivePage(str, flags_);
+    book_frame_->FindAllInActivePage(find_str, flags_);
   } else if (location_ == kAllPages) {
-    book_frame_->FindAllInAllPages(str, flags_);
+    book_frame_->FindAllInAllPages(find_str, flags_);
   } else if (location_ == kFolders) {
-    wxString folders_str = folders_text_ctrl_->GetValue();
-    folders_str.Trim(true).Trim(false);
-    if (!folders_str.IsEmpty()) {
-      wxArrayString folders = wxSplit(folders_str, kFolderSp);
-      book_frame_->FindAllInFolders(str, flags_, folders);
+    wxArrayString folders = GetFolders();
+    if (!folders.IsEmpty()) {
+      book_frame_->FindAllInFolders(find_str, flags_, folders);
     }
   }
 }
 
 void FindPanel::OnReplace(wxCommandEvent& evt) {
-  HandleReplace(false);
+  if (location_ == kCurrentPage) {
+    HandleReplace(false);
+  }  // else: Not supported.
 }
 
 void FindPanel::OnReplaceAll(wxCommandEvent& evt) {
@@ -516,18 +525,36 @@ void FindPanel::OnReplaceAll(wxCommandEvent& evt) {
 }
 
 void FindPanel::OnFindText(wxCommandEvent& evt) {
-  UpdateFindTextFgColor();
-  
-  if (location_ == kCurrentPage) {
-    wxString find_str = find_text_ctrl_->GetValue();
-    book_frame_->FindInActivePageIncrementally(find_str.ToStdWstring(), flags_);
-  }
+  HandleFindTextChange();
 }
 
 void FindPanel::OnFindTextEnter(wxCommandEvent& evt) {
   if (location_ == kCurrentPage) {
     HandleFind();
   }
+}
+
+void FindPanel::HandleFindTextChange() {
+  wxString find_wxstr = find_text_ctrl_->GetValue();
+  bool valid = IsFindStringValid(find_wxstr, false);
+
+  EnableButtons(valid);
+  SetFindTextCtrlFgColor(find_wxstr.IsEmpty() || valid);
+
+  // NOTE:
+  // Find incrementally even if the find string is empty or invalid so that
+  // the previous find results can be cleared.
+  if (location_ == kCurrentPage) {
+    FindIncrementally(find_wxstr);
+  }
+}
+
+void FindPanel::FindIncrementally(const wxString& find_wxstr) {
+  assert(location_ == kCurrentPage);
+
+  std::wstring find_str = find_wxstr.ToStdWstring();
+  book_frame_->SetLastFindStringAndFlags(find_str, flags_);
+  book_frame_->FindInActivePageIncrementally(find_str, flags_);
 }
 
 void FindPanel::OnFindTextHistory(wxCommandEvent& evt) {
@@ -589,27 +616,55 @@ void FindPanel::HandleHistoryMenu(const std::list<wxString>& history_strings,
 void FindPanel::HandleFind() {
   assert(location_ == kCurrentPage);
 
-  wxString find_str = find_text_ctrl_->GetValue();
-  if (find_str.IsEmpty()) {
+  wxString find_wxstr = find_text_ctrl_->GetValue();
+  if (find_wxstr.IsEmpty()) {
+    book_frame_->SetLastFindStringAndFlags(L"", flags_);
     return;
   }
 
-  AddFindString(find_str);
+  AddFindString(find_wxstr);
 
-  book_frame_->FindInActivePage(find_str.ToStdWstring(), flags_);
+  std::wstring find_str = find_wxstr.ToStdWstring();
+  book_frame_->SetLastFindStringAndFlags(find_str, flags_);
+  book_frame_->FindInActivePage(find_str, flags_);
 }
 
 void FindPanel::HandleReplace(bool all) {
-  wxString find_str = find_text_ctrl_->GetValue();
-  if (!find_str.IsEmpty()) {
-    AddFindString(find_str);
+  wxString find_wxstr = find_text_ctrl_->GetValue();
+  if (find_wxstr.IsEmpty()) {
+    book_frame_->SetLastFindStringAndFlags(L"", flags_);
+    return;
+  }
 
-    wxString replace_str = replace_text_ctrl_->GetValue();
-    if (!replace_str.IsEmpty()) {
-      AddReplaceString(replace_str);
+  AddFindString(find_wxstr);
+
+  wxString replace_wxstr = replace_text_ctrl_->GetValue();
+  if (!replace_wxstr.IsEmpty()) {
+    AddReplaceString(replace_wxstr);
+  }
+
+  std::wstring find_str = find_wxstr.ToStdWstring();
+  std::wstring replace_str = replace_wxstr.ToStdWstring();
+
+  book_frame_->SetLastFindStringAndFlags(find_str, flags_);
+
+  if (location_ == kCurrentPage) {
+    if (all) {
+      book_frame_->ReplaceAllInActivePage(find_str, replace_str, flags_);
+    } else {
+      book_frame_->ReplaceInActivePage(find_str, replace_str, flags_);
     }
-
-    // TODO
+  } else if (location_ == kAllPages) {
+    if (all) {
+      book_frame_->ReplaceAllInAllPages(find_str, replace_str, flags_);
+    }  // else: Not supported
+  } else if (location_ == kFolders) {
+    if (all) {
+      wxArrayString folders = GetFolders();
+      if (!folders.IsEmpty()) {
+        book_frame_->ReplaceAllInFolders(find_str, replace_str, flags_, folders);
+      }
+    }  // else: Not supported
   }
 }
 
@@ -636,22 +691,37 @@ bool FindPanel::IsRegexValid(const std::wstring& re_str) const {
   }
 }
 
-void FindPanel::UpdateFindTextFgColor() {
-  wxColor color = fg_color_;
-
-  if (GetBit(flags_, kFind_UseRegex)) {
-    wxString str = find_text_ctrl_->GetValue();
-    if (!str.IsEmpty()) {
-      if (!IsRegexValid(str.ToStdWstring())) {
-        color = invalid_fg_color_;
-      }
-    }
+bool FindPanel::IsFindStringValid(const wxString& find_wxstr, bool empty_as_valid) const {
+  if (find_wxstr.IsEmpty()) {
+    return empty_as_valid;
   }
 
+  if (GetBit(flags_, kFind_UseRegex)) {
+    return IsRegexValid(find_wxstr.ToStdWstring());
+  }
+
+  return true;
+}
+
+void FindPanel::SetFindTextCtrlFgColor(bool valid) {
+  wxColor color = valid ? fg_color_ : invalid_fg_color_;
   if (color != find_text_ctrl_->GetForegroundColour()) {
     find_text_ctrl_->SetForegroundColour(color);
     find_text_ctrl_->Refresh();
   }
+}
+
+wxArrayString FindPanel::GetFolders() const {
+  wxArrayString folders;
+
+  wxString folders_str = folders_text_ctrl_->GetValue();
+  folders_str.Trim(true).Trim(false);
+
+  if (!folders_str.IsEmpty()) {
+    folders = wxSplit(folders_str, kFolderSp);
+  }
+
+  return folders;
 }
 
 // TODO: If a folder includes another folder...
@@ -832,6 +902,13 @@ void FindPanel::ShowFolders(bool show) {
   folders_bitmap_->Show(show);
   folders_text_ctrl_->Show(show);
   add_folder_button_->Show(show);
+}
+
+void FindPanel::EnableButtons(bool enable) {
+  find_button_->Enable(enable);
+  find_all_button_->Enable(enable);
+  replace_button_->Enable(enable);
+  replace_all_button_->Enable(enable);
 }
 
 void FindPanel::InitButtonStyle() {

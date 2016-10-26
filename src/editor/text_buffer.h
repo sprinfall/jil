@@ -728,6 +728,11 @@ private:
   void RemoveLineLength(TextLine* line);
   void ClearLineLength();
 
+  //----------------------------------------------------------------------------
+
+  // Get line iterator by line number.
+  TextLines::const_iterator GetLineIter(Coord ln) const;
+
 private:
   // Unique ID of this text buffer.
   // You can't use file full path to identify text buffers uniquely because a
