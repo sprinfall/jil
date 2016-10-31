@@ -129,8 +129,17 @@ public:
   //----------------------------------------------------------------------------
   // Find Regex
 
-  // Find the regex from the given offset.
-  bool FindRegex(const std::wregex& re, Coord off, CharRange* char_range) const;
+  // Find the regex in the given range.
+  bool FindRegex(const std::wregex& re,
+                 Coord begin,
+                 Coord end,
+                 CharRange* char_range) const;
+
+  // Find the last regex in the given range.
+  bool FindLastRegex(const std::wregex& re,
+                     Coord begin,
+                     Coord end,
+                     CharRange* char_range) const;
 
   //----------------------------------------------------------------------------
   // Indent

@@ -245,6 +245,15 @@ public:
   // Delete the current selection.
   void DeleteSelection(bool grouped, bool update_caret);
 
+  // Delete the text specified by the range, then insert the string if it's
+  // not empty.
+  // \param replace_str Should have no EOL contained (TODO: Support in future).
+  // \param grouped Group the delete and insert actions so that they can be
+  //                undone together.
+  void Replace(const TextRange& range,
+               const std::wstring& replace_str,
+               bool grouped);
+
   void SelectText(TextUnit text_unit, SeekType seek_type);
 
   void ScrollText(TextUnit text_unit, SeekType seek_type);

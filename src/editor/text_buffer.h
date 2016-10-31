@@ -61,54 +61,6 @@ public:
   // Use deque instead of vector for faster line insert & delete operations.
   typedef std::deque<TextLine*> TextLines;
 
-#if JIL_FIND_REGEX_ACROSS_LINES
-  //----------------------------------------------------------------------------
-  // CharIterator - Iterate text buffer char by char.
-
-  typedef std::iterator<std::bidirectional_iterator_tag, wchar_t, ptrdiff_t> CharIteratorBase;
-
-  class CharIterator : public CharIteratorBase {
-  private:
-    // Use TextLines::iterator instead of Coord for performance.
-    // If lines are kept in vector instead of deque, Coord will be OK.
-    TextLines::const_iterator y_;
-    Coord x_;
-
-  public:
-    CharIterator() {
-    }
-
-    CharIterator(TextLines::const_iterator l_it, Coord c_it)
-        : y_(l_it), x_(c_it) {
-    }
-
-    TextLines::const_iterator line_iterator() const {
-      return y_;
-    }
-
-    Coord x() const {
-      return x_;
-    }
-
-    bool operator==(const CharIterator& rhs) const {
-      return y_ == rhs.y_ && x_ == rhs.x_;
-    }
-
-    bool operator!=(const CharIterator& rhs) const {
-      return !(*this == rhs);
-    }
-
-    // NOTE: The return is NOT reference.
-    wchar_t operator*() const;
-
-    CharIterator& operator++();
-    CharIterator& operator--();
-
-    CharIterator operator++(int);
-    CharIterator operator--(int);
-  };
-#endif  // JIL_FIND_REGEX_ACROSS_LINES
-
   //----------------------------------------------------------------------------
 
   TextBuffer(size_t id, FtPlugin* ft_plugin, const Encoding& file_encoding);
@@ -137,28 +89,6 @@ public:
   TextRange range() const {
     return TextRange(point_begin(), point_end());
   }
-
-#if JIL_FIND_REGEX_ACROSS_LINES
-
-  CharIterator CharBegin();
-  const CharIterator CharBegin() const;
-
-  CharIterator CharEnd();
-  const CharIterator CharEnd() const;
-  
-  // Get text point from char iterator.
-  TextPoint PointFromCharIterator(CharIterator c_it) const {
-    return TextPoint(c_it.x(), c_it.line_iterator() - lines_.begin() + 1);
-  }
-
-  // Get char iterator from text point.
-  CharIterator CharIteratorFromPoint(const TextPoint& point) const {
-    TextLines::const_iterator l_it = lines_.begin();
-    l_it += (point.y - 1);
-    return CharIterator(l_it, point.x);
-  }
-
-#endif  // JIL_FIND_REGEX_ACROSS_LINES
 
   //----------------------------------------------------------------------------
 
@@ -349,7 +279,7 @@ public:
   void HandleLineChange(LineChangeType type, Coord first_ln, Coord last_ln = 0);
 
   //----------------------------------------------------------------------------
-  // Find
+  // Find & Replace
 
   // \param reversely Currently, only for non-regex find.
   TextRange FindString(const std::wstring& str,
@@ -365,6 +295,13 @@ public:
                      bool case_sensitive,
                      bool match_word,
                      std::list<TextRange>* result_ranges) const;
+
+  void ReplaceStringAll(const std::wstring& str,
+                        const std::wstring& replace_str,
+                        const TextRange& range,
+                        bool use_regex,
+                        bool case_sensitive,
+                        bool match_word);
 
   //----------------------------------------------------------------------------
   // Listener
@@ -478,6 +415,8 @@ public:
   // is merged.
   Action* AddAction(Action* action);
 
+  void AddGroupAction();
+
   // Special handling for insert char action.
   // Insert char actions added with this function might be merged later.
   void AddInsertCharAction(InsertCharAction* insert_char_action);
@@ -550,7 +489,7 @@ private:
   }
 
   //----------------------------------------------------------------------------
-  // Find
+  // Find & Replace
 
   // Find a plain string in the given range.
   TextRange FindPlainString(const std::wstring& str,
@@ -566,9 +505,12 @@ private:
   // Find a regex string in the given range.
   TextRange FindRegexString(const std::wstring& str,
                             const TextRange& range,
-                            bool case_sensitive) const;
+                            bool case_sensitive,
+                            bool reversely) const;
 
   TextRange FindRegex(const std::wregex& re, const TextRange& range) const;
+
+  TextRange FindRegexReversely(const std::wregex& re, const TextRange& range) const;
 
   // Find all occurrences of a plain string in the given range.
   void FindPlainStringAll(const std::wstring& str,
@@ -586,10 +528,11 @@ private:
                     const TextRange& range,
                     std::list<TextRange>* result_ranges) const;
 
-  // Find regex all in the given line.
+  // Find regex all matching results in the given line.
   void FindRegexAll(const TextLine* line,
                     Coord ln,
-                    Coord off,
+                    Coord x_begin,
+                    Coord x_end,
                     const std::wregex& re,
                     std::list<TextRange>* result_ranges) const;
 
@@ -611,6 +554,17 @@ private:
                          bool case_sensitive,
                          bool match_word,
                          std::list<TextRange>* result_ranges) const;
+
+  void ReplacePlainStringAll(const std::wstring& str,
+                             const std::wstring& replace_str,
+                             const TextRange& range,
+                             bool case_sensitive,
+                             bool match_word);
+
+  void ReplaceRegexStringAll(const std::wstring& str,
+                             const std::wstring& replace_str,
+                             const TextRange& range,
+                             bool case_sensitive);
 
   typedef int (*CmpFunc)(const wchar_t*, const wchar_t*, size_t);
 

@@ -74,10 +74,7 @@ void FtPlugin::AddAnyof(Lex lex, const std::wstring& joined_words) {
 #if !JIL_MATCH_WORD_WITH_HASH
 
 void FtPlugin::SortAnyof() {
-#if JIL_USE_CPP11
   anyofs_.shrink_to_fit();  // Shrink to save memory.
-#endif  // JIL_USE_CPP11
-
   std::sort(anyofs_.begin(), anyofs_.end());
 }
 

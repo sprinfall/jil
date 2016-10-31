@@ -127,6 +127,18 @@ public:
     assert(point_begin_ <= point_end_);
   }
 
+  TextRange(Coord ln, Coord x_begin, Coord x_end)
+    : point_begin_(x_begin, ln)
+    , point_end_(x_end, ln) {
+    assert(point_begin_ <= point_end_);
+  }
+
+  TextRange(Coord ln, const CharRange& char_range)
+      : point_begin_(char_range.begin(), ln)
+      , point_end_(char_range.end(), ln) {
+    assert(point_begin_ <= point_end_);
+  }
+
   TextRange(const TextRange& rhs)
       : point_begin_(rhs.point_begin_), point_end_(rhs.point_end_) {
   }
@@ -158,6 +170,16 @@ public:
     point_end_ = point_end;
   }
 
+  void Set(Coord ln, Coord x_begin, Coord x_end) {
+    assert(x_begin <= x_end);
+    Set(ln, CharRange(x_begin, x_end));
+  }
+
+  void Set(Coord ln, const CharRange& char_range) {
+    point_begin_.Set(char_range.begin(), ln);
+    point_end_.Set(char_range.end(), ln);
+  }
+
   void Reset() {
     point_begin_.Reset();
     point_end_.Reset();
@@ -178,6 +200,14 @@ public:
   }
   Coord line_last() const {
     return point_end_.y;
+  }
+
+  Coord x_begin() const {
+    return point_begin_.x;
+  }
+
+  Coord x_end() const {
+    return point_end_.x;
   }
 
   // If the given line is in this text range.

@@ -17,8 +17,12 @@
 namespace jil {
 
 namespace editor {
+
+class Action;
+class RangeAction;
 class TextBuffer;
 class WrapHelper;
+
 }  // namespace editor
 
 class PageWindow;
@@ -55,7 +59,8 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// A non-active text page could be changed by some operations (e.g., Replace All).
+// A non-active text page could be changed by some operations, e.g., Replace All
+// in All Pages.
 // Implement TextListener so that the wrap info can be updated when changes
 // happen.
 class TextPage : public editor::TextListener, public BookPage {
@@ -63,12 +68,13 @@ public:
   explicit TextPage(editor::TextBuffer* buffer);
   virtual ~TextPage();
 
+  // You must call this!
   void set_page_window(PageWindow* page_window) {
     page_window_ = page_window;
   }
 
   //----------------------------------------------------------------------------
-  // Overriddens of BookPage
+  // OVERRIDE of BookPage
 
   virtual bool Page_HasFocus() const override;
   virtual void Page_SetFocus() override;
@@ -111,8 +117,37 @@ public:
   // Detach self from the buffer.
   void Detach();
 
+  //----------------------------------------------------------------------------
+
+  // TODO: Avoid duplication with editor::TextWindow.
+
+  void InsertString(const editor::TextPoint& point,
+                    const std::wstring& str,
+                    bool grouped,
+                    bool update_caret);
+
+  void DeleteRange(const editor::TextRange& range,
+                   editor::TextDir dir,
+                   bool rect,
+                   bool grouped,
+                   bool selected,
+                   bool update_caret);
+
+  void Replace(const editor::TextRange& range,
+               const std::wstring& replace_str,
+               bool grouped);
+
 private:
-  PageWindow* page_window_;
+  void Exec(editor::Action* action);
+
+  void UpdateAfterExec(editor::Action* action);
+
+  void UpdateCaretPointAfterAction(const editor::TextPoint& point, editor::RangeAction* ra);
+
+  void UpdateCaretPoint(const editor::TextPoint& point, bool line_step, bool vspace);
+
+private:
+  PageWindow* page_window_;  // Always != NULL.
 
   editor::TextBuffer* buffer_;
   PageState* state_;

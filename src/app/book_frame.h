@@ -360,6 +360,12 @@ private:
                editor::TextBuffer* buffer,
                std::list<editor::TextRange>* result_ranges);
 
+  // Replace all in the given buffer.
+  void ReplaceAll(const std::wstring& str,
+                  const std::wstring& replace_str,
+                  int flags,
+                  TextPage* text_page);
+
   void AddFrFilePathLine(editor::TextBuffer* buffer, editor::TextBuffer* fr_buffer);
 
   void AddFrMatchLines(editor::TextBuffer* buffer,

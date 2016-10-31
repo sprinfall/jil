@@ -16,6 +16,10 @@ public:
   explicit PageWindow(TextPage* page);
   virtual ~PageWindow();
 
+  TextPage* page() const {
+    return page_;
+  }
+
   void SetPage(TextPage* page);
 
   bool IsPagePlaceholder() const;
@@ -32,7 +36,7 @@ protected:
   void SetState(PageState* state);
 
 private:
-  TextPage* page_;
+  TextPage* page_;  // Always != NULL.
 };
 
 }  // namespace jil

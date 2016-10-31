@@ -144,11 +144,14 @@ protected:
   void OnUseRegexToggle(wxCommandEvent& evt);
   void OnCaseSensitiveToggle(wxCommandEvent& evt);
   void OnMatchWordToggle(wxCommandEvent& evt);
+  void OnReverselyToggle(wxCommandEvent& evt);
 #else
   void OnOptionsLabel(wxCommandEvent& evt);
+
   void OnMenuUseRegex(wxCommandEvent& evt);
   void OnMenuCaseSensitive(wxCommandEvent& evt);
   void OnMenuMatchWord(wxCommandEvent& evt);
+  void OnMenuReversely(wxCommandEvent& evt);
 #endif  // JIL_BMP_BUTTON_FIND_OPTIONS
 
   void OnFind(wxCommandEvent& evt);
@@ -255,6 +258,7 @@ private:
   ui::BitmapToggleButton* use_regex_tbutton_;
   ui::BitmapToggleButton* case_sensitive_tbutton_;
   ui::BitmapToggleButton* match_word_tbutton_;
+  ui::BitmapToggleButton* reversely_tbutton_;
 #else
   ui::Label* location_label_;
   ui::Separator* sep_;

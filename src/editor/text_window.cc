@@ -599,8 +599,7 @@ void TextWindow::DeleteRange(const TextRange& range,
                              bool grouped,
                              bool selected,
                              bool update_caret) {
-  DeleteRangeAction* dra =
-      new DeleteRangeAction(buffer_, range, dir, rect, selected);
+  DeleteRangeAction* dra = new DeleteRangeAction(buffer_, range, dir, rect, selected);
 
   dra->set_caret_point(caret_point_);
   dra->set_update_caret(update_caret);
@@ -625,6 +624,24 @@ void TextWindow::DeleteSelection(bool grouped, bool update_caret) {
   selection_.Reset();
 
   Exec(dra);
+}
+
+void TextWindow::Replace(const TextRange& range,
+                         const std::wstring& replace_str,
+                         bool grouped) {
+  grouped = grouped && !replace_str.empty();
+
+  DeleteRange(range, kForward, false, grouped, false, false);
+
+  if (!replace_str.empty()) {
+    InsertString(range.point_begin(), replace_str, grouped, false);
+  }
+
+  if (!selection_.IsEmpty()) {
+    if (!selection_.GetLineRange().Intersect(range.GetLineRange()).IsEmpty()) {
+      ClearSelection();
+    }
+  }
 }
 
 void TextWindow::ScrollText(TextUnit text_unit, SeekType seek_type) {

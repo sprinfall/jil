@@ -32,9 +32,16 @@
 #define kTrOptions            _("Options")
 
 #define kTrLocation           _("Location")
+
 #define kTrUseRegex           _("Use regular expression")
 #define kTrCaseSensitive      _("Case sensitive")
 #define kTrMatchWord          _("Match whole word")
+#define kTrReversely          _("Find reversely")
+
+#define kTrMenuUseRegex       _("Use Regular Expression")
+#define kTrMenuCaseSensitive  _("Case Sensitive")
+#define kTrMenuMatchWord      _("Match Whole Word")
+#define kTrMenuReversely      _("Find Reversely")
 
 #define kTrFind               _("Find")
 #define kTrReplace            _("Replace")
@@ -124,6 +131,7 @@ EVT_BUTTON        (ID_FP_LOCATION_BUTTON,         FindPanel::OnLocationClick)
 EVT_TOGGLEBUTTON  (ID_FP_USE_REGEX_TBUTTON,       FindPanel::OnUseRegexToggle)
 EVT_TOGGLEBUTTON  (ID_FP_CASE_SENSITIVE_TBUTTON,  FindPanel::OnCaseSensitiveToggle)
 EVT_TOGGLEBUTTON  (ID_FP_MATCH_WORD_TBUTTON,      FindPanel::OnMatchWordToggle)
+EVT_TOGGLEBUTTON  (ID_FP_REVERSELY_TBUTTON,       FindPanel::OnReverselyToggle)
 
 #else
 
@@ -133,6 +141,7 @@ EVT_BUTTON        (ID_FP_OPTIONS_LABEL,           FindPanel::OnOptionsLabel)
 EVT_MENU          (ID_FP_MENU_USE_REGEX,          FindPanel::OnMenuUseRegex)
 EVT_MENU          (ID_FP_MENU_CASE_SENSITIVE,     FindPanel::OnMenuCaseSensitive)
 EVT_MENU          (ID_FP_MENU_MATCH_WORD,         FindPanel::OnMenuMatchWord)
+EVT_MENU          (ID_FP_MENU_REVERSELY,          FindPanel::OnMenuReversely)
 
 #endif  // JIL_BMP_BUTTON_FIND_OPTIONS
 
@@ -215,10 +224,14 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   match_word_tbutton_ = NewBitmapToggleButton(ID_FP_MATCH_WORD_TBUTTON);
   match_word_tbutton_->SetToolTip(kTrMatchWord);
 
+  reversely_tbutton_ = NewBitmapToggleButton(ID_FP_REVERSELY_TBUTTON);
+  reversely_tbutton_->SetToolTip(kTrReversely);
+
   // Initialize toggle button states.
   use_regex_tbutton_->set_toggle(GetBit(flags_, kFind_UseRegex));
   case_sensitive_tbutton_->set_toggle(GetBit(flags_, kFind_CaseSensitive));
   match_word_tbutton_->set_toggle(GetBit(flags_, kFind_MatchWord));
+  reversely_tbutton_->set_toggle(GetBit(flags_, kFind_Reversely));
 
 #else
 
@@ -264,7 +277,12 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   // Restore last find string.
   if (!session_->find_strings().empty()) {
     find_text_ctrl_->SetValue(session_->find_strings().front());
-    //UpdateFindTextFgColor();  // TODO
+  }
+
+  if (mode_ == kReplaceMode) {
+    if (!session_->replace_strings().empty()) {
+      replace_text_ctrl_->SetValue(session_->replace_strings().front());
+    }
   }
 
   return true;
@@ -425,14 +443,23 @@ void FindPanel::OnMatchWordToggle(wxCommandEvent& evt) {
   flags_ = SetBit(flags_, kFind_MatchWord, evt.IsChecked());
 }
 
+void FindPanel::OnReverselyToggle(wxCommandEvent& evt) {
+  flags_ = SetBit(flags_, kFind_Reversely, evt.IsChecked());
+}
+
 #else
 
 void FindPanel::OnOptionsLabel(wxCommandEvent& evt) {
   wxMenu menu;
 
-  menu.AppendCheckItem(ID_FP_MENU_USE_REGEX, kTrUseRegex);
-  menu.AppendCheckItem(ID_FP_MENU_CASE_SENSITIVE, kTrCaseSensitive);
-  menu.AppendCheckItem(ID_FP_MENU_MATCH_WORD, kTrMatchWord);
+  menu.AppendCheckItem(ID_FP_MENU_USE_REGEX, kTrMenuUseRegex);
+  menu.AppendCheckItem(ID_FP_MENU_CASE_SENSITIVE, kTrMenuCaseSensitive);
+  menu.AppendCheckItem(ID_FP_MENU_MATCH_WORD, kTrMenuMatchWord);
+  menu.AppendCheckItem(ID_FP_MENU_REVERSELY, kTrMenuReversely);
+
+  if (GetBit(flags_, kFind_UseRegex)) {
+    menu.Check(ID_FP_MENU_USE_REGEX, true);
+  }
 
   if (GetBit(flags_, kFind_CaseSensitive)) {
     menu.Check(ID_FP_MENU_CASE_SENSITIVE, true);
@@ -442,13 +469,19 @@ void FindPanel::OnOptionsLabel(wxCommandEvent& evt) {
     menu.Check(ID_FP_MENU_MATCH_WORD, true);
   }
 
-  if (GetBit(flags_, kFind_UseRegex)) {
-    menu.Check(ID_FP_MENU_USE_REGEX, true);
+  if (GetBit(flags_, kFind_Reversely)) {
+    menu.Check(ID_FP_MENU_REVERSELY, true);
+  }
 
-    // You can't just surround the regex string with '\b' to match the whole
-    // word, because '\b' can't match EOL.
-    // So disable "Match Whole Word" when "Use Regex" is on.
+  // You can't just surround the regex string with '\b' to match the whole
+  // word, because '\b' can't match EOL.
+  // So disable "Match Whole Word" when "Use Regular Expression" is on.
+  if (GetBit(flags_, kFind_UseRegex)) {
     menu.Enable(ID_FP_MENU_MATCH_WORD, false);
+  }
+
+  if (location_ != kCurrentPage) {
+    menu.Enable(ID_FP_MENU_REVERSELY, false);
   }
 
   PopupMenu(&menu, ScreenToClient(wxGetMousePosition()));
@@ -479,6 +512,10 @@ void FindPanel::OnMenuMatchWord(wxCommandEvent& evt) {
   if (location_ == kCurrentPage) {
     FindIncrementally(find_text_ctrl_->GetValue());
   }
+}
+
+void FindPanel::OnMenuReversely(wxCommandEvent& evt) {
+  flags_ = SetBit(flags_, kFind_Reversely, evt.IsChecked());
 }
 
 #endif  // JIL_BMP_BUTTON_FIND_OPTIONS

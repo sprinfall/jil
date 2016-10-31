@@ -337,22 +337,47 @@ Coord TextLine::UnpairedLeftKey(wchar_t l_key, wchar_t r_key, Coord off) const {
 //------------------------------------------------------------------------------
 // Find Regex
 
-bool TextLine::FindRegex(const std::wregex& re, Coord off, CharRange* char_range) const {
-  assert(off <= data_.size());
+bool TextLine::FindRegex(const std::wregex& re,
+                         Coord begin,
+                         Coord end,
+                         CharRange* char_range) const {
+  if (end == kInvCoord) {
+    end = Length();
+  } else {
+    assert(end <= Length());
+  }
 
+  if (begin >= end) {
+    return false;
+  }
+  
   typedef std::wstring::const_iterator Iter;
 
-  Iter begin(data_.begin() + off);
-  Iter end(data_.end());
+  Iter begin_it(data_.begin() + begin);
+  Iter end_it(data_.begin() + end);
 
   std::match_results<Iter> m;
-  if (std::regex_search(begin, end, m, re)) {
-    char_range->Set(m[0].first - begin, m[0].second - begin);
-    char_range->Shift(off);
+  if (std::regex_search(begin_it, end_it, m, re)) {
+    char_range->Set(m[0].first - begin_it, m[0].second - begin_it);
+    char_range->Shift(begin);
     return true;
   }
 
   return false;
+}
+
+bool TextLine::FindLastRegex(const std::wregex& re,
+                             Coord begin,
+                             Coord end,
+                             CharRange* char_range) const {
+  bool found = false;
+
+  while (begin < Length() && FindRegex(re, begin, end, char_range)) {
+    found = true;
+    begin = char_range->end();
+  }
+
+  return found;
 }
 
 //------------------------------------------------------------------------------

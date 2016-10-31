@@ -330,55 +330,6 @@ static FileError ReadFile(const wxString& file_path,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#if JIL_FIND_REGEX_ACROSS_LINES
-
-wchar_t TextBuffer::CharIterator::operator*() const {
-  TextLine* line = *y_;
-  if (x_ >= line->Length()) {
-    return LF;
-  } else {
-    return line->Char(x_);
-  }
-}
-
-TextBuffer::CharIterator& TextBuffer::CharIterator::operator++() {
-  TextLine* line = *y_;
-  if (x_ < line->Length()) {
-    ++x_;
-  } else {
-    ++y_;
-    x_ = 0;
-  }
-  return *this;
-}
-
-TextBuffer::CharIterator& TextBuffer::CharIterator::operator--() {
-  TextLine* line = *y_;
-  if (x_ == 0) {
-    --y_;
-    x_ = (*y_)->Length();
-  } else {
-    --x_;
-  }
-  return *this;
-}
-
-TextBuffer::CharIterator TextBuffer::CharIterator::operator++(int) {
-  CharIterator tmp = *this;
-  ++*this;
-  return tmp;
-}
-
-TextBuffer::CharIterator TextBuffer::CharIterator::operator--(int) {
-  CharIterator tmp = *this;
-  --*this;
-  return tmp;
-}
-
-#endif  // JIL_FIND_REGEX_ACROSS_LINES
-
-////////////////////////////////////////////////////////////////////////////////
-
 TextBuffer::TextBuffer(size_t id, FtPlugin* ft_plugin, const Encoding& file_encoding)
     : id_(id)
     , ft_plugin_(ft_plugin)
@@ -506,36 +457,6 @@ FileError TextBuffer::SaveFile() {
 
   return kNoError;
 }
-
-//------------------------------------------------------------------------------
-
-#if JIL_FIND_REGEX_ACROSS_LINES
-
-TextBuffer::CharIterator TextBuffer::CharBegin() {
-  assert(!lines_.empty());
-  return CharIterator(lines_.begin(), 0);
-}
-
-const TextBuffer::CharIterator TextBuffer::CharBegin() const {
-  assert(!lines_.empty());
-  return CharIterator(lines_.begin(), 0);
-}
-
-TextBuffer::CharIterator TextBuffer::CharEnd() {
-  assert(!lines_.empty());
-  TextLines::iterator y = lines_.end();
-  --y;
-  return CharIterator(y, (*y)->Length());
-}
-
-const TextBuffer::CharIterator TextBuffer::CharEnd() const {
-  assert(!lines_.empty());
-  TextLines::const_iterator y = lines_.end();
-  --y;
-  return CharIterator(y, (*y)->Length());
-}
-
-#endif  // JIL_FIND_REGEX_ACROSS_LINES
 
 //------------------------------------------------------------------------------
 
@@ -1209,7 +1130,7 @@ void TextBuffer::DeleteText(const TextRange& range, std::wstring* text) {
   }
 
   if (range.HasOneLine()) {
-    DeleteString(range.point_begin(), range.point_end().x - range.point_begin().x, text);
+    DeleteString(range.point_begin(), range.x_end() - range.x_begin(), text);
     return;
   }
 
@@ -1242,13 +1163,13 @@ void TextBuffer::DeleteText(const TextRange& range, std::wstring* text) {
   }
 
   // Last line.
-  if (range.point_end().x > 0) {
+  if (range.x_end() > 0) {
     if (text != NULL) {
       std::wstring str;
-      DeleteString(TextPoint(0, range.line_first() + 1), range.point_end().x, &str);
+      DeleteString(TextPoint(0, range.line_first() + 1), range.x_end(), &str);
       *text += str;
     } else {
-      DeleteString(TextPoint(0, range.line_first() + 1), range.point_end().x);
+      DeleteString(TextPoint(0, range.line_first() + 1), range.x_end());
     }
   }
 
@@ -1348,7 +1269,7 @@ TextRange TextBuffer::FindString(const std::wstring& str,
   assert(range.line_first() <= LineCount());
 
   if (use_regex) {
-    return FindRegexString(str, range, case_sensitive);
+    return FindRegexString(str, range, case_sensitive, reversely);
   } else {
     if (reversely) {
       return FindPlainStringReversely(str, range, case_sensitive, match_word);
@@ -1371,6 +1292,22 @@ void TextBuffer::FindStringAll(const std::wstring& str,
     FindPlainStringAll(str, range, case_sensitive, match_word, result_ranges);
   } else {
     FindRegexStringAll(str, range, case_sensitive, result_ranges);
+  }
+}
+
+void TextBuffer::ReplaceStringAll(const std::wstring& str,
+                                  const std::wstring& replace_str,
+                                  const TextRange& range,
+                                  bool use_regex,
+                                  bool case_sensitive,
+                                  bool match_word) {
+  assert(!str.empty());
+  assert(range.line_first() <= LineCount());
+
+  if (!use_regex) {
+    ReplacePlainStringAll(str, replace_str, range, case_sensitive, match_word);
+  } else {
+    ReplaceRegexStringAll(str, replace_str, range, case_sensitive);
   }
 }
 
@@ -1737,6 +1674,10 @@ Action* TextBuffer::AddAction(Action* action) {
   return action;
 }
 
+void TextBuffer::AddGroupAction() {
+  AddAction(new GroupAction(this));
+}
+
 void TextBuffer::AddInsertCharAction(InsertCharAction* insert_char_action) {
   bool modified_backup = modified();
 
@@ -1964,28 +1905,25 @@ TextRange TextBuffer::FindPlainString(const std::wstring& str,
 
   TextLines::const_iterator it = GetLineIter(range.line_first());
 
-  // The range contains only one line.
+  // Find in the first line of the range.
+
+  Coord x_end = kInvCoord;
   if (range.LineCount() == 1) {
-    FindLineString(it,
-                   range.point_begin().x,
-                   range.point_end().x,
-                   str,
-                   case_sensitive,
-                   false,
-                   match_word,
-                   &result_range);
-    return result_range;
+    x_end = range.x_end();
   }
 
-  // Find in the first line of the range.
   if (FindLineString(it,
-                     range.point_begin().x,
-                     kInvCoord,
+                     range.x_begin(),
+                     x_end,
                      str,
                      case_sensitive,
                      false,
                      match_word,
                      &result_range)) {
+    return result_range;
+  }
+
+  if (range.LineCount() == 1) {
     return result_range;
   }
 
@@ -2008,12 +1946,13 @@ TextRange TextBuffer::FindPlainString(const std::wstring& str,
   // Find in the last line of the range.
   FindLineString(it,
                  0,
-                 range.point_end().x,
+                 range.x_end(),
                  str,
                  case_sensitive,
                  false,
                  match_word,
                  &result_range);
+
   return result_range;
 }
 
@@ -2025,28 +1964,25 @@ TextRange TextBuffer::FindPlainStringReversely(const std::wstring& str,
 
   TextLines::const_iterator it = GetLineIter(range.line_last());
 
-  // The range contains only one line.
+  Coord x_begin = 0;
+
   if (range.LineCount() == 1) {
-    FindLineString(it,
-                   range.point_begin().x,
-                   range.point_end().x,
-                   str,
-                   case_sensitive,
-                   true,
-                   match_word,
-                   &result_range);
-    return result_range;
+    x_begin = range.x_begin();
   }
 
   // Find in the last line of the range.
   if (FindLineString(it,
-                     0,
-                     range.point_end().x,
+                     x_begin,
+                     range.x_end(),
                      str,
                      case_sensitive,
                      true,
                      match_word,
                      &result_range)) {
+    return result_range;
+  }
+
+  if (range.LineCount() == 1) {
     return result_range;
   }
 
@@ -2068,7 +2004,7 @@ TextRange TextBuffer::FindPlainStringReversely(const std::wstring& str,
 
   // Find in the first line of the range.
   FindLineString(it,
-                 range.point_begin().x,
+                 range.x_begin(),
                  kInvCoord,
                  str,
                  case_sensitive,
@@ -2081,7 +2017,8 @@ TextRange TextBuffer::FindPlainStringReversely(const std::wstring& str,
 
 TextRange TextBuffer::FindRegexString(const std::wstring& str,
                                       const TextRange& range,
-                                      bool case_sensitive) const {
+                                      bool case_sensitive,
+                                      bool reversely) const {
   std::wregex::flag_type re_flags = std::wregex::ECMAScript;
   if (!case_sensitive) {
     re_flags |= std::wregex::icase;
@@ -2090,7 +2027,11 @@ TextRange TextBuffer::FindRegexString(const std::wstring& str,
   try {
     // NOTE: Throw std::regex_error if the supplied regular expression is not valid.
     std::wregex re(str, re_flags);
-    return FindRegex(re, range);
+    if (reversely) {
+      return FindRegexReversely(re, range);
+    } else {
+      return FindRegex(re, range);
+    }
   } catch (std::regex_error& e) {
     // Invalid regular expression!
     wxLogError(e.what());
@@ -2100,16 +2041,6 @@ TextRange TextBuffer::FindRegexString(const std::wstring& str,
 }
 
 TextRange TextBuffer::FindRegex(const std::wregex& re, const TextRange& range) const {
-#if JIL_FIND_REGEX_ACROSS_LINES
-  CharIterator c_begin(CharIteratorFromPoint(range.point_begin()));
-  CharIterator c_end(CharEnd());
-  std::match_results<CharIterator> m;
-  std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
-
-  if (std::regex_search(c_begin, c_end, m, re, flags)) {
-    return TextRange(PointFromCharIterator(m[0].first), PointFromCharIterator(m[0].second));
-  }
-#else
   const TextPoint& p_begin = range.point_begin();
   const TextPoint& p_end = range.point_end();
 
@@ -2117,30 +2048,60 @@ TextRange TextBuffer::FindRegex(const std::wregex& re, const TextRange& range) c
   CharRange char_range;
 
   // Find in first line.
-  if (!Line(ln)->FindRegex(re, p_begin.x, &char_range)) {
+  if (!Line(ln)->FindRegex(re, p_begin.x, kInvCoord, &char_range)) {
     ++ln;
 
     if (range.LineCount() > 1) {
       // Find in middle lines.
       for (; ln < p_end.y; ++ln) {
-        if (Line(ln)->FindRegex(re, 0, &char_range)) {
+        if (Line(ln)->FindRegex(re, 0, kInvCoord, &char_range)) {
           break;
         }
       }
 
       if (char_range.IsEmpty()) {
         // Find in last line.
-        Line(ln)->FindRegex(re, 0, &char_range);
+        Line(ln)->FindRegex(re, 0, p_end.x, &char_range);
       }
     }
   }
 
   if (!char_range.IsEmpty()) {
-    TextPoint p_begin(char_range.begin(), ln);
-    TextPoint p_end(char_range.end(), ln);
-    return TextRange(p_begin, p_end);
+    return TextRange(ln, char_range);
   }
-#endif  // JIL_FIND_REGEX_ACROSS_LINES
+
+  return TextRange();
+}
+
+TextRange TextBuffer::FindRegexReversely(const std::wregex& re, const TextRange& range) const {
+  const TextPoint& p_begin = range.point_begin();
+  const TextPoint& p_end = range.point_end();
+
+  Coord ln = p_end.y;
+  CharRange char_range;
+
+  // Find in last line.
+  if (!Line(ln)->FindLastRegex(re, 0, p_end.x, &char_range)) {
+    --ln;
+
+    if (range.LineCount() > 1) {
+      // Find in middle lines.
+      for (; ln > p_begin.y; --ln) {
+        if (Line(ln)->FindLastRegex(re, 0, kInvCoord, &char_range)) {
+          break;
+        }
+      }
+
+      if (char_range.IsEmpty()) {
+        // Find in first line.
+        Line(ln)->FindLastRegex(re, p_begin.x, kInvCoord, &char_range);
+      }
+    }
+  }
+
+  if (!char_range.IsEmpty()) {
+    return TextRange(ln, char_range);
+  }
 
   return TextRange();
 }
@@ -2154,12 +2115,12 @@ void TextBuffer::FindPlainStringAll(const std::wstring& str,
 
   // The range contains only one line.
   if (range.LineCount() == 1) {
-    FindLineStringAll(it, range.point_begin().x, range.point_end().x, str, case_sensitive, match_word, result_ranges);
+    FindLineStringAll(it, range.x_begin(), range.x_end(), str, case_sensitive, match_word, result_ranges);
     return;
   }
 
   // Find in the first line of the range.
-  FindLineStringAll(it, range.point_begin().x, kInvCoord, str, case_sensitive, match_word, result_ranges);
+  FindLineStringAll(it, range.x_begin(), kInvCoord, str, case_sensitive, match_word, result_ranges);
 
   TextLines::const_iterator end_it = GetLineIter(range.line_last());
 
@@ -2169,7 +2130,7 @@ void TextBuffer::FindPlainStringAll(const std::wstring& str,
   }
 
   // Find in the last line of the range.
-  FindLineStringAll(it, 0, range.point_end().x, str, case_sensitive, match_word, result_ranges);
+  FindLineStringAll(it, 0, range.x_end(), str, case_sensitive, match_word, result_ranges);
 }
 
 void TextBuffer::FindRegexStringAll(const std::wstring& str,
@@ -2194,25 +2155,6 @@ void TextBuffer::FindRegexStringAll(const std::wstring& str,
 void TextBuffer::FindRegexAll(const std::wregex& re,
                               const TextRange& range,
                               std::list<TextRange>* result_ranges) const {
-#if JIL_FIND_REGEX_ACROSS_LINES
-  CharIterator c_begin = CharIteratorFromPoint(range.point_begin());
-  CharIterator c_end = CharEnd();
-  std::match_results<CharIterator> m;
-  std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
-
-  while (true) {
-    if (!std::regex_search(c_begin, c_end, m, re, flags)) {
-      break;
-    }
-
-    TextPoint point_begin = PointFromCharIterator(m[0].first);
-    TextPoint point_end = PointFromCharIterator(m[0].second);
-
-    result_ranges->push_back(TextRange(point_begin, point_end));
-
-    c_begin = m[0].second;
-  }
-#else
   const TextPoint& p_begin = range.point_begin();
   const TextPoint& p_end = range.point_end();
 
@@ -2222,7 +2164,7 @@ void TextBuffer::FindRegexAll(const std::wregex& re,
   TextLines::const_iterator it = GetLineIter(p_begin.y);
 
   // Find in first line.
-  FindRegexAll(*it, ln, p_begin.x, re, result_ranges);
+  FindRegexAll(*it, ln, p_begin.x, kInvCoord, re, result_ranges);
 
   if (range.LineCount() > 1) {
     ++it;
@@ -2231,29 +2173,26 @@ void TextBuffer::FindRegexAll(const std::wregex& re,
     // Find in middle lines.
     TextLines::const_iterator last_it = GetLineIter(p_end.y);
     for (; it != last_it; ++it, ++ln) {
-      FindRegexAll(*it, ln, 0, re, result_ranges);
+      FindRegexAll(*it, ln, 0, kInvCoord, re, result_ranges);
     }
 
     // Find in last line.
-    FindRegexAll(*it, ln, 0, re, result_ranges);
+    FindRegexAll(*it, ln, 0, p_end.x, re, result_ranges);
   }
-#endif  // JIL_FIND_REGEX_ACROSS_LINES
 }
 
 void TextBuffer::FindRegexAll(const TextLine* line,
                               Coord ln,
-                              Coord off,
+                              Coord x_begin,
+                              Coord x_end,
                               const std::wregex& re,
                               std::list<TextRange>* result_ranges) const {
   CharRange char_range;
-  while (off < line->Length() && line->FindRegex(re, off, &char_range)) {
+  while (x_begin < line->Length() && line->FindRegex(re, x_begin, x_end, &char_range)) {
     if (!char_range.IsEmpty()) {
-      TextPoint p_begin(char_range.begin(), ln);
-      TextPoint p_end(char_range.end(), ln);
-      result_ranges->push_back(TextRange(p_begin, p_end));
+      result_ranges->push_back(TextRange(ln, char_range));
     }
-
-    off = char_range.end();
+    x_begin = char_range.end();
   }
 }
 
@@ -2292,7 +2231,7 @@ bool TextBuffer::FindLineString(TextLines::const_iterator line_it,
 
   Coord x = pos;
   Coord y = CoordCast(std::distance(lines_.begin(), line_it)) + 1;
-  result_range->Set(TextPoint(x, y), TextPoint(x + str.size(), y));
+  result_range->Set(y, x, x + str.size());
 
   return true;
 }
@@ -2327,11 +2266,32 @@ void TextBuffer::FindLineStringAll(TextLines::const_iterator line_it,
 
     Coord x = pos;
     Coord y = CoordCast(std::distance(lines_.begin(), line_it)) + 1;
-    result_ranges->push_back(TextRange(TextPoint(x, y),
-                                       TextPoint(x + str_size, y)));
+    result_ranges->push_back(TextRange(y, x, x + str_size));
 
     x_begin = x + str_size;
   }
+}
+
+void TextBuffer::ReplacePlainStringAll(const std::wstring& str,
+                                       const std::wstring& replace_str,
+                                       const TextRange& range,
+                                       bool case_sensitive,
+                                       bool match_word) {
+  std::list<TextRange> result_ranges;
+  FindPlainStringAll(str, range, case_sensitive, match_word, &result_ranges);
+
+  if (result_ranges.empty()) {
+    return;
+  }
+
+
+}
+
+// TODO
+void TextBuffer::ReplaceRegexStringAll(const std::wstring& str,
+                                       const std::wstring& replace_str,
+                                       const TextRange& range,
+                                       bool case_sensitive) {
 }
 
 Coord TextBuffer::StringFind(const std::wstring& str,

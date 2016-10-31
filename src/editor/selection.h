@@ -19,7 +19,7 @@ public:
     rect = false;
   }
 
-  void Set(const TextRange _range, TextDir _dir, bool _rect) {
+  void Set(const TextRange& _range, TextDir _dir, bool _rect) {
     range = _range;
     dir = _dir;
     rect = _rect;

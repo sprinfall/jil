@@ -62,7 +62,7 @@ TEST(TextLine, FindRegex) {
     std::wregex e(L"_\\(.+\\)");
 
     CharRange char_range;
-    EXPECT_TRUE(line.FindRegex(e, 0, &char_range));
+    EXPECT_TRUE(line.FindRegex(e, 0, kInvCoord, &char_range));
 
     CharRange expected_char_range(line.FindChar(L'_'), line.Length());
     EXPECT_EQ(expected_char_range, char_range);
@@ -72,7 +72,7 @@ TEST(TextLine, FindRegex) {
     std::wregex e(L"_\\(.+\\)$");
 
     CharRange char_range;
-    EXPECT_TRUE(line.FindRegex(e, 0, &char_range));
+    EXPECT_TRUE(line.FindRegex(e, 0, kInvCoord, &char_range));
 
     CharRange expected_char_range(line.FindChar(L'_'), line.Length());
     EXPECT_EQ(expected_char_range, char_range);
@@ -82,7 +82,7 @@ TEST(TextLine, FindRegex) {
     std::wregex e(L"^#define");
 
     CharRange char_range;
-    EXPECT_TRUE(line.FindRegex(e, 0, &char_range));
+    EXPECT_TRUE(line.FindRegex(e, 0, kInvCoord, &char_range));
     EXPECT_EQ(CharRange(0, 7), char_range);
   }
 
@@ -90,7 +90,7 @@ TEST(TextLine, FindRegex) {
     std::wregex e(L"^#define\\b");
 
     CharRange char_range;
-    EXPECT_TRUE(line.FindRegex(e, 0, &char_range));
+    EXPECT_TRUE(line.FindRegex(e, 0, kInvCoord, &char_range));
     EXPECT_EQ(CharRange(0, 7), char_range);
   }
 
@@ -98,7 +98,7 @@ TEST(TextLine, FindRegex) {
     std::wregex e(L"^.+$");
 
     CharRange char_range;
-    EXPECT_TRUE(line.FindRegex(e, 0, &char_range));
+    EXPECT_TRUE(line.FindRegex(e, 0, kInvCoord, &char_range));
     EXPECT_EQ(CharRange(0, line.Length()), char_range);
   }
 
@@ -107,7 +107,7 @@ TEST(TextLine, FindRegex) {
     std::wregex e(L"^$");
 
     CharRange char_range;
-    EXPECT_TRUE(line.FindRegex(e, 0, &char_range));
+    EXPECT_TRUE(line.FindRegex(e, 0, kInvCoord, &char_range));
     EXPECT_EQ(CharRange(0, 0), char_range);
   }
 }
