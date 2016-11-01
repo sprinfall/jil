@@ -138,14 +138,20 @@ enum {
   ID_MENU_HELP_VIEW_ONLINE,
   ID_MENU_HELP_END,
 
-  // Indent menu on status bar.
-  ID_MENU_INDENT_BEGIN,  // TODO: Rename
-  ID_MENU_EXPAND_TAB = ID_MENU_INDENT_BEGIN,
+  // Tool book tab right click menu.
+  // NOTE: Don't reuse the IDs for text book!
+  ID_MENU_TB_CLOSE,
+  ID_MENU_TB_CLOSE_ALL,
+  ID_MENU_TB_CLOSE_ALL_BUT_THIS,
+
+  // Tab related menu on status bar.
+  ID_MENU_TAB_BEGIN,
+  ID_MENU_EXPAND_TAB = ID_MENU_TAB_BEGIN,
   ID_MENU_TAB_STOP_0,
   ID_MENU_TAB_STOP_8 = ID_MENU_TAB_STOP_0 + 7,
   ID_MENU_GUESS_TAB_OPTIONS,
   ID_MENU_RETAB,
-  ID_MENU_INDENT_END,
+  ID_MENU_TAB_END,
 
   // Encoding menu on status bar.
   // NOTE: The order must be consistent with editor::EncId.

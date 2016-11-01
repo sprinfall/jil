@@ -179,7 +179,7 @@ void TextBook::HandleTabMouseRightUp(wxMouseEvent& evt) {
 
   BookPage* page = PageByPos(evt.GetPosition().x);
 
-  if (page == NULL) {  // Click on blank area
+  if (page == NULL) {  // Click on blank area.
     menu.Append(ID_MENU_FILE_NEW, kTrRClickNewFile);
 
     if (PageCount() > 0) {

@@ -26,7 +26,10 @@ protected:
   virtual void DoRemoveTab(Tab* tab) override;
   virtual void DoRemoveAll(Tab* tab) override;
 
+  // Handlers for right click menu items on the tab area.
   void OnMenuClose(wxCommandEvent& evt);
+  void OnMenuCloseAll(wxCommandEvent& evt);
+  void OnMenuCloseAllButThis(wxCommandEvent& evt);
 };
 
 }  // namespace jil

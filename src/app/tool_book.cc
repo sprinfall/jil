@@ -11,7 +11,9 @@
 namespace jil {
 
 BEGIN_EVENT_TABLE(ToolBook, BookCtrl)
-EVT_MENU(ID_MENU_FILE_CLOSE, ToolBook::OnMenuClose)
+EVT_MENU(ID_MENU_TB_CLOSE, ToolBook::OnMenuClose)
+EVT_MENU(ID_MENU_TB_CLOSE_ALL, ToolBook::OnMenuCloseAll)
+EVT_MENU(ID_MENU_TB_CLOSE_ALL_BUT_THIS, ToolBook::OnMenuCloseAllButThis)
 END_EVENT_TABLE()
 
 ToolBook::ToolBook() {
@@ -36,12 +38,24 @@ bool ToolBook::Create(wxWindow* parent, wxWindowID id) {
 }
 
 void ToolBook::HandleTabMouseRightUp(wxMouseEvent& evt) {
-  TabList::iterator it = TabByPos(evt.GetPosition().x);
-  if (it != tabs_.end()) {
-    wxMenu menu;
-    menu.Append(ID_MENU_FILE_CLOSE, kTrRClickClose);
-    PopupMenu(&menu, evt.GetPosition());
+  wxMenu menu;
+
+  BookPage* page = PageByPos(evt.GetPosition().x);
+
+  if (page == NULL) {  // Click on blank area.
+    if (PageCount() > 0) {
+      menu.Append(ID_MENU_TB_CLOSE_ALL, kTrRClickCloseAll);
+    }
+  } else {
+    menu.Append(ID_MENU_TB_CLOSE, kTrRClickClose);
+
+    if (PageCount() > 1) {
+      menu.Append(ID_MENU_TB_CLOSE_ALL, kTrRClickCloseAll);
+      menu.Append(ID_MENU_TB_CLOSE_ALL_BUT_THIS, kTrRClickCloseAllButThis);
+    }
   }
+
+  PopupMenu(&menu, evt.GetPosition());
 }
 
 void ToolBook::DoActivateTab(Tab* tab, bool active) {
@@ -85,6 +99,14 @@ void ToolBook::DoRemoveAll(Tab* tab) {
 
 void ToolBook::OnMenuClose(wxCommandEvent& evt) {
   RemoveActivePage();
+}
+
+void ToolBook::OnMenuCloseAll(wxCommandEvent& evt) {
+  RemoveAllPages(false);
+}
+
+void ToolBook::OnMenuCloseAllButThis(wxCommandEvent& evt) {
+  RemoveAllPages(false, ActivePage());
 }
 
 }  // namespace jil

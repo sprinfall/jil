@@ -123,7 +123,7 @@ EVT_TEXT_WINDOW(wxID_ANY, BookFrame::OnTextWindowEvent)
 
 // Status bar.
 EVT_STATUS_FIELD_CLICK(ID_STATUS_BAR, BookFrame::OnStatusFieldClick)
-EVT_MENU_RANGE(ID_MENU_INDENT_BEGIN, ID_MENU_INDENT_END - 1, BookFrame::OnStatusTabOptionsMenu)
+EVT_MENU_RANGE(ID_MENU_TAB_BEGIN, ID_MENU_TAB_END - 1, BookFrame::OnStatusTabOptionsMenu)
 EVT_MENU_RANGE(ID_MENU_ENCODING_BEGIN, ID_MENU_ENCODING_END - 1, BookFrame::OnStatusEncodingMenu)
 EVT_MENU_RANGE(ID_MENU_FILE_FORMAT_BEGIN, ID_MENU_FILE_FORMAT_END - 1, BookFrame::OnStatusFileFormatMenu)
 EVT_MENU_RANGE(ID_MENU_FILE_TYPE_BEGIN, ID_MENU_FILE_TYPE_END - 1, BookFrame::OnStatusFileTypeMenu)
@@ -618,6 +618,8 @@ void BookFrame::FindInActivePage(const std::wstring& str, int flags) {
 }
 
 void BookFrame::FindAllInActivePage(const std::wstring& str, int flags) {
+  wxBusyCursor busy;
+
   FindResultPage* fr_page = GetFindResultPage(true);
   ClearFindResult(fr_page);
 
@@ -628,6 +630,8 @@ void BookFrame::FindAllInActivePage(const std::wstring& str, int flags) {
 }
 
 void BookFrame::FindAllInAllPages(const std::wstring& str, int flags) {
+  wxBusyCursor busy;
+
   FindResultPage* fr_page = GetFindResultPage(true);
   ClearFindResult(fr_page);
 
@@ -749,12 +753,16 @@ void BookFrame::ReplaceAllInActivePage(const std::wstring& str,
     return;
   }
 
+  wxBusyCursor busy;
+
   ReplaceAll(str, replace_str, flags, text_page);
 }
 
 void BookFrame::ReplaceAllInAllPages(const std::wstring& str,
                                      const std::wstring& replace_str,
                                      int flags) {
+  wxBusyCursor busy;
+
   std::vector<TextPage*> text_pages = text_book_->TextPages();
   for (size_t i = 0; i < text_pages.size(); ++i) {
     ReplaceAll(str, replace_str, flags, text_pages[i]);
