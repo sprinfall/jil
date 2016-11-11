@@ -77,9 +77,7 @@
 #define kTrFileCloseAll       _("Close A&ll")
 #define kTrFileCloseFormat    _("&Close %s")
 #define kTrFileSave           _("&Save")
-#define kTrFileSaveFormat     _("&Save %s")
 #define kTrFileSaveAs         _("Save &As...")
-#define kTrFileSaveAsFormat   _("Save %s &As...")
 #define kTrFileSaveAll        _("Save A&ll")
 #define kTrFileRecentFiles    _("Recent &Files")
 

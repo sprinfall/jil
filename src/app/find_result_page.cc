@@ -87,14 +87,7 @@ bool FindResultPage::Page_EditMenuState(int menu_id) {
   return true;
 }
 
-bool FindResultPage::Page_FileMenuState(int menu_id, wxString* text) {
-  if (menu_id == ID_MENU_FILE_SAVE_AS) {
-    if (text != NULL) {
-      *text = wxString::Format(kTrFileSaveAsFormat, Page_Label());
-    }
-    return true;
-  }
-
+bool FindResultPage::Page_FileMenuState(int menu_id) {
   return false;
 }
 
@@ -120,10 +113,6 @@ bool FindResultPage::Page_OnMenu(int menu_id) {
 
 bool FindResultPage::Page_Save() {
   return false;
-}
-
-bool FindResultPage::Page_SaveAs() {
-  return SaveBufferAs(buffer_, NULL);
 }
 
 // Double-click goes to the line of this result.

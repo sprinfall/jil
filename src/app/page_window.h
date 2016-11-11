@@ -26,7 +26,7 @@ public:
 
   void GetEditMenu(wxMenu* menu);
   bool GetEditMenuState(int menu_id);
-  bool GetFileMenuState(int menu_id, wxString* text);
+  bool GetFileMenuState(int menu_id);
   bool HandleMenu(int menu_id);
 
 protected:

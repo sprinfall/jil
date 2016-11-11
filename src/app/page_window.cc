@@ -108,12 +108,8 @@ bool PageWindow::GetEditMenuState(int menu_id) {
   }
 }
 
-bool PageWindow::GetFileMenuState(int menu_id, wxString* text) {
+bool PageWindow::GetFileMenuState(int menu_id) {
   if (menu_id == ID_MENU_FILE_SAVE_AS) {
-    if (text != NULL) {
-      // TODO: The page label might be too long.
-      *text = wxString::Format(kTrFileSaveAsFormat, page_->Page_Label());
-    }
     return true;
   }
 

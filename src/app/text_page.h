@@ -89,11 +89,10 @@ public:
 
   virtual void Page_EditMenu(wxMenu* menu) override;
   virtual bool Page_EditMenuState(int menu_id) override;
-  virtual bool Page_FileMenuState(int menu_id, wxString* text) override;
+  virtual bool Page_FileMenuState(int menu_id) override;
   virtual bool Page_OnMenu(int menu_id) override;
 
   virtual bool Page_Save() override;
-  virtual bool Page_SaveAs() override;
 
   //----------------------------------------------------------------------------
   // Overriddens of editor::TextListener

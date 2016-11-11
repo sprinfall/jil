@@ -98,9 +98,9 @@ bool TextPage::Page_EditMenuState(int menu_id) {
   return page_window_->GetEditMenuState(menu_id);
 }
 
-bool TextPage::Page_FileMenuState(int menu_id, wxString* text) {
+bool TextPage::Page_FileMenuState(int menu_id) {
   assert(page_window_ != NULL);
-  return page_window_->GetFileMenuState(menu_id, text);
+  return page_window_->GetFileMenuState(menu_id);
 }
 
 bool TextPage::Page_OnMenu(int menu_id) {
@@ -126,10 +126,6 @@ bool TextPage::Page_Save() {
 
   // Saved successfully or the user chose not to save it.
   return true;
-}
-
-bool TextPage::Page_SaveAs() {
-  return SaveBufferAs(buffer_, NULL);
 }
 
 //------------------------------------------------------------------------------

@@ -417,11 +417,13 @@ void BookFrame::FileSave() {
 }
 
 void BookFrame::FileSaveAs() {
-  // NOTE: Save As applies to not only text page, but also tool pages, e.g.,
-  // find result page.
-  BookPage* page = GetCurrentPage();
-  if (page != NULL) {
-    page->Page_SaveAs();
+  editor::TextBuffer* buffer = ActiveBuffer();
+  if (buffer == NULL) {
+    return;
+  }
+
+  if (SaveBufferAs(buffer, this)) {
+    AddRecentFile(buffer->file_path_name(), true);
   }
 }
 
@@ -1313,13 +1315,7 @@ bool BookFrame::ExecFuncByMenu(int menu) {
 //------------------------------------------------------------------------------
 
 void BookFrame::OnFileUpdateUI(wxUpdateUIEvent& evt) {
-  int menu_id = evt.GetId();
-  wxString label;
-  bool state = GetFileMenuState(menu_id, &label);
-  evt.Enable(state);
-  if (!label.IsEmpty()) {
-    evt.SetText(label);
-  }
+  evt.Enable(GetFileMenuState(evt.GetId()));
 }
 
 void BookFrame::OnEditUpdateUI(wxUpdateUIEvent& evt) {
@@ -2557,17 +2553,14 @@ void BookFrame::SetAccelForVoidCmds() {
   SetAcceleratorTable(accel_table);
 }
 
-bool BookFrame::GetFileMenuState(int menu_id, wxString* text) {
+bool BookFrame::GetFileMenuState(int menu_id) {
   using namespace editor;
 
   if (menu_id == ID_MENU_FILE_SAVE_AS) {
     BookPage* page = GetCurrentPage();
     if (page != NULL) {
-      return page->Page_FileMenuState(menu_id, text);
+      return page->Page_FileMenuState(menu_id);
     } else {
-      if (text != NULL) {
-        *text = kTrFileSaveAs;
-      }
       return false;
     }
   }

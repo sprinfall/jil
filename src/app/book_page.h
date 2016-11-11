@@ -57,19 +57,13 @@ public:
   // Get the enable state of the edit menu item.
   virtual bool Page_EditMenuState(int menu_id) = 0;
 
-  // Get the enable state of the file menu item and optionaly return the
-  // menu item text.
-  virtual bool Page_FileMenuState(int menu_id, wxString* text) = 0;
+  // Get the enable state of the file menu item.
+  virtual bool Page_FileMenuState(int menu_id) = 0;
 
   // Handle the menu event.
   virtual bool Page_OnMenu(int menu_id) = 0;
 
   virtual bool Page_Save() = 0;
-
-  // Special handling of Save As.
-  // Save As applies to not only text page, but also tool pages, e.g.,
-  // find result page.
-  virtual bool Page_SaveAs() = 0;
 
   bool Page_IsModified() const {
     return (Page_Flags() & kModified) != 0;

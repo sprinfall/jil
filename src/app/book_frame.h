@@ -409,7 +409,7 @@ private:
   // TODO: Avoid building accelerator table when create menus.
   void SetAccelForVoidCmds();
 
-  bool GetFileMenuState(int menu_id, wxString* text = NULL);
+  bool GetFileMenuState(int menu_id);
   bool GetEditMenuState(int menu_id);
   bool GetViewMenuState(int menu_id, bool* check = NULL);
 
