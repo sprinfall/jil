@@ -69,12 +69,11 @@ protected:
   void Init();
   void CreatePageWindow();
 
-  virtual void HandleTabMouseLeftDown(wxMouseEvent& evt);
-  virtual void HandleTabMouseLeftUp(wxMouseEvent& evt);
-  virtual void HandleTabMouseMiddleUp(wxMouseEvent& evt);
-  virtual void HandleTabMouseRightDown(wxMouseEvent& evt);
-  virtual void HandleTabMouseRightUp(wxMouseEvent& evt);
-  virtual void HandleTabMouseLeftDClick(wxMouseEvent& evt);
+  virtual void HandleTabMouseLeftUp(wxMouseEvent& evt) override;
+  virtual void HandleTabMouseMiddleUp(wxMouseEvent& evt) override;
+  virtual void HandleTabMouseRightDown(wxMouseEvent& evt) override;
+  virtual void HandleTabMouseRightUp(wxMouseEvent& evt) override;
+  virtual void HandleTabMouseLeftDClick(wxMouseEvent& evt) override;
 
   virtual void DoActivateTab(Tab* tab, bool active) override;
   virtual void DoRemoveTab(Tab* tab) override;

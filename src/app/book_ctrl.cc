@@ -29,6 +29,7 @@ EVT_SIZE                (BookTabArea::OnSize)
 EVT_PAINT               (BookTabArea::OnPaint)
 EVT_MOUSE_EVENTS        (BookTabArea::OnMouseEvents)
 EVT_MOUSE_CAPTURE_LOST  (BookTabArea::OnMouseCaptureLost)
+EVT_LEAVE_WINDOW        (BookTabArea::OnLeaveWindow)
 END_EVENT_TABLE()
 
 BookTabArea::BookTabArea(BookCtrl* book_ctrl, wxWindowID id)
@@ -89,6 +90,10 @@ void BookTabArea::OnMouseEvents(wxMouseEvent& evt) {
 
 void BookTabArea::OnMouseCaptureLost(wxMouseCaptureLostEvent& evt) {
   // Do nothing.
+}
+
+void BookTabArea::OnLeaveWindow(wxMouseEvent& evt) {
+  book_ctrl_->OnTabLeaveWindow(evt);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -242,6 +247,10 @@ void BookCtrl::RemoveAllPages(bool from_destroy, const BookPage* except_page) {
     if (tab->page == except_page) {
       ++it;
       continue;
+    }
+
+    if (hover_tab_ == tab) {
+      hover_tab_ = NULL;
     }
 
     it = tabs_.erase(it);
@@ -523,6 +532,9 @@ void BookCtrl::Init() {
   tab_area_ = NULL;
   page_area_ = NULL;
 
+  hover_tab_ = NULL;
+  hover_on_close_icon_ = false;
+
   batch_ = false;
   need_resize_tabs_ = false;
 }
@@ -531,6 +543,7 @@ void BookCtrl::UpdateTabFontDetermined() {
   char_width_ = tab_area_->GetCharWidth();
   tab_area_->GetTextExtent(ui::kEllipsis, &ellipsis_width_, NULL);
   tab_padding_.Set(char_width_, char_width_ / 2 + 1);
+  tab_space_x_ = char_width_ / 2 + 1;
 
   // Book ctrl's min size is the best size of its tab area.
   SetMinSize(tab_area_->GetBestSize());
@@ -571,6 +584,8 @@ void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
   wxPen active_tab_pen(theme_->GetColor(COLOR_ACTIVE_TAB_BORDER));
   wxBrush active_tab_brush(theme_->GetColor(COLOR_ACTIVE_TAB_BG));
 
+  wxBitmap tab_close_bitmap = theme_->GetImage(IMAGE_TAB_CLOSE);
+
   dc.SetFont(tab_area_->GetFont());
 
   int x = rect.x;
@@ -583,9 +598,7 @@ void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
   for (TabIter it = tabs_.begin(); it != tabs_.end(); ++it) {
     Tab* tab = *it;
 
-    wxRect tab_rect(x, rect.y, tab->size, rect.height);
-    tab_rect.y += tab_margin_top_;
-    tab_rect.height -= tab_margin_top_;
+    wxRect tab_rect = GetTabRect(x, tab->size, rect);
 
     // Background
 
@@ -615,26 +628,48 @@ void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
 
     wxRect tab_fg_rect = tab_rect;
     tab_fg_rect.Deflate(tab_padding_);
-    tab_fg_rect.width -= char_width_;  // *
+
+    wxRect label_rect = tab_fg_rect;
+    label_rect.width -= tab_close_bitmap.GetWidth();
+    label_rect.width -= tab_space_x_;
+    label_rect.width -= char_width_;  // Modified indicator
+    label_rect.width -= tab_space_x_;
 
     wxString label = tab->page->Page_Label();
 
+    // Label.
     if (!label.IsEmpty()) {
       if (tab->best_size <= tab->size) {
-        dc.DrawText(label, tab_fg_rect.x, tab_fg_rect.y);
+        dc.DrawText(label, label_rect.x, label_rect.y);
       } else {
-        if (tab_fg_rect.width > ellipsis_width_) {
-          int max_width = tab_fg_rect.width - ellipsis_width_;
+        if (label_rect.width > ellipsis_width_) {
+          int max_width = label_rect.width - ellipsis_width_;
           size_t i = ui::TailorLabel(dc, label, max_width);
           label = label.Mid(0, i) + ui::kEllipsis;
-          dc.DrawText(label, tab_fg_rect.x, tab_fg_rect.y);
+          dc.DrawText(label, label_rect.x, label_rect.y);
         }
       }
     }
 
+    // Modified indicator.
     if (tab->page->Page_IsModified()) {
-      int x = tab_fg_rect.GetRight() + char_width_ / 2;
-      dc.DrawText(kStar, x, tab_fg_rect.y);
+      int star_x = label_rect.GetRight() + tab_space_x_;
+      dc.DrawText(kStar, star_x, label_rect.y);
+    }
+
+    // Close icon.
+    if (tab->active || tab == hover_tab_) {
+      wxRect close_rect = GetTabCloseIconRect(tab_rect);
+
+      if (hover_on_close_icon_ && tab == hover_tab_) {
+        wxColour hover_bg = theme_->GetColor(
+            tab->active ? COLOR_ACTIVE_TAB_HOVER_BG : COLOR_TAB_HOVER_BG);
+        dc.SetPen(wxPen(hover_bg));
+        dc.SetBrush(wxBrush(hover_bg));
+        dc.DrawRectangle(close_rect);
+      }
+
+      dc.DrawBitmap(tab_close_bitmap, close_rect.GetLeftTop(), true);
     }
 
     x += tab->size;
@@ -688,9 +723,8 @@ void BookCtrl::OnTabMouseLeftUp(wxMouseEvent& evt) {
     return;
   }
 
-  HandleTabMouseLeftUp(evt);
-
   tab_area_->ReleaseMouse();
+  HandleTabMouseLeftUp(evt);
 }
 
 void BookCtrl::OnTabMouseMiddleDown(wxMouseEvent& evt) {
@@ -708,25 +742,47 @@ void BookCtrl::OnTabMouseMiddleUp(wxMouseEvent& evt) {
   if (!tab_area_->HasCapture()) {
     return;
   }
-  tab_area_->ReleaseMouse();
 
+  tab_area_->ReleaseMouse();
   HandleTabMouseMiddleUp(evt);
 }
 
 // Update tooltip on mouse motion.
 void BookCtrl::OnTabMouseMotion(wxMouseEvent& evt) {
-  wxString tooltip;
+  wxPoint pos = evt.GetPosition();
 
-  TabIter it = TabByPos(evt.GetPosition().x);
-  if (it != tabs_.end()) {
-    tooltip = (*it)->page->Page_Description();
+  wxRect tab_rect;
+  Tab* tab = TabByPos(pos.x, &tab_rect);
+
+  if (tab == NULL) {
+    if (hover_tab_ != NULL) {
+      hover_tab_ = NULL;
+      hover_on_close_icon_ = false;
+      tab_area_->Refresh();
+    }
+
+    SetTabTooltip(wxEmptyString);
+    return;
   }
 
-#if defined(__WXMSW__)
-  tab_area_->SetToolTipEx(tooltip);
-#else
-  tab_area_->SetToolTip(tooltip);
-#endif
+  SetTabTooltip(tab->page->Page_Description());
+
+  bool refresh = false;
+
+  if (hover_tab_ != tab) {
+    hover_tab_ = tab;
+    refresh = true;
+  }
+
+  bool on_close_icon = GetTabCloseIconRect(tab_rect).Contains(pos);
+  if (hover_on_close_icon_ != on_close_icon) {
+    hover_on_close_icon_ = on_close_icon;
+    refresh = true;
+  }
+
+  if (refresh) {
+    tab_area_->Refresh();
+  }
 }
 
 void BookCtrl::OnTabMouseRightDown(wxMouseEvent& evt) {
@@ -746,8 +802,8 @@ void BookCtrl::OnTabMouseRightUp(wxMouseEvent& evt) {
   if (!tab_area_->HasCapture()) {
     return;
   }
-  tab_area_->ReleaseMouse();
 
+  tab_area_->ReleaseMouse();
   HandleTabMouseRightUp(evt);
 }
 
@@ -755,15 +811,41 @@ void BookCtrl::OnTabMouseLeftDClick(wxMouseEvent& evt) {
   HandleTabMouseLeftDClick(evt);
 }
 
+void BookCtrl::OnTabLeaveWindow(wxMouseEvent& evt) {
+  if (hover_tab_ != NULL) {
+    hover_tab_ = NULL;
+    tab_area_->Refresh();
+  }
+}
+
 void BookCtrl::HandleTabMouseLeftDown(wxMouseEvent& evt) {
-  ActivatePageByPos(evt.GetPosition().x);
+  wxPoint pos = evt.GetPosition();
+
+  wxRect tab_rect;
+  TabIter it = TabIterByPos(pos.x, &tab_rect);
+
+  if (it != tabs_.end()) {
+    // If click on the close icon, don't activate the page.
+    wxRect close_icon_rect = GetTabCloseIconRect(tab_rect);
+    if (!close_icon_rect.Contains(pos)) {
+      ActivatePage(it);
+    }
+  }
 }
 
 void BookCtrl::HandleTabMouseLeftUp(wxMouseEvent& evt) {
+  wxPoint pos = evt.GetPosition();
+
+  wxRect tab_rect;
+  TabIter it = TabIterByPos(pos.x, &tab_rect);
+
+  if (it != tabs_.end() && tab_rect.Contains(pos)) {
+    RemovePage(it);
+  }
 }
 
 void BookCtrl::HandleTabMouseMiddleUp(wxMouseEvent& evt) {
-  TabIter it = TabByPos(evt.GetPosition().x);
+  TabIter it = TabIterByPos(evt.GetPosition().x);
   if (it != tabs_.end()) {
     RemovePage(it);
   }
@@ -773,14 +855,26 @@ void BookCtrl::HandleTabMouseRightDown(wxMouseEvent& evt) {
   ActivatePageByPos(evt.GetPosition().x);
 }
 
+void BookCtrl::SetTabTooltip(const wxString& tooltip) {
+#if defined(__WXMSW__)
+  tab_area_->SetToolTipEx(tooltip);
+#else
+  tab_area_->SetToolTip(tooltip);
+#endif
+}
+
 //------------------------------------------------------------------------------
 
-BookCtrl::TabIter BookCtrl::TabByPos(int pos_x) {
-  int x = 0;
+BookCtrl::TabIter BookCtrl::TabIterByPos(int pos_x, wxRect* tab_rect) {
+  wxRect rect = tab_area_->GetClientRect();
+  int x = rect.x + tab_area_padding_x_;
 
   TabIter it = tabs_.begin();
   for (; it != tabs_.end(); ++it) {
     if (pos_x >= x && pos_x < x + (*it)->size) {
+      if (tab_rect != NULL) {
+        *tab_rect = GetTabRect(x, (*it)->size, rect);
+      }
       return it;
     }
 
@@ -790,10 +884,18 @@ BookCtrl::TabIter BookCtrl::TabByPos(int pos_x) {
   return tabs_.end();
 }
 
-BookPage* BookCtrl::PageByPos(int pos_x) {
-  TabIter it = TabByPos(pos_x);
+BookCtrl::Tab* BookCtrl::TabByPos(int pos_x, wxRect* tab_rect) {
+  TabIter it = TabIterByPos(pos_x, tab_rect);
   if (it != tabs_.end()) {
-    return (*it)->page;
+    return *it;
+  }
+  return NULL;
+}
+
+BookPage* BookCtrl::PageByPos(int pos_x) {
+  Tab* tab = TabByPos(pos_x);
+  if (tab != NULL) {
+    return tab->page;
   }
   return NULL;
 }
@@ -838,6 +940,10 @@ bool BookCtrl::RemovePage(TabIter it) {
 
   Tab* tab = *it;
 
+  if (hover_tab_ == tab) {
+    hover_tab_ = NULL;
+  }
+
   tabs_.erase(it);
   stack_tabs_.remove(tab);
 
@@ -855,7 +961,7 @@ bool BookCtrl::RemovePage(TabIter it) {
 }
 
 void BookCtrl::ActivatePageByPos(int pos_x) {
-  TabIter it = TabByPos(pos_x);
+  TabIter it = TabIterByPos(pos_x);
   if (it != tabs_.end()) {
     ActivatePage(it);
   }
@@ -902,16 +1008,39 @@ BookCtrl::TabConstIter BookCtrl::TabIterByPage(const BookPage* page) const {
 }
 
 int BookCtrl::CalcTabBestSize(const wxString& label) const {
-  int label_size = 0;
-  tab_area_->GetTextExtent(label, &label_size, NULL);
-  // Add char_width_ for *.
-  return label_size + tab_padding_.x + tab_padding_.x + char_width_;
+  int x = 0;
+  tab_area_->GetTextExtent(label, &x, NULL);
+
+  x += tab_padding_.x;
+  x += tab_space_x_;
+  x += char_width_;  // Modified indicator.
+  x += tab_space_x_;
+  x += theme_->GetImage(IMAGE_TAB_CLOSE).GetWidth();
+  x += tab_padding_.x;
+
+  return x;
 }
 
 wxSize BookCtrl::CalcTabAreaBestSize() const {
   int y = tab_area_->GetCharHeight();
   y += tab_margin_top_ + tab_padding_.y + tab_padding_.y;
   return wxSize(-1, y);
+}
+
+wxRect BookCtrl::GetTabRect(int x, int width, const wxRect& tab_area_rect) {
+  wxRect tab_rect(x, tab_area_rect.y, width, tab_area_rect.height);
+  tab_rect.y += tab_margin_top_;
+  tab_rect.height -= tab_margin_top_;
+  return tab_rect;
+}
+
+wxRect BookCtrl::GetTabCloseIconRect(const wxRect& tab_rect) {
+  const wxBitmap& tab_close_bitmap = theme_->GetImage(IMAGE_TAB_CLOSE);
+
+  int x = tab_rect.GetRight() - tab_padding_.x - tab_close_bitmap.GetWidth();
+  int y = tab_rect.y + (tab_rect.height - tab_close_bitmap.GetHeight()) / 2;
+
+  return wxRect(x, y, tab_close_bitmap.GetWidth(), tab_close_bitmap.GetHeight());
 }
 
 void BookCtrl::PostEvent(wxEventType event_type) {

@@ -137,13 +137,30 @@ void TextBook::CreatePageWindow() {
   page_area_->GetSizer()->Add(page_window_, 1, wxEXPAND);
 }
 
-void TextBook::HandleTabMouseLeftDown(wxMouseEvent& evt) {
-  ActivatePageByPos(evt.GetPosition().x);
-}
-
 void TextBook::HandleTabMouseLeftUp(wxMouseEvent& evt) {
-  if (PageByPos(evt.GetPosition().x) == NULL) {
+  wxPoint pos = evt.GetPosition();
+
+  wxRect tab_rect;
+  TabIter it = TabIterByPos(pos.x, &tab_rect);
+
+  if (it != tabs_.end()) {
+    wxRect close_icon_rect = GetTabCloseIconRect(tab_rect);
+    if (close_icon_rect.Contains(pos)) {
+      // Up on close icon, close the page.
+      // If the buffer is modified, ask for save.
+      BookPage* page = (*it)->page;
+
+      if (page->Page_IsModified()) {
+        if (!page->Page_Save()) {
+          return;
+        }
+      } 
+
+      RemovePage(it);
+    }
+  } else {
     if (evt.CmdDown()) {
+      // Ctrl + LeftUp on the blank area, create a new page.
       wxCommandEvent cmd_evt(wxEVT_COMMAND_MENU_SELECTED, ID_MENU_FILE_NEW);
       GetParent()->GetEventHandler()->AddPendingEvent(cmd_evt);
     }
@@ -151,7 +168,7 @@ void TextBook::HandleTabMouseLeftUp(wxMouseEvent& evt) {
 }
 
 void TextBook::HandleTabMouseMiddleUp(wxMouseEvent& evt) {
-  TabIter it = TabByPos(evt.GetPosition().x);
+  TabIter it = TabIterByPos(evt.GetPosition().x);
   if (it == tabs_.end()) {
     return;
   }
@@ -209,7 +226,7 @@ void TextBook::HandleTabMouseRightUp(wxMouseEvent& evt) {
 
 // Left double-click on blank area, new a file.
 void TextBook::HandleTabMouseLeftDClick(wxMouseEvent& evt) {
-  TabIter it = TabByPos(evt.GetPosition().x);
+  TabIter it = TabIterByPos(evt.GetPosition().x);
   if (it == tabs_.end()) {
     wxCommandEvent cmd_evt(wxEVT_COMMAND_MENU_SELECTED, ID_MENU_FILE_NEW);
     GetParent()->GetEventHandler()->AddPendingEvent(cmd_evt);

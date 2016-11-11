@@ -55,6 +55,7 @@ protected:
   void OnPaint(wxPaintEvent& evt);
   void OnMouseEvents(wxMouseEvent& evt);
   void OnMouseCaptureLost(wxMouseCaptureLostEvent& evt);
+  void OnLeaveWindow(wxMouseEvent& evt);
 
 private:
   BookCtrl* book_ctrl_;
@@ -75,13 +76,23 @@ public:
 
     // Tab item colors:
     COLOR_TAB_FG,
-    COLOR_ACTIVE_TAB_FG,
     COLOR_TAB_BG,
-    COLOR_ACTIVE_TAB_BG,
     COLOR_TAB_BORDER,
+
+    COLOR_ACTIVE_TAB_FG,
+    COLOR_ACTIVE_TAB_BG,
     COLOR_ACTIVE_TAB_BORDER,
 
+    COLOR_TAB_HOVER_BG,
+    COLOR_ACTIVE_TAB_HOVER_BG,
+
     COLORS,
+  };
+
+  enum ImageId {
+    IMAGE_TAB_CLOSE = 0,
+
+    IMAGES,
   };
 
 protected:
@@ -201,6 +212,7 @@ protected:
   void OnTabMouseRightDown(wxMouseEvent& evt);
   void OnTabMouseRightUp(wxMouseEvent& evt);
   void OnTabMouseLeftDClick(wxMouseEvent& evt);
+  void OnTabLeaveWindow(wxMouseEvent& evt);
 
   virtual void HandleTabMouseLeftDown(wxMouseEvent& evt);
   virtual void HandleTabMouseLeftUp(wxMouseEvent& evt);
@@ -209,9 +221,18 @@ protected:
   virtual void HandleTabMouseRightUp(wxMouseEvent& evt) {}
   virtual void HandleTabMouseLeftDClick(wxMouseEvent& evt) {}
 
+  void SetTabTooltip(const wxString& tooltip);
+
   //----------------------------------------------------------------------------
 
-  TabIter TabByPos(int pos_x);
+  // Get tab iterator by x position.
+  // \param tab_rect Optional output of the tab rect.
+  TabIter TabIterByPos(int pos_x, wxRect* tab_rect = NULL);
+
+  // Get tab by x position.
+  // \param tab_rect Optional output of the tab rect.
+  Tab* TabByPos(int pos_x, wxRect* tab_rect = NULL);
+
   BookPage* PageByPos(int pos_x);
 
   void ActivatePage(TabIter it);
@@ -233,6 +254,9 @@ protected:
 
   wxSize CalcTabAreaBestSize() const;
 
+  wxRect GetTabRect(int x, int width, const wxRect& tab_area_rect);
+  wxRect GetTabCloseIconRect(const wxRect& tab_rect);
+
   void PostEvent(wxEventType event_type);
 
 protected:
@@ -243,6 +267,9 @@ protected:
 
   int tab_margin_top_;
   wxSize tab_padding_;
+
+  // The space between two elements inside a tab.
+  int tab_space_x_;
 
   // The space before/after the first/last tab.
   int tab_area_padding_x_;
@@ -261,6 +288,9 @@ protected:
   // The front tab is the current active tab.
   // A tab is moved to the front when it's activated.
   TabList stack_tabs_;
+
+  Tab* hover_tab_;
+  bool hover_on_close_icon_;
 
   bool batch_;
   bool need_resize_tabs_;

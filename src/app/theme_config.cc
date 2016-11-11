@@ -151,7 +151,7 @@ bool LoadThemeFile(const wxString& theme_folder,
   // Text book
   SharedTheme tb_theme = theme->GetTheme(THEME_TEXT_BOOK);
   if (!tb_theme) {
-    tb_theme.reset(new Theme(0, BookCtrl::COLORS, 0));
+    tb_theme.reset(new Theme(0, BookCtrl::COLORS, BookCtrl::IMAGES));
     theme->SetTheme(THEME_TEXT_BOOK, tb_theme);
   }
 
@@ -159,12 +159,19 @@ bool LoadThemeFile(const wxString& theme_folder,
   if (tb_setting) {
     tb_theme->SetColor(BookCtrl::COLOR_BG, tb_setting.GetColor("bg"));
     tb_theme->SetColor(BookCtrl::COLOR_TAB_AREA_BG, tb_setting.GetColor("tab_area_bg"));
+
     tb_theme->SetColor(BookCtrl::COLOR_TAB_FG, tb_setting.GetColor("tab_fg"));
-    tb_theme->SetColor(BookCtrl::COLOR_ACTIVE_TAB_FG, tb_setting.GetColor("active_tab_fg"));
     tb_theme->SetColor(BookCtrl::COLOR_TAB_BG, tb_setting.GetColor("tab_bg"));
-    tb_theme->SetColor(BookCtrl::COLOR_ACTIVE_TAB_BG, tb_setting.GetColor("active_tab_bg"));
     tb_theme->SetColor(BookCtrl::COLOR_TAB_BORDER, tb_setting.GetColor("tab_border"));
+
+    tb_theme->SetColor(BookCtrl::COLOR_ACTIVE_TAB_FG, tb_setting.GetColor("active_tab_fg"));
+    tb_theme->SetColor(BookCtrl::COLOR_ACTIVE_TAB_BG, tb_setting.GetColor("active_tab_bg"));
     tb_theme->SetColor(BookCtrl::COLOR_ACTIVE_TAB_BORDER, tb_setting.GetColor("active_tab_border"));
+
+    tb_theme->SetColor(BookCtrl::COLOR_TAB_HOVER_BG, tb_setting.GetColor("tab_hover_bg"));
+    tb_theme->SetColor(BookCtrl::COLOR_ACTIVE_TAB_HOVER_BG, tb_setting.GetColor("active_tab_hover_bg"));
+
+    tb_theme->SetImage(BookCtrl::IMAGE_TAB_CLOSE, GetImage(image_dir, wxT("tab_close")));
   }
 
   // Text page
