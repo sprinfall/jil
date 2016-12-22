@@ -120,9 +120,6 @@ public:
   void FileCopyPath();
   void FileOpenFolder();
 
-  void SwitchToNextPage();
-  void SwitchToPrevPage();
-
   void SwitchToNextStackPage();
   void SwitchToPrevStackPage();
 

@@ -13,10 +13,10 @@ public:
   enum Part {
     FG = 0,
     BG1,
-    BG2,
-    BG3,
+    BG2,  // Optional, use BG1 if not provided.
+    BG3,  // Optional, use BG2 if not provided.
     BORDER_OUTER,
-    BORDER_INNER,
+    BORDER_INNER,  // Optional, use BORDER_OUTER if not provided.
     PARTS,
   };
 

@@ -191,8 +191,7 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   SetBackgroundColour(theme_->GetColor(COLOR_BG_TOP));
 
-  button_style_.reset(new ui::ButtonStyle);
-  InitButtonStyle();
+  button_style_ = ButtonStyleFromTheme(theme_->GetTheme(THEME_BUTTON));
 
   //----------------------------------------------------------------------------
 
@@ -340,7 +339,7 @@ void FindPanel::SetFindString(const wxString& find_string) {
 void FindPanel::ReapplyTheme() {
   assert(theme_);
 
-  InitButtonStyle();
+  button_style_ = ButtonStyleFromTheme(theme_->GetTheme(THEME_BUTTON));
 
   folders_bitmap_->SetBitmap(theme_->GetImage(IMAGE_FOLDERS));
   folders_bitmap_->SetForegroundColour(theme_->GetColor(COLOR_FG));
@@ -946,24 +945,6 @@ void FindPanel::EnableButtons(bool enable) {
   find_all_button_->Enable(enable);
   replace_button_->Enable(enable);
   replace_all_button_->Enable(enable);
-}
-
-void FindPanel::InitButtonStyle() {
-  editor::SharedTheme button_theme = theme_->GetTheme(THEME_BUTTON);
-  if (!button_theme) {
-    return;
-  }
-
-  for (int part = 0; part < ui::ButtonStyle::PARTS; ++part) {
-    editor::SharedTheme part_theme = button_theme->GetTheme(part);
-    if (part_theme) {
-      for (int state = 0; state < ui::ButtonStyle::STATES; ++state) {
-        button_style_->SetColor(part, state, part_theme->GetColor(state));
-      }
-    }
-  }
-
-  button_style_->Fix();
 }
 
 ui::BitmapButton* FindPanel::NewBitmapButton(int id) {

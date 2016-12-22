@@ -5,10 +5,10 @@
 #include "editor/line_nr_area.h"
 #include "editor/renderer.h"
 
+#define kTextAreaStyle (wxBORDER_NONE | wxWANTS_CHARS)
+
 namespace jil {
 namespace editor {
-
-#define kTextAreaStyle (wxBORDER_NONE | wxWANTS_CHARS)
 
 BEGIN_EVENT_TABLE(TextArea, wxPanel)
 EVT_PAINT(TextArea::OnPaint)
@@ -48,7 +48,7 @@ void TextArea::ScrollWindow(int dx, int dy, const wxRect* rect) {
 void TextArea::OnPaint(wxPaintEvent& evt) {
   wxAutoBufferedPaintDC dc(this);
 #if !wxALWAYS_NATIVE_DOUBLE_BUFFER
-  wxLogDebug("TextArea native double buffer");
+  //wxLogDebug("TextArea native double buffer");
   dc.SetBackground(GetBackgroundColour());
   dc.Clear();
 #endif

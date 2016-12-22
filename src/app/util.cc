@@ -109,4 +109,27 @@ bool IsTraditionalChinese(int lang) {
           lang <= wxLANGUAGE_CHINESE_TAIWAN);
 }
 
+ui::SharedButtonStyle ButtonStyleFromTheme(editor::SharedTheme button_theme) {
+  ui::SharedButtonStyle button_style(new ui::ButtonStyle);
+
+  if (!button_theme) {
+    return button_style;
+  }
+
+  // Set the color for every state of each part.
+  for (int part = 0; part < ui::ButtonStyle::PARTS; ++part) {
+    editor::SharedTheme part_theme = button_theme->GetTheme(part);
+    if (part_theme) {
+      for (int state = 0; state < ui::ButtonStyle::STATES; ++state) {
+        button_style->SetColor(part, state, part_theme->GetColor(state));
+      }
+    }
+  }
+
+  // Fix if some color is missing.
+  button_style->Fix();
+
+  return button_style;
+}
+
 } // namespace jil

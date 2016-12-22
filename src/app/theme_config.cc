@@ -151,7 +151,7 @@ bool LoadThemeFile(const wxString& theme_folder,
   // Text book
   SharedTheme tb_theme = theme->GetTheme(THEME_TEXT_BOOK);
   if (!tb_theme) {
-    tb_theme.reset(new Theme(0, BookCtrl::COLORS, BookCtrl::IMAGES));
+    tb_theme.reset(new Theme(BookCtrl::THEMES, BookCtrl::COLORS, BookCtrl::IMAGES));
     theme->SetTheme(THEME_TEXT_BOOK, tb_theme);
   }
 
@@ -172,6 +172,12 @@ bool LoadThemeFile(const wxString& theme_folder,
     tb_theme->SetColor(BookCtrl::COLOR_ACTIVE_TAB_HOVER_BG, tb_setting.GetColor("active_tab_hover_bg"));
 
     tb_theme->SetImage(BookCtrl::IMAGE_TAB_CLOSE, GetImage(image_dir, wxT("tab_close")));
+    tb_theme->SetImage(BookCtrl::IMAGE_TAB_MORE, GetImage(image_dir, wxT("tab_more")));
+
+    Setting button_setting = tb_setting.Get("button", Setting::kGroup);
+    if (button_setting) {
+      tb_theme->SetTheme(BookCtrl::THEME_BUTTON, GetButtonTheme(button_setting));
+    }
   }
 
   // Text page
@@ -206,6 +212,7 @@ bool LoadThemeFile(const wxString& theme_folder,
       fp_theme->SetTheme(FindPanel::THEME_BUTTON, GetButtonTheme(button_setting));
     }
   }
+
   // Load images.
   fp_theme->SetImage(FindPanel::IMAGE_HISTORY, GetImage(image_dir, wxT("fp_history")));
 #if JIL_BMP_BUTTON_FIND_OPTIONS
@@ -250,6 +257,23 @@ bool LoadThemeFile(const wxString& theme_folder,
     nd_theme->SetColor(NavigationDialog::COLOR_SELECT_FG, nd_setting.GetColor("select_fg"));
     nd_theme->SetColor(NavigationDialog::COLOR_SELECT_BG, nd_setting.GetColor("select_bg"));
     nd_theme->SetColor(NavigationDialog::COLOR_SELECT_BORDER, nd_setting.GetColor("select_border"));
+  }
+
+  // Popup
+  SharedTheme popup_theme = theme->GetTheme(THEME_POPUP);
+  if (!popup_theme) {
+    popup_theme.reset(new Theme(0, WithPopupTheme::COLORS, 0));
+    theme->SetTheme(THEME_POPUP, popup_theme);
+  }
+
+  Setting popup_setting = root.Get("popup", Setting::kGroup);
+  if (popup_setting) {
+    popup_theme->SetColor(WithPopupTheme::COLOR_BG, popup_setting.GetColor("bg"));
+    popup_theme->SetColor(WithPopupTheme::COLOR_FG, popup_setting.GetColor("fg"));
+    popup_theme->SetColor(WithPopupTheme::COLOR_BORDER, popup_setting.GetColor("border"));
+    popup_theme->SetColor(WithPopupTheme::COLOR_SELECT_FG, popup_setting.GetColor("select_fg"));
+    popup_theme->SetColor(WithPopupTheme::COLOR_SELECT_BG, popup_setting.GetColor("select_bg"));
+    popup_theme->SetColor(WithPopupTheme::COLOR_SELECT_BORDER, popup_setting.GetColor("select_border"));
   }
 
   //----------------------------------------------------------------------------

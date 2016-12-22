@@ -14,6 +14,12 @@ class ButtonBase : public wxControl {
   DECLARE_EVENT_TABLE()
 
 public:
+  enum ClickType {
+    kClickOnUp,
+    kClickOnDown
+  };
+
+public:
   explicit ButtonBase(SharedButtonStyle style);
   virtual ~ButtonBase();
 
@@ -23,6 +29,10 @@ public:
 
   virtual bool AcceptsFocus() const override {
     return accepts_focus_;
+  }
+
+  void set_click_type(ClickType click_type) {
+    click_type_ = click_type;
   }
 
   void set_padding(const wxSize& padding) {
@@ -54,6 +64,8 @@ protected:
 
 protected:
   SharedButtonStyle style_;
+
+  ClickType click_type_;
 
   wxSize padding_;
 

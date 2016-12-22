@@ -14,9 +14,6 @@
 
 namespace jil {
 
-static const int kMarginX = 10;
-static const int kMarginY = 10;
-static const int kSpaceX = 10;
 static const int kSpaceY = 7;
 static const int kPaddingX = 5;
 static const int kPaddingY = 3;
@@ -37,6 +34,8 @@ END_EVENT_TABLE()
 
 NavigationDialog::NavigationDialog(const editor::SharedTheme& theme)
     : theme_(theme)
+    , margin_(10, 10)
+    , col_gap_(10)
     , select_index_(kNpos)
     , column_width_(180)
     , max_rows_(10) {
@@ -90,13 +89,11 @@ bool NavigationDialog::DoNavigateIn(int flags) {
 
 void NavigationDialog::OnPaint(wxPaintEvent& evt) {
   wxAutoBufferedPaintDC dc(this);
+
 #if !wxALWAYS_NATIVE_DOUBLE_BUFFER
   dc.SetBackground(GetBackgroundColour());
   dc.Clear();
 #endif
-
-  int x = kMarginX;
-  int y = kMarginY;
 
   if (select_index_ < text_pages_.size()) {
     dc.SetFont(title_font_);
@@ -170,7 +167,6 @@ void NavigationDialog::OnMouseMotion(wxMouseEvent& evt) {
 }
 
 void NavigationDialog::OnKeyDown(wxKeyEvent& evt) {
-  wxLogDebug("on key down");
   if (evt.GetKeyCode() == WXK_ESCAPE) {
     Close();
   } else {
@@ -236,22 +232,22 @@ void NavigationDialog::AdjustSize() {
   int path_h = name_h;
 
   // Client width without margin.
-  int w = column_width_ * cols + kSpaceX * (cols - 1);
+  int w = column_width_ * cols + col_gap_ * (cols - 1);
 
   // Client height without margin.
   int h = title_h + kSpaceY + name_h * max_rows_ + kSpaceY + path_h;
 
-  SetClientSize(w + kMarginX + kMarginX, h + kMarginY + kMarginY);
+  SetClientSize(w + margin_.x + margin_.x, h + margin_.y + margin_.y);
 
-  title_rect_ = wxRect(kMarginX, kMarginY, w, title_h);
-  path_rect_ = wxRect(kMarginX, kMarginY + h - path_h, w, path_h);
+  title_rect_ = wxRect(margin_.x, margin_.y, w, title_h);
+  path_rect_ = wxRect(margin_.x, margin_.y + h - path_h, w, path_h);
 
   for (size_t i = 0; i < text_pages_.size(); ++i) {
     int col = i / max_rows_;
     int row = i % max_rows_;
 
-    int x = kMarginX + (column_width_ + kSpaceX) * col;
-    int y = kMarginY + title_h + kSpaceY + name_h * row;
+    int x = margin_.x + (column_width_ + col_gap_) * col;
+    int y = margin_.y + title_h + kSpaceY + name_h * row;
     text_rects_[i] = wxRect(x, y, column_width_, name_h);
   }
 }

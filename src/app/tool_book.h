@@ -16,7 +16,7 @@ public:
   bool Create(wxWindow* parent, wxWindowID id);
 
   wxPanel* page_area() const {
-    return page_area_;
+    return page_panel_;
   }
 
 protected:

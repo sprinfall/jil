@@ -62,7 +62,7 @@ void ToolBook::DoActivateTab(Tab* tab, bool active) {
   if (active) {
     tab->active = true;
     tab->page->Page_Activate(true);
-    page_area_->Layout();
+    page_panel_->Layout();
   } else {
     tab->active = false;
     tab->page->Page_Activate(false);
@@ -74,7 +74,7 @@ void ToolBook::DoRemoveTab(Tab* tab) {
 
   // The page to remove is active; activate another page.
   if (tab->active) {
-    page_area_->GetSizer()->Clear(false);
+    page_panel_->GetSizer()->Clear(false);
 
     if (!IsEmpty()) {
       // TODO: Duplicate code as DoActivateTab().
@@ -86,14 +86,14 @@ void ToolBook::DoRemoveTab(Tab* tab) {
     }
   }
 
-  page_area_->Layout();
+  page_panel_->Layout();
 }
 
 void ToolBook::DoRemoveAll(Tab* tab) {
   tab->page->Page_Close();
 
   if (tab->active) {
-    page_area_->GetSizer()->Clear(false);
+    page_panel_->GetSizer()->Clear(false);
   }
 }
 

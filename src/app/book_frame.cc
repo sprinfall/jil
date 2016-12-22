@@ -164,6 +164,7 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
   text_book_->set_options(options_);
   text_book_->set_style(style_);
   text_book_->set_theme(theme_->GetTheme(THEME_TEXT_BOOK));
+  text_book_->set_popup_theme(theme_->GetTheme(THEME_POPUP));
   text_book_->set_page_theme(theme_->GetTheme(THEME_TEXT_PAGE));
   text_book_->set_binding(binding_);
   text_book_->Create(splitter_, ID_TEXT_BOOK);
@@ -175,6 +176,7 @@ bool BookFrame::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
   // Create tool book.
   tool_book_ = new ToolBook();
   tool_book_->set_theme(theme_->GetTheme(THEME_TEXT_BOOK));
+  tool_book_->set_popup_theme(theme_->GetTheme(THEME_POPUP));
   tool_book_->Create(splitter_, ID_TOOL_BOOK);
   tool_book_->SetTabFont(options_->fonts[FONT_TABS]);
   tool_book_->Hide();
@@ -261,12 +263,11 @@ void BookFrame::OpenFiles(const wxArrayString& file_names, bool silent) {
 
   text_book_->StartBatch();
 
-  // Activate the first opened file.
   bool active = true;
   for (size_t i = 0; i < file_names.size(); ++i) {
     // Don't update Recent Files menu for performance. Update it later.
     if (DoOpenFile(file_names[i], active, silent, true, false) != NULL) {
-      active = false;
+      active = false;  // Activate the first opened file.
     }
   }
 
@@ -326,7 +327,8 @@ void BookFrame::RestoreOpenedFiles() {
       text_book_->MovePageToStackFront(opened_page.page);
     }
 
-    text_book_->ActivatePage(last_page.page);
+    // NOTE: Visibility will be ensured in EndBatch().
+    text_book_->ActivatePage(last_page.page, false);
   }
 
   text_book_->EndBatch();
@@ -454,14 +456,6 @@ void BookFrame::FileOpenFolder() {
 }
 
 //------------------------------------------------------------------------------
-
-void BookFrame::SwitchToNextPage() {
-  text_book_->SwitchToNextPage();
-}
-
-void BookFrame::SwitchToPrevPage() {
-  text_book_->SwitchToPrevPage();
-}
 
 void BookFrame::SwitchToNextStackPage() {
   SwitchStackPage(true);
@@ -1642,7 +1636,7 @@ void BookFrame::HandleFindResultPageLocalize(FindResultPage* fr_page) {
 
     if (text_page != NULL) {
       // The page might not be active, activate it.
-      text_book_->ActivatePage(text_page);
+      text_book_->ActivatePage(text_page, true);
       text_book_->SetFocus();
     } else {
       // The page is closed, reopen it.
@@ -1654,7 +1648,7 @@ void BookFrame::HandleFindResultPageLocalize(FindResultPage* fr_page) {
 
     if (text_page != NULL) {
       // The page might not be active, activate it.
-      text_book_->ActivatePage(text_page);
+      text_book_->ActivatePage(text_page, true);
       text_book_->SetFocus();
     }
   }
@@ -2043,7 +2037,7 @@ void BookFrame::ActivateToolPage(BookPage* page) {
     splitter_->Split();
   }
 
-  tool_book_->ActivatePage(page);
+  tool_book_->ActivatePage(page, true);
 }
 
 BookPage* BookFrame::GetFocusedPage() {
@@ -2753,7 +2747,7 @@ void BookFrame::SwitchStackPage(bool forward) {
 
   size_t index = navigation_dialog.select_index();
   if (index < text_pages.size()) {
-    text_book_->ActivatePage(text_pages[index]);
+    text_book_->ActivatePage(text_pages[index], true);
   }
 }
 
@@ -2800,7 +2794,7 @@ TextPage* BookFrame::DoOpenFile(const wxFileName& fn,
   TextPage* text_page = TextPageByFileName(fn);
   if (text_page != NULL) {
     if (active) {
-      text_book_->ActivatePage(text_page);
+      text_book_->ActivatePage(text_page, true);
     }
   } else {
     TextBuffer* buffer = CreateBuffer(fn, NewBufferId(), true);

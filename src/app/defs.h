@@ -90,7 +90,20 @@ enum ThemeId {
   THEME_FIND_PANEL,
   THEME_STATUS_BAR,
   THEME_NAVIGATION_DIALOG,
+  THEME_POPUP,  // Theme for all popup dialogs, custom menus, etc.
   THEME_COUNT,
+};
+
+struct WithPopupTheme {
+  enum ColorId {
+    COLOR_BG = 0,
+    COLOR_FG,
+    COLOR_BORDER,
+    COLOR_SELECT_BG,
+    COLOR_SELECT_BORDER,
+    COLOR_SELECT_FG,
+    COLORS,
+  };
 };
 
 // Split parts.

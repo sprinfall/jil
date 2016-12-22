@@ -1,6 +1,5 @@
 #include "ui/button_base.h"
 #include "wx/dcbuffer.h"
-#include "wx/log.h"
 #include "ui/color.h"
 
 namespace jil {
@@ -22,6 +21,7 @@ END_EVENT_TABLE()
 
 ButtonBase::ButtonBase(SharedButtonStyle style)
     : style_(style)
+    , click_type_(kClickOnUp)
     , pressed_(false)
     , hover_(false)
     , accepts_focus_(true) {
@@ -143,10 +143,12 @@ void ButtonBase::OnPaint(wxPaintEvent& evt) {
 void ButtonBase::OnMouseLeftDown(wxMouseEvent& evt) {
   pressed_ = true;
 
-  wxLogDebug("Left Down");
-
-  if (!HasCapture()) {
-    CaptureMouse();
+  if (click_type_ == kClickOnUp) {
+    if (!HasCapture()) {
+      CaptureMouse();
+    }
+  } else {
+    PostEvent();
   }
 
   Refresh();
@@ -154,13 +156,13 @@ void ButtonBase::OnMouseLeftDown(wxMouseEvent& evt) {
 }
 
 void ButtonBase::OnMouseLeftUp(wxMouseEvent& evt) {
-  wxLogDebug("Left Up");
-
   if (HasCapture()) {
     ReleaseMouse();
 
-    if (GetClientRect().Contains(evt.GetPosition())) {
-      PostEvent();
+    if (click_type_ == kClickOnUp) {
+      if (GetClientRect().Contains(evt.GetPosition())) {
+        PostEvent();
+      }
     }
   }
 
@@ -201,6 +203,7 @@ void ButtonBase::OnSetFocus(wxFocusEvent& evt) {
 }
 
 void ButtonBase::OnKillFocus(wxFocusEvent& evt) {
+  pressed_ = false;
   Refresh();
   evt.Skip();
 }

@@ -3,12 +3,15 @@
 #include <cassert>
 #include <memory>
 
+#include "wx/display.h"
 #include "wx/log.h"
 #include "wx/menu.h"
 #include "wx/sizer.h"
 #include "wx/wupdlock.h"
 
 #include "base/math_util.h"
+
+#include "ui/bitmap_button.h"
 #include "ui/util.h"
 
 #include "editor/text_extent.h"
@@ -17,6 +20,8 @@
 #include "app/book_page.h"
 #include "app/i18n_strings.h"
 #include "app/id.h"
+#include "app/popup_menu.h"
+#include "app/util.h"
 
 namespace jil {
 
@@ -24,28 +29,26 @@ static const wxString kStar = wxT("*");
 
 ////////////////////////////////////////////////////////////////////////////////
 
-BEGIN_EVENT_TABLE(BookTabArea, wxPanel)
-EVT_SIZE                (BookTabArea::OnSize)
-EVT_PAINT               (BookTabArea::OnPaint)
-EVT_MOUSE_EVENTS        (BookTabArea::OnMouseEvents)
-EVT_MOUSE_CAPTURE_LOST  (BookTabArea::OnMouseCaptureLost)
-EVT_LEAVE_WINDOW        (BookTabArea::OnLeaveWindow)
+BEGIN_EVENT_TABLE(TabPanel, wxPanel)
+EVT_SIZE                (TabPanel::OnSize)
+EVT_PAINT               (TabPanel::OnPaint)
+EVT_MOUSE_EVENTS        (TabPanel::OnMouseEvents)
+EVT_MOUSE_CAPTURE_LOST  (TabPanel::OnMouseCaptureLost)
+EVT_LEAVE_WINDOW        (TabPanel::OnLeaveWindow)
 END_EVENT_TABLE()
 
-BookTabArea::BookTabArea(BookCtrl* book_ctrl, wxWindowID id)
+TabPanel::TabPanel(BookCtrl* book_ctrl, wxWindowID id)
     : wxPanel(book_ctrl, id)
 #if defined(__WXMSW__)
-    , book_ctrl_(book_ctrl)
-    , tip_handler_(NULL) {
-#else
-    , book_ctrl_(book_ctrl) {
+    , tip_handler_(NULL)
 #endif
+    , book_ctrl_(book_ctrl) {
 
   SetBackgroundStyle(wxBG_STYLE_PAINT);
   SetCursor(wxCursor(wxCURSOR_ARROW));
 }
 
-BookTabArea::~BookTabArea() {
+TabPanel::~TabPanel() {
 #if defined(__WXMSW__)
   if (tip_handler_ != NULL) {
     PopEventHandler();
@@ -55,7 +58,7 @@ BookTabArea::~BookTabArea() {
 }
 
 #if defined(__WXMSW__)
-void BookTabArea::SetToolTipEx(const wxString& tooltip) {
+void TabPanel::SetToolTipEx(const wxString& tooltip) {
   if (tip_handler_ == NULL) {
     tip_handler_ = new editor::TipHandler(this);
     tip_handler_->set_start_on_move(true);
@@ -65,38 +68,42 @@ void BookTabArea::SetToolTipEx(const wxString& tooltip) {
 }
 #endif
 
-wxSize BookTabArea::DoGetBestSize() const {
-  return book_ctrl_->CalcTabAreaBestSize();
+wxSize TabPanel::DoGetBestSize() const {
+  return book_ctrl_->CalcTabPanelBestSize();
 }
 
-void BookTabArea::OnSize(wxSizeEvent& evt) {
+void TabPanel::OnSize(wxSizeEvent& evt) {
   book_ctrl_->OnTabSize(evt);
 }
 
-void BookTabArea::OnPaint(wxPaintEvent& evt) {
+void TabPanel::OnPaint(wxPaintEvent& evt) {
   wxAutoBufferedPaintDC dc(this);
 
-//#if !wxALWAYS_NATIVE_DOUBLE_BUFFER (20150508: Set background even when double bufferred (on Mac).
   dc.SetBackground(GetBackgroundColour());
   dc.Clear();
-//#endif
 
   book_ctrl_->OnTabPaint(dc, evt);
 }
 
-void BookTabArea::OnMouseEvents(wxMouseEvent& evt) {
+void TabPanel::OnMouseEvents(wxMouseEvent& evt) {
   book_ctrl_->OnTabMouse(evt);
 }
 
-void BookTabArea::OnMouseCaptureLost(wxMouseCaptureLostEvent& evt) {
+void TabPanel::OnMouseCaptureLost(wxMouseCaptureLostEvent& evt) {
   // Do nothing.
 }
 
-void BookTabArea::OnLeaveWindow(wxMouseEvent& evt) {
+void TabPanel::OnLeaveWindow(wxMouseEvent& evt) {
   book_ctrl_->OnTabLeaveWindow(evt);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+BEGIN_EVENT_TABLE(BookCtrl, wxPanel)
+EVT_BUTTON(ID_TAB_MORE_BUTTON, BookCtrl::OnTabMoreButtonClick)
+EVT_UPDATE_UI(ID_TAB_MORE_BUTTON, BookCtrl::OnTabMoreButtonUpdateUI)
+EVT_POPUP_MENU_SELECT(BookCtrl::OnMoreTabsMenuSelect)
+END_EVENT_TABLE()
 
 BookCtrl::BookCtrl() {
   Init();
@@ -111,6 +118,7 @@ BookCtrl::~BookCtrl() {
 
 bool BookCtrl::Create(wxWindow* parent, wxWindowID id) {
   assert(theme_);
+  assert(popup_theme_);
 
   if (!wxPanel::Create(parent, id)) {
     return false;
@@ -118,16 +126,15 @@ bool BookCtrl::Create(wxWindow* parent, wxWindowID id) {
 
   SetBackgroundColour(theme_->GetColor(COLOR_BG));
 
-  tab_area_ = new BookTabArea(this, wxID_ANY);
-  tab_area_->SetBackgroundColour(theme_->GetColor(COLOR_TAB_AREA_BG));
+  CreateTabPanel();
 
-  page_area_ = new wxPanel(this, wxID_ANY);
+  page_panel_ = new wxPanel(this, wxID_ANY);
   wxSizer* page_vsizer = new wxBoxSizer(wxVERTICAL);
-  page_area_->SetSizer(page_vsizer);
+  page_panel_->SetSizer(page_vsizer);
 
   wxSizer* vsizer = new wxBoxSizer(wxVERTICAL);
-  vsizer->Add(tab_area_, 0, wxEXPAND);
-  vsizer->Add(page_area_, 1, wxEXPAND);
+  vsizer->Add(tab_panel_, 0, wxEXPAND);
+  vsizer->Add(page_panel_, 1, wxEXPAND);
   SetSizer(vsizer);
 
   UpdateTabFontDetermined();
@@ -157,9 +164,9 @@ void BookCtrl::SetFocus() {
 }
 
 void BookCtrl::SetTabFont(const wxFont& tab_font) {
-  assert(tab_area_ != NULL);
+  assert(tab_panel_ != NULL);
 
-  if (tab_area_->SetFont(tab_font)) {
+  if (tab_panel_->SetFont(tab_font)) {
     UpdateTabFontDetermined();
   }
 }
@@ -168,54 +175,54 @@ void BookCtrl::ReapplyTheme() {
   assert(theme_);
 
   SetBackgroundColour(theme_->GetColor(COLOR_BG));
-  tab_area_->SetBackgroundColour(theme_->GetColor(COLOR_TAB_AREA_BG));
+  tab_panel_->SetBackgroundColour(theme_->GetColor(COLOR_TAB_AREA_BG));
 
-  tab_area_->Refresh();
+  tab_panel_->Refresh();
 }
 
 void BookCtrl::StartBatch() {
   batch_ = true;
-  tab_area_->Freeze();
+  tab_panel_->Freeze();
 }
 
 void BookCtrl::EndBatch() {
-  batch_ = false;
-  tab_area_->Thaw();
-
-  if (need_resize_tabs_) {
-    ResizeTabs();
-    need_resize_tabs_ = false;
-    tab_area_->Refresh();
+  if (!batch_) {
+    return;
   }
+
+  batch_ = false;
+
+  ResizeTabs();
+  MakeActiveTabVisible(false);
+
+  tab_panel_->Thaw();
+
+  PostEvent(kEvtBookPageChange);
 }
 
 void BookCtrl::AddPage(BookPage* page, bool active) {
-  int tab_best_size = CalcTabBestSize(page->Page_Label());
-  Tab* tab = new Tab(page, tab_best_size, false);
+  int best_size = CalcTabBestSize(page->Page_Label());
+
+  Tab* tab = new Tab(page, best_size, false);
   tabs_.push_back(tab);
 
-  // Try to avoid resizing tabs.
-  int expected_size = wxMax(tab->best_size, tab_default_size_);
-
-  if (expected_size <= free_size_) {
-    tab->size = expected_size;
-    free_size_ -= expected_size;
-  } else {
-    if (!batch_) {
-      ResizeTabs();
-    } else {
-      need_resize_tabs_ = true;
-    }
+  if (!batch_) {
+    ResizeTabs();
   }
 
   if (active) {
-    ActivatePage(--tabs_.end());
+    TabIter it = --tabs_.end();
+    // If in batch more, the visibility of the active tab will be ensured
+    // in EndBatch().
+    bool ensure_visible = !batch_;
+    ActivatePage(it, ensure_visible);
   } else {
     stack_tabs_.push_back(tab);
   }
 
-  // TODO: Avoid when batch is on.
-  PostEvent(kEvtBookPageChange);
+  if (!batch_) {
+    PostEvent(kEvtBookPageChange);
+  }
 }
 
 bool BookCtrl::RemovePage(const BookPage* page) {
@@ -237,9 +244,9 @@ bool BookCtrl::RemoveActivePage() {
 }
 
 void BookCtrl::RemoveAllPages(bool from_destroy, const BookPage* except_page) {
-  wxWindowUpdateLocker avoid_flickering(this);
+  wxWindowUpdateLocker update_locker(this);
 
-  bool removed = false;
+  bool removed_any = false;
 
   for (TabIter it = tabs_.begin(); it != tabs_.end(); ) {
     Tab* tab = *it;
@@ -260,25 +267,26 @@ void BookCtrl::RemoveAllPages(bool from_destroy, const BookPage* except_page) {
 
     wxDELETE(tab);
 
-    removed = true;
+    removed_any = true;
   }
 
-  if (removed && !from_destroy) {
+  if (removed_any && !from_destroy) {
     if (!stack_tabs_.empty()) {
-      ActivatePage(stack_tabs_.front()->page);
+      ActivatePage(stack_tabs_.front()->page, true);
       PostEvent(kEvtBookPageSwitch);
     }
 
     ResizeTabs();
-    tab_area_->Refresh();
+    tab_panel_->Refresh();
+
     PostEvent(kEvtBookPageChange);
   }
 }
 
-void BookCtrl::ActivatePage(BookPage* page) {
+void BookCtrl::ActivatePage(BookPage* page, bool ensure_visible) {
   TabIter it = TabIterByPage(page);
   if (it != tabs_.end()) {
-    ActivatePage(it);
+    ActivatePage(it, ensure_visible);
   }
 }
 
@@ -288,42 +296,6 @@ BookPage* BookCtrl::ActivePage() const {
     return tab->page;
   }
   return NULL;
-}
-
-void BookCtrl::SwitchToNextPage() {
-  if (PageCount() <= 1) {
-    return;
-  }
-
-  TabIter it = tabs_.begin();
-  for (; it != tabs_.end(); ++it) {
-    if ((*it)->active) {
-      ++it;
-      if (it == tabs_.end()) {
-        it = tabs_.begin();
-      }
-      ActivatePage(it);
-      return;
-    }
-  }
-}
-
-void BookCtrl::SwitchToPrevPage() {
-  if (PageCount() <= 1) {
-    return;
-  }
-
-  TabIter it = tabs_.begin();
-  for (; it != tabs_.end(); ++it) {
-    if ((*it)->active) {
-      if (it == tabs_.begin()) {
-        it = tabs_.end();
-      }
-      --it;
-      ActivatePage(it);
-      return;
-    }
-  }
 }
 
 int BookCtrl::GetStackIndex(BookPage* page) const {
@@ -383,126 +355,36 @@ BookPage* BookCtrl::NextPage(const BookPage* page) const {
 }
 
 void BookCtrl::ResizeTabs() {
+  visible_tabs_count_ = 0;
+
   if (tabs_.empty()) {
     return;
   }
 
-  free_size_ = 0;  // Reset
-
-  int client_size = tab_area_->GetClientSize().x;
-  client_size -= tab_area_padding_x_ + tab_area_padding_x_;
+  int client_size = tab_panel_->GetClientSize().x;
+  client_size -= tab_panel_padding_x_;
+  client_size -= theme_->GetImage(IMAGE_TAB_MORE).GetWidth();
+  client_size -= tab_space_x_;
+  client_size -= tab_panel_padding_x_;
 
   int sum_best_size = 0;
 
-  // Initialize.
-  for (TabIter it = tabs_.begin(); it != tabs_.end(); ++it) {
-    sum_best_size += (*it)->best_size;
-    (*it)->size = (*it)->best_size;  // Reset tab size to its best size.
-  }
-
-  if (sum_best_size < client_size) {
-    // Give more size to small tabs.
-
-    TabList small_tabs;
-    for (TabIter it = tabs_.begin(); it != tabs_.end(); ++it) {
-      if ((*it)->size < tab_default_size_) {
-        small_tabs.push_back(*it);
-      }
+  for (Tab* tab : tabs_) {
+    if (sum_best_size + tab->best_size > client_size) {
+      break;  // Can't display more tabs.
     }
 
-    int free_size = client_size - sum_best_size;
-
-    while (!small_tabs.empty()) {
-      int avg_free_size = free_size / static_cast<int>(small_tabs.size());
-      free_size %= static_cast<int>(small_tabs.size());
-
-      if (avg_free_size == 0) {
-        // Give 1px to each small tab.
-        for (TabIter it = small_tabs.begin(); it != small_tabs.end(); ++it) {
-          if (free_size == 0) {
-            break;
-          }
-          ++(*it)->size;
-          --free_size;
-        }
-        break;
-      }
-
-      for (TabIter it = small_tabs.begin(); it != small_tabs.end(); ) {
-        Tab* small_tab = *it;
-        int needed_size = tab_default_size_ - small_tab->size;
-        if (needed_size > avg_free_size) {
-          small_tab->size += avg_free_size;
-          ++it;
-        } else {
-          // This tab doesn't need that much size.
-          small_tab->size = tab_default_size_;
-          // Return extra free size back.
-          free_size += avg_free_size - needed_size;
-          // This tab is not small any more.
-          it = small_tabs.erase(it);
-        }
-      }
-    }  // while (!small_tabs.empty())
-
-    // Save free size.
-    free_size_ = free_size;
-    wxLogDebug(wxT("ResizeTabs, free_size: %d"), free_size_);
-
-  } else {  // sum_best_size >= client_size
-    // Reduce the size of large tabs (except the active one).
-
-    int lack_size = sum_best_size - client_size;
-
-    for (int large_size = tab_default_size_;
-         large_size > tab_min_size_ && lack_size > 0;
-         large_size /= 2) {
-      TabList large_tabs;
-      for (TabIter it = tabs_.begin(); it != tabs_.end(); ++it) {
-        Tab* large_tab = *it;
-        if (large_tab->size > large_size && !large_tab->active) {
-          large_tabs.push_back(large_tab);
-        }
-      }
-
-      if (large_tabs.empty()) {
-        continue;
-      }
-
-      while (!large_tabs.empty()) {
-        int avg_lack_size = lack_size / large_tabs.size();
-        lack_size %= large_tabs.size();
-
-        if (avg_lack_size == 0) {
-          // Take 1px from first "lack_size" number of large tabs.
-          for (TabIter it = large_tabs.begin(); it != large_tabs.end(); ++it) {
-            if (lack_size == 0) {
-              break;
-            }
-            --(*it)->size;
-            --lack_size;
-          }
-          break;
-        }
-
-        for (TabIter it = large_tabs.begin(); it != large_tabs.end(); ) {
-          Tab* large_tab = *it;
-          int givable_size = large_tab->size - large_size;
-          if (givable_size > avg_lack_size) {
-            large_tab->size -= avg_lack_size;
-            ++it;
-          } else {
-            // This tab cannot give that much size. Give all it can give.
-            large_tab->size = large_size;
-            // Return extra lack size back.
-            lack_size += avg_lack_size - givable_size;
-            // This tab is not large any more.
-            it = large_tabs.erase(it);
-          }
-        }
-      }
-    }
+    sum_best_size += tab->best_size;
+    tab->size = tab->best_size;  // Reset tab size to its best size.
+    ++visible_tabs_count_;
   }
+
+  if (visible_tabs_count_ == 0) {
+    // The space can't display even one tab at its best size.
+    // Give the whole space to this tab anyway. 
+    tabs_.front()->size = client_size;
+    visible_tabs_count_ = 1;
+  } 
 }
 
 void BookCtrl::ResizeActiveTab() {
@@ -512,7 +394,7 @@ void BookCtrl::ResizeActiveTab() {
     if (tab->best_size != new_best_size) {
       tab->best_size = new_best_size;
       ResizeTabs();
-      tab_area_->Refresh();
+      tab_panel_->Refresh();
     }
   }
 }
@@ -522,31 +404,50 @@ void BookCtrl::Init() {
   ellipsis_width_ = 0;
 
   tab_margin_top_ = 5;
-  tab_area_padding_x_ = 3;
+  tab_panel_padding_x_ = 3;
 
-  tab_min_size_ = 10;
-  tab_default_size_ = 130;
+  tab_panel_ = NULL;
+  tab_more_button_ = NULL;
 
-  free_size_ = 0;
+  page_panel_ = NULL;
 
-  tab_area_ = NULL;
-  page_area_ = NULL;
+  visible_tabs_count_ = 0;
 
   hover_tab_ = NULL;
   hover_on_close_icon_ = false;
 
   batch_ = false;
-  need_resize_tabs_ = false;
+}
+
+void BookCtrl::CreateTabPanel() {
+  tab_panel_ = new TabPanel(this, wxID_ANY);
+  tab_panel_->SetBackgroundColour(theme_->GetColor(COLOR_TAB_AREA_BG));
+
+  ui::SharedButtonStyle button_style = ButtonStyleFromTheme(theme_->GetTheme(BookCtrl::THEME_BUTTON));
+  tab_more_button_ = new ui::BitmapButton(button_style);
+  tab_more_button_->SetBitmap(theme_->GetImage(BookCtrl::IMAGE_TAB_MORE));
+  tab_more_button_->Create(tab_panel_, ID_TAB_MORE_BUTTON);
+  tab_more_button_->set_click_type(ui::ButtonBase::kClickOnDown);
+
+  //wxBitmap tab_more_bitmap = theme_->GetImage(BookCtrl::IMAGE_TAB_MORE);
+
+  // Layout
+  wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
+  hsizer->AddStretchSpacer(1);
+  hsizer->AddSpacer(tab_space_x_);
+  hsizer->Add(tab_more_button_, wxSizerFlags().CenterVertical());
+  hsizer->AddSpacer(tab_panel_padding_x_);
+  tab_panel_->SetSizer(hsizer);
 }
 
 void BookCtrl::UpdateTabFontDetermined() {
-  char_width_ = tab_area_->GetCharWidth();
-  tab_area_->GetTextExtent(ui::kEllipsis, &ellipsis_width_, NULL);
+  char_width_ = tab_panel_->GetCharWidth();
+  tab_panel_->GetTextExtent(ui::kEllipsis, &ellipsis_width_, NULL);
   tab_padding_.Set(char_width_, char_width_ / 2 + 1);
   tab_space_x_ = char_width_ / 2 + 1;
 
   // Book ctrl's min size is the best size of its tab area.
-  SetMinSize(tab_area_->GetBestSize());
+  SetMinSize(tab_panel_->GetBestSize());
 
   // Update tabs best size.
   for (Tab* tab : tabs_) {
@@ -556,7 +457,7 @@ void BookCtrl::UpdateTabFontDetermined() {
   ResizeTabs();
 
   Layout();
-  //tab_area_->Refresh();
+  //tab_panel_->Refresh();
 }
 
 //------------------------------------------------------------------------------
@@ -565,14 +466,15 @@ void BookCtrl::UpdateTabFontDetermined() {
 void BookCtrl::OnTabSize(wxSizeEvent& evt) {
   if (!batch_) {
     ResizeTabs();
-    tab_area_->Refresh();
+    MakeActiveTabVisible(false);
+    tab_panel_->Refresh();
   }
   evt.Skip();
 }
 
 // Paint tab items.
 void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
-  wxRect rect = tab_area_->GetClientRect();
+  wxRect rect = tab_panel_->GetClientRect();
   int bottom = rect.GetBottom();
 
   const wxColour& tab_border = theme_->GetColor(COLOR_TAB_BORDER);
@@ -586,16 +488,20 @@ void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
 
   wxBitmap tab_close_bitmap = theme_->GetImage(IMAGE_TAB_CLOSE);
 
-  dc.SetFont(tab_area_->GetFont());
+  dc.SetFont(tab_panel_->GetFont());
 
   int x = rect.x;
 
   dc.SetPen(active_tab_pen);
-  dc.DrawLine(x, bottom, x + tab_area_padding_x_, bottom);
+  dc.DrawLine(x, bottom, x + tab_panel_padding_x_, bottom);
 
-  x += tab_area_padding_x_;
+  x += tab_panel_padding_x_;
 
-  for (TabIter it = tabs_.begin(); it != tabs_.end(); ++it) {
+  // TODO
+  size_t i = 0;
+  for (TabIter it = tabs_.begin();
+       it != tabs_.end() && i < visible_tabs_count_;
+       ++it, ++i) {
     Tab* tab = *it;
 
     wxRect tab_rect = GetTabRect(x, tab->size, rect);
@@ -662,7 +568,7 @@ void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
       wxRect close_rect = GetTabCloseIconRect(tab_rect);
 
       if (hover_on_close_icon_ && tab == hover_tab_) {
-        wxColour hover_bg = theme_->GetColor(
+        const wxColour& hover_bg = theme_->GetColor(
             tab->active ? COLOR_ACTIVE_TAB_HOVER_BG : COLOR_TAB_HOVER_BG);
         dc.SetPen(wxPen(hover_bg));
         dc.SetBrush(wxBrush(hover_bg));
@@ -706,8 +612,8 @@ void BookCtrl::OnTabMouse(wxMouseEvent& evt) {
 }
 
 void BookCtrl::OnTabMouseLeftDown(wxMouseEvent& evt) {
-  if (!tab_area_->HasCapture()) {
-    tab_area_->CaptureMouse();
+  if (!tab_panel_->HasCapture()) {
+    tab_panel_->CaptureMouse();
   }
 
   // Without this the active page won't have the focus.
@@ -719,17 +625,17 @@ void BookCtrl::OnTabMouseLeftDown(wxMouseEvent& evt) {
 }
 
 void BookCtrl::OnTabMouseLeftUp(wxMouseEvent& evt) {
-  if (!tab_area_->HasCapture()) {
+  if (!tab_panel_->HasCapture()) {
     return;
   }
 
-  tab_area_->ReleaseMouse();
+  tab_panel_->ReleaseMouse();
   HandleTabMouseLeftUp(evt);
 }
 
 void BookCtrl::OnTabMouseMiddleDown(wxMouseEvent& evt) {
-  if (!tab_area_->HasCapture()) {
-    tab_area_->CaptureMouse();
+  if (!tab_panel_->HasCapture()) {
+    tab_panel_->CaptureMouse();
   }
 
   // Without this the active page won't have the focus.
@@ -739,11 +645,11 @@ void BookCtrl::OnTabMouseMiddleDown(wxMouseEvent& evt) {
 }
 
 void BookCtrl::OnTabMouseMiddleUp(wxMouseEvent& evt) {
-  if (!tab_area_->HasCapture()) {
+  if (!tab_panel_->HasCapture()) {
     return;
   }
 
-  tab_area_->ReleaseMouse();
+  tab_panel_->ReleaseMouse();
   HandleTabMouseMiddleUp(evt);
 }
 
@@ -758,7 +664,7 @@ void BookCtrl::OnTabMouseMotion(wxMouseEvent& evt) {
     if (hover_tab_ != NULL) {
       hover_tab_ = NULL;
       hover_on_close_icon_ = false;
-      tab_area_->Refresh();
+      tab_panel_->Refresh();
     }
 
     SetTabTooltip(wxEmptyString);
@@ -781,13 +687,13 @@ void BookCtrl::OnTabMouseMotion(wxMouseEvent& evt) {
   }
 
   if (refresh) {
-    tab_area_->Refresh();
+    tab_panel_->Refresh();
   }
 }
 
 void BookCtrl::OnTabMouseRightDown(wxMouseEvent& evt) {
-  if (!tab_area_->HasCapture()) {
-    tab_area_->CaptureMouse();
+  if (!tab_panel_->HasCapture()) {
+    tab_panel_->CaptureMouse();
   }
 
   // Without this the active page won't have the focus.
@@ -799,11 +705,11 @@ void BookCtrl::OnTabMouseRightDown(wxMouseEvent& evt) {
 }
 
 void BookCtrl::OnTabMouseRightUp(wxMouseEvent& evt) {
-  if (!tab_area_->HasCapture()) {
+  if (!tab_panel_->HasCapture()) {
     return;
   }
 
-  tab_area_->ReleaseMouse();
+  tab_panel_->ReleaseMouse();
   HandleTabMouseRightUp(evt);
 }
 
@@ -814,7 +720,7 @@ void BookCtrl::OnTabMouseLeftDClick(wxMouseEvent& evt) {
 void BookCtrl::OnTabLeaveWindow(wxMouseEvent& evt) {
   if (hover_tab_ != NULL) {
     hover_tab_ = NULL;
-    tab_area_->Refresh();
+    tab_panel_->Refresh();
   }
 }
 
@@ -828,7 +734,7 @@ void BookCtrl::HandleTabMouseLeftDown(wxMouseEvent& evt) {
     // If click on the close icon, don't activate the page.
     wxRect close_icon_rect = GetTabCloseIconRect(tab_rect);
     if (!close_icon_rect.Contains(pos)) {
-      ActivatePage(it);
+      ActivatePage(it, false);
     }
   }
 }
@@ -857,20 +763,125 @@ void BookCtrl::HandleTabMouseRightDown(wxMouseEvent& evt) {
 
 void BookCtrl::SetTabTooltip(const wxString& tooltip) {
 #if defined(__WXMSW__)
-  tab_area_->SetToolTipEx(tooltip);
+  tab_panel_->SetToolTipEx(tooltip);
 #else
-  tab_area_->SetToolTip(tooltip);
+  tab_panel_->SetToolTip(tooltip);
 #endif
+}
+
+void BookCtrl::OnTabMoreButtonClick(wxCommandEvent& evt) {
+  if (visible_tabs_count_ >= tabs_.size()) {
+    return;
+  }
+
+  std::vector<wxString> more_tabs;
+
+  TabList::iterator it = tabs_.begin();
+  std::advance(it, visible_tabs_count_);
+  for (; it != tabs_.end(); ++it) {
+    more_tabs.push_back((*it)->page->Page_Label());
+  }
+
+  jil::PopupMenu* popup_menu = new jil::PopupMenu(popup_theme_);
+
+  wxRect owner_rect = tab_more_button_->GetScreenRect();
+  popup_menu->set_owner_rect(owner_rect);
+
+  int display_index = wxDisplay::GetFromWindow(this);
+  wxRect display_client_rect = wxDisplay(display_index).GetClientArea();
+  popup_menu->set_display_client_rect(display_client_rect);
+
+  popup_menu->Create(this, wxID_ANY);
+  popup_menu->SetTabs(more_tabs);
+  popup_menu->Popup();
+}
+
+void BookCtrl::OnTabMoreButtonUpdateUI(wxUpdateUIEvent& evt) {
+  evt.Enable(visible_tabs_count_ < tabs_.size());
+}
+
+void BookCtrl::OnMoreTabsMenuSelect(PopupMenuEvent& evt) {
+  if (visible_tabs_count_ >= tabs_.size() || visible_tabs_count_ == 0) {
+    return;
+  }
+
+  TabIter it = TabIterByIndex(visible_tabs_count_ + evt.index());
+  if (it == tabs_.end()) {
+    return;
+  }
+
+  //it = MakeTabVisible(it);
+  ActivatePage(it, true);
+
+  // Get back the focus.
+  SetFocus();
+}
+
+BookCtrl::TabIter BookCtrl::MakeTabVisible(TabIter it, bool check, bool refresh) {
+  if (it == tabs_.end()) {
+    return it;
+  }
+
+  if (check) {
+    size_t index = std::distance(tabs_.begin(), it);
+    if (index < visible_tabs_count_) {
+      return it;  // Already visible.
+    }
+  }
+
+  Tab* tab = *it;
+  size_t count = visible_tabs_count_;
+
+  while (count >= 0) {
+    // Insert the tab AFTER the last visible tab.
+    // NOTE: list.insert() inserts before the given position.
+    tabs_.erase(it);
+    it = tabs_.insert(TabIterByIndex(count), tab);
+
+    // After resize tabs, visible_tabs_count_ might have be changed.
+    ResizeTabs();
+
+    if (visible_tabs_count_ > count) {
+      // The tab does become visible.
+      break;
+    }
+
+    if (count > 0) {
+      --count;
+    } else {
+      break;
+    }
+  }
+
+  tab_panel_->Refresh();
+
+  return it;
+}
+
+BookCtrl::TabIter BookCtrl::MakeActiveTabVisible(bool refresh) {
+  return MakeTabVisible(ActiveTabIter(), true, refresh);
 }
 
 //------------------------------------------------------------------------------
 
-BookCtrl::TabIter BookCtrl::TabIterByPos(int pos_x, wxRect* tab_rect) {
-  wxRect rect = tab_area_->GetClientRect();
-  int x = rect.x + tab_area_padding_x_;
+BookCtrl::TabIter BookCtrl::TabIterByIndex(size_t index) {
+  if (index >= tabs_.size()) {
+    return tabs_.end();
+  }
 
   TabIter it = tabs_.begin();
-  for (; it != tabs_.end(); ++it) {
+  std::advance(it, index);
+  return it;
+}
+
+BookCtrl::TabIter BookCtrl::TabIterByPos(int pos_x, wxRect* tab_rect) {
+  wxRect rect = tab_panel_->GetClientRect();
+  int x = rect.x + tab_panel_padding_x_;
+
+  TabIter it = tabs_.begin();
+  TabIter it_end = VisibleEndTabIter();
+
+  for (; it != it_end; ++it) {
     if (pos_x >= x && pos_x < x + (*it)->size) {
       if (tab_rect != NULL) {
         *tab_rect = GetTabRect(x, (*it)->size, rect);
@@ -900,7 +911,7 @@ BookPage* BookCtrl::PageByPos(int pos_x) {
   return NULL;
 }
 
-void BookCtrl::ActivatePage(TabIter it) {
+void BookCtrl::ActivatePage(TabIter it, bool ensure_visible) {
   if (it == tabs_.end()) {
     return;
   }
@@ -919,16 +930,16 @@ void BookCtrl::ActivatePage(TabIter it) {
   // Activate new page.
   DoActivateTab(*it, true);
 
-  // Make sure the active tab has enough space to display.
-  if ((*it)->size < (*it)->best_size) {
-    ResizeTabs();
+  // Make sure the new activated tab is visible.
+  if (ensure_visible) {
+    MakeTabVisible(it, true, false);
   }
 
   // Update tab stack.
   stack_tabs_.remove(tab);
   stack_tabs_.push_front(tab);
 
-  tab_area_->Refresh();
+  tab_panel_->Refresh();
 
   PostEvent(kEvtBookPageSwitch);
 }
@@ -953,7 +964,7 @@ bool BookCtrl::RemovePage(TabIter it) {
 
   // Resize tabs since more space is available.
   ResizeTabs();
-  tab_area_->Refresh();
+  tab_panel_->Refresh();
 
   PostEvent(kEvtBookPageChange);
 
@@ -963,7 +974,7 @@ bool BookCtrl::RemovePage(TabIter it) {
 void BookCtrl::ActivatePageByPos(int pos_x) {
   TabIter it = TabIterByPos(pos_x);
   if (it != tabs_.end()) {
-    ActivatePage(it);
+    ActivatePage(it, false);
   }
 }
 
@@ -985,6 +996,10 @@ BookCtrl::TabIter BookCtrl::ActiveTabIter() {
     }
   }
   return it;
+}
+
+BookCtrl::TabIter BookCtrl::VisibleEndTabIter() {
+  return TabIterByIndex(visible_tabs_count_);
 }
 
 BookCtrl::TabIter BookCtrl::TabIterByPage(const BookPage* page) {
@@ -1009,7 +1024,7 @@ BookCtrl::TabConstIter BookCtrl::TabIterByPage(const BookPage* page) const {
 
 int BookCtrl::CalcTabBestSize(const wxString& label) const {
   int x = 0;
-  tab_area_->GetTextExtent(label, &x, NULL);
+  tab_panel_->GetTextExtent(label, &x, NULL);
 
   x += tab_padding_.x;
   x += tab_space_x_;
@@ -1021,8 +1036,8 @@ int BookCtrl::CalcTabBestSize(const wxString& label) const {
   return x;
 }
 
-wxSize BookCtrl::CalcTabAreaBestSize() const {
-  int y = tab_area_->GetCharHeight();
+wxSize BookCtrl::CalcTabPanelBestSize() const {
+  int y = tab_panel_->GetCharHeight();
   y += tab_margin_top_ + tab_padding_.y + tab_padding_.y;
   return wxSize(-1, y);
 }

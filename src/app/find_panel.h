@@ -226,8 +226,6 @@ private:
   // Enable or disable find and replace buttons.
   void EnableButtons(bool enable);
 
-  void InitButtonStyle();
-
   ui::BitmapButton* NewBitmapButton(int id);
   ui::BitmapToggleButton* NewBitmapToggleButton(int id);
   ui::TextButton* NewTextButton(int id, const wxString& label);

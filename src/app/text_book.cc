@@ -126,7 +126,7 @@ void TextBook::CreatePageWindow() {
   page_window_->set_theme(page_theme_);
   page_window_->set_binding(binding_);
 
-  page_window_->Create(page_area_, ID_TEXT_WINDOW, true);
+  page_window_->Create(page_panel_, ID_TEXT_WINDOW, true);
 
   // TODO: SetTextFont causes Refresh, avoid it.
   page_window_->SetTextFont(options_->fonts[FONT_TEXT]);
@@ -134,7 +134,7 @@ void TextBook::CreatePageWindow() {
 
   page_window_->set_font_range(FontRange(kMinFontSize, kMaxFontSize));
 
-  page_area_->GetSizer()->Add(page_window_, 1, wxEXPAND);
+  page_panel_->GetSizer()->Add(page_window_, 1, wxEXPAND);
 }
 
 void TextBook::HandleTabMouseLeftUp(wxMouseEvent& evt) {
@@ -242,7 +242,7 @@ void TextBook::DoActivateTab(Tab* tab, bool active) {
     if (!page_window_->IsShown()) {
       page_window_->Show();
       page_window_->SetFocus();
-      page_area_->Layout();
+      page_panel_->Layout();
     }
   } else {
     // TODO
@@ -266,7 +266,7 @@ void TextBook::DoRemoveTab(Tab* tab) {
     // No pages left, set placeholder page and hide page window.
     placeholder_page_->Page_Activate(true);
     page_window_->Hide();
-    page_area_->Layout();
+    page_panel_->Layout();
   }
 }
 
@@ -303,7 +303,7 @@ void TextBook::OnTextWindowEvent(wxCommandEvent& evt) {
   } else if (type == editor::TextWindow::kFileNameEvent) {
     ResizeActiveTab();
   } else if (type == editor::TextWindow::kModifiedStateEvent) {
-    tab_area_->Refresh();
+    tab_panel_->Refresh();
   }
 }
 

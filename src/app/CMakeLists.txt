@@ -82,6 +82,8 @@ set(SRCS
     option_config.h
     page_window.cc
     page_window.h
+    popup_menu.cc
+    popup_menu.h
     save.cc
     save.h
     session.cc

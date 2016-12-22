@@ -154,16 +154,6 @@ void FileOpenFolder() {
   book_frame->FileOpenFolder();
 }
 
-void NextPage() {
-  GET_BOOK_FRAME_OR_RETURN;
-  book_frame->SwitchToNextPage();
-}
-
-void PrevPage() {
-  GET_BOOK_FRAME_OR_RETURN;
-  book_frame->SwitchToPrevPage();
-}
-
 void NextStackPage() {
   GET_BOOK_FRAME_OR_RETURN;
   book_frame->SwitchToNextStackPage();
@@ -387,7 +377,7 @@ bool App::OnInit() {
   if (options_.restore_files) {
     book_frame->RestoreOpenedFiles();
   }
-
+ 
   // Open the files specified as command line arguments.
   if (!cmdline_files_.empty()) {
     book_frame->OpenFiles(cmdline_files_, false);
@@ -814,8 +804,6 @@ void App::InitCommands() {
   AddVoidCmd("save_all", FileSaveAll, ID_MENU_FILE_SAVE_ALL);
   AddVoidCmd("copy_path", FileCopyPath, ID_MENU_FILE_COPY_PATH);
   AddVoidCmd("open_folder", FileOpenFolder, ID_MENU_FILE_OPEN_FOLDER);
-  AddVoidCmd("next_page", NextPage, ID_MENU_FILE_NEXT_PAGE);
-  AddVoidCmd("prev_page", PrevPage, ID_MENU_FILE_PREV_PAGE);
   AddVoidCmd("next_stack_page", NextStackPage, ID_MENU_FILE_NEXT_STACK_PAGE);
   AddVoidCmd("prev_stack_page", PrevStackPage, ID_MENU_FILE_PREV_STACK_PAGE);
 

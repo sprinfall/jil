@@ -3,9 +3,14 @@
 #pragma once
 
 #include <string>
+
 #include "wx/filefn.h"
 #include "wx/string.h"
+
+#include "ui/button_style.h"
+
 #include "editor/defs.h"
+#include "editor/theme.h"
 
 class wxMenu;
 class wxWindow;
@@ -76,6 +81,9 @@ wxString GetFileFormatName(editor::FileFormat ff);
 
 // \param lang See wxLanguage
 bool IsTraditionalChinese(int lang);
+
+// Create a button style from button theme.
+ui::SharedButtonStyle ButtonStyleFromTheme(editor::SharedTheme button_theme);
 
 }  // namespace jil
 

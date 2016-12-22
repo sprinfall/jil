@@ -6,9 +6,14 @@
 
 #include <list>
 #include <vector>
+
 #include "wx/panel.h"
 #include "wx/dcbuffer.h"
+
+#include "ui/button_style.h"
+
 #include "editor/theme.h"
+
 #include "app/compile_config.h"
 
 class wxMenu;
@@ -20,6 +25,10 @@ class wxMemoryDC;
 
 namespace jil {
 
+namespace ui {
+class BitmapButton;
+}
+
 #if defined(__WXMSW__)
 namespace editor {
 class TipHandler;
@@ -28,16 +37,16 @@ class TipHandler;
 
 class BookCtrl;
 class BookPage;
+class PopupMenuEvent;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class BookTabArea : public wxPanel {
+class TabPanel : public wxPanel {
   DECLARE_EVENT_TABLE()
 
 public:
-  BookTabArea(BookCtrl* book_ctrl, wxWindowID id);
-
-  virtual ~BookTabArea();
+  TabPanel(BookCtrl* book_ctrl, wxWindowID id);
+  virtual ~TabPanel();
 
   // Page header has no focus.
   virtual bool AcceptsFocus() const override {
@@ -68,7 +77,15 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 
 class BookCtrl : public wxPanel {
+  DECLARE_EVENT_TABLE()
+
 public:
+  enum ThemeId {
+    THEME_BUTTON = 0,
+
+    THEMES,
+  };
+
   enum ColorId {
     COLOR_BG = 0,  // The whole book background
 
@@ -91,6 +108,7 @@ public:
 
   enum ImageId {
     IMAGE_TAB_CLOSE = 0,
+    IMAGE_TAB_MORE,
 
     IMAGES,
   };
@@ -126,9 +144,14 @@ public:
     theme_ = theme;
   }
 
+  void set_popup_theme(const editor::SharedTheme& popup_theme) {
+    popup_theme_ = popup_theme;
+  }
+
   bool Create(wxWindow* parent, wxWindowID id);
 
   virtual bool HasFocus() const override;
+
   virtual void SetFocus() override;
 
   // NOTE: Call after Create().
@@ -149,11 +172,16 @@ public:
   // NOTE: Don't check if the page is already in the book or not.
   virtual void AddPage(BookPage* page, bool active);
 
+  // Remove the given page.
+  // Return true if the page is removed.
   bool RemovePage(const BookPage* page);
 
+  // Remove the current active page.
+  // Return true if the page is removed.
   bool RemoveActivePage();
 
-  // \param from_destroy If from destroy, don't refresh or post event.
+  // Remove all pages.
+  // \param from_destroy It's going to be destroyed, don't refresh or post event.
   // \param except_page If specified, this page won't be removed.
   void RemoveAllPages(bool from_destroy, const BookPage* except_page = NULL);
 
@@ -165,12 +193,12 @@ public:
     return PageCount() == 0;
   }
 
-  void ActivatePage(BookPage* page);
+  // Activate the given page.
+  // \param ensure_visible Make sure the tab of this page will be visible.
+  void ActivatePage(BookPage* page, bool ensure_visible);
 
+  // Return the current active page.
   BookPage* ActivePage() const;
-
-  void SwitchToNextPage();
-  void SwitchToPrevPage();
 
   int GetStackIndex(BookPage* page) const;
 
@@ -191,13 +219,15 @@ public:
 protected:
   void Init();
 
+  void CreateTabPanel();
+
   // Update values determined by tab font.
   void UpdateTabFontDetermined();
 
   //----------------------------------------------------------------------------
   // Tab area event handlers.
 
-  friend class BookTabArea;
+  friend class TabPanel;
 
   void OnTabSize(wxSizeEvent& evt);
 
@@ -223,7 +253,23 @@ protected:
 
   void SetTabTooltip(const wxString& tooltip);
 
+  void OnTabMoreButtonClick(wxCommandEvent& evt);
+  void OnTabMoreButtonUpdateUI(wxUpdateUIEvent& evt);
+
+  void OnMoreTabsMenuSelect(PopupMenuEvent& evt);
+
+  // Move the given tab so that it becomes visible.
+  // \param check Check if the tab is really invisible.
+  // \param refresh Refresh the tab panel if necessary.
+  // \return The new iterator of the tab.
+  TabIter MakeTabVisible(TabIter it, bool check = false, bool refresh = true);
+
+  TabIter MakeActiveTabVisible(bool refresh);
+
   //----------------------------------------------------------------------------
+
+  // Get tab iterator by index.
+  TabIter TabIterByIndex(size_t index);
 
   // Get tab iterator by x position.
   // \param tab_rect Optional output of the tab rect.
@@ -235,7 +281,9 @@ protected:
 
   BookPage* PageByPos(int pos_x);
 
-  void ActivatePage(TabIter it);
+  // \param ensure_visible Make sure the active tab will be visible.
+  void ActivatePage(TabIter it, bool ensure_visible);
+
   bool RemovePage(TabIter it);
 
   virtual void DoActivateTab(Tab* tab, bool active) = 0;
@@ -247,12 +295,15 @@ protected:
   Tab* ActiveTab() const;
 
   TabIter ActiveTabIter();
+
+  TabIter VisibleEndTabIter();
+
   TabIter TabIterByPage(const BookPage* page);
   TabConstIter TabIterByPage(const BookPage* page) const;
 
   int CalcTabBestSize(const wxString& label) const;
 
-  wxSize CalcTabAreaBestSize() const;
+  wxSize CalcTabPanelBestSize() const;
 
   wxRect GetTabRect(int x, int width, const wxRect& tab_area_rect);
   wxRect GetTabCloseIconRect(const wxRect& tab_rect);
@@ -261,6 +312,9 @@ protected:
 
 protected:
   editor::SharedTheme theme_;
+
+  // Theme for the popup menu displaying hidden tabs.
+  editor::SharedTheme popup_theme_;
 
   int char_width_;
   int ellipsis_width_;  // Size of "...".
@@ -272,16 +326,16 @@ protected:
   int tab_space_x_;
 
   // The space before/after the first/last tab.
-  int tab_area_padding_x_;
+  int tab_panel_padding_x_;
 
-  int tab_min_size_;
-  int tab_default_size_;
+  // Tab panel displays the tabs.
+  // If there is not enough space to display all tabs, it just displays
+  // first visible_tabs_count_ number of tabs.
+  TabPanel* tab_panel_;
 
-  // Tab area free/available size.
-  int free_size_;
+  ui::BitmapButton* tab_more_button_;
 
-  BookTabArea* tab_area_;
-  wxPanel* page_area_;
+  wxPanel* page_panel_;
 
   TabList tabs_;
 
@@ -289,18 +343,22 @@ protected:
   // A tab is moved to the front when it's activated.
   TabList stack_tabs_;
 
+  // Number of visible tabs.
+  size_t visible_tabs_count_;
+
+  // The tab on which the mouse is hovering.
   Tab* hover_tab_;
+  // If the mouse is hovering on the close icon of the tab.
   bool hover_on_close_icon_;
 
+  // Batch mode.
   bool batch_;
-  bool need_resize_tabs_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// Events
+// Events posted by BookCtrl.
 
 BEGIN_DECLARE_EVENT_TYPES()
-// Events posted by book ctrl:
 DECLARE_EVENT_TYPE(kEvtBookPageChange, 0)  // Page(s) added or removed.
 DECLARE_EVENT_TYPE(kEvtBookPageSwitch, 0)  // Page activated.
 END_DECLARE_EVENT_TYPES()

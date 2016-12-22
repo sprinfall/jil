@@ -68,6 +68,9 @@ private:
 private:
   editor::SharedTheme theme_;
 
+  wxSize margin_;
+  int col_gap_;
+
   // Active text pages.
   std::vector<TextPage*> text_pages_;
 
