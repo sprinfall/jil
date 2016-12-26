@@ -261,6 +261,9 @@ void BookFrame::OpenFiles(const wxArrayString& file_names, bool silent) {
     return;
   }
 
+  // KISS: Make the cursor busy instead of opening in another thread.
+  wxBusyCursor busy_cursor;
+
   text_book_->StartBatch();
 
   bool active = true;
@@ -287,7 +290,8 @@ bool operator<(const OpenedPage& lhs, const OpenedPage& rhs) {
   return lhs.stack_index > rhs.stack_index;
 }
 
-// TODO: Do this in another thread. Don't block the UI.
+// NOTE:
+// Don't have to use wxBusyCursor. The cursor will be busy automatically (Why?).
 void BookFrame::RestoreOpenedFiles() {
   const std::list<Session::OpenedFile>& opened_files = session_->opened_files();
   if (opened_files.empty()) {

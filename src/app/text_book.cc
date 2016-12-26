@@ -102,6 +102,57 @@ std::vector<TextPage*> TextBook::StackTextPages() const {
   return TextPagesFromTabs(stack_tabs_);
 }
 
+//------------------------------------------------------------------------------
+
+void TextBook::DoActivateTab(Tab* tab, bool active) {
+  if (active) {
+    tab->active = true;
+
+    tab->page->Page_Activate(true);
+
+    if (!page_window_->IsShown()) {
+      page_window_->Show();
+      page_window_->SetFocus();
+      page_panel_->Layout();
+    }
+  } else {
+    // TODO
+    tab->active = false;
+  }
+}
+
+void TextBook::DoRemoveTab(Tab* tab) {
+  // The page to remove is active; activate another page.
+  if (tab->active) {
+    if (!IsEmpty()) {
+      Tab* active_tab = stack_tabs_.front();
+      active_tab->active = true;
+      active_tab->page->Page_Activate(true);
+
+      PostEvent(kEvtBookPageSwitch);
+    }
+  }
+
+  if (IsEmpty()) {
+    // No pages left, set placeholder page and hide page window.
+    placeholder_page_->Page_Activate(true);
+    page_window_->Hide();
+    page_panel_->Layout();
+  }
+
+  delete tab->page;
+}
+
+void TextBook::DoRemoveAll(Tab* tab) {
+  if (tab->active) {
+    page_window_->SetPage(placeholder_page_);
+  }
+
+  delete tab->page;
+}
+
+//------------------------------------------------------------------------------
+
 void TextBook::Init() {
   options_ = NULL;
   style_ = NULL;
@@ -230,49 +281,6 @@ void TextBook::HandleTabMouseLeftDClick(wxMouseEvent& evt) {
   if (it == tabs_.end()) {
     wxCommandEvent cmd_evt(wxEVT_COMMAND_MENU_SELECTED, ID_MENU_FILE_NEW);
     GetParent()->GetEventHandler()->AddPendingEvent(cmd_evt);
-  }
-}
-
-void TextBook::DoActivateTab(Tab* tab, bool active) {
-  if (active) {
-    tab->active = true;
-
-    tab->page->Page_Activate(true);
-
-    if (!page_window_->IsShown()) {
-      page_window_->Show();
-      page_window_->SetFocus();
-      page_panel_->Layout();
-    }
-  } else {
-    // TODO
-    tab->active = false;
-  }
-}
-
-void TextBook::DoRemoveTab(Tab* tab) {
-  // The page to remove is active; activate another page.
-  if (tab->active) {
-    if (!IsEmpty()) {
-      Tab* active_tab = stack_tabs_.front();
-      active_tab->active = true;
-      active_tab->page->Page_Activate(true);
-
-      PostEvent(kEvtBookPageSwitch);
-    }
-  }
-
-  if (IsEmpty()) {
-    // No pages left, set placeholder page and hide page window.
-    placeholder_page_->Page_Activate(true);
-    page_window_->Hide();
-    page_panel_->Layout();
-  }
-}
-
-void TextBook::DoRemoveAll(Tab* tab) {
-  if (tab->active) {
-    page_window_->SetPage(placeholder_page_);
   }
 }
 

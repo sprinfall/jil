@@ -13,8 +13,8 @@ DEFINE_EVENT_TYPE(kFindResultPageEvent);
 
 IMPLEMENT_CLASS(FindResultPage, editor::TextWindow);
 
-FindResultPage::FindResultPage(editor::TextBuffer* buffer)
-    : editor::TextWindow(buffer) {
+FindResultPage::FindResultPage(editor::TextBuffer* fr_buffer)
+    : editor::TextWindow(fr_buffer) {
   allow_text_change_ = false;
 }
 

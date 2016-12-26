@@ -66,6 +66,10 @@ public:
   std::vector<TextPage*> StackTextPages() const;
 
 protected:
+  virtual void DoActivateTab(Tab* tab, bool active) override;
+  virtual void DoRemoveTab(Tab* tab) override;
+  virtual void DoRemoveAll(Tab* tab) override;
+
   void Init();
   void CreatePageWindow();
 
@@ -74,10 +78,6 @@ protected:
   virtual void HandleTabMouseRightDown(wxMouseEvent& evt) override;
   virtual void HandleTabMouseRightUp(wxMouseEvent& evt) override;
   virtual void HandleTabMouseLeftDClick(wxMouseEvent& evt) override;
-
-  virtual void DoActivateTab(Tab* tab, bool active) override;
-  virtual void DoRemoveTab(Tab* tab) override;
-  virtual void DoRemoveAll(Tab* tab) override;
 
   std::vector<TextPage*> TextPagesFromTabs(const TabList& tabs) const;
 

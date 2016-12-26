@@ -217,6 +217,20 @@ public:
   void ResizeActiveTab();
 
 protected:
+  //----------------------------------------------------------------------------
+
+  virtual void DoActivateTab(Tab* tab, bool active) = 0;
+
+  // \param tab The tab which will be deleted, and it has been removed
+  //            from the tab list.
+  virtual void DoRemoveTab(Tab* tab) = 0;
+
+  // \param tab The tab which will be deleted during RemoveAllPages(), and it
+  //            has been removed from the tab list.
+  virtual void DoRemoveAll(Tab* tab) = 0;
+
+  //----------------------------------------------------------------------------
+
   void Init();
 
   void CreateTabPanel();
@@ -285,10 +299,6 @@ protected:
   void ActivatePage(TabIter it, bool ensure_visible);
 
   bool RemovePage(TabIter it);
-
-  virtual void DoActivateTab(Tab* tab, bool active) = 0;
-  virtual void DoRemoveTab(Tab* tab) = 0;
-  virtual void DoRemoveAll(Tab* tab) = 0;
 
   void ActivatePageByPos(int pos_x);
 

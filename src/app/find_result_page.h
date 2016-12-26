@@ -27,7 +27,9 @@ public:
   };
 
 public:
-  explicit FindResultPage(editor::TextBuffer* buffer);
+  // \param fr_buffer Find result text buffer (managed by BookFrame).
+  explicit FindResultPage(editor::TextBuffer* fr_buffer);
+
   virtual ~FindResultPage();
 
   bool Create(wxWindow* parent, wxWindowID id, bool hide = false);
