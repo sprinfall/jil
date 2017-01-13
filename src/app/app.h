@@ -164,7 +164,9 @@ private:
   bool LoadFileTypes();
 
   // Load lex for the file type.
-  void LoadLex(editor::FtPlugin* ft_plugin);
+  //void LoadLex(editor::FtPlugin* ft_plugin);
+
+  void SetFrameIcons(BookFrame* book_frame);
 
 private:
   FILE* log_file_;

@@ -13,5 +13,7 @@
 #endif
 #endif
 
+#define IDI_ICON_APP                    102
+#define IDI_ICON_16                     103
+#define IDI_ICON_32                     104
 
-#define IDI_ICON0                       102

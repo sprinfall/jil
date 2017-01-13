@@ -48,6 +48,10 @@ extern "C" {
 #include "app/theme_config.h"
 #include "app/util.h"
 
+#if defined(__WXMSW__)
+#include "app/resource.h"  // For icon IDs.
+#endif
+
 IMPLEMENT_WXWIN_MAIN
 
 namespace jil {
@@ -370,6 +374,8 @@ bool App::OnInit() {
     wxLogError(wxT("Failed to create book frame!"));
     return false;
   }
+
+  SetFrameIcons(book_frame);
 
   SetTopWindow(book_frame);
   book_frame->Show();
@@ -900,6 +906,39 @@ bool App::LoadFileTypes() {
   }
 
   return true;
+}
+
+// TODO: OSX and GTK.
+void App::SetFrameIcons(BookFrame* book_frame) {
+#if defined(__WXMSW__)
+  wxIconBundle icons;
+
+  // NOTE:
+  // wxWidgets seems not providing a function to get embedded icon resources
+  // by icon ID. Windows API is used instead.
+
+  HINSTANCE hinstance = ::GetModuleHandle(NULL);
+
+  // NOTE: Only 16 and 32 are needed.
+
+  HICON hicon16 = ::LoadIcon(hinstance, MAKEINTRESOURCE(IDI_ICON_16));
+  if (hicon16 != NULL) {
+    wxIcon icon16;
+    if (icon16.CreateFromHICON(hicon16)) {
+      icons.AddIcon(icon16);
+    }
+  }
+
+  HICON hicon32 = ::LoadIcon(hinstance, MAKEINTRESOURCE(IDI_ICON_32));
+  if (hicon32 != NULL) {
+    wxIcon icon32;
+    if (icon32.CreateFromHICON(hicon32)) {
+      icons.AddIcon(icon32);
+    }
+  }
+
+  book_frame->SetIcons(icons);
+#endif
 }
 
 }  // namespace jil

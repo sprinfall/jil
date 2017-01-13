@@ -1,28 +1,31 @@
 // Microsoft Visual C++ generated resource script.
 //
-#include "resource.h"
+#include "app/resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-//#include "afxres.h"
 #include <windows.h>
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Chinese (P.R.C.) resources
+// English (U.S.) resources
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 #ifdef _WIN32
-LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
-#pragma code_page(936)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #endif //_WIN32
 
-IDI_ICON0	ICON "icon/editor.ico"
+// This is icon bundle with several different size icons.
+IDI_ICON_APP ICON "icon/editor.ico"
+
+// For wxTopLevelWindow::SetIcons().
+IDI_ICON_16 ICON "icon/editor16.ico"
+IDI_ICON_32 ICON "icon/editor32.ico"
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -30,22 +33,24 @@ IDI_ICON0	ICON "icon/editor.ico"
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE
-BEGIN
-    "resource.h\0"
-END
+// TODO: Remove?
 
-2 TEXTINCLUDE
-BEGIN
-    "#include ""afxres.h""\r\n"
-    "\0"
-END
+// 1 TEXTINCLUDE
+// BEGIN
+    // "resource.h\0"
+// END
 
-3 TEXTINCLUDE
-BEGIN
-    "\r\n"
-    "\0"
-END
+// 2 TEXTINCLUDE
+// BEGIN
+    // "#include ""afxres.h""\r\n"
+    // "\0"
+// END
+
+// 3 TEXTINCLUDE
+// BEGIN
+    // "\r\n"
+    // "\0"
+// END
 
 #endif    // APSTUDIO_INVOKED
 
@@ -87,7 +92,7 @@ BEGIN
     END
 END
 
-#endif    // Chinese (P.R.C.) resources
+#endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
