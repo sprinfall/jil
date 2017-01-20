@@ -125,17 +125,13 @@ enum {
   ID_MENU_VIEW_FULL_SCREEN,
   ID_MENU_VIEW_END,
 
-  // Tools menu
-  ID_MENU_TOOLS_BEGIN,
-  ID_MENU_TOOLS_END,
-
   // Preferences menu
   ID_MENU_PREFS_EDITOR_BEGIN,
   ID_MENU_PREFS_EDITOR_END = ID_MENU_PREFS_EDITOR_BEGIN + kMaxFileTypes,
 
   // Help menu
   ID_MENU_HELP_BEGIN,
-  ID_MENU_HELP_VIEW_ONLINE,
+  ID_MENU_HELP_GITHUB,
   ID_MENU_HELP_END,
 
   // Tool book tab right click menu.

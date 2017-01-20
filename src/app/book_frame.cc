@@ -103,7 +103,6 @@ EVT_MENU(wxID_EXIT, BookFrame::OnQuit)
 
 EVT_MENU_RANGE(ID_MENU_EDIT_BEGIN, ID_MENU_EDIT_END - 1, BookFrame::OnMenuEdit)
 EVT_MENU_RANGE(ID_MENU_VIEW_BEGIN, ID_MENU_VIEW_END - 1, BookFrame::OnMenuView)
-EVT_MENU_RANGE(ID_MENU_TOOLS_BEGIN, ID_MENU_TOOLS_END - 1, BookFrame::OnMenuTools)
 
 EVT_MENU(wxID_PREFERENCES, BookFrame::OnGlobalPreferences)
 EVT_MENU_RANGE(ID_MENU_PREFS_EDITOR_BEGIN, ID_MENU_PREFS_EDITOR_END - 1, BookFrame::OnEditorPreferences)
@@ -1277,16 +1276,11 @@ void BookFrame::OnMenuView(wxCommandEvent& evt) {
 
 //------------------------------------------------------------------------------
 
-void BookFrame::OnMenuTools(wxCommandEvent& evt) {
-}
-
-//------------------------------------------------------------------------------
-
 void BookFrame::OnMenuHelp(wxCommandEvent& evt) {
   switch (evt.GetId()) {
-    case ID_MENU_HELP_VIEW_ONLINE:
-      wxMessageBox(kTrComingSoon);
-      break;
+  case ID_MENU_HELP_GITHUB:
+    wxLaunchDefaultBrowser(wxT("https://github.com/sprinfall/jil"));
+    break;
   }
 }
 
@@ -2519,7 +2513,7 @@ void BookFrame::LoadMenus() {
   // Help
 
   wxMenu* help_menu = new wxMenu;
-  help_menu->Append(ID_MENU_HELP_VIEW_ONLINE, kTrHelpViewOnline);
+  help_menu->Append(ID_MENU_HELP_GITHUB, kTrHelpGitHub);
 
 #if !defined (__WXOSX__)
   help_menu->Append(wxID_ABOUT, kTrMenuAbout);

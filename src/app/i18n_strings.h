@@ -116,7 +116,7 @@
 #define kTrPrefsEditor        _("&Syntax Specific")
 #define kTrPrefsTheme         _("&Theme")
 
-#define kTrHelpViewOnline     _("&View Online Help")
+#define kTrHelpGitHub         wxT("&GitHub")
 
 // Right click floating menu labels.
 

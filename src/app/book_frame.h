@@ -235,7 +235,6 @@ protected:
 
   void OnMenuEdit(wxCommandEvent& evt);
   void OnMenuView(wxCommandEvent& evt);
-  void OnMenuTools(wxCommandEvent& evt);
   void OnMenuHelp(wxCommandEvent& evt);
 
   // Return true if the command function is found and executed.
