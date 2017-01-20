@@ -10,6 +10,7 @@
 
 #include "wx/app.h"
 #include "wx/arrstr.h"
+#include "wx/iconbndl.h"
 
 #if JIL_SINGLE_INSTANCE
 #  include "wx/ipc.h"  // wxServer
@@ -87,6 +88,10 @@ public:
 
   bool ReloadTheme(const wxString& theme_name);
 
+  const wxIconBundle& icons() const {
+    return icons_;
+  }
+
 protected:
 #if wxUSE_CMDLINE_PARSER
   // Called from OnInit() to add all supported options to the given parser.
@@ -163,10 +168,8 @@ private:
 
   bool LoadFileTypes();
 
-  // Load lex for the file type.
-  //void LoadLex(editor::FtPlugin* ft_plugin);
-
-  void SetFrameIcons(BookFrame* book_frame);
+  // Load icons for top level windows.
+  void LoadIcons();
 
 private:
   FILE* log_file_;
@@ -210,6 +213,9 @@ private:
   std::vector<StatusBar::FieldInfo> status_fields_;
 
   lua_State* lua_state_;
+
+  // Icons for top level windows.
+  wxIconBundle icons_;
 };
 
 DECLARE_APP(App)

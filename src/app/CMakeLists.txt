@@ -41,6 +41,8 @@ set(PREF_SRCS
 
 set(SRCS
     ${PREF_SRCS}
+    about_dialog.cc
+    about_dialog.h
     app.cc
     app.h
     binding_config.cc

@@ -375,7 +375,7 @@ bool App::OnInit() {
     return false;
   }
 
-  SetFrameIcons(book_frame);
+  book_frame->SetIcons(icons_);
 
   SetTopWindow(book_frame);
   book_frame->Show();
@@ -909,9 +909,9 @@ bool App::LoadFileTypes() {
 }
 
 // TODO: OSX and GTK.
-void App::SetFrameIcons(BookFrame* book_frame) {
+void App::LoadIcons() {
+
 #if defined(__WXMSW__)
-  wxIconBundle icons;
 
   // NOTE:
   // wxWidgets seems not providing a function to get embedded icon resources
@@ -925,7 +925,7 @@ void App::SetFrameIcons(BookFrame* book_frame) {
   if (hicon16 != NULL) {
     wxIcon icon16;
     if (icon16.CreateFromHICON(hicon16)) {
-      icons.AddIcon(icon16);
+      icons_.AddIcon(icon16);
     }
   }
 
@@ -933,12 +933,11 @@ void App::SetFrameIcons(BookFrame* book_frame) {
   if (hicon32 != NULL) {
     wxIcon icon32;
     if (icon32.CreateFromHICON(hicon32)) {
-      icons.AddIcon(icon32);
+      icons_.AddIcon(icon32);
     }
   }
-
-  book_frame->SetIcons(icons);
 #endif
+
 }
 
 }  // namespace jil

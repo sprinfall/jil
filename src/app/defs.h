@@ -20,9 +20,9 @@
 #define kAppDisplayName wxT("Jil Text")
 
 // App version.
-#define kAppVersion wxT("0.1")
+#define kAppVersion wxT("1.0")
 
-
+// Shortcuts of sizer align flags.
 #define wxLR (wxLEFT|wxRIGHT)
 #define wxTB (wxTOP|wxBOTTOM)
 #define wxLTR (wxLEFT|wxTOP|wxRIGHT)

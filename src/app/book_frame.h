@@ -208,7 +208,7 @@ protected:
   bool HandleKeyDownHook(wxKeyEvent& evt);
 
   void OnAbout(wxCommandEvent& evt);
-  void ShowAboutWindow();
+  void ShowAboutDialog();
 
   void OnGlobalPreferences(wxCommandEvent& evt);
 

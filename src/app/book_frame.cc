@@ -35,6 +35,7 @@
 #include "editor/ft_plugin.h"
 #include "editor/text_window.h"
 
+#include "app/about_dialog.h"
 #include "app/app.h"
 #include "app/compile_config.h"
 #include "app/config.h"
@@ -1029,11 +1030,12 @@ void BookFrame::OnMenuFileRecentFile(wxCommandEvent& evt) {
 }
 
 void BookFrame::OnAbout(wxCommandEvent& WXUNUSED(evt)) {
-  ShowAboutWindow();
+  ShowAboutDialog();
 }
 
-void BookFrame::ShowAboutWindow() {
-  wxMessageBox(kTrComingSoon);
+void BookFrame::ShowAboutDialog() {
+  AboutDialog* about_dialog = new AboutDialog(this);
+  about_dialog->ShowModal();
 }
 
 void BookFrame::OnGlobalPreferences(wxCommandEvent& WXUNUSED(evt)) {
