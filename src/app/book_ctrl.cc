@@ -100,9 +100,9 @@ void TabPanel::OnLeaveWindow(wxMouseEvent& evt) {
 ////////////////////////////////////////////////////////////////////////////////
 
 BEGIN_EVENT_TABLE(BookCtrl, wxPanel)
-EVT_BUTTON(ID_TAB_MORE_BUTTON, BookCtrl::OnTabMoreButtonClick)
-EVT_UPDATE_UI(ID_TAB_MORE_BUTTON, BookCtrl::OnTabMoreButtonUpdateUI)
-EVT_POPUP_MENU_SELECT(BookCtrl::OnMoreTabsMenuSelect)
+EVT_BUTTON(ID_TAB_EXPAND_BUTTON, BookCtrl::OnTabExpandButtonClick)
+EVT_UPDATE_UI(ID_TAB_EXPAND_BUTTON, BookCtrl::OnTabExpandButtonUpdateUI)
+EVT_POPUP_MENU_SELECT(BookCtrl::OnTabExpandMenuSelect)
 END_EVENT_TABLE()
 
 BookCtrl::BookCtrl() {
@@ -175,7 +175,7 @@ void BookCtrl::ReapplyTheme() {
   assert(theme_);
 
   SetBackgroundColour(theme_->GetColor(COLOR_BG));
-  tab_panel_->SetBackgroundColour(theme_->GetColor(COLOR_TAB_AREA_BG));
+  tab_panel_->SetBackgroundColour(theme_->GetColor(COLOR_TAB_PANEL_BG));
 
   tab_panel_->Refresh();
 }
@@ -363,7 +363,7 @@ void BookCtrl::ResizeTabs() {
 
   int client_size = tab_panel_->GetClientSize().x;
   client_size -= tab_panel_padding_x_;
-  client_size -= theme_->GetImage(IMAGE_TAB_MORE).GetWidth();
+  client_size -= theme_->GetImage(IMAGE_TAB_EXPAND).GetWidth();
   client_size -= tab_space_x_;
   client_size -= tab_panel_padding_x_;
 
@@ -407,7 +407,7 @@ void BookCtrl::Init() {
   tab_panel_padding_x_ = 3;
 
   tab_panel_ = NULL;
-  tab_more_button_ = NULL;
+  tab_expand_button_ = NULL;
 
   page_panel_ = NULL;
 
@@ -421,21 +421,19 @@ void BookCtrl::Init() {
 
 void BookCtrl::CreateTabPanel() {
   tab_panel_ = new TabPanel(this, wxID_ANY);
-  tab_panel_->SetBackgroundColour(theme_->GetColor(COLOR_TAB_AREA_BG));
+  tab_panel_->SetBackgroundColour(theme_->GetColor(COLOR_TAB_PANEL_BG));
 
   ui::SharedButtonStyle button_style = ButtonStyleFromTheme(theme_->GetTheme(BookCtrl::THEME_BUTTON));
-  tab_more_button_ = new ui::BitmapButton(button_style);
-  tab_more_button_->SetBitmap(theme_->GetImage(BookCtrl::IMAGE_TAB_MORE));
-  tab_more_button_->Create(tab_panel_, ID_TAB_MORE_BUTTON);
-  tab_more_button_->set_click_type(ui::ButtonBase::kClickOnDown);
-
-  //wxBitmap tab_more_bitmap = theme_->GetImage(BookCtrl::IMAGE_TAB_MORE);
+  tab_expand_button_ = new ui::BitmapButton(button_style);
+  tab_expand_button_->SetBitmap(theme_->GetImage(BookCtrl::IMAGE_TAB_EXPAND));
+  tab_expand_button_->Create(tab_panel_, ID_TAB_EXPAND_BUTTON);
+  tab_expand_button_->set_click_type(ui::ButtonBase::kClickOnDown);
 
   // Layout
   wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
   hsizer->AddStretchSpacer(1);
   hsizer->AddSpacer(tab_space_x_);
-  hsizer->Add(tab_more_button_, wxSizerFlags().CenterVertical());
+  hsizer->Add(tab_expand_button_, wxSizerFlags().CenterVertical());
   hsizer->AddSpacer(tab_panel_padding_x_);
   tab_panel_->SetSizer(hsizer);
 }
@@ -486,7 +484,7 @@ void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
   wxPen active_tab_pen(theme_->GetColor(COLOR_ACTIVE_TAB_BORDER));
   wxBrush active_tab_brush(theme_->GetColor(COLOR_ACTIVE_TAB_BG));
 
-  wxBitmap tab_close_bitmap = theme_->GetImage(IMAGE_TAB_CLOSE);
+  const wxBitmap& tab_close_bitmap = theme_->GetImage(IMAGE_TAB_CLOSE);
 
   dc.SetFont(tab_panel_->GetFont());
 
@@ -497,11 +495,8 @@ void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
 
   x += tab_panel_padding_x_;
 
-  // TODO
-  size_t i = 0;
-  for (TabIter it = tabs_.begin();
-       it != tabs_.end() && i < visible_tabs_count_;
-       ++it, ++i) {
+  TabIter end_it = VisibleEndTabIter();
+  for (TabIter it = tabs_.begin(); it != end_it; ++it) {
     Tab* tab = *it;
 
     wxRect tab_rect = GetTabRect(x, tab->size, rect);
@@ -538,12 +533,12 @@ void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
     wxRect label_rect = tab_fg_rect;
     label_rect.width -= tab_close_bitmap.GetWidth();
     label_rect.width -= tab_space_x_;
-    label_rect.width -= char_width_;  // Modified indicator
+    label_rect.width -= char_width_;  // Modify indicator
     label_rect.width -= tab_space_x_;
 
     wxString label = tab->page->Page_Label();
 
-    // Label.
+    // Label
     if (!label.IsEmpty()) {
       if (tab->best_size <= tab->size) {
         dc.DrawText(label, label_rect.x, label_rect.y);
@@ -557,25 +552,26 @@ void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
       }
     }
 
-    // Modified indicator.
+    // Modify indicator
     if (tab->page->Page_IsModified()) {
       int star_x = label_rect.GetRight() + tab_space_x_;
       dc.DrawText(kStar, star_x, label_rect.y);
     }
 
-    // Close icon.
+    // Close icon
     if (tab->active || tab == hover_tab_) {
-      wxRect close_rect = GetTabCloseIconRect(tab_rect);
+      wxRect close_icon_rect = GetTabCloseIconRect(tab_rect);
 
       if (hover_on_close_icon_ && tab == hover_tab_) {
-        const wxColour& hover_bg = theme_->GetColor(
-            tab->active ? COLOR_ACTIVE_TAB_HOVER_BG : COLOR_TAB_HOVER_BG);
+        ColorId hover_color_id = tab->active ? COLOR_ACTIVE_TAB_HOVER_BG : COLOR_TAB_HOVER_BG;
+        const wxColour& hover_bg = theme_->GetColor(hover_color_id);
+
         dc.SetPen(wxPen(hover_bg));
         dc.SetBrush(wxBrush(hover_bg));
-        dc.DrawRectangle(close_rect);
+        dc.DrawRectangle(close_icon_rect);
       }
 
-      dc.DrawBitmap(tab_close_bitmap, close_rect.GetLeftTop(), true);
+      dc.DrawBitmap(tab_close_bitmap, close_icon_rect.GetLeftTop(), true);
     }
 
     x += tab->size;
@@ -769,22 +765,22 @@ void BookCtrl::SetTabTooltip(const wxString& tooltip) {
 #endif
 }
 
-void BookCtrl::OnTabMoreButtonClick(wxCommandEvent& evt) {
+void BookCtrl::OnTabExpandButtonClick(wxCommandEvent& evt) {
   if (visible_tabs_count_ >= tabs_.size()) {
     return;
   }
 
-  std::vector<wxString> more_tabs;
+  std::vector<wxString> hidden_tabs;
 
   TabList::iterator it = tabs_.begin();
   std::advance(it, visible_tabs_count_);
   for (; it != tabs_.end(); ++it) {
-    more_tabs.push_back((*it)->page->Page_Label());
+    hidden_tabs.push_back((*it)->page->Page_Label());
   }
 
   jil::PopupMenu* popup_menu = new jil::PopupMenu(popup_theme_);
 
-  wxRect owner_rect = tab_more_button_->GetScreenRect();
+  wxRect owner_rect = tab_expand_button_->GetScreenRect();
   popup_menu->set_owner_rect(owner_rect);
 
   int display_index = wxDisplay::GetFromWindow(this);
@@ -792,15 +788,15 @@ void BookCtrl::OnTabMoreButtonClick(wxCommandEvent& evt) {
   popup_menu->set_display_client_rect(display_client_rect);
 
   popup_menu->Create(this, wxID_ANY);
-  popup_menu->SetTabs(more_tabs);
+  popup_menu->SetTabs(hidden_tabs);
   popup_menu->Popup();
 }
 
-void BookCtrl::OnTabMoreButtonUpdateUI(wxUpdateUIEvent& evt) {
-  evt.Enable(visible_tabs_count_ < tabs_.size());
+void BookCtrl::OnTabExpandButtonUpdateUI(wxUpdateUIEvent& evt) {
+  evt.Enable(IsToShowTabExpandButton());
 }
 
-void BookCtrl::OnMoreTabsMenuSelect(PopupMenuEvent& evt) {
+void BookCtrl::OnTabExpandMenuSelect(PopupMenuEvent& evt) {
   if (visible_tabs_count_ >= tabs_.size() || visible_tabs_count_ == 0) {
     return;
   }
@@ -1042,8 +1038,8 @@ wxSize BookCtrl::CalcTabPanelBestSize() const {
   return wxSize(-1, y);
 }
 
-wxRect BookCtrl::GetTabRect(int x, int width, const wxRect& tab_area_rect) {
-  wxRect tab_rect(x, tab_area_rect.y, width, tab_area_rect.height);
+wxRect BookCtrl::GetTabRect(int tab_x, int tab_width, const wxRect& tab_panel_rect) {
+  wxRect tab_rect(tab_x, tab_panel_rect.y, tab_width, tab_panel_rect.height);
   tab_rect.y += tab_margin_top_;
   tab_rect.height -= tab_margin_top_;
   return tab_rect;

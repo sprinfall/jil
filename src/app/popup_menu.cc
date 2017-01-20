@@ -39,7 +39,6 @@ PopupMenu::PopupMenu(const editor::SharedTheme& theme)
 }
 
 PopupMenu::~PopupMenu() {
-  wxLogDebug("~MoreTabsDialog");
 }
 
 bool PopupMenu::Create(wxWindow* parent, wxWindowID id) {

@@ -36,9 +36,9 @@ protected:
 private:
   BookFrame* book_frame_;
 
-  std::wstring str_;  // Find this string.
+  std::wstring str_;  // The string to find.
   int flags_;  // Find flags.
-  wxArrayString files_;  // Find in these files.
+  wxArrayString files_;  // The files in which to find.
 };
 
 }  // namespace jil

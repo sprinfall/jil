@@ -158,7 +158,7 @@ bool LoadThemeFile(const wxString& theme_folder,
   Setting tb_setting = root.Get("text_book", Setting::kGroup);
   if (tb_setting) {
     tb_theme->SetColor(BookCtrl::COLOR_BG, tb_setting.GetColor("bg"));
-    tb_theme->SetColor(BookCtrl::COLOR_TAB_AREA_BG, tb_setting.GetColor("tab_area_bg"));
+    tb_theme->SetColor(BookCtrl::COLOR_TAB_PANEL_BG, tb_setting.GetColor("tab_panel_bg"));
 
     tb_theme->SetColor(BookCtrl::COLOR_TAB_FG, tb_setting.GetColor("tab_fg"));
     tb_theme->SetColor(BookCtrl::COLOR_TAB_BG, tb_setting.GetColor("tab_bg"));
@@ -172,7 +172,7 @@ bool LoadThemeFile(const wxString& theme_folder,
     tb_theme->SetColor(BookCtrl::COLOR_ACTIVE_TAB_HOVER_BG, tb_setting.GetColor("active_tab_hover_bg"));
 
     tb_theme->SetImage(BookCtrl::IMAGE_TAB_CLOSE, GetImage(image_dir, wxT("tab_close")));
-    tb_theme->SetImage(BookCtrl::IMAGE_TAB_MORE, GetImage(image_dir, wxT("tab_more")));
+    tb_theme->SetImage(BookCtrl::IMAGE_TAB_EXPAND, GetImage(image_dir, wxT("tab_expand")));
 
     Setting button_setting = tb_setting.Get("button", Setting::kGroup);
     if (button_setting) {
@@ -241,22 +241,6 @@ bool LoadThemeFile(const wxString& theme_folder,
     sb_theme->SetColor(StatusBar::COLOR_BG_TOP, sb_setting.GetColor("bg_top"));
     sb_theme->SetColor(StatusBar::COLOR_BG_BOTTOM, sb_setting.GetColor("bg_bottom"));
     sb_theme->SetColor(StatusBar::COLOR_SEPARATOR, sb_setting.GetColor("separator"));
-  }
-
-  // Navigation dialog
-  SharedTheme nd_theme = theme->GetTheme(THEME_NAVIGATION_DIALOG);
-  if (!nd_theme) {
-    nd_theme.reset(new Theme(0, NavigationDialog::COLORS, 0));
-    theme->SetTheme(THEME_NAVIGATION_DIALOG, nd_theme);
-  }
-
-  Setting nd_setting = root.Get("navigation_dialog", Setting::kGroup);
-  if (nd_setting) {
-    nd_theme->SetColor(NavigationDialog::COLOR_BG, nd_setting.GetColor("bg"));
-    nd_theme->SetColor(NavigationDialog::COLOR_FG, nd_setting.GetColor("fg"));
-    nd_theme->SetColor(NavigationDialog::COLOR_SELECT_FG, nd_setting.GetColor("select_fg"));
-    nd_theme->SetColor(NavigationDialog::COLOR_SELECT_BG, nd_setting.GetColor("select_bg"));
-    nd_theme->SetColor(NavigationDialog::COLOR_SELECT_BORDER, nd_setting.GetColor("select_border"));
   }
 
   // Popup

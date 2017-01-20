@@ -921,7 +921,7 @@ void App::SetFrameIcons(BookFrame* book_frame) {
 
   // NOTE: Only 16 and 32 are needed.
 
-  HICON hicon16 = ::LoadIcon(hinstance, MAKEINTRESOURCE(IDI_ICON_16));
+  HICON hicon16 = ::LoadIcon(hinstance, MAKEINTRESOURCE(IDI_EDITOR_16));
   if (hicon16 != NULL) {
     wxIcon icon16;
     if (icon16.CreateFromHICON(hicon16)) {
@@ -929,7 +929,7 @@ void App::SetFrameIcons(BookFrame* book_frame) {
     }
   }
 
-  HICON hicon32 = ::LoadIcon(hinstance, MAKEINTRESOURCE(IDI_ICON_32));
+  HICON hicon32 = ::LoadIcon(hinstance, MAKEINTRESOURCE(IDI_EDITOR_32));
   if (hicon32 != NULL) {
     wxIcon icon32;
     if (icon32.CreateFromHICON(hicon32)) {

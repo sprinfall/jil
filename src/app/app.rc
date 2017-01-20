@@ -21,11 +21,12 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #endif //_WIN32
 
 // This is icon bundle with several different size icons.
-IDI_ICON_APP ICON "icon/editor.ico"
+// Windows Explorer will display the jil.exe with these icons.
+IDI_EDITOR ICON "icon/editor.ico"
 
 // For wxTopLevelWindow::SetIcons().
-IDI_ICON_16 ICON "icon/editor16.ico"
-IDI_ICON_32 ICON "icon/editor32.ico"
+IDI_EDITOR_16 ICON "icon/editor16.ico"
+IDI_EDITOR_32 ICON "icon/editor32.ico"
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////

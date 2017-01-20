@@ -3,14 +3,14 @@
 
 namespace jil {
 
-FindThread::FindThread(BookFrame* handler)
+FindThread::FindThread(BookFrame* book_frame)
     : wxThread(wxTHREAD_DETACHED)
-    , book_frame_(handler) {
+    , book_frame_(book_frame) {
 }
 
 wxThread::ExitCode FindThread::Entry() {
   if (str_.empty()) {
-    return static_cast<wxThread::ExitCode>(0);
+    return 0;
   }
 
   size_t count = files_.GetCount();
@@ -19,11 +19,13 @@ wxThread::ExitCode FindThread::Entry() {
       break;
     }
 
+    // Update status.
     int new_fr_lines = book_frame_->AsyncFindInFile(str_, flags_, files_[i]);
-    QueueEvent(new_fr_lines, files_[i]);  // Update
+    QueueEvent(new_fr_lines, files_[i]);
   }
 
-  QueueEvent(wxNOT_FOUND, wxEmptyString);  // Finish
+  // Finished.
+  QueueEvent(wxNOT_FOUND, wxEmptyString);
   return 0;
 }
 

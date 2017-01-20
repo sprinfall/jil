@@ -5,23 +5,14 @@
 #include <vector>
 #include "wx/dialog.h"
 #include "editor/theme.h"
+#include "app/defs.h"
 
 namespace jil {
 
 class TextPage;
 
-class NavigationDialog : public wxDialog {
+class NavigationDialog : public wxDialog, public WithPopupTheme {
   DECLARE_EVENT_TABLE()
-
-public:
-  enum ColorId {
-    COLOR_BG = 0,
-    COLOR_FG,
-    COLOR_SELECT_BG,
-    COLOR_SELECT_BORDER,
-    COLOR_SELECT_FG,
-    COLORS,
-  };
 
 public:
   explicit NavigationDialog(const editor::SharedTheme& theme);

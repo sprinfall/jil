@@ -45,10 +45,8 @@ NavigationDialog::~NavigationDialog() {
 }
 
 bool NavigationDialog::Create(wxWindow* parent, wxWindowID id) {
-  long style = wxDEFAULT_DIALOG_STYLE | wxWANTS_CHARS;
-  wxString title = _("Switch Page");
-
-  if (!wxDialog::Create(parent, id, title, wxDefaultPosition, wxDefaultSize, style)) {
+  long style = wxWANTS_CHARS;
+  if (!wxDialog::Create(parent, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, style)) {
     return false;
   }
 
@@ -90,10 +88,12 @@ bool NavigationDialog::DoNavigateIn(int flags) {
 void NavigationDialog::OnPaint(wxPaintEvent& evt) {
   wxAutoBufferedPaintDC dc(this);
 
-#if !wxALWAYS_NATIVE_DOUBLE_BUFFER
-  dc.SetBackground(GetBackgroundColour());
-  dc.Clear();
-#endif
+  wxRect client_rect = GetClientRect();
+
+  // Border
+  dc.SetPen(wxPen(theme_->GetColor(COLOR_BORDER)));
+  dc.SetBrush(wxBrush(theme_->GetColor(COLOR_BG)));
+  dc.DrawRectangle(client_rect);
 
   if (select_index_ < text_pages_.size()) {
     dc.SetFont(title_font_);

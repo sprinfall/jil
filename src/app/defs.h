@@ -89,7 +89,6 @@ enum ThemeId {
   THEME_TEXT_PAGE,
   THEME_FIND_PANEL,
   THEME_STATUS_BAR,
-  THEME_NAVIGATION_DIALOG,
   THEME_POPUP,  // Theme for all popup dialogs, custom menus, etc.
   THEME_COUNT,
 };

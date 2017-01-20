@@ -41,6 +41,7 @@ class PopupMenuEvent;
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// A panel displaying tabs.
 class TabPanel : public wxPanel {
   DECLARE_EVENT_TABLE()
 
@@ -54,6 +55,8 @@ public:
   }
 
 #if defined(__WXMSW__)
+  // Display file full path in a customized tooltip instead of the native one.
+  // The native tooltip of Windows breaks long tooltip into several lines.
   void SetToolTipEx(const wxString& tooltip);
 #endif
 
@@ -89,7 +92,7 @@ public:
   enum ColorId {
     COLOR_BG = 0,  // The whole book background
 
-    COLOR_TAB_AREA_BG,  // The tab area background
+    COLOR_TAB_PANEL_BG,  // The tab panel background
 
     // Tab item colors:
     COLOR_TAB_FG,
@@ -107,8 +110,8 @@ public:
   };
 
   enum ImageId {
-    IMAGE_TAB_CLOSE = 0,
-    IMAGE_TAB_MORE,
+    IMAGE_TAB_CLOSE = 0,  // Close icon on each tab.
+    IMAGE_TAB_EXPAND,     // Expand icon on right side.
 
     IMAGES,
   };
@@ -239,7 +242,7 @@ protected:
   void UpdateTabFontDetermined();
 
   //----------------------------------------------------------------------------
-  // Tab area event handlers.
+  // Tab panel event handlers.
 
   friend class TabPanel;
 
@@ -267,10 +270,14 @@ protected:
 
   void SetTabTooltip(const wxString& tooltip);
 
-  void OnTabMoreButtonClick(wxCommandEvent& evt);
-  void OnTabMoreButtonUpdateUI(wxUpdateUIEvent& evt);
+  void OnTabExpandButtonClick(wxCommandEvent& evt);
+  void OnTabExpandButtonUpdateUI(wxUpdateUIEvent& evt);
 
-  void OnMoreTabsMenuSelect(PopupMenuEvent& evt);
+  void OnTabExpandMenuSelect(PopupMenuEvent& evt);
+
+  bool IsToShowTabExpandButton() const {
+    return visible_tabs_count_ < tabs_.size();
+  }
 
   // Move the given tab so that it becomes visible.
   // \param check Check if the tab is really invisible.
@@ -315,7 +322,10 @@ protected:
 
   wxSize CalcTabPanelBestSize() const;
 
-  wxRect GetTabRect(int x, int width, const wxRect& tab_area_rect);
+  // Get the rect of the tab starting from the given x.
+  wxRect GetTabRect(int tab_x, int tab_width, const wxRect& tab_panel_rect);
+
+  // Get the rect of the close icon of a tab.
   wxRect GetTabCloseIconRect(const wxRect& tab_rect);
 
   void PostEvent(wxEventType event_type);
@@ -343,7 +353,8 @@ protected:
   // first visible_tabs_count_ number of tabs.
   TabPanel* tab_panel_;
 
-  ui::BitmapButton* tab_more_button_;
+  // A button to expand hidden tabs.
+  ui::BitmapButton* tab_expand_button_;
 
   wxPanel* page_panel_;
 

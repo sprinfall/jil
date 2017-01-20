@@ -2742,9 +2742,7 @@ void BookFrame::SwitchStackPage(bool forward) {
     return;
   }
 
-  editor::SharedTheme theme = theme_->GetTheme(THEME_NAVIGATION_DIALOG);
-
-  NavigationDialog navigation_dialog(theme);
+  NavigationDialog navigation_dialog(theme_->GetTheme(THEME_POPUP));
   navigation_dialog.Create(this, wxID_ANY);
   navigation_dialog.SetTextPages(text_pages, forward);
   navigation_dialog.ShowModal();
