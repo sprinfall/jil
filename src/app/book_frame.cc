@@ -2755,7 +2755,7 @@ void BookFrame::SwitchStackPage(bool forward) {
 editor::TextBuffer* BookFrame::CreateBuffer(const wxFileName& fn, size_t id, bool scan_lex) {
   using namespace editor;
 
-  FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(fn.GetExt());
+  FtPlugin* ft_plugin = wxGetApp().GetFtPluginByFileName(fn);
   TextBuffer* buffer = new TextBuffer(id, ft_plugin, options_->file_encoding);
   buffer->set_scan_lex(scan_lex);
 

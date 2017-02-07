@@ -285,8 +285,6 @@ App::App()
 
 // If OnInit() returns false, OnExit() won't be called.
 App::~App() {
-  editor::ClearContainer(&file_types_);
-  editor::ClearContainer(&internal_file_types_);
   editor::ClearContainer(&ft_plugins_);
 
   wxDELETE(binding_);
@@ -414,24 +412,16 @@ wxString App::GetTheme(int index) const {
 }
 
 int App::GetFileTypeCount() const {
-  return static_cast<int>(file_types_.size());
+  return static_cast<int>(ft_config_.GetCount());
 }
 
 const editor::FileType* App::GetFileType(int index) const {
   assert(index >= 0 && index < GetFileTypeCount());
-  return file_types_[index];
+  return ft_config_.GetByIndex(static_cast<size_t>(index));
 }
 
-const editor::FileType& App::FileTypeFromExt(const wxString& ext) const {
-  ExtFileTypeMap::const_iterator it = ext_ft_map_.find(ext);
-  if (it != ext_ft_map_.end()) {
-    return *(it->second);
-  }
-
-  // Unsupported ext, use Plain Text file type.
-  it = ext_ft_map_.find(kTxtFtId);
-  assert(it != ext_ft_map_.end());
-  return *(it->second);
+const editor::FileType& App::FileTypeFromFileName(const wxFileName& fn) const {
+  return ft_config_.GetByFileName(fn);
 }
 
 editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
@@ -497,8 +487,8 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
   return ft_plugin;
 }
 
-editor::FtPlugin* App::GetFtPlugin(const wxString& ext) {
-  return GetFtPlugin(FileTypeFromExt(ext));
+editor::FtPlugin* App::GetFtPluginByFileName(const wxFileName& fn) {
+  return GetFtPlugin(ft_config_.GetByFileName(fn));
 }
 
 bool App::SaveUserGlobalOptions() {
@@ -889,19 +879,11 @@ bool App::LoadBinding() {
 }
 
 bool App::LoadFileTypes() {
-  // Plain Text file type.
-  editor::FileType* ft_txt = new editor::FileType(kTxtFt);
-  file_types_.push_back(ft_txt);
-
-  // Files without extension name are considered as Plain Text file.
-  ext_ft_map_[wxEmptyString] = ft_txt;
-  ext_ft_map_[kTxtFtId] = ft_txt;
-
   // Load other file types from config file.
-  wxString ft_file = path::ResourceDir() + kFileTypesFile;
+  wxString ft_config_file = path::ResourceDir() + kFileTypesFile;
 
-  if (!LoadFtConfigFile(ft_file, ext_ft_map_, file_types_, internal_file_types_)) {
-    ShowError(wxString::Format(kTrCfgFileLoadFail, ft_file));
+  if (!ft_config_.Load(ft_config_file)) {
+    ShowError(wxString::Format(kTrCfgFileLoadFail, ft_config_file));
     return false;
   }
 

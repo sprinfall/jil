@@ -78,7 +78,7 @@ bool SaveBufferAs(editor::TextBuffer* buffer, wxWindow* parent) {
   buffer->set_file_path_name(file_path);
 
   // Get the new file type from the new file ext.
-  const editor::FileType& ft = wxGetApp().FileTypeFromExt(buffer->file_ext());
+  const editor::FileType& ft = wxGetApp().FileTypeFromFileName(buffer->file_name_object());
 
   // Update the ft plugin if the file type is changed.
   if (ft.id != old_ft_id) {

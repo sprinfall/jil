@@ -34,6 +34,8 @@ namespace luabridge {
 class LuaRef;
 }
 
+class wxFileName;
+
 #if JIL_SINGLE_INSTANCE
 class wxSingleInstanceChecker;
 #endif
@@ -67,14 +69,14 @@ public:
   int GetFileTypeCount() const;
   const editor::FileType* GetFileType(int index) const;
 
-  const editor::FileType& FileTypeFromExt(const wxString& ext) const;
+  const editor::FileType& FileTypeFromFileName(const wxFileName& fn) const;
 
   // Get ft plugin object.
   // If the ft plugin doesn't exist, it will be created.
   editor::FtPlugin* GetFtPlugin(const editor::FileType& ft);
 
-  // Get ft plugin object by file extension.
-  editor::FtPlugin* GetFtPlugin(const wxString& ext);
+  // Get ft plugin object by file name.
+  editor::FtPlugin* GetFtPluginByFileName(const wxFileName& fn);
 
   const std::vector<StatusBar::FieldInfo>& status_fields() const {
     return status_fields_;
@@ -197,13 +199,7 @@ private:
   editor::SharedTheme theme_;
   editor::Style* style_;
 
-  FileTypes file_types_;
-
-  // The ID of internal file types always starts with "jil-".
-  // Internal file types won't be displayed to the end user.
-  FileTypes internal_file_types_;
-
-  ExtFileTypeMap ext_ft_map_;
+  FtConfig ft_config_;
 
   std::vector<editor::FtPlugin*> ft_plugins_;
 
