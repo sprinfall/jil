@@ -64,12 +64,14 @@ bool FtConfig::Load(const wxString& ft_config_file) {
     Setting fn_ext_setting = setting.Get("fn_ext");
     if (fn_ext_setting) {
       std::string fn_ext = fn_ext_setting.GetString();
-      MapToFt(fn_ext, ft, fn_ext_ft_map_);
+      // File name extension should always be ASCII chars.
+      MapToFt(fn_ext, ft, false, fn_ext_ft_map_);
     } else {
       Setting fn_setting = setting.Get("fn");
       if (fn_setting) {
         std::string fn = fn_setting.GetString();
-        MapToFt(fn, ft, fn_ft_map_);
+        // File name itself could be non-ASCII chars.
+        MapToFt(fn, ft, true, fn_ft_map_);
       }
     }
   }
@@ -78,35 +80,55 @@ bool FtConfig::Load(const wxString& ft_config_file) {
 }
 
 const editor::FileType& FtConfig::GetByFileName(const wxFileName& fn) const {
-  FileTypeMap::const_iterator it;
+  wxString ext = fn.GetExt();
 
-  // Check file name firstly!
-  it = fn_ft_map_.find(fn.GetFullName());
-  if (it != fn_ft_map_.end()) {
-    return *(it->second);
+#if defined(__WXMSW__)
+  ext.MakeLower();
+#endif
+
+  FileTypeMap::const_iterator it = fn_ext_ft_map_.find(ext);
+  if (it == fn_ext_ft_map_.end()) {
+    // No matching, use Plain Text file type.
+    it = fn_ext_ft_map_.find(kTxtFtId);
   }
 
-  // Check file name extension.
-  it = fn_ext_ft_map_.find(fn.GetExt());
-  if (it != fn_ext_ft_map_.end()) {
-    return *(it->second);
-  }
+  // Check file name if it's Plain Text.
+  if (it->second->id == kTxtFtId) {
+    wxString name = fn.GetFullName();
 
-  // No matching, use Plain Text file type.
-  it = fn_ext_ft_map_.find(kTxtFtId);
-  assert(it != fn_ext_ft_map_.end());
+#if defined(__WXMSW__)
+    name.MakeLower();
+#endif
+
+    FileTypeMap::const_iterator it2 = fn_ft_map_.find(name);
+    if (it2 != fn_ft_map_.end()) {
+      it = it2;
+    }
+  }
 
   return *(it->second);
 }
 
 void FtConfig::MapToFt(const std::string& keys_str,
                        editor::FileType* ft,
+                       bool utf8,
                        FileTypeMap& ft_map) {
   std::vector<std::string> keys_array;
   boost::split(keys_array, keys_str, boost::is_any_of(","), boost::token_compress_on);
 
   for (size_t i = 0; i < keys_array.size(); ++i) {
-    wxString key = wxString::FromAscii(keys_array[i].c_str());
+    wxString key;
+
+    if (utf8) {
+      key = wxString::FromUTF8(keys_array[i].c_str());
+    } else {
+      key = wxString::FromAscii(keys_array[i].c_str());
+    }
+
+    // Ignore case for file names on Windows.
+#if defined(__WXMSW__)
+    key.MakeLower();
+#endif
 
     if (ft_map.find(key) == ft_map.end()) {
       ft_map[key] = ft;

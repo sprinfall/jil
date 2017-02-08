@@ -50,8 +50,10 @@ public:
   const editor::FileType& GetByFileName(const wxFileName& fn) const;
 
 private:
+  // \param utf8 Interpret keys_str as UTF8 string or not.
   void MapToFt(const std::string& keys_str,
                editor::FileType* ft,
+               bool utf8,
                FileTypeMap& ft_map);
 
 private:
