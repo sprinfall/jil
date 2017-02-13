@@ -10,7 +10,10 @@ namespace editor {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Quote::Quote(Lex lex, const std::wstring& start, const std::wstring& end, int flags)
+Quote::Quote(Lex lex,
+             const std::wstring& start,
+             const std::wstring& end,
+             int flags)
     : lex_(lex), start_(start), end_(end), flags_(flags)
     , ignore_case_(false) {
 }
@@ -28,7 +31,10 @@ size_t Quote::MatchStart(const std::wstring& str, size_t off) const {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-RegexQuote::RegexQuote(Lex lex, const std::wstring& start, const std::wstring& end, int flags)
+RegexQuote::RegexQuote(Lex lex,
+                       const std::wstring& start,
+                       const std::wstring& end,
+                       int flags)
     : Quote(lex, start, end, flags)
     , start_re_(NULL) {
   assert(!start_.empty());

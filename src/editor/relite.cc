@@ -298,7 +298,18 @@ bool Regex::Compile() {
           escaped = false;
           word.append(1, c);
         } else {
-          CompileWord(word);
+          // Repeat the last char of word.
+          if (!word.empty()) {
+            wchar_t lc = word[word.size() - 1];  // Last char
+
+            // Remove the last char from word.
+            word.resize(word.size() - 1);
+            CompileWord(word);
+
+            nodes_.push_back(new Atom(Atom::kNormal, lc));
+          } else {
+            CompileWord(word);
+          }
 
           Atom* atom = nodes_.empty() ? NULL : nodes_.back()->AsAtom();
           if (atom != NULL) {

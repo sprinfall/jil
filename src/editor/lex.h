@@ -53,7 +53,17 @@ enum LexConstant {
 
 enum LexIdentifier {
   kLexIdentifierOther = 0,
+
+  kLexIdentifierVariable,
+
+  // For Python, given
+  //   def f(): ...
+  // then f is a function identifier.
   kLexIdentifierFunction,
+
+  // For C++, given
+  //   class A { }
+  // then A is a class identifier.
   kLexIdentifierClass,
 };
 
@@ -70,7 +80,7 @@ enum LexStatement {
 enum LexType {
   kLexTypeOther = 0,
   kLexTypeQualifier,    // static, auto, register, const, etc.
-  kLexTypeStruct,       // struct, union, class, etc.
+  kLexTypeStruct,       // class, struct, union, etc.
 
   kLexTypeCount
 };
@@ -182,7 +192,10 @@ enum QuoteFlag {
 
 class Quote {
 public:
-  Quote(Lex lex, const std::wstring& start, const std::wstring& end, int flags);
+  Quote(Lex lex,
+        const std::wstring& start,
+        const std::wstring& end,
+        int flags);
 
   virtual ~Quote();
 
@@ -202,6 +215,13 @@ public:
     return flags_;
   }
 
+  void set_name(const std::string& name) {
+    name_ = name;
+  }
+  const std::string& name() const {
+    return name_;
+  }
+
   bool multi_line() const {
     return (flags_ & kQuoteMultiLine) != 0;
   }
@@ -218,9 +238,12 @@ public:
 
 protected:
   Lex lex_;
+
   std::wstring start_;
   std::wstring end_;
   int flags_;
+
+  std::string name_;  // Optional.
 
   // Match with case ignored. E.g., VB's comment: REM
   bool ignore_case_;
@@ -240,7 +263,10 @@ public:
 // The end of regex quote only supports back reference "\1".
 class RegexQuote : public Quote {
 public:
-  RegexQuote(Lex lex, const std::wstring& start, const std::wstring& end, int flags);
+  RegexQuote(Lex lex,
+             const std::wstring& start,
+             const std::wstring& end,
+             int flags);
   virtual ~RegexQuote();
 
   size_t MatchStart(const std::wstring& str, size_t off, std::wstring* concrete_end) const;

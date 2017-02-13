@@ -174,6 +174,9 @@ bool LoadLexFile(const wxString& lex_file, FtPlugin* ft_plugin) {
 
     Setting quote_setting = lex_setting.Get("quote");
     if (quote_setting) {
+      // Optional name.
+      std::string name = lex_setting.GetString("name");
+
       std::wstring start;
       std::wstring end;
       if (!ParseQuoteSetting(quote_setting, &start, &end)) {
@@ -190,9 +193,11 @@ bool LoadLexFile(const wxString& lex_file, FtPlugin* ft_plugin) {
 
       if (lex_setting.GetBool("use_regex")) {
         RegexQuote* regex_quote = new RegexQuote(lex, start, end, flags);
+        regex_quote->set_name(name);
         ft_plugin->AddRegexQuote(regex_quote);
       } else {
         Quote* quote = new Quote(lex, start, end, flags);
+        quote->set_name(name);
         ft_plugin->AddQuote(quote);
       }
 

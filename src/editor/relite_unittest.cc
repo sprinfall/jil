@@ -27,6 +27,22 @@ TEST(LiteRegex, Match_Basic) {
   EXPECT_EQ(str.size(), off);
 }
 
+TEST(LiteRegex, Match_RepeatNormalChar) {
+  std::wstring pattern = L"https?://";
+
+  relite::Regex regex(pattern, 0);
+
+  EXPECT_TRUE(regex.valid());
+
+  std::wstring str = L"http://";
+  size_t off = regex.Match(str, 0);
+  EXPECT_EQ(str.size(), off);
+
+  str = L"https://";
+  off = regex.Match(str, 0);
+  EXPECT_EQ(str.size(), off);
+}
+
 TEST(LiteRegex, Match_Wildcard) {
   std::wstring pattern = L"#\\s*include\\s*<.+>";
 
