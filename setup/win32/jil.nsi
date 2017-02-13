@@ -13,6 +13,9 @@ XPStyle on
 ; Product name displayed to the user.
 !define PRODUCT_NAME "Jil Text"
 
+!define PRODUCT_PUBLISHER "Chunting Gu"
+!define PRODUCT_WEB_SITE "https://github.com/sprinfall/jil"
+
 !define EXE_NAME "jil.exe"
 
 !define UNINST_EXE_NAME "uninst.exe"
@@ -61,6 +64,9 @@ Section "Jil Text"
   File "..\..\data\jilfiles\options.cfg"
   File "..\..\data\jilfiles\status_fields.cfg"
 
+  ; For the item in system Programs and Features list.
+  File "..\..\src\app\icon\editor.ico"
+
   File "${EXE_NAME}"
 
   WriteUninstaller "$INSTDIR\${UNINST_EXE_NAME}"
@@ -78,6 +84,16 @@ Section "Jil Text"
   ; Desktop
   CreateShortcut "$DESKTOP\${PRODUCT_NAME}.lnk" "$INSTDIR\${EXE_NAME}"
 
+  ; Add to system Programs and Features list.
+  !define PRODUCT_UNINST_KEY "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
+  WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayName" "${PRODUCT_NAME}"
+  WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
+  WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\editor.ico"
+  WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
+  ;  WriteRegStr "${PRODUCT_UNINST_KEY}" "GITRevNum" "${REVISION_NUMBER}"
+  WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
+  WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
+
 SectionEnd
 
 ; Uninstall section.
@@ -92,6 +108,7 @@ Section "Uninstall"
   Delete "$INSTDIR\file_types.cfg"
   Delete "$INSTDIR\options.cfg"
   Delete "$INSTDIR\status_fields.cfg"
+  Delete "$INSTDIR\editor.ico"
 
   Delete "$INSTDIR\${EXE_NAME}"
   Delete "$INSTDIR\${UNINST_EXE_NAME}"  ; Delete self.
@@ -102,6 +119,9 @@ Section "Uninstall"
 
   ; App data
   RMDir /r "$APPDATA\${PRODUCT_NAME}"
+
+  ; Remove from system Programs and Features list.
+  DeleteRegKey HKLM "${PRODUCT_UNINST_KEY}"
 
 SectionEnd
 
