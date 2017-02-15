@@ -163,12 +163,7 @@ void TextBook::Init() {
 }
 
 void TextBook::CreatePageWindow() {
-  using namespace editor;
-
-  // TODO: Txt ft has wrap infos, avoid this.
-  FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(kTxtFt);
-  TextBuffer* placeholder_buffer = new TextBuffer(kPlaceholderBufferId, ft_plugin, options_->file_encoding);
-  placeholder_page_ = new TextPage(placeholder_buffer);
+  CreatePlaceholderPage();
 
   page_window_ = new PageWindow(placeholder_page_);
   placeholder_page_->set_page_window(page_window_);
@@ -183,9 +178,25 @@ void TextBook::CreatePageWindow() {
   page_window_->SetTextFont(options_->fonts[FONT_TEXT]);
   page_window_->SetLinePadding(options_->line_padding);
 
-  page_window_->set_font_range(FontRange(kMinFontSize, kMaxFontSize));
+  page_window_->set_font_range(editor::FontRange(kMinFontSize, kMaxFontSize));
 
   page_panel_->GetSizer()->Add(page_window_, 1, wxEXPAND);
+}
+
+void TextBook::CreatePlaceholderPage() {
+  using namespace editor;
+
+  FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(kTxtFt);
+  TextBuffer* buffer = new TextBuffer(kPlaceholderBufferId, ft_plugin, options_->file_encoding);
+
+  // Never wrap line for placeholder page for performance.
+  if (buffer->view_options().wrap) {
+    ViewOptions view_options = buffer->view_options();
+    view_options.wrap = false;
+    buffer->set_view_options(view_options);
+  }
+
+  placeholder_page_ = new TextPage(buffer);
 }
 
 void TextBook::HandleTabMouseLeftUp(wxMouseEvent& evt) {

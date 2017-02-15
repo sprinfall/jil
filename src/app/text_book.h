@@ -72,6 +72,7 @@ protected:
 
   void Init();
   void CreatePageWindow();
+  void CreatePlaceholderPage();
 
   virtual void HandleTabMouseLeftUp(wxMouseEvent& evt) override;
   virtual void HandleTabMouseMiddleUp(wxMouseEvent& evt) override;

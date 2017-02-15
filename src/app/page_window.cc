@@ -106,17 +106,17 @@ void PageWindow::GetEditMenu(wxMenu* menu) {
 
 bool PageWindow::GetEditMenuState(int menu_id) {
   switch (menu_id) {
-    case ID_MENU_EDIT_UNDO:
-      return CanUndo();
+  case ID_MENU_EDIT_UNDO:
+    return CanUndo();
 
-    case ID_MENU_EDIT_REDO:
-      return CanRedo();
+  case ID_MENU_EDIT_REDO:
+    return CanRedo();
 
-    case ID_MENU_EDIT_PASTE:
-      return !editor::IsClipboardEmpty();
+  case ID_MENU_EDIT_PASTE:
+    return !editor::IsClipboardEmpty();
 
-    default:
-      return true;
+  default:
+    return true;
   }
 }
 

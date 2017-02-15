@@ -16,6 +16,7 @@ int ReadBytes(const wxString& filename,
               size_t max_bytes = std::wstring::npos);
 
 // Save file in bytes.
+// The bytes could be empty.
 // Return 0 on success, 1 on IO error.
 int SaveBytes(const wxString& filename, const char* bom, const std::string& bytes);
 
