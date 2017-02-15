@@ -375,65 +375,67 @@ bool TextBuffer::LoadFile(const wxFileName& fn, int cjk_filters) {
 }
 
 FileError TextBuffer::SaveFile() {
+  // Bytes to write to the file.
+  std::string bytes;
+    const char* bom = NULL;
+  EncodingId new_file_encoding = ENCODING_COUNT;
+
   std::wstring text;
   GetText(&text);
 
   // Convert back to bytes with the original encoding.
-
-  EncodingId new_file_encoding = ENCODING_COUNT;
-
-  const char* bom = NULL;
-  bool conv_need_delete = true;
-  wxMBConv* conv = GetCsConv(file_encoding_, &bom, &conv_need_delete);
-  if (conv == NULL) {
-    // Save in UTF-8 instead.
-    conv = &wxConvUTF8;
-    conv_need_delete = false;
-    bom = NULL;
-    new_file_encoding = ENCODING_UTF8;
-  }
-
-  // Get the size in bytes.
-  // FIXME: Cannot use std::auto_ptr! Strange!
-  size_t count = conv->FromWChar(NULL, 0, text.c_str(), text.size());
-  if (count == wxCONV_FAILED) {
-    // Can't save in original encoding.
-    // Example: Original encoding is ASCII, but non-ASCII characters are added.
-    // Save in UTF-8 instead.
-    if (conv_need_delete) {
-      delete conv;
+  if (!text.empty()) {
+    bool conv_need_delete = true;
+    wxMBConv* conv = GetCsConv(file_encoding_, &bom, &conv_need_delete);
+    if (conv == NULL) {
+      // Save in UTF-8 instead.
+      conv = &wxConvUTF8;
+      conv_need_delete = false;
+      bom = NULL;
+      new_file_encoding = ENCODING_UTF8;
     }
-    conv = &wxConvUTF8;
-    conv_need_delete = false;
 
-    // Get the size in bytes using UTF-8.
-    count = conv->FromWChar(NULL, 0, text.c_str(), text.size());
+    // Get the size in bytes.
+    // FIXME: Cannot use std::auto_ptr! Strange!
+    size_t count = conv->FromWChar(NULL, 0, text.c_str(), text.size());
     if (count == wxCONV_FAILED) {
-      // Still failed!
+      // Can't save in original encoding.
+      // Example: Original encoding is ASCII, but non-ASCII characters are added.
+      // Save in UTF-8 instead.
       if (conv_need_delete) {
         delete conv;
-        conv = NULL;
       }
-      return kEncodingError;
+      conv = &wxConvUTF8;
+      conv_need_delete = false;
+
+      // Get the size in bytes using UTF-8.
+      count = conv->FromWChar(NULL, 0, text.c_str(), text.size());
+      if (count == wxCONV_FAILED) {
+        // Still failed!
+        if (conv_need_delete) {
+          delete conv;
+          conv = NULL;
+        }
+        return kEncodingError;
+      }
+
+      bom = NULL;  // UTF-8 without BOM
+      new_file_encoding = ENCODING_UTF8;
     }
 
-    bom = NULL;  // UTF-8 without BOM
-    new_file_encoding = ENCODING_UTF8;
-  }
+    // Allocate buffer for the bytes.
+    bytes.resize(count);
 
-  // Allocate buffer for the bytes.
-  std::string bytes;
-  bytes.resize(count);
+    // Convert.
+    conv->FromWChar(&bytes[0], count, &text[0], text.size());
+    if (bytes[count - 1] == '\0') {
+      --count;
+    }
 
-  // Convert.
-  conv->FromWChar(&bytes[0], count, &text[0], text.size());
-  if (bytes[count - 1] == '\0') {
-    --count;
-  }
-
-  if (conv_need_delete) {
-    delete conv;
-    conv = NULL;
+    if (conv_need_delete) {
+      delete conv;
+      conv = NULL;
+    }
   }
 
   // Save.

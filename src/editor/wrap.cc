@@ -183,7 +183,9 @@ int WrapHelper::UpdateLineWrap(Coord ln) {
 }
 
 bool WrapHelper::Wrap(int* wrap_delta) {
-  *wrap_delta = 0;
+  if (wrap_delta != NULL) {
+    *wrap_delta = 0;
+  }
   bool wrap_changed = false;
 
   if (client_width_ <= 0) {
@@ -204,7 +206,9 @@ bool WrapHelper::Wrap(int* wrap_delta) {
                        client_width_,
                        &delta)) {
       wrap_changed = true;
-      *wrap_delta += delta;
+      if (wrap_delta != NULL) {
+        *wrap_delta += delta;
+      }
     }
 
     wrapped_line_count_ += wrap_info.WrapCount() + 1;
@@ -214,18 +218,21 @@ bool WrapHelper::Wrap(int* wrap_delta) {
 }
 
 bool WrapHelper::Unwrap(int* wrap_delta) {
-  const Coord line_count = buffer_->LineCount();
+  Coord line_count = buffer_->LineCount();
   assert(line_count == CoordCast(wrap_infos_.size()));
 
-  *wrap_delta = 0;
-
+  int delta = 0;
   for (Coord ln = 1; ln <= line_count; ++ln) {
-    *wrap_delta -= wrap_infos_[ln - 1].Unwrap();
+    delta -= wrap_infos_[ln - 1].Unwrap();
   }
 
   wrapped_line_count_ = 0;
 
-  return *wrap_delta != 0;
+  if (wrap_delta != NULL) {
+    *wrap_delta = delta;
+  }
+
+  return delta != 0;
 }
 
 Coord WrapHelper::WrapLineNr(Coord ln) const {

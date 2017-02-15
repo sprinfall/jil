@@ -29,28 +29,40 @@ void PageWindow::SetPage(TextPage* page) {
   assert(page != NULL);
   assert(page->buffer() != NULL);
 
-  if (page_ != page) {
-    page->Detach();
-    buffer_->DetachListener(this);
-
-    GetState(page_->state());
-    page_->Attach();
-
-    page_ = page;
-    buffer_ = page_->buffer();
-    SetState(page_->state());
-
-    HandleTextChange();
-    UpdateCaretPosition();
-
-    // NOTE: Don't do this inside SetState().
-    // Scroll to view start AFTER set virtual size.
-    Scroll(page_->state()->view_start);
-
-    Refresh();
-
-    buffer_->AttachListener(this);
+  if (page_ == page) {
+    return;
   }
+
+  // The text page will not listen to its buffer any more.
+  // Instead, the page window will listen.
+  page->Detach();
+
+  // The page window will not listen to its buffer any more. 
+  buffer_->DetachListener(this);
+
+  // Save the view state to the text page.
+  GetState(page_->state());
+
+  // Let the text page listen to its buffer.
+  page_->Attach();
+
+  // Set text page and buffer.
+  page_ = page;
+  buffer_ = page_->buffer();
+
+  // Apply the view state from the new text page.
+  SetState(page_->state());
+
+  HandleTextChange();
+  UpdateCaretPosition();
+
+  // NOTE: Don't do this inside SetState().
+  // Scroll to view start AFTER set virtual size.
+  Scroll(page_->state()->view_start);
+
+  Refresh();
+
+  buffer_->AttachListener(this);
 }
 
 bool PageWindow::IsPagePlaceholder() const {
@@ -140,8 +152,6 @@ void PageWindow::HandleTextRightUp(wxMouseEvent& evt) {
 }
 
 void PageWindow::GetState(PageState* state) const {
-  assert(!!wrap_helper_ == view_options_.wrap);
-
   state->allow_text_change = allow_text_change_;
 
   state->view_options = view_options_;
@@ -159,8 +169,6 @@ void PageWindow::GetState(PageState* state) const {
 }
 
 void PageWindow::SetState(PageState* state) {
-  assert(!!state->wrap_helper == state->view_options.wrap);
-
   allow_text_change_ = state->allow_text_change;
 
   view_options_ = state->view_options;
@@ -178,13 +186,19 @@ void PageWindow::SetState(PageState* state) {
   wrap_helper_ = state->wrap_helper;
   state->wrap_helper.reset();
 
+  if (view_options_.wrap) {
+    // Create the wrap helper if necessary.
+    if (!wrap_helper_) {
+      wrap_helper()->Wrap(NULL);  
+    }
+  }
+
   // Rewrap if the client width has been changed.
   if (wrap_helper_) {
     int text_width = GetTextClientWidth();
     if (text_width != wrap_helper_->client_width()) {
       wrap_helper_->set_client_width(text_width);
-      int wrap_delta = 0;  // Not used
-      wrap_helper_->Wrap(&wrap_delta);
+      wrap_helper_->Wrap(NULL);
     }
   }
 }

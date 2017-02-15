@@ -110,7 +110,7 @@ public:
     return state_;
   }
 
-  // Attach self to buffer.
+  // Attach self to the buffer.
   void Attach();
 
   // Detach self from the buffer.

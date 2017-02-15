@@ -20,6 +20,7 @@ TextPage::TextPage(editor::TextBuffer* buffer)
     : page_window_(NULL)
     , buffer_(buffer) {
   state_ = new PageState();
+  state_->view_options = buffer->view_options();
 }
 
 TextPage::~TextPage() {

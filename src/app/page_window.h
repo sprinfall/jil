@@ -20,6 +20,7 @@ public:
     return page_;
   }
 
+  // Switch to the given text page.
   void SetPage(TextPage* page);
 
   bool IsPagePlaceholder() const;

@@ -167,14 +167,14 @@ public:
   }
 
   // Wrap all lines.
-  // @wrap_delta is the wrap count increased (> 0) or decreased (< 0).
+  // \param wrap_delta The wrap count increased (> 0) or decreased (< 0)), optional.
   // Return true if the wrap offsets change.
-  bool Wrap(int* wrap_delta);
+  bool Wrap(int* wrap_delta = NULL);
 
   // Unwrap all lines.
-  // @wrap_delta is the wrap count increased (> 0) or decreased (< 0).
+  // \param wrap_delta The wrap count increased (> 0) or decreased (< 0), optional.
   // Return true if the wrap offsets change.
-  bool Unwrap(int* wrap_delta);
+  bool Unwrap(int* wrap_delta = NULL);
 
   // Given 3 lines wrapped as:
   //  1 ABC
