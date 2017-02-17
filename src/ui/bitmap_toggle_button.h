@@ -4,9 +4,8 @@
 
 // A replacement of wxBitmapToggleButton.
 
-#include "ui/button_base.h"
+#include "ui/bitmap_button_base.h"
 #include "wx/tglbtn.h"  // For wxEVT_TOGGLEBUTTON, etc.
-#include "wx/bitmap.h"
 
 namespace jil {
 namespace ui {
@@ -16,7 +15,7 @@ namespace ui {
 //   Event type: wxEVT_TOGGLEBUTTON
 //   Macro: EVT_TOGGLEBUTTON(id, func)
 
-class BitmapToggleButton : public ButtonBase {
+class BitmapToggleButton : public BitmapButtonBase {
   DECLARE_CLASS(BitmapToggleButton)
   DECLARE_NO_COPY_CLASS(BitmapToggleButton)
 
@@ -26,8 +25,8 @@ public:
 
   bool Create(wxWindow* parent, wxWindowID id);
 
-  void set_user_best_size(const wxSize& user_best_size) {
-    user_best_size_ = user_best_size;
+  void set_auto_switch(bool auto_switch) {
+    auto_switch_ = auto_switch;
   }
 
   // Switch toggle state.
@@ -43,21 +42,18 @@ public:
     Refresh();
   }
 
-  void SetBitmap(const wxBitmap& bitmap);
+  void SetToggleBitmaps(const wxBitmap& normal, const wxBitmap& pressed) {
+    SetBitmaps(normal, pressed, pressed, normal);
+  }
 
 protected:
-  virtual wxSize DoGetBestSize() const override;
+  ButtonStyle::State GetState() const override;
 
-  virtual ButtonStyle::State GetState() const override;
-
-  virtual void DrawForeground(wxDC& dc, ButtonStyle::State state) override;
-
-  virtual void PostEvent() override;
+  void PostEvent() override;
 
 private:
-  wxSize user_best_size_;
   bool toggle_;
-  wxBitmap bitmap_;
+  bool auto_switch_;
 };
 
 }  // namespace ui

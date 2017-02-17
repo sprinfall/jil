@@ -3,14 +3,18 @@
 #pragma once
 
 // A replacement of wxBitmapButton.
+// Note:
+// BitmapButton emits the same event as wxBitmapButton:
+//   Event type: wxEVT_BUTTON
+//   Macro: EVT_BUTTON(id, func)
 
-#include "ui/button_base.h"
-#include "wx/bitmap.h"
+#include "ui/bitmap_button_base.h"
+#include "wx/button.h" // For wxEVT_BUTTON, etc.
 
 namespace jil {
 namespace ui {
 
-class BitmapButton : public ButtonBase {
+class BitmapButton : public BitmapButtonBase {
   DECLARE_CLASS(BitmapButton)
   DECLARE_NO_COPY_CLASS(BitmapButton)
 
@@ -20,26 +24,10 @@ public:
 
   bool Create(wxWindow* parent, wxWindowID id);
 
-  void set_user_best_size(const wxSize& user_best_size) {
-    user_best_size_ = user_best_size;
-  }
-
-  void SetBitmap(const wxBitmap& bitmap) {
-    bitmap_ = bitmap;
-  }
-
 protected:
-  virtual wxSize DoGetBestSize() const override;
+  ButtonStyle::State GetState() const override;
 
-  virtual ButtonStyle::State GetState() const override;
-
-  virtual void DrawForeground(wxDC& dc, ButtonStyle::State state) override;
-
-  virtual void PostEvent() override;
-
-private:
-  wxSize user_best_size_;
-  wxBitmap bitmap_;
+  void PostEvent() override;
 };
 
 }  // namespace ui

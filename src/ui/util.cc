@@ -43,5 +43,12 @@ void DrawTextInRect(wxDC& dc, const wxString& text, const wxRect& rect) {
   dc.DrawText(text.Mid(0, i) + kEllipsis, rect.x, rect.y);
 }
 
+wxSize GetBitmapSize(const wxBitmap& bitmap) {
+  if (!bitmap.IsOk()) {
+    return wxDefaultSize;
+  }
+  return wxSize(bitmap.GetWidth(), bitmap.GetHeight());
+}
+
 }  // namespace ui
 }  // namespace jil

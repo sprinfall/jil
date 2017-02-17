@@ -16,14 +16,20 @@ TextButton::~TextButton() {
 bool TextButton::Create(wxWindow* parent,
                         wxWindowID id,
                         const wxString& label) {
-  if (!ButtonBase::Create(parent, id, label)) {
+  if (!ButtonBase::Create(parent, id)) {
     return false;
   }
+
+  SetLabel(label);
 
   return true;
 }
 
 wxSize TextButton::DoGetBestSize() const {
+  if (user_best_size_ != wxDefaultSize) {
+    return user_best_size_;
+  }
+
   wxSize best_size;
   GetTextExtent(GetLabel(), &best_size.x, &best_size.y);
   best_size += padding_;
@@ -32,14 +38,16 @@ wxSize TextButton::DoGetBestSize() const {
 }
 
 ButtonStyle::State TextButton::GetState() const {
-  if (!IsEnabled()) {
+  if (!IsThisEnabled()) {  // NOTE: Don't use IsEnabled()!
     return ButtonStyle::DISABLED;
   }
 
   if (pressed_) {
-    return hover_ ? ButtonStyle::PRESSED_HOVER : ButtonStyle::PRESSED;
+    return ButtonStyle::PRESSED;
+  } else if (hover_) {
+    return ButtonStyle::HOVER;
   } else {
-    return hover_ ? ButtonStyle::NORMAL_HOVER : ButtonStyle::NORMAL;
+    return ButtonStyle::NORMAL;
   }
 }
 

@@ -12,19 +12,15 @@ class ButtonStyle {
 public:
   enum Part {
     FG = 0,
-    BG1,
-    BG2,  // Optional, use BG1 if not provided.
-    BG3,  // Optional, use BG2 if not provided.
-    BORDER_OUTER,
-    BORDER_INNER,  // Optional, use BORDER_OUTER if not provided.
+    BG,
+    BORDER,
     PARTS,
   };
 
   enum State {
     NORMAL = 0,
-    NORMAL_HOVER,
+    HOVER,
     PRESSED,
-    PRESSED_HOVER,
     DISABLED,
     STATES,
   };

@@ -339,12 +339,12 @@ void FindPanel::SetFindString(const wxString& find_string) {
 void FindPanel::ReapplyTheme() {
   assert(theme_);
 
-  button_style_ = ButtonStyleFromTheme(theme_->GetTheme(THEME_BUTTON));
+  //button_style_ = ButtonStyleFromTheme(theme_->GetTheme(THEME_BUTTON));
 
   folders_bitmap_->SetBitmap(theme_->GetImage(IMAGE_FOLDERS));
   folders_bitmap_->SetForegroundColour(theme_->GetColor(COLOR_FG));
 
-  add_folder_button_->SetBitmap(theme_->GetImage(IMAGE_ADD_FOLDER));
+  add_folder_button_->SetBitmaps(theme_->GetImage(IMAGE_ADD_FOLDER));
 
 #if JIL_BMP_BUTTON_FIND_OPTIONS
   location_button_->SetBitmap(theme_->GetImage(IMAGE_LOCATION));

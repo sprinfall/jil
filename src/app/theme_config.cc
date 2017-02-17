@@ -81,12 +81,8 @@ static void ReadStyle(Setting parent,
 static SharedTheme GetButtonTheme(Setting button_setting) {
   assert(button_setting);
 
-  const char* kButtonParts[] = {
-    "fg", "bg1", "bg2", "bg3", "border_outer", "border_inner"
-  };
-  const char* kButtonStates[] = {
-    "normal", "hover", "pressed", "pressed_hover", "disabled"
-  };
+  const char* kButtonParts[] = { "fg", "bg", "border" };
+  const char* kButtonStates[] = { "normal", "hover", "pressed", "disabled" };
 
   SharedTheme button_theme(new Theme(ui::ButtonStyle::PARTS));
 

@@ -27,6 +27,8 @@ protected:
   virtual void DrawForeground(wxDC& dc, ButtonStyle::State state) override;
 
   virtual void PostEvent() override;
+
+private:
 };
 
 }  // namespace ui

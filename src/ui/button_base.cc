@@ -11,6 +11,7 @@ BEGIN_EVENT_TABLE(ButtonBase, wxControl)
 EVT_PAINT               (ButtonBase::OnPaint)
 EVT_LEFT_DOWN           (ButtonBase::OnMouseLeftDown)
 EVT_LEFT_UP             (ButtonBase::OnMouseLeftUp)
+EVT_LEFT_DCLICK         (ButtonBase::OnMouseLeftDClick)
 EVT_ENTER_WINDOW        (ButtonBase::OnMouseEnter)
 EVT_LEAVE_WINDOW        (ButtonBase::OnMouseLeave)
 EVT_MOUSE_CAPTURE_LOST  (ButtonBase::OnMouseCaptureLost)
@@ -21,28 +22,29 @@ END_EVENT_TABLE()
 
 ButtonBase::ButtonBase(SharedButtonStyle style)
     : style_(style)
+    , accepts_focus_(true)
     , click_type_(kClickOnUp)
-    , pressed_(false)
     , hover_(false)
-    , accepts_focus_(true) {
+    , pressed_(false)
+    , user_best_size_(wxDefaultSize) {
 }
 
 ButtonBase::~ButtonBase() {
 }
 
-bool ButtonBase::Create(wxWindow* parent, wxWindowID id, const wxString& label) {
-  assert(style_);
-
+bool ButtonBase::Create(wxWindow* parent, wxWindowID id) {
   if (!wxControl::Create(parent, id, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)) {
     return false;
   }
 
-  SetLabel(label);
+  SetExtraStyle(GetExtraStyle() | wxWS_EX_PROCESS_UI_UPDATES);
 
   SetBackgroundStyle(wxBG_STYLE_PAINT);
   SetBackgroundColour(parent->GetBackgroundColour());
 
   InitPadding();
+
+  SetCursor(wxCURSOR_HAND);
 
   return true;
 }
@@ -70,71 +72,23 @@ void ButtonBase::OnPaint(wxPaintEvent& evt) {
 
   ButtonStyle::State state = GetState();
 
-  wxColour bg1 = style_->GetColor(ButtonStyle::BG1, state);
-  wxColour bg2 = style_->GetColor(ButtonStyle::BG2, state);
-  wxColour bg3 = style_->GetColor(ButtonStyle::BG3, state);
-  wxColour border_outer = style_->GetColor(ButtonStyle::BORDER_OUTER, state);
-  wxColour border_inner = style_->GetColor(ButtonStyle::BORDER_INNER, state);
+  wxColour bg = style_->GetColor(ButtonStyle::BG, state);
+  wxColour border = style_->GetColor(ButtonStyle::BORDER, state);
 
   const wxRect client_rect = GetClientRect();
 
-  // Background rects
-  wxRect inner_rect = client_rect;
-  inner_rect.Deflate(2, 2);
-
-  wxRect rect1 = inner_rect;
-  rect1.height = inner_rect.height / 2 - 2;
-
-  wxRect rect2 = inner_rect;
-  rect2.y = inner_rect.y + rect1.height;
-  rect2.height = inner_rect.height - rect1.height - 2;
-
-  wxRect rect3 = inner_rect;
-  rect3.y = inner_rect.y + rect1.height + rect2.height;
-  rect3.height = 2;
-
   // Background
-  dc.GradientFillLinear(rect1, bg2, bg1, wxNORTH);
+  wxRect bg_rect = client_rect;
+  bg_rect.Deflate(1, 1);
+  dc.SetPen(wxPen(bg));
+  dc.SetBrush(wxBrush(bg));
+  dc.DrawRectangle(bg_rect);
 
-  dc.SetPen(wxPen(bg2));
-  dc.SetBrush(wxBrush(bg2));
-  dc.DrawRectangle(rect2);
-
-  dc.SetPen(wxPen(bg3));
-  dc.SetBrush(wxBrush(bg3));
-  dc.DrawRectangle(rect3);
-
-  // Borders
-  dc.SetBrush(*wxTRANSPARENT_BRUSH);
-
+  // Border
   wxRect border_rect = client_rect;
-  dc.SetPen(wxPen(border_outer));
+  dc.SetPen(wxPen(border));
+  dc.SetBrush(*wxTRANSPARENT_BRUSH);
   dc.DrawRectangle(border_rect);
-
-  border_rect.Deflate(1, 1);
-  dc.SetPen(wxPen(border_inner));
-  dc.DrawRectangle(border_rect);
-
-  // Draw 2 more inner borders.
-  if (state == ButtonStyle::NORMAL_HOVER || state == ButtonStyle::PRESSED_HOVER) {
-    int r = border_inner.Red();
-    int g = border_inner.Green();
-    int b = border_inner.Blue();
-
-    int delta_r = (bg2.Red() - r) / 3;
-    int delta_g = (bg2.Green() - g) / 3;
-    int delta_b = (bg2.Blue() - b) / 3;
-
-    for (size_t i = 0; i < 2; ++i) {
-      r += delta_r;
-      g += delta_g;
-      b += delta_b;
-
-      border_rect.Deflate(1, 1);
-      dc.SetPen(wxPen(wxColour(r, g, b)));
-      dc.DrawRectangle(border_rect);
-    }
-  }
 
   // Foreground
   DrawForeground(dc, state);
@@ -158,7 +112,9 @@ void ButtonBase::OnMouseLeftDown(wxMouseEvent& evt) {
 void ButtonBase::OnMouseLeftUp(wxMouseEvent& evt) {
   if (HasCapture()) {
     ReleaseMouse();
+  }
 
+  if (pressed_) {
     if (click_type_ == kClickOnUp) {
       if (GetClientRect().Contains(evt.GetPosition())) {
         PostEvent();
@@ -169,6 +125,26 @@ void ButtonBase::OnMouseLeftUp(wxMouseEvent& evt) {
   pressed_ = false;
   Refresh();
 
+  evt.Skip();
+}
+
+// NOTE:
+// If you double click this control, the mouse events would be:
+//   - Left Down
+//   - Left Up
+//   - Left DClick
+//   - Left Up
+// There won't be two Left Down, instead the second Left Down is replaced
+// by Left DClick.
+void ButtonBase::OnMouseLeftDClick(wxMouseEvent& evt) {
+  pressed_ = true;
+
+  // NOTE: Don't capture mouse.
+  if (click_type_ == kClickOnDown) {
+    PostEvent();
+  }
+
+  Refresh();
   evt.Skip();
 }
 

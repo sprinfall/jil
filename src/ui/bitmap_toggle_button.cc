@@ -1,70 +1,47 @@
 #include "ui/bitmap_toggle_button.h"
-#include "wx/dcclient.h"
 
 namespace jil {
 namespace ui {
 
-IMPLEMENT_CLASS(BitmapToggleButton, ButtonBase);
+IMPLEMENT_CLASS(BitmapToggleButton, BitmapButtonBase);
 
 BitmapToggleButton::BitmapToggleButton(SharedButtonStyle style)
-    : ButtonBase(style), toggle_(false) {
+    : BitmapButtonBase(style), toggle_(false), auto_switch_(true) {
 }
 
 BitmapToggleButton::~BitmapToggleButton() {
 }
 
 bool BitmapToggleButton::Create(wxWindow* parent, wxWindowID id) {
-  if (!ButtonBase::Create(parent, id, wxEmptyString)) {
+  if (!BitmapButtonBase::Create(parent, id)) {
     return false;
   }
 
   return true;
 }
 
-wxSize BitmapToggleButton::DoGetBestSize() const {
-  if (user_best_size_ != wxDefaultSize) {
-    return user_best_size_;
-  }
-
-  if (bitmap_.IsOk()) {
-    return wxSize(bitmap_.GetWidth(), bitmap_.GetHeight());
-  }
-
-  return wxDefaultSize;
-}
-
-void BitmapToggleButton::SetBitmap(const wxBitmap& bitmap) {
-  bitmap_ = bitmap;
-}
-
 ButtonStyle::State BitmapToggleButton::GetState() const {
-  if (!IsEnabled()) {
+  if (!IsThisEnabled()) {  // NOTE: Don't use IsEnabled()!
     return ButtonStyle::DISABLED;
   }
 
   if (toggle_ || pressed_) {
-    return hover_ ? ButtonStyle::PRESSED_HOVER : ButtonStyle::PRESSED;
+    return ButtonStyle::PRESSED;
+  } else if (hover_) {
+    return ButtonStyle::HOVER;
   } else {
-    return hover_ ? ButtonStyle::NORMAL_HOVER : ButtonStyle::NORMAL;
-  }
-}
-
-void BitmapToggleButton::DrawForeground(wxDC& dc, ButtonStyle::State state) {
-  if (bitmap_.IsOk()) {
-    wxRect rect = GetClientRect();
-    int x = (rect.GetWidth() - bitmap_.GetWidth()) / 2;
-    int y = (rect.GetHeight() - bitmap_.GetHeight()) / 2;
-    dc.DrawBitmap(bitmap_, x, y, true);
+    return ButtonStyle::NORMAL;
   }
 }
 
 void BitmapToggleButton::PostEvent() {
-  toggle_ = !toggle_;
+  if (auto_switch_) {
+    toggle_ = !toggle_;
+  }
 
   wxCommandEvent toggle_evt(wxEVT_TOGGLEBUTTON, GetId());
   toggle_evt.SetEventObject(this);
-  // Note: SetInt() affects IsChecked().
-  toggle_evt.SetInt(toggle_ ? 1 : 0);
+  toggle_evt.SetInt(toggle_ ? 1 : 0);  // Note: SetInt() affects IsChecked().
   GetParent()->GetEventHandler()->AddPendingEvent(toggle_evt);
 }
 

@@ -5,6 +5,8 @@ endif()
 set(SRCS
     bitmap_button.cc
     bitmap_button.h
+    bitmap_button_base.cc
+    bitmap_button_base.h
     bitmap_toggle_button.cc
     bitmap_toggle_button.h
     button_base.cc
