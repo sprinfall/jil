@@ -30,6 +30,8 @@ public:
 
   void SetBitmaps(const wxBitmap& bitmap);
 
+  void SetBitmapsND(const wxBitmap& normal, const wxBitmap& disabled);
+
 protected:
   wxSize DoGetBestSize() const override;
 

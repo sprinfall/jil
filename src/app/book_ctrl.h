@@ -111,7 +111,10 @@ public:
 
   enum ImageId {
     IMAGE_TAB_CLOSE = 0,  // Close icon on each tab.
-    IMAGE_TAB_EXPAND,     // Expand icon on right side.
+
+    // Expand button on right side.
+    IMAGE_TAB_EXPAND,
+    IMAGE_TAB_EXPAND_DISABLED,
 
     IMAGES,
   };

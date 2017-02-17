@@ -426,7 +426,10 @@ void BookCtrl::CreateTabPanel() {
   ui::SharedButtonStyle button_style = ButtonStyleFromTheme(theme_->GetTheme(BookCtrl::THEME_BUTTON));
   tab_expand_button_ = new ui::BitmapButton(button_style);
   tab_expand_button_->Create(tab_panel_, ID_TAB_EXPAND_BUTTON);
-  tab_expand_button_->SetBitmaps(theme_->GetImage(BookCtrl::IMAGE_TAB_EXPAND));
+
+  tab_expand_button_->SetBitmapsND(theme_->GetImage(BookCtrl::IMAGE_TAB_EXPAND),
+                                   theme_->GetImage(BookCtrl::IMAGE_TAB_EXPAND_DISABLED));
+
   tab_expand_button_->set_click_type(ui::BitmapButton::kClickOnDown);
 
   // Layout

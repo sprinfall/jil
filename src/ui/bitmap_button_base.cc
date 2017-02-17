@@ -36,6 +36,10 @@ void BitmapButtonBase::SetBitmaps(const wxBitmap& bitmap) {
   SetBitmaps(bitmap, bitmap, bitmap, bitmap);
 }
 
+void BitmapButtonBase::SetBitmapsND(const wxBitmap& normal, const wxBitmap& disabled) {
+  SetBitmaps(normal, normal, normal, disabled);
+}
+
 wxSize BitmapButtonBase::DoGetBestSize() const {
   if (user_best_size_ != wxDefaultSize) {
     return user_best_size_;

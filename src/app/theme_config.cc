@@ -169,6 +169,7 @@ bool LoadThemeFile(const wxString& theme_folder,
 
     tb_theme->SetImage(BookCtrl::IMAGE_TAB_CLOSE, GetImage(image_dir, wxT("tab_close")));
     tb_theme->SetImage(BookCtrl::IMAGE_TAB_EXPAND, GetImage(image_dir, wxT("tab_expand")));
+    tb_theme->SetImage(BookCtrl::IMAGE_TAB_EXPAND_DISABLED, GetImage(image_dir, wxT("tab_expand_disabled")));
 
     Setting button_setting = tb_setting.Get("button", Setting::kGroup);
     if (button_setting) {
