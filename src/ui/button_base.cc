@@ -26,7 +26,9 @@ ButtonBase::ButtonBase(SharedButtonStyle style)
     , click_type_(kClickOnUp)
     , hover_(false)
     , pressed_(false)
-    , user_best_size_(wxDefaultSize) {
+    , user_best_size_(wxDefaultSize)
+    , draw_bg_(true)
+    , draw_border_(true) {
 }
 
 ButtonBase::~ButtonBase() {
@@ -63,6 +65,28 @@ void ButtonBase::InitPadding() {
   padding_.Set(cw, cw / 2);
 }
 
+void ButtonBase::DrawBg(wxDC& dc, ButtonStyle::State state) {
+  if (!draw_border_ && !draw_bg_) {
+    return;
+  }
+
+  if (draw_border_) {
+    wxColour border = style_->GetColor(ButtonStyle::BORDER, state);
+    dc.SetPen(wxPen(border));
+  } else {
+    dc.SetPen(*wxTRANSPARENT_PEN);
+  }
+
+  if (draw_bg_) {
+    wxColour bg = style_->GetColor(ButtonStyle::BG, state);
+    dc.SetBrush(wxBrush(bg));
+  } else {
+    dc.SetBrush(*wxTRANSPARENT_BRUSH);
+  }
+
+  dc.DrawRectangle(GetClientRect());
+}
+
 void ButtonBase::OnPaint(wxPaintEvent& evt) {
   wxAutoBufferedPaintDC dc(this);
 #if !wxALWAYS_NATIVE_DOUBLE_BUFFER
@@ -71,27 +95,8 @@ void ButtonBase::OnPaint(wxPaintEvent& evt) {
 #endif
 
   ButtonStyle::State state = GetState();
-
-  wxColour bg = style_->GetColor(ButtonStyle::BG, state);
-  wxColour border = style_->GetColor(ButtonStyle::BORDER, state);
-
-  const wxRect client_rect = GetClientRect();
-
-  // Background
-  wxRect bg_rect = client_rect;
-  bg_rect.Deflate(1, 1);
-  dc.SetPen(wxPen(bg));
-  dc.SetBrush(wxBrush(bg));
-  dc.DrawRectangle(bg_rect);
-
-  // Border
-  wxRect border_rect = client_rect;
-  dc.SetPen(wxPen(border));
-  dc.SetBrush(*wxTRANSPARENT_BRUSH);
-  dc.DrawRectangle(border_rect);
-
-  // Foreground
-  DrawForeground(dc, state);
+  DrawBg(dc, state);
+  DrawFg(dc, state);
 }
 
 void ButtonBase::OnMouseLeftDown(wxMouseEvent& evt) {

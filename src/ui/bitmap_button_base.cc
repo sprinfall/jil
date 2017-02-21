@@ -47,7 +47,7 @@ wxSize BitmapButtonBase::DoGetBestSize() const {
   return GetBitmapSize(bitmaps_[ButtonStyle::NORMAL]);
 }
 
-void BitmapButtonBase::DrawForeground(wxDC& dc, ButtonStyle::State state) {
+void BitmapButtonBase::DrawFg(wxDC& dc, ButtonStyle::State state) {
   const wxBitmap& bitmap = bitmaps_[state];
   if (bitmap.IsOk()) {
     wxRect rect = GetClientRect();

@@ -20,10 +20,10 @@ class wxTextCtrl;
 namespace jil {
 
 namespace ui {
+class BitmapButtonBase;
 class BitmapButton;
 class BitmapToggleButton;
 class Label;
-class Separator;
 class TextButton;
 }  // namespace ui
 
@@ -64,14 +64,19 @@ public:
   };
 
   enum ImageId {
-    IMAGE_HISTORY = 0,
-#if JIL_BMP_BUTTON_FIND_OPTIONS
-    IMAGE_LOCATION,
+    IMAGE_LOCATION_PAGE = 0,
+    IMAGE_LOCATION_ALL_PAGES,
+    IMAGE_LOCATION_FOLDERS,
     IMAGE_CASE_SENSITIVE,
+    IMAGE_CASE_SENSITIVE_HOVER,
     IMAGE_MATCH_WORD,
+    IMAGE_MATCH_WORD_HOVER,
+    IMAGE_MATCH_WORD_DISABLED,
+    IMAGE_REVERSELY,
+    IMAGE_REVERSELY_HOVER,
+    IMAGE_REVERSELY_DISABLED,
     IMAGE_USE_REGEX,
-#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
-    IMAGE_FOLDERS,
+    IMAGE_USE_REGEX_HOVER,
     IMAGE_ADD_FOLDER,
     IMAGES,
   };
@@ -138,21 +143,14 @@ protected:
 
   void OnAddFolderButtonClick(wxCommandEvent& evt);
 
-  void OnLocationClick(wxCommandEvent& evt);
+  void OnLocationButtonClick(wxCommandEvent& evt);
 
-#if JIL_BMP_BUTTON_FIND_OPTIONS
   void OnUseRegexToggle(wxCommandEvent& evt);
   void OnCaseSensitiveToggle(wxCommandEvent& evt);
   void OnMatchWordToggle(wxCommandEvent& evt);
   void OnReverselyToggle(wxCommandEvent& evt);
-#else
-  void OnOptionsLabel(wxCommandEvent& evt);
 
-  void OnMenuUseRegex(wxCommandEvent& evt);
-  void OnMenuCaseSensitive(wxCommandEvent& evt);
-  void OnMenuMatchWord(wxCommandEvent& evt);
-  void OnMenuReversely(wxCommandEvent& evt);
-#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
+  void OnMatchWordButtonUpdateUI(wxUpdateUIEvent& evt);
 
   void OnFind(wxCommandEvent& evt);
   void OnFindAll(wxCommandEvent& evt);
@@ -191,6 +189,11 @@ protected:
 
   void SetLocation(FindLocation location);
 
+  FindLocation GetNextLocation(FindLocation location) const;
+
+  // Set bitmaps and tooltip for location button according to current location.
+  void UpdateLocationButton();
+
   // Check if the given regex is valid or not.
   bool IsRegexValid(const std::wstring& re_str) const;
 
@@ -226,9 +229,24 @@ private:
   // Enable or disable find and replace buttons.
   void EnableButtons(bool enable);
 
-  ui::BitmapButton* NewBitmapButton(int id);
-  ui::BitmapToggleButton* NewBitmapToggleButton(int id);
+  ui::BitmapButton* NewBitmapButton(int id, bool draw_bg = true, bool draw_border = true);
+  ui::BitmapToggleButton* NewBitmapToggleButton(int id, bool draw_bg = true, bool draw_border = true);
   ui::TextButton* NewTextButton(int id, const wxString& label);
+
+  void SetButtonBitmaps(ui::BitmapButtonBase* button, ImageId normal_id);
+
+  void SetButtonBitmapsNH(ui::BitmapButtonBase* button,
+                          ImageId normal_id,
+                          ImageId hover_id);
+
+  void SetButtonBitmapsND(ui::BitmapButtonBase* button,
+                          ImageId normal_id,
+                          ImageId disabled_id);
+
+  void SetButtonBitmapsNHD(ui::BitmapButtonBase* button,
+                           ImageId normal_id,
+                           ImageId hover_id,
+                           ImageId disabled_id);
 
   void PostLayoutEvent();
 
@@ -247,21 +265,15 @@ private:
 
   FindLocation location_;
 
-  wxStaticBitmap* folders_bitmap_;
+  ui::Label* folders_label_;
   wxTextCtrl* folders_text_ctrl_;
   ui::BitmapButton* add_folder_button_;
 
-#if JIL_BMP_BUTTON_FIND_OPTIONS
   ui::BitmapButton* location_button_;
   ui::BitmapToggleButton* use_regex_tbutton_;
   ui::BitmapToggleButton* case_sensitive_tbutton_;
   ui::BitmapToggleButton* match_word_tbutton_;
   ui::BitmapToggleButton* reversely_tbutton_;
-#else
-  ui::Label* location_label_;
-  ui::Separator* sep_;
-  ui::Label* options_label_;
-#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
 
   FindTextCtrl* find_text_ctrl_;
   FindTextCtrl* replace_text_ctrl_;

@@ -11,8 +11,4 @@
 // the application complex.
 #define JIL_MULTIPLE_WINDOW 0
 
-// Use bitmap toggle buttons for options in find panel.
-// If disabled, a text label "Options" with floating menu will be used.
-#define JIL_BMP_BUTTON_FIND_OPTIONS 0
-
 #endif  // JIL_COMPILE_CONFIG_H_

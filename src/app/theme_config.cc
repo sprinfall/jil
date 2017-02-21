@@ -211,14 +211,19 @@ bool LoadThemeFile(const wxString& theme_folder,
   }
 
   // Load images.
-  fp_theme->SetImage(FindPanel::IMAGE_HISTORY, GetImage(image_dir, wxT("fp_history")));
-#if JIL_BMP_BUTTON_FIND_OPTIONS
-  fp_theme->SetImage(FindPanel::IMAGE_LOCATION, GetImage(image_dir, wxT("fp_location")));
+  fp_theme->SetImage(FindPanel::IMAGE_LOCATION_PAGE, GetImage(image_dir, wxT("fp_location_page")));
+  fp_theme->SetImage(FindPanel::IMAGE_LOCATION_ALL_PAGES, GetImage(image_dir, wxT("fp_location_all_pages")));
+  fp_theme->SetImage(FindPanel::IMAGE_LOCATION_FOLDERS, GetImage(image_dir, wxT("fp_location_folders")));
   fp_theme->SetImage(FindPanel::IMAGE_CASE_SENSITIVE, GetImage(image_dir, wxT("fp_case_sensitive")));
+  fp_theme->SetImage(FindPanel::IMAGE_CASE_SENSITIVE_HOVER, GetImage(image_dir, wxT("fp_case_sensitive_hover")));
   fp_theme->SetImage(FindPanel::IMAGE_MATCH_WORD, GetImage(image_dir, wxT("fp_match_word")));
+  fp_theme->SetImage(FindPanel::IMAGE_MATCH_WORD_HOVER, GetImage(image_dir, wxT("fp_match_word_hover")));
+  fp_theme->SetImage(FindPanel::IMAGE_MATCH_WORD_DISABLED, GetImage(image_dir, wxT("fp_match_word_disabled")));
   fp_theme->SetImage(FindPanel::IMAGE_USE_REGEX, GetImage(image_dir, wxT("fp_use_regex")));
-#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
-  fp_theme->SetImage(FindPanel::IMAGE_FOLDERS, GetImage(image_dir, wxT("fp_folders")));
+  fp_theme->SetImage(FindPanel::IMAGE_USE_REGEX_HOVER, GetImage(image_dir, wxT("fp_use_regex_hover")));
+  fp_theme->SetImage(FindPanel::IMAGE_REVERSELY, GetImage(image_dir, wxT("fp_reversely")));
+  fp_theme->SetImage(FindPanel::IMAGE_REVERSELY_HOVER, GetImage(image_dir, wxT("fp_reversely_hover")));
+  fp_theme->SetImage(FindPanel::IMAGE_REVERSELY_DISABLED, GetImage(image_dir, wxT("fp_reversely_disabled")));
   fp_theme->SetImage(FindPanel::IMAGE_ADD_FOLDER, GetImage(image_dir, wxT("fp_add_folder")));
 
   theme->SetTheme(THEME_FIND_PANEL, fp_theme);

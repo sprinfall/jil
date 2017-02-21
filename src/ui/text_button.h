@@ -24,11 +24,9 @@ protected:
 
   virtual ButtonStyle::State GetState() const override;
 
-  virtual void DrawForeground(wxDC& dc, ButtonStyle::State state) override;
+  virtual void DrawFg(wxDC& dc, ButtonStyle::State state) override;
 
   virtual void PostEvent() override;
-
-private:
 };
 
 }  // namespace ui

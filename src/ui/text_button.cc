@@ -51,7 +51,7 @@ ButtonStyle::State TextButton::GetState() const {
   }
 }
 
-void TextButton::DrawForeground(wxDC& dc, ButtonStyle::State state) {
+void TextButton::DrawFg(wxDC& dc, ButtonStyle::State state) {
   dc.SetFont(GetFont());
 
   wxColour fg = style_->GetColor(ButtonStyle::FG, state);

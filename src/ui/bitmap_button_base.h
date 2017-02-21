@@ -35,7 +35,7 @@ public:
 protected:
   wxSize DoGetBestSize() const override;
 
-  virtual void DrawForeground(wxDC& dc, ButtonStyle::State state) override;
+  virtual void DrawFg(wxDC& dc, ButtonStyle::State state) override;
 
   virtual void PostEvent() = 0;
 

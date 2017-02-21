@@ -52,12 +52,21 @@ public:
     user_best_size_ = user_best_size;
   }
 
+  void set_draw_bg(bool draw_bg) {
+    draw_bg_ = draw_bg;
+  }
+
+  void set_draw_border(bool draw_border) {
+    draw_border_ = draw_border;
+  }
+
 protected:
   void InitPadding();
 
   virtual ButtonStyle::State GetState() const = 0;
 
-  virtual void DrawForeground(wxDC& dc, ButtonStyle::State state) = 0;
+  void DrawBg(wxDC& dc, ButtonStyle::State state);
+  virtual void DrawFg(wxDC& dc, ButtonStyle::State state) = 0;
 
   virtual void PostEvent() = 0;
 
@@ -84,6 +93,9 @@ protected:
 
   wxSize padding_;
   wxSize user_best_size_;
+
+  bool draw_bg_;
+  bool draw_border_;
 };
 
 }  // namespace ui

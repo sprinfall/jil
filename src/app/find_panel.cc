@@ -15,7 +15,6 @@
 #include "ui/bitmap_toggle_button.h"
 #include "ui/color.h"
 #include "ui/label.h"
-#include "ui/separator.h"
 #include "ui/text_button.h"
 
 #include "editor/text_buffer.h"
@@ -29,19 +28,11 @@
 #define kTrCurrentPage        _("Current Page")
 #define kTrAllPages           _("All Pages")
 #define kTrFolders            _("Folders")
-#define kTrOptions            _("Options")
-
-#define kTrLocation           _("Location")
 
 #define kTrUseRegex           _("Use regular expression")
 #define kTrCaseSensitive      _("Case sensitive")
 #define kTrMatchWord          _("Match whole word")
 #define kTrReversely          _("Find reversely")
-
-#define kTrMenuUseRegex       _("Use Regular Expression")
-#define kTrMenuCaseSensitive  _("Case Sensitive")
-#define kTrMenuMatchWord      _("Match Whole Word")
-#define kTrMenuReversely      _("Find Reversely")
 
 #define kTrFind               _("Find")
 #define kTrReplace            _("Replace")
@@ -124,26 +115,14 @@ EVT_MENU          (ID_FP_MENU_FOLDERS,            FindPanel::OnMenuFolders)
 
 EVT_BUTTON        (ID_FP_ADD_FOLDER_BUTTON,       FindPanel::OnAddFolderButtonClick)
 
-#if JIL_BMP_BUTTON_FIND_OPTIONS
-
-EVT_BUTTON        (ID_FP_LOCATION_BUTTON,         FindPanel::OnLocationClick)
+EVT_BUTTON        (ID_FP_LOCATION_BUTTON,         FindPanel::OnLocationButtonClick)
 
 EVT_TOGGLEBUTTON  (ID_FP_USE_REGEX_TBUTTON,       FindPanel::OnUseRegexToggle)
 EVT_TOGGLEBUTTON  (ID_FP_CASE_SENSITIVE_TBUTTON,  FindPanel::OnCaseSensitiveToggle)
 EVT_TOGGLEBUTTON  (ID_FP_MATCH_WORD_TBUTTON,      FindPanel::OnMatchWordToggle)
 EVT_TOGGLEBUTTON  (ID_FP_REVERSELY_TBUTTON,       FindPanel::OnReverselyToggle)
 
-#else
-
-EVT_BUTTON        (ID_FP_LOCATION_LABEL,          FindPanel::OnLocationClick)  // TODO
-EVT_BUTTON        (ID_FP_OPTIONS_LABEL,           FindPanel::OnOptionsLabel)
-
-EVT_MENU          (ID_FP_MENU_USE_REGEX,          FindPanel::OnMenuUseRegex)
-EVT_MENU          (ID_FP_MENU_CASE_SENSITIVE,     FindPanel::OnMenuCaseSensitive)
-EVT_MENU          (ID_FP_MENU_MATCH_WORD,         FindPanel::OnMenuMatchWord)
-EVT_MENU          (ID_FP_MENU_REVERSELY,          FindPanel::OnMenuReversely)
-
-#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
+EVT_UPDATE_UI     (ID_FP_MATCH_WORD_TBUTTON,      FindPanel::OnMatchWordButtonUpdateUI)
 
 EVT_BUTTON        (ID_FP_FIND_BUTTON,             FindPanel::OnFind)
 EVT_BUTTON        (ID_FP_FIND_ALL_BUTTON,         FindPanel::OnFindAll)
@@ -195,8 +174,8 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   //----------------------------------------------------------------------------
 
-  folders_bitmap_ = new wxStaticBitmap(this, ID_FP_FOLDERS_LABEL, wxNullBitmap);
-  folders_bitmap_->Hide();
+  folders_label_ = new ui::Label(this, ID_FP_FOLDERS_LABEL, kTrFolders);
+  folders_label_->Hide();
 
   folders_text_ctrl_ = new wxTextCtrl(this, ID_FP_FOLDERS_TEXTCTRL);
   folders_text_ctrl_->Hide();
@@ -209,13 +188,7 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   //----------------------------------------------------------------------------
 
-#if JIL_BMP_BUTTON_FIND_OPTIONS
-
-  location_button_ = NewBitmapButton(ID_FP_LOCATION_BUTTON);
-  location_button_->SetToolTip(kTrLocation);
-
-  use_regex_tbutton_ = NewBitmapToggleButton(ID_FP_USE_REGEX_TBUTTON);
-  use_regex_tbutton_->SetToolTip(kTrUseRegex);
+  location_button_ = NewBitmapButton(ID_FP_LOCATION_BUTTON, false, false);
 
   case_sensitive_tbutton_ = NewBitmapToggleButton(ID_FP_CASE_SENSITIVE_TBUTTON);
   case_sensitive_tbutton_->SetToolTip(kTrCaseSensitive);
@@ -226,23 +199,14 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   reversely_tbutton_ = NewBitmapToggleButton(ID_FP_REVERSELY_TBUTTON);
   reversely_tbutton_->SetToolTip(kTrReversely);
 
+  use_regex_tbutton_ = NewBitmapToggleButton(ID_FP_USE_REGEX_TBUTTON);
+  use_regex_tbutton_->SetToolTip(kTrUseRegex);
+
   // Initialize toggle button states.
-  use_regex_tbutton_->set_toggle(GetBit(flags_, kFind_UseRegex));
   case_sensitive_tbutton_->set_toggle(GetBit(flags_, kFind_CaseSensitive));
   match_word_tbutton_->set_toggle(GetBit(flags_, kFind_MatchWord));
   reversely_tbutton_->set_toggle(GetBit(flags_, kFind_Reversely));
-
-#else
-
-  location_label_ = new ui::Label(this, ID_FP_LOCATION_LABEL, kTrLocation);
-  location_label_->SetCursor(wxCursor(wxCURSOR_HAND));
-
-  sep_ = new ui::Separator(this, 1, false);
-
-  options_label_ = new ui::Label(this, ID_FP_OPTIONS_LABEL, kTrOptions);
-  options_label_->SetCursor(wxCursor(wxCURSOR_HAND));
-
-#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
+  use_regex_tbutton_->set_toggle(GetBit(flags_, kFind_UseRegex));
 
   //------------------------------------
 
@@ -339,23 +303,31 @@ void FindPanel::SetFindString(const wxString& find_string) {
 void FindPanel::ReapplyTheme() {
   assert(theme_);
 
-  //button_style_ = ButtonStyleFromTheme(theme_->GetTheme(THEME_BUTTON));
+  button_style_ = ButtonStyleFromTheme(theme_->GetTheme(THEME_BUTTON));
 
-  folders_bitmap_->SetBitmap(theme_->GetImage(IMAGE_FOLDERS));
-  folders_bitmap_->SetForegroundColour(theme_->GetColor(COLOR_FG));
+  folders_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
 
   add_folder_button_->SetBitmaps(theme_->GetImage(IMAGE_ADD_FOLDER));
 
-#if JIL_BMP_BUTTON_FIND_OPTIONS
-  location_button_->SetBitmap(theme_->GetImage(IMAGE_LOCATION));
-  use_regex_tbutton_->SetBitmap(theme_->GetImage(IMAGE_USE_REGEX));
-  case_sensitive_tbutton_->SetBitmap(theme_->GetImage(IMAGE_CASE_SENSITIVE));
-  match_word_tbutton_->SetBitmap(theme_->GetImage(IMAGE_MATCH_WORD));
-#else
-  location_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
-  sep_->SetColor(theme_->GetColor(COLOR_FG));
-  options_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
-#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
+  UpdateLocationButton();
+
+  SetButtonBitmapsNH(case_sensitive_tbutton_,
+                     IMAGE_CASE_SENSITIVE,
+                     IMAGE_CASE_SENSITIVE_HOVER);
+
+  SetButtonBitmapsNHD(match_word_tbutton_,
+                      IMAGE_MATCH_WORD,
+                      IMAGE_MATCH_WORD_HOVER,
+                      IMAGE_MATCH_WORD_DISABLED);
+
+  SetButtonBitmapsNHD(reversely_tbutton_,
+                      IMAGE_REVERSELY,
+                      IMAGE_REVERSELY_HOVER,
+                      IMAGE_REVERSELY_DISABLED);
+
+  SetButtonBitmapsNH(use_regex_tbutton_,
+                     IMAGE_USE_REGEX,
+                     IMAGE_USE_REGEX_HOVER);
 }
 
 void FindPanel::OnPaint(wxPaintEvent& evt) {
@@ -392,12 +364,6 @@ void FindPanel::OnMenuAllPages(wxCommandEvent& evt) {
 
 void FindPanel::OnMenuFolders(wxCommandEvent& evt) {
   SetLocation(kFolders);
-
-  // Add current working dir.
-  if (folders_text_ctrl_->GetValue().IsEmpty()) {
-    wxString cwd = wxGetCwd();
-    folders_text_ctrl_->SetValue(cwd);
-  }
 }
 
 void FindPanel::OnAddFolderButtonClick(wxCommandEvent& evt) {
@@ -410,83 +376,12 @@ void FindPanel::OnAddFolderButtonClick(wxCommandEvent& evt) {
   }
 }
 
-void FindPanel::OnLocationClick(wxCommandEvent& evt) {
-  wxMenu menu;
-
-  menu.AppendCheckItem(ID_FP_MENU_CURRENT_PAGE, kTrCurrentPage);
-  menu.AppendCheckItem(ID_FP_MENU_ALL_PAGES, kTrAllPages);
-  menu.AppendCheckItem(ID_FP_MENU_FOLDERS, kTrFolders);
-
-  if (location_ == kCurrentPage) {
-    menu.Check(ID_FP_MENU_CURRENT_PAGE, true);
-  } else if (location_ == kAllPages) {
-    menu.Check(ID_FP_MENU_ALL_PAGES, true);
-  } else {
-    menu.Check(ID_FP_MENU_FOLDERS, true);
-  }
-
-  PopupMenu(&menu, ScreenToClient(wxGetMousePosition()));
+void FindPanel::OnLocationButtonClick(wxCommandEvent& evt) {
+  SetLocation(GetNextLocation(location_));
+  UpdateLocationButton();
 }
-
-#if JIL_BMP_BUTTON_FIND_OPTIONS
 
 void FindPanel::OnUseRegexToggle(wxCommandEvent& evt) {
-  flags_ = SetBit(flags_, kFind_UseRegex, evt.IsChecked());
-}
-
-void FindPanel::OnCaseSensitiveToggle(wxCommandEvent& evt) {
-  flags_ = SetBit(flags_, kFind_CaseSensitive, evt.IsChecked());
-}
-
-void FindPanel::OnMatchWordToggle(wxCommandEvent& evt) {
-  flags_ = SetBit(flags_, kFind_MatchWord, evt.IsChecked());
-}
-
-void FindPanel::OnReverselyToggle(wxCommandEvent& evt) {
-  flags_ = SetBit(flags_, kFind_Reversely, evt.IsChecked());
-}
-
-#else
-
-void FindPanel::OnOptionsLabel(wxCommandEvent& evt) {
-  wxMenu menu;
-
-  menu.AppendCheckItem(ID_FP_MENU_USE_REGEX, kTrMenuUseRegex);
-  menu.AppendCheckItem(ID_FP_MENU_CASE_SENSITIVE, kTrMenuCaseSensitive);
-  menu.AppendCheckItem(ID_FP_MENU_MATCH_WORD, kTrMenuMatchWord);
-  menu.AppendCheckItem(ID_FP_MENU_REVERSELY, kTrMenuReversely);
-
-  if (GetBit(flags_, kFind_UseRegex)) {
-    menu.Check(ID_FP_MENU_USE_REGEX, true);
-  }
-
-  if (GetBit(flags_, kFind_CaseSensitive)) {
-    menu.Check(ID_FP_MENU_CASE_SENSITIVE, true);
-  }
-
-  if (GetBit(flags_, kFind_MatchWord)) {
-    menu.Check(ID_FP_MENU_MATCH_WORD, true);
-  }
-
-  if (GetBit(flags_, kFind_Reversely)) {
-    menu.Check(ID_FP_MENU_REVERSELY, true);
-  }
-
-  // You can't just surround the regex string with '\b' to match the whole
-  // word, because '\b' can't match EOL.
-  // So disable "Match Whole Word" when "Use Regular Expression" is on.
-  if (GetBit(flags_, kFind_UseRegex)) {
-    menu.Enable(ID_FP_MENU_MATCH_WORD, false);
-  }
-
-  if (location_ != kCurrentPage) {
-    menu.Enable(ID_FP_MENU_REVERSELY, false);
-  }
-
-  PopupMenu(&menu, ScreenToClient(wxGetMousePosition()));
-}
-
-void FindPanel::OnMenuUseRegex(wxCommandEvent& evt) {
   bool use_regex = evt.IsChecked();
   flags_ = SetBit(flags_, kFind_UseRegex, use_regex);
 
@@ -497,7 +392,7 @@ void FindPanel::OnMenuUseRegex(wxCommandEvent& evt) {
   HandleFindTextChange();
 }
 
-void FindPanel::OnMenuCaseSensitive(wxCommandEvent& evt) {
+void FindPanel::OnCaseSensitiveToggle(wxCommandEvent& evt) {
   flags_ = SetBit(flags_, kFind_CaseSensitive, evt.IsChecked());
 
   if (location_ == kCurrentPage) {
@@ -505,7 +400,7 @@ void FindPanel::OnMenuCaseSensitive(wxCommandEvent& evt) {
   }
 }
 
-void FindPanel::OnMenuMatchWord(wxCommandEvent& evt) {
+void FindPanel::OnMatchWordToggle(wxCommandEvent& evt) {
   flags_ = SetBit(flags_, kFind_MatchWord, evt.IsChecked());
 
   if (location_ == kCurrentPage) {
@@ -513,11 +408,17 @@ void FindPanel::OnMenuMatchWord(wxCommandEvent& evt) {
   }
 }
 
-void FindPanel::OnMenuReversely(wxCommandEvent& evt) {
+void FindPanel::OnReverselyToggle(wxCommandEvent& evt) {
   flags_ = SetBit(flags_, kFind_Reversely, evt.IsChecked());
 }
 
-#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
+void FindPanel::OnMatchWordButtonUpdateUI(wxUpdateUIEvent& evt) {
+  // NOTE (Disable Match Whole Word option if use regex):
+  // You can't just surround the regex string with '\b' to match the whole
+  // word, because '\b' can't match EOL.
+  // So disable "Match Whole Word" when "Use Regular Expression" is on.
+  match_word_tbutton_->Enable(!GetBit(flags_, kFind_UseRegex));
+}
 
 void FindPanel::OnFind(wxCommandEvent& evt) {
   if (location_ == kCurrentPage) {
@@ -705,16 +606,52 @@ void FindPanel::HandleReplace(bool all) {
 }
 
 void FindPanel::SetLocation(FindLocation location) {
-  if (location_ != location) {
-    bool folders = location_ == kFolders || location == kFolders;
-    location_ = location;
+  if (location_ == location) {
+    return;
+  }
 
-    if (folders) {
-      ShowFolders(location == kFolders);
-      PostLayoutEvent();
+  bool folders = location_ == kFolders || location == kFolders;
+  location_ = location;
+
+  if (folders) {
+    ShowFolders(location == kFolders);
+    PostLayoutEvent();
+  }
+
+  UpdateLayout();
+
+  if (location_ == kFolders) {
+    // Add current working dir.
+    if (folders_text_ctrl_->GetValue().IsEmpty()) {
+      wxString cwd = wxGetCwd();
+      folders_text_ctrl_->SetValue(cwd);
     }
+  }
 
-    UpdateLayout();
+  // Support Reversely option only for finding in current page.
+  reversely_tbutton_->Enable(location_ == kCurrentPage);
+}
+
+FindLocation FindPanel::GetNextLocation(FindLocation location) const {
+  if (location_ == kCurrentPage) {
+    return kAllPages;
+  }
+  if (location_ == kAllPages) {
+    return kFolders;
+  }
+  return kCurrentPage;
+}
+
+void FindPanel::UpdateLocationButton() {
+  if (location_ == kCurrentPage) {
+    SetButtonBitmaps(location_button_, IMAGE_LOCATION_PAGE);
+    location_button_->SetToolTip(kTrCurrentPage);
+  } else if (location_ == kAllPages) {
+    SetButtonBitmaps(location_button_, IMAGE_LOCATION_ALL_PAGES);
+    location_button_->SetToolTip(kTrAllPages);
+  } else {
+    SetButtonBitmaps(location_button_, IMAGE_LOCATION_FOLDERS);
+    location_button_->SetToolTip(kTrFolders);
   }
 }
 
@@ -837,7 +774,7 @@ wxSizer* FindPanel::CommonLayoutHead(bool with_replace) {
   if (location_ == kFolders) {
     wxSizer* location_head_hsizer = new wxBoxSizer(wxHORIZONTAL);
     location_head_hsizer->AddStretchSpacer(1);  // Make the label right-aligned.
-    location_head_hsizer->Add(folders_bitmap_, 0, wxALIGN_CV);
+    location_head_hsizer->Add(folders_label_, 0, wxALIGN_CV);
     head_vsizer->Add(location_head_hsizer, 1, wxEXPAND);
     head_vsizer->AddSpacer(kPaddingY);
   }
@@ -846,17 +783,12 @@ wxSizer* FindPanel::CommonLayoutHead(bool with_replace) {
 
   int cw = GetCharWidth();
 
-#if JIL_BMP_BUTTON_FIND_OPTIONS
   find_head_hsizer->Add(location_button_, 0, wxALIGN_CV);
-  find_head_hsizer->Add(use_regex_tbutton_, 0, wxALIGN_CV | wxLEFT, cw);
-  find_head_hsizer->Add(case_sensitive_tbutton_, 0, wxALIGN_CV | wxLEFT, 2);
-  find_head_hsizer->Add(match_word_tbutton_, 0, wxALIGN_CV | wxLEFT, 2);
-#else
-  find_head_hsizer->Add(location_label_, 0, wxALIGN_CV);
   find_head_hsizer->AddSpacer(cw);
-  find_head_hsizer->Add(sep_, 0, wxEXPAND | wxTB, 7);
-  find_head_hsizer->Add(options_label_, 0, wxALIGN_CV | wxLEFT, cw);
-#endif  // JIL_BMP_BUTTON_FIND_OPTIONS
+  find_head_hsizer->Add(case_sensitive_tbutton_, 0, wxALIGN_CV | wxLEFT, cw);
+  find_head_hsizer->Add(match_word_tbutton_, 0, wxALIGN_CV | wxLEFT, 2);
+  find_head_hsizer->Add(reversely_tbutton_, 0, wxALIGN_CV | wxLEFT, 2);
+  find_head_hsizer->Add(use_regex_tbutton_, 0, wxALIGN_CV | wxLEFT, cw);
 
   head_vsizer->Add(find_head_hsizer, 1, wxEXPAND);
 
@@ -914,7 +846,6 @@ wxSizer* FindPanel::CommonLayoutFoot(bool with_replace) {
   if (with_replace) {
     foot_vsizer->AddSpacer(kPaddingY);
     wxSizer* replace_foot_hsizer = new wxBoxSizer(wxHORIZONTAL);
-    //replace_foot_hsizer->Add(replace_history_button_, 0, wxALIGN_CV | wxRIGHT, kPaddingX);
     if (replace_button_->IsShown()) {
       replace_foot_hsizer->Add(replace_button_, 1, wxALIGN_CV);
       replace_foot_hsizer->Add(replace_all_button_, 1, wxALIGN_CV | wxLEFT, kPaddingX);
@@ -929,13 +860,12 @@ wxSizer* FindPanel::CommonLayoutFoot(bool with_replace) {
 
 void FindPanel::ShowReplace(bool show) {
   replace_text_ctrl_->Show(show);
-  //replace_history_button_->Show(show);
   replace_button_->Show(show && location_ == kCurrentPage);
   replace_all_button_->Show(show);
 }
 
 void FindPanel::ShowFolders(bool show) {
-  folders_bitmap_->Show(show);
+  folders_label_->Show(show);
   folders_text_ctrl_->Show(show);
   add_folder_button_->Show(show);
 }
@@ -947,17 +877,21 @@ void FindPanel::EnableButtons(bool enable) {
   replace_all_button_->Enable(enable);
 }
 
-ui::BitmapButton* FindPanel::NewBitmapButton(int id) {
+ui::BitmapButton* FindPanel::NewBitmapButton(int id, bool draw_bg, bool draw_border) {
   ui::BitmapButton* button = new ui::BitmapButton(button_style_);
   button->Create(this, id);
   button->set_user_best_size(bitmap_button_best_size_);
+  button->set_draw_bg(draw_bg);
+  button->set_draw_border(draw_border);
   return button;
 }
 
-ui::BitmapToggleButton* FindPanel::NewBitmapToggleButton(int id) {
+ui::BitmapToggleButton* FindPanel::NewBitmapToggleButton(int id, bool draw_bg, bool draw_border) {
   ui::BitmapToggleButton* button = new ui::BitmapToggleButton(button_style_);
   button->Create(this, id);
   button->set_user_best_size(bitmap_button_best_size_);
+  button->set_draw_bg(draw_bg);
+  button->set_draw_border(draw_border);
   return button;
 }
 
@@ -965,6 +899,38 @@ ui::TextButton* FindPanel::NewTextButton(int id, const wxString& label) {
   ui::TextButton* button = new ui::TextButton(button_style_);
   button->Create(this, id, label);
   return button;
+}
+
+void FindPanel::SetButtonBitmaps(ui::BitmapButtonBase* button, ImageId normal_id) {
+  button->SetBitmaps(theme_->GetImage(normal_id));
+}
+
+void FindPanel::SetButtonBitmapsNH(ui::BitmapButtonBase* button,
+                                   ImageId normal_id,
+                                   ImageId hover_id) {
+  wxBitmap normal = theme_->GetImage(normal_id);
+  wxBitmap hover = theme_->GetImage(hover_id);
+
+  button->SetBitmaps(normal, hover, hover, normal);
+}
+
+void FindPanel::SetButtonBitmapsND(ui::BitmapButtonBase* button,
+                                   ImageId normal_id,
+                                   ImageId disabled_id) {
+  button->SetBitmapsND(theme_->GetImage(normal_id),
+                       theme_->GetImage(disabled_id));
+}
+
+void FindPanel::SetButtonBitmapsNHD(ui::BitmapButtonBase* button,
+                                    ImageId normal_id,
+                                    ImageId hover_id,
+                                    ImageId disabled_id) {
+  wxBitmap hover = theme_->GetImage(hover_id);
+
+  button->SetBitmaps(theme_->GetImage(normal_id),
+                     hover,
+                     hover,
+                     theme_->GetImage(disabled_id));
 }
 
 void FindPanel::PostLayoutEvent() {
