@@ -273,9 +273,11 @@ void FindPanel::SetFocus() {
 bool FindPanel::SetFont(const wxFont& font) {
   bool result = wxPanel::SetFont(font);
 
-  find_text_ctrl_->SetFont(font);
-  replace_text_ctrl_->SetFont(font);
-  folders_text_ctrl_->SetFont(font);
+  wxWindowList& children = GetChildren();
+  for (size_t i = 0; i < children.GetCount(); ++i) {
+    children[i]->SetFont(font);
+    children[i]->Refresh();
+  }
 
   if (GetBit(flags_, kFind_UseRegex)) {
     find_text_ctrl_->UseBoldFont(true);

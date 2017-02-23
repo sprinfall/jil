@@ -41,10 +41,19 @@ void BitmapButtonBase::SetBitmapsND(const wxBitmap& normal, const wxBitmap& disa
 }
 
 wxSize BitmapButtonBase::DoGetBestSize() const {
+  wxSize best_size = GetBitmapSize(bitmaps_[ButtonStyle::NORMAL]);
+  best_size.IncBy(2, 2);  // For 1px border.
+
   if (user_best_size_ != wxDefaultSize) {
-    return user_best_size_;
+    if (best_size.x < user_best_size_.x) {
+      best_size.x = user_best_size_.x;
+    }
+    if (best_size.y < user_best_size_.y) {
+      best_size.y = user_best_size_.y;
+    }
   }
-  return GetBitmapSize(bitmaps_[ButtonStyle::NORMAL]);
+
+  return best_size;
 }
 
 void BitmapButtonBase::DrawFg(wxDC& dc, ButtonStyle::State state) {
