@@ -15,6 +15,7 @@ extern "C" {
 }
 #include "LuaBridge/LuaBridge.h"
 
+#include "wx/clipbrd.h"
 #include "wx/cmdline.h"
 #include "wx/dir.h"
 #include "wx/filename.h"
@@ -392,6 +393,11 @@ bool App::OnInit() {
 }
 
 int App::OnExit() {
+  // Flushes the clipboard: this means that the data which is currently on
+  // clipboard will stay available even after the application exits (possibly
+  // eating memory), otherwise the clipboard will be emptied on exit.
+  wxTheClipboard->Flush();
+
   session_.Save(UserDataFile(kSessionFile));
 
   delete wxLog::SetActiveTarget(NULL);

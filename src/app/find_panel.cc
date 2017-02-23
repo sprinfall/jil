@@ -190,6 +190,9 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   location_button_ = NewBitmapButton(ID_FP_LOCATION_BUTTON, false, false);
 
+  use_regex_tbutton_ = NewBitmapToggleButton(ID_FP_USE_REGEX_TBUTTON);
+  use_regex_tbutton_->SetToolTip(kTrUseRegex);
+
   case_sensitive_tbutton_ = NewBitmapToggleButton(ID_FP_CASE_SENSITIVE_TBUTTON);
   case_sensitive_tbutton_->SetToolTip(kTrCaseSensitive);
 
@@ -199,14 +202,11 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   reversely_tbutton_ = NewBitmapToggleButton(ID_FP_REVERSELY_TBUTTON);
   reversely_tbutton_->SetToolTip(kTrReversely);
 
-  use_regex_tbutton_ = NewBitmapToggleButton(ID_FP_USE_REGEX_TBUTTON);
-  use_regex_tbutton_->SetToolTip(kTrUseRegex);
-
   // Initialize toggle button states.
+  use_regex_tbutton_->set_toggle(GetBit(flags_, kFind_UseRegex));
   case_sensitive_tbutton_->set_toggle(GetBit(flags_, kFind_CaseSensitive));
   match_word_tbutton_->set_toggle(GetBit(flags_, kFind_MatchWord));
   reversely_tbutton_->set_toggle(GetBit(flags_, kFind_Reversely));
-  use_regex_tbutton_->set_toggle(GetBit(flags_, kFind_UseRegex));
 
   //------------------------------------
 
@@ -311,6 +311,10 @@ void FindPanel::ReapplyTheme() {
 
   UpdateLocationButton();
 
+  SetButtonBitmapsNH(use_regex_tbutton_,
+                     IMAGE_USE_REGEX,
+                     IMAGE_USE_REGEX_HOVER);
+
   SetButtonBitmapsNH(case_sensitive_tbutton_,
                      IMAGE_CASE_SENSITIVE,
                      IMAGE_CASE_SENSITIVE_HOVER);
@@ -324,10 +328,6 @@ void FindPanel::ReapplyTheme() {
                       IMAGE_REVERSELY,
                       IMAGE_REVERSELY_HOVER,
                       IMAGE_REVERSELY_DISABLED);
-
-  SetButtonBitmapsNH(use_regex_tbutton_,
-                     IMAGE_USE_REGEX,
-                     IMAGE_USE_REGEX_HOVER);
 }
 
 void FindPanel::OnPaint(wxPaintEvent& evt) {
@@ -784,11 +784,10 @@ wxSizer* FindPanel::CommonLayoutHead(bool with_replace) {
   int cw = GetCharWidth();
 
   find_head_hsizer->Add(location_button_, 0, wxALIGN_CV);
-  find_head_hsizer->AddSpacer(cw);
-  find_head_hsizer->Add(case_sensitive_tbutton_, 0, wxALIGN_CV | wxLEFT, cw);
+  find_head_hsizer->Add(use_regex_tbutton_, 0, wxALIGN_CV | wxLEFT, cw);
+  find_head_hsizer->Add(case_sensitive_tbutton_, 0, wxALIGN_CV | wxLEFT, 2);
   find_head_hsizer->Add(match_word_tbutton_, 0, wxALIGN_CV | wxLEFT, 2);
   find_head_hsizer->Add(reversely_tbutton_, 0, wxALIGN_CV | wxLEFT, 2);
-  find_head_hsizer->Add(use_regex_tbutton_, 0, wxALIGN_CV | wxLEFT, cw);
 
   head_vsizer->Add(find_head_hsizer, 1, wxEXPAND);
 
