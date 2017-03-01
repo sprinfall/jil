@@ -136,27 +136,22 @@ static int AdjustCjkByLocale(int cjk_filters) {
   return cjk_filters;
 }
 
-#define kLowResolutionStr     "low"
-#define kMediumResolutionStr  "medium"
+#define kNormalResolutionStr  "normal"
 #define kHighResolutionStr    "high"
 
 static Resolution StrToResolution(const std::string& str) {
-  if (str == kLowResolutionStr) {
-    return kLowResolution;
-  } else if (str == kHighResolutionStr) {
+  if (str == kHighResolutionStr) {
     return kHighResolution;
   } else {
-    return kMediumResolution;
+    return kNormalResolution;
   }
 }
 
 std::string ResolutionToStr(Resolution resolution) {
-  if (resolution == kLowResolution) {
-    return kLowResolutionStr;
-  } else if (resolution == kHighResolution) {
+  if (resolution == kHighResolution) {
     return kHighResolutionStr;
   } else {
-    return kMediumResolutionStr;
+    return kNormalResolutionStr;
   }
 }
 

@@ -6,6 +6,7 @@
 #include <vector>
 #include "editor/defs.h"
 
+class wxCheckBox;
 class wxComboBox;
 class wxStaticText;
 
@@ -35,6 +36,7 @@ private:
 
   wxComboBox* theme_combo_box_;
   wxComboBox* icon_combo_box_;
+  wxCheckBox* enlarge_icons_check_box_;
 };
 
 }  // namespace pref

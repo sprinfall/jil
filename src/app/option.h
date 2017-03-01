@@ -15,10 +15,9 @@ namespace jil {
 const int kMinLinePadding = 1;
 const int kMaxLinePadding = 9;
 
-// Different resolutions of theme icons/images.
+// Resolution of theme icons.
 enum Resolution {
-  kLowResolution = 0,
-  kMediumResolution,
+  kNormalResolution = 0,
   kHighResolution,
 };
 
@@ -31,7 +30,7 @@ public:
 
   void Init() {
     cjk_filters = 0;
-    icon_resolution = kMediumResolution;
+    icon_resolution = kNormalResolution;
     line_padding = 1;
     switch_cwd = false;
     restore_files = true;

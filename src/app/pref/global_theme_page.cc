@@ -1,8 +1,8 @@
 #include "app/pref/global_theme_page.h"
 
+#include "wx/checkbox.h"
 #include "wx/combobox.h"
 #include "wx/sizer.h"
-#include "wx/statline.h"
 #include "wx/stattext.h"
 
 #include "editor/option.h"
@@ -14,10 +14,6 @@
 #include "app/util.h"
 
 #include "app/pref/common.h"
-
-#define kTrIconLow      _("Low")
-#define kTrIconMedium   _("Medium")
-#define kTrIconHigh     _("High")
 
 namespace jil {
 namespace pref {
@@ -41,13 +37,19 @@ bool Global_ThemePage::Create(wxWindow* parent, wxWindowID id) {
 
 bool Global_ThemePage::TransferDataToWindow() {
   theme_combo_box_->SetStringSelection(options_->theme);
-  icon_combo_box_->Select(options_->icon_resolution);
+  enlarge_icons_check_box_->SetValue(options_->icon_resolution == kHighResolution);
   return true;
 }
 
 bool Global_ThemePage::TransferDataFromWindow() {
   options_->theme = theme_combo_box_->GetValue();
-  options_->icon_resolution = static_cast<Resolution>(icon_combo_box_->GetSelection());
+
+  if (enlarge_icons_check_box_->IsChecked()) {
+    options_->icon_resolution = kHighResolution;
+  } else {
+    options_->icon_resolution = kNormalResolution;
+  }
+
   return true;
 }
 
@@ -72,14 +74,9 @@ void Global_ThemePage::CreateControls() {
   //----------------------------------------------------------------------------
   // Icon Resolution
 
-  wxStaticText* icon_label = new wxStaticText(this, wxID_ANY, _("Resolution of icons:"));
-  icon_combo_box_ = CreateReadonlyComboBox(this, wxID_ANY);
+  enlarge_icons_check_box_ = new wxCheckBox(this, wxID_ANY, _("Enlarge icons for high resolution display"));
 
-  icon_combo_box_->Append(kTrIconLow);
-  icon_combo_box_->Append(kTrIconMedium);
-  icon_combo_box_->Append(kTrIconHigh);
-
-  LayoutField(top_vsizer, icon_label, icon_combo_box_);
+  top_vsizer->Add(enlarge_icons_check_box_, wxSizerFlags().Left().Border(wxALL));
 
   SetSizerAndFit(top_vsizer);
 }
@@ -89,7 +86,6 @@ void Global_ThemePage::LayoutField(wxSizer* top_vsizer, wxStaticText* label, wxC
   hsizer->Add(label, wxSizerFlags(1).CenterVertical());
   hsizer->Add(combo_box, wxSizerFlags(1).CenterVertical().Border(wxLEFT));
   top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
-
 }
 
 }  // namespace pref
