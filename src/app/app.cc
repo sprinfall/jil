@@ -107,13 +107,6 @@ void FileNew() {
   book_frame->FileNew();
 }
 
-#if JIL_MULTIPLE_WINDOW
-void FileNewWindow() {
-  GET_BOOK_FRAME_OR_RETURN;
-  book_frame->FileNewWindow();
-}
-#endif  // JIL_MULTIPLE_WINDOW
-
 void FileOpen() {
   GET_BOOK_FRAME_OR_RETURN;
   book_frame->FileOpen();
@@ -315,14 +308,14 @@ bool App::OnInit() {
 
   wxImage::AddHandler(new wxPNGHandler);
 
-#if 0  // TODO
-  #ifdef __WXMSW__
+#if 0  // We don't have toolbars.
+#ifdef __WXMSW__
   // Switched off the colour remapping and use a transparent background
   // for toolbar bitmaps.
   if (wxTheApp->GetComCtl32Version() >= 600 && ::wxDisplayDepth() >= 32) {
     wxSystemOptions::SetOption(_T("msw.remap"), 2);
   }
-  #endif  // __WXMSW__
+#endif  // __WXMSW__
 #endif  // 0
 
   // Make sure the user data dir exists.
@@ -332,8 +325,7 @@ bool App::OnInit() {
   }
 
   // Set log target to file.
-  // TODO: Add timestamp to file name.
-  wxString log_file_path = UserDataFile(wxT("log.txt"));
+  wxString log_file_path = UserDataFile(wxT("Jil.log"));
   log_file_ = wxFopen(log_file_path, "w+");
   wxLog* default_log = wxLog::SetActiveTarget(new wxLogStderr(log_file_));
   delete default_log;
@@ -473,6 +465,7 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
 
   WorkingDirSwitcher wd_switcher(ft_plugin_dir);
 
+  // Load indent function from Lua script.
   std::string lua_error;
   if (editor::LoadLuaFile(lua_state_, kIndentFile, &lua_error)) {
     std::string ns = ft.id.ToStdString();
@@ -480,12 +473,12 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
     ft_plugin->set_indent_func(indent_func);
   } else {
     if (!lua_error.empty()) {
+      // Save the error to file type plugin.
       int ln = 0;
       std::string msg;
       if (editor::ParseLuaError(lua_error, &ln, &msg)) {
-        // TODO
+        ft_plugin->AddLuaIndentError(ln, msg);
       }
-      // TODO: Show to user
     }
   }
 
@@ -793,9 +786,6 @@ void App::InitCommands() {
   //----------------------------------------------------------------------------
 
   AddVoidCmd("new", FileNew, ID_MENU_FILE_NEW);
-#if JIL_MULTIPLE_WINDOW
-  AddVoidCmd("new_window", FileNewWindow, ID_MENU_FILE_NEW_WINDOW);
-#endif  // JIL_MULTIPLE_WINDOW
   AddVoidCmd("open", FileOpen, ID_MENU_FILE_OPEN);
   AddVoidCmd("close", FileClose, ID_MENU_FILE_CLOSE);
   AddVoidCmd("close_all", FileCloseAll, ID_MENU_FILE_CLOSE_ALL);

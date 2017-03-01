@@ -4,7 +4,6 @@ using namespace jil::editor;
 
 static const Encoding kEncoding = GetEncodingById(ENCODING_ISO_8859_1);
 
-// static
 lua_State* IndentTestBase::lua_state;
 FtPlugin* IndentTestBase::ft_plugin;
 

@@ -11,7 +11,7 @@ using namespace jil::editor;
 
 static const FileType kFtTxt("txt", "Text");
 static const Encoding kEncoding = GetEncodingById(ENCODING_ISO_8859_1);
-static FtPlugin g_ft_plugin(kFtTxt);
+static FtPlugin g_ft_plugin(kFtTxt, NULL);
 
 ////////////////////////////////////////////////////////////////////////////////
 // InsertCharAction

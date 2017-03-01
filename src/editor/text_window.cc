@@ -268,19 +268,19 @@ void TextWindow::OnBufferLineChange(LineChangeType type, const LineChangeData& d
 void TextWindow::OnBufferChange(ChangeType type) {
   switch (type) {
     case kEncodingChange:
-      PostEvent(TextWindow::kEncodingEvent);
+      PostEvent(kEncodingEvent);
       break;
 
     case kFileFormatChange:
-      PostEvent(TextWindow::kFileFormatEvent);
+      PostEvent(kFileFormatEvent);
       break;
 
     case kFileNameChange:
-      PostEvent(TextWindow::kFileNameEvent);
+      PostEvent(kFileNameEvent);
       break;
 
     case kModifiedStateChange:
-      PostEvent(TextWindow::kModifiedStateEvent);
+      PostEvent(kModifiedStateEvent);
       break;
 
     case kFileTypeChange:
@@ -289,6 +289,7 @@ void TextWindow::OnBufferChange(ChangeType type) {
 
     case kTabOptionsChange:
       HandleTabOptionsChange();
+      break;
 
     default:
       break;

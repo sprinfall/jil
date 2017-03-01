@@ -38,8 +38,7 @@ typedef std::pair<std::wstring, Lex> WordLexPair;
 // File type specific options, lex, etc.
 class FtPlugin {
 public:
-  // TODO: NULL
-  FtPlugin(const FileType& file_type, lua_State* lua_state = NULL);
+  FtPlugin(const FileType& file_type, lua_State* lua_state);
   ~FtPlugin();
 
   const wxString& id() const {
@@ -138,8 +137,12 @@ public:
     indent_func_ = indent_func;
   }
 
-  // Add an error when execute the lua indent function.
+  // Add an error when execute the Lua indent function.
   void AddLuaIndentError(int ln, const std::string& msg);
+
+  bool HasLuaIndentError() const {
+    return !lua_indent_errors_.empty();
+  }
 
   bool MatchIndentKey(const std::wstring& str, size_t off, size_t len) const;
 

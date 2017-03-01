@@ -38,7 +38,7 @@ TEST(TextBuffer, CharIterator) {
 ////////////////////////////////////////////////////////////////////////////////
 
 TEST(TextBuffer, SetText_EmptyLines) {
-  FtPlugin ft_plugin(kFtTxt);
+  FtPlugin ft_plugin(kFtTxt, NULL);
   TextBuffer buffer(0, &ft_plugin, kEncoding);
 
   std::wstring text;
@@ -87,7 +87,7 @@ TEST(TextBuffer, SetText_EmptyLines) {
 }
 
 TEST(TextBuffer, SetText) {
-  FtPlugin ft_plugin(kFtTxt);
+  FtPlugin ft_plugin(kFtTxt, NULL);
   TextBuffer buffer(0, &ft_plugin, kEncoding);
 
   std::wstring text = L"abc";
@@ -124,7 +124,7 @@ TEST(TextBuffer, SetText) {
 ////////////////////////////////////////////////////////////////////////////////
 
 TEST(TextBuffer, PrevNonEmptyLine) {
-  FtPlugin ft_plugin(FileType("cpp", "C++"));
+  FtPlugin ft_plugin(FileType("cpp", "C++"), NULL);
   ft_plugin.AddQuote(new Quote(kLexComment, L"//", L"", kQuoteEscapeEol));
   ft_plugin.AddQuote(new Quote(kLexComment, L"/*", L"*/", kQuoteMultiLine));
   TextBuffer buffer(0, &ft_plugin, kEncoding);
@@ -149,7 +149,7 @@ TEST(TextBuffer, PrevNonEmptyLine) {
 // Test TextBuffer::GuessTabOptions WITHOUT indent function.
 
 TEST(TextBuffer, GuessTabOptions1) {
-  FtPlugin ft_plugin(kFtTxt);
+  FtPlugin ft_plugin(kFtTxt, NULL);
   TextBuffer buffer(0, &ft_plugin, kEncoding);
 
   buffer.AppendLine(L"if (a > b) {");
@@ -165,7 +165,7 @@ TEST(TextBuffer, GuessTabOptions1) {
 }
 
 TEST(TextBuffer, GuessTabOptions2) {
-  FtPlugin ft_plugin(kFtTxt);
+  FtPlugin ft_plugin(kFtTxt, NULL);
   TextBuffer buffer(0, &ft_plugin, kEncoding);
 
   buffer.AppendLine(L"if (a > b) {");
@@ -181,7 +181,7 @@ TEST(TextBuffer, GuessTabOptions2) {
 }
 
 TEST(TextBuffer, GuessTabOptions3) {
-  FtPlugin ft_plugin(kFtTxt);
+  FtPlugin ft_plugin(kFtTxt, NULL);
   TextBuffer buffer(0, &ft_plugin, kEncoding);
 
   buffer.AppendLine(L"if (a > b) {");
@@ -231,7 +231,7 @@ private:
 
 // Test the notifications of different text changes.
 TEST(TextBuffer, Notify) {
-  FtPlugin ft_plugin(kFtTxt);
+  FtPlugin ft_plugin(kFtTxt, NULL);
 
   TestTextListener listener;
 
@@ -251,7 +251,7 @@ TEST(TextBuffer, Notify) {
 ////////////////////////////////////////////////////////////////////////////////
 
 TEST(TextBuffer, UnpairedLeftKey) {
-  FtPlugin ft_plugin(FileType("cpp", "C++"));
+  FtPlugin ft_plugin(FileType("cpp", "C++"), NULL);
   ft_plugin.AddQuote(new Quote(kLexComment, L"//", L"", kQuoteEscapeEol));
   ft_plugin.AddQuote(new Quote(kLexComment, L"/*", L"*/", kQuoteMultiLine));
   ft_plugin.AddQuote(new Quote(Lex(kLexConstant, kLexConstantString), L"\"", L"\"", kQuoteEscapeEol));
@@ -264,7 +264,7 @@ TEST(TextBuffer, UnpairedLeftKey) {
 }
 
 TEST(TextBuffer, FindStringAll_Regex1) {
-  FtPlugin ft_plugin(kFtTxt);
+  FtPlugin ft_plugin(kFtTxt, NULL);
   TextBuffer buffer(0, &ft_plugin, kEncoding);
 
   buffer.AppendLine(L"test test");  // L2
@@ -283,7 +283,7 @@ TEST(TextBuffer, FindStringAll_Regex1) {
 }
 
 TEST(TextBuffer, FindStringAll_Regex2) {
-  FtPlugin ft_plugin(kFtTxt);
+  FtPlugin ft_plugin(kFtTxt, NULL);
   TextBuffer buffer(0, &ft_plugin, kEncoding);
 
   buffer.AppendLine(L"test test");  // L2
@@ -302,7 +302,7 @@ TEST(TextBuffer, FindStringAll_Regex2) {
 }
 
 TEST(TextBuffer, FindStringAll_Regex3) {
-  FtPlugin ft_plugin(kFtTxt);
+  FtPlugin ft_plugin(kFtTxt, NULL);
   TextBuffer buffer(0, &ft_plugin, kEncoding);
 
   buffer.AppendLine(L"test test");  // L2

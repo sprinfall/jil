@@ -347,7 +347,10 @@ bool TextLine::FindRegex(const std::wregex& re,
     assert(end <= Length());
   }
 
-  if (begin >= end) {
+  // NOTE:
+  // Don't return false if begin == end, because the re might be "^$" which
+  // will match the empty line (piece).
+  if (begin > end) {
     return false;
   }
   

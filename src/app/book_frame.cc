@@ -89,9 +89,6 @@ class FileDropTarget : public wxFileDropTarget {
 
 BEGIN_EVENT_TABLE(BookFrame, wxFrame)
 EVT_SIZE(BookFrame::OnSize)
-#if JIL_MULTIPLE_WINDOW
-EVT_ACTIVATE(BookFrame::OnActivate)
-#endif  // JIL_MULTIPLE_WINDOW
 
 EVT_KEYDOWN_HOOK(BookFrame::OnKeyDownHook)
 
@@ -103,6 +100,7 @@ EVT_MENU(wxID_EXIT, BookFrame::OnQuit)
 
 EVT_MENU_RANGE(ID_MENU_EDIT_BEGIN, ID_MENU_EDIT_END - 1, BookFrame::OnMenuEdit)
 EVT_MENU_RANGE(ID_MENU_VIEW_BEGIN, ID_MENU_VIEW_END - 1, BookFrame::OnMenuView)
+EVT_MENU_RANGE(ID_MENU_TOOLS_BEGIN, ID_MENU_TOOLS_END - 1, BookFrame::OnMenuTools)
 
 EVT_MENU(wxID_PREFERENCES, BookFrame::OnGlobalPreferences)
 EVT_MENU_RANGE(ID_MENU_PREFS_EDITOR_BEGIN, ID_MENU_PREFS_EDITOR_END - 1, BookFrame::OnEditorPreferences)
@@ -111,10 +109,11 @@ EVT_MENU_RANGE(ID_MENU_THEME_BEGIN, ID_MENU_THEME_END - 1, BookFrame::OnMenuThem
 EVT_MENU_RANGE(ID_MENU_HELP_BEGIN, ID_MENU_HELP_END - 1, BookFrame::OnMenuHelp)
 
 // Update UI
-EVT_UPDATE_UI_RANGE(ID_MENU_FILE_BEGIN, ID_MENU_FILE_END - 1, BookFrame::OnFileUpdateUI)
-EVT_UPDATE_UI_RANGE(ID_MENU_EDIT_BEGIN, ID_MENU_EDIT_END - 1, BookFrame::OnEditUpdateUI)
-EVT_UPDATE_UI_RANGE(ID_MENU_VIEW_BEGIN, ID_MENU_VIEW_END - 1, BookFrame::OnViewUpdateUI)
-EVT_UPDATE_UI_RANGE(ID_MENU_THEME_BEGIN, ID_MENU_THEME_END - 1, BookFrame::OnThemeUpdateUI)
+EVT_UPDATE_UI_RANGE(ID_MENU_FILE_BEGIN, ID_MENU_FILE_END - 1, BookFrame::OnMenuFileUpdateUI)
+EVT_UPDATE_UI_RANGE(ID_MENU_EDIT_BEGIN, ID_MENU_EDIT_END - 1, BookFrame::OnMenuEditUpdateUI)
+EVT_UPDATE_UI_RANGE(ID_MENU_VIEW_BEGIN, ID_MENU_VIEW_END - 1, BookFrame::OnMenuViewUpdateUI)
+EVT_UPDATE_UI_RANGE(ID_MENU_TOOLS_BEGIN, ID_MENU_TOOLS_END - 1, BookFrame::OnMenuToolsUpdateUI)
+EVT_UPDATE_UI_RANGE(ID_MENU_THEME_BEGIN, ID_MENU_THEME_END - 1, BookFrame::OnMenuThemeUpdateUI)
 
 EVT_CLOSE(BookFrame::OnClose)
 
@@ -343,28 +342,12 @@ void BookFrame::RestoreOpenedFiles() {
 void BookFrame::FileNew() {
   using namespace editor;
 
-  // TODO: Let the user choose file type.
   FtPlugin* ft_plugin = wxGetApp().GetFtPlugin(kTxtFt);
 
   TextBuffer* buffer = new TextBuffer(NewBufferId(), ft_plugin, options_->file_encoding);
 
   text_book_->AddPage(buffer, true);
 }
-
-#if JIL_MULTIPLE_WINDOW
-void BookFrame::FileNewWindow() {
-  BookFrame* book_frame = new BookFrame(options_, session_);
-  book_frame->set_theme(theme_);
-  book_frame->set_style(style_);
-  book_frame->set_binding(binding_);
-
-  if (!book_frame->Create(NULL, wxID_ANY, kAppDisplayName)) {
-    wxLogError(wxT("Failed to create book frame!"));
-    return;
-  }
-  book_frame->Show();
-}
-#endif  // JIL_MULTIPLE_WINDOW
 
 void BookFrame::FileOpen() {
   // TODO: wxFileDialog has memory leak!!!
@@ -867,19 +850,6 @@ SplitNode* BookFrame::CreateDefaultSplitTree() {
   return split_root;
 }
 
-#if JIL_MULTIPLE_WINDOW
-// Set current active book frame as the top window.
-// TODO: Match command func to execute for commands not in the menu.
-void BookFrame::OnActivate(wxActivateEvent& evt) {
-  if (evt.GetActive()) {
-    if (this != wxGetApp().GetTopWindow()) {
-      wxGetApp().SetTopWindow(this);
-    }
-  }
-  evt.Skip();
-}
-#endif  // JIL_MULTIPLE_WINDOW
-
 void BookFrame::OnKeyDownHook(wxKeyEvent& evt) {
   if (!HandleKeyDownHook(evt)) {
     // Skip for child windows, e.g., TextWindow.
@@ -1256,13 +1226,9 @@ void BookFrame::OnQuit(wxCommandEvent& WXUNUSED(evt)) {
   Close(true);  // Go to OnClose().
 }
 
-//------------------------------------------------------------------------------
-
 void BookFrame::OnMenuEdit(wxCommandEvent& evt) {
   ExecFuncByMenu(evt.GetId());
 }
-
-//------------------------------------------------------------------------------
 
 void BookFrame::OnMenuView(wxCommandEvent& evt) {
   // View menu has no menu items mapping to text function.
@@ -1274,7 +1240,17 @@ void BookFrame::OnMenuView(wxCommandEvent& evt) {
   }
 }
 
-//------------------------------------------------------------------------------
+void BookFrame::OnMenuTools(wxCommandEvent& evt) {
+  switch (evt.GetId()) {
+  case ID_MENU_TOOLS_RESCAN_LEX:
+    RescanLex();
+    break;
+
+  case ID_MENU_TOOLS_ERRORS:
+    ShowErrors();
+    break;
+  }
+}
 
 void BookFrame::OnMenuHelp(wxCommandEvent& evt) {
   switch (evt.GetId()) {
@@ -1308,24 +1284,29 @@ bool BookFrame::ExecFuncByMenu(int menu) {
 
 //------------------------------------------------------------------------------
 
-void BookFrame::OnFileUpdateUI(wxUpdateUIEvent& evt) {
+void BookFrame::OnMenuFileUpdateUI(wxUpdateUIEvent& evt) {
   evt.Enable(GetFileMenuState(evt.GetId()));
 }
 
-void BookFrame::OnEditUpdateUI(wxUpdateUIEvent& evt) {
+void BookFrame::OnMenuEditUpdateUI(wxUpdateUIEvent& evt) {
   int menu_id = evt.GetId();
   bool state = GetEditMenuState(menu_id);
   evt.Enable(state);
 }
 
-void BookFrame::OnViewUpdateUI(wxUpdateUIEvent& evt) {
+void BookFrame::OnMenuViewUpdateUI(wxUpdateUIEvent& evt) {
   bool check = false;
   bool state = GetViewMenuState(evt.GetId(), &check);
   evt.Enable(state);
   evt.Check(check);
 }
 
-void BookFrame::OnThemeUpdateUI(wxUpdateUIEvent& evt) {
+void BookFrame::OnMenuToolsUpdateUI(wxUpdateUIEvent& evt) {
+  bool state = GetToolsMenuState(evt.GetId());
+  evt.Enable(state);
+}
+
+void BookFrame::OnMenuThemeUpdateUI(wxUpdateUIEvent& evt) {
   int index = evt.GetId() - ID_MENU_THEME_BEGIN;
   wxString theme = wxGetApp().GetTheme(index);
   evt.Check(theme == options_->theme);
@@ -2397,7 +2378,7 @@ wxMenuItem* BookFrame::AppendMenuItem(wxMenu* menu, int id, const wxString& labe
 void BookFrame::LoadMenus() {
   wxMenuBar* menu_bar = new wxMenuBar;
 
-  //------------------------------------
+  //----------------------------------------------------------------------------
   // OSX Apple menu
 
 #if defined (__WXOSX__)
@@ -2426,17 +2407,12 @@ void BookFrame::LoadMenus() {
 
 #endif  // defined (__WXOSX__)
 
-  //------------------------------------
+  //----------------------------------------------------------------------------
   // File
 
   wxMenu* file_menu = new wxMenu;
   // - New
   AppendMenuItem(file_menu, ID_MENU_FILE_NEW, kTrFileNew);
-
-#if JIL_MULTIPLE_WINDOW
-  file_menu->AppendSeparator();
-  AppendMenuItem(file_menu, ID_MENU_FILE_NEW_WINDOW, kTrFileNewFrame);
-#endif  // JIL_MULTIPLE_WINDOW
 
   // - Open
   file_menu->AppendSeparator();
@@ -2463,14 +2439,14 @@ void BookFrame::LoadMenus() {
 
   menu_bar->Append(file_menu, kTrMenuFile);
 
-  //------------------------------------
+  //----------------------------------------------------------------------------
   // Edit
   // Not loaded here. See RecreateEditMenu.
 
   edit_menu_ = new wxMenu;
   menu_bar->Append(edit_menu_, kTrMenuEdit);
 
-  //------------------------------------
+  //----------------------------------------------------------------------------
   // View
 
   wxMenu* view_menu = new wxMenu;
@@ -2485,7 +2461,17 @@ void BookFrame::LoadMenus() {
 
   menu_bar->Append(view_menu, kTrMenuView);
 
-  //------------------------------------
+  //----------------------------------------------------------------------------
+  // Tools
+
+  wxMenu* tools_menu = new wxMenu;
+
+  tools_menu->Append(ID_MENU_TOOLS_RESCAN_LEX, kTrToolsRescanLex);
+  tools_menu->Append(ID_MENU_TOOLS_ERRORS, kTrToolsErrors);
+
+  menu_bar->Append(tools_menu, kTrMenuTools);
+
+  //----------------------------------------------------------------------------
   // Preferences
 
   wxMenu* prefs_menu = new wxMenu;
@@ -2509,7 +2495,7 @@ void BookFrame::LoadMenus() {
 
   menu_bar->Append(prefs_menu, kTrMenuPrefs);
 
-  //------------------------------------
+  //----------------------------------------------------------------------------
   // Help
 
   wxMenu* help_menu = new wxMenu;
@@ -2521,7 +2507,7 @@ void BookFrame::LoadMenus() {
 
   menu_bar->Append(help_menu, kTrMenuHelp);
 
-  //------------------------------------
+  //----------------------------------------------------------------------------
 
   SetMenuBar(menu_bar);
 }
@@ -2610,21 +2596,30 @@ bool BookFrame::GetViewMenuState(int menu_id, bool* check) {
 
   if (text_page != NULL && check != NULL) {
     switch (menu_id) {
-      case ID_MENU_VIEW_WRAP:
-        *check = page_window->view_options().wrap;
-        break;
+    case ID_MENU_VIEW_WRAP:
+      *check = page_window->view_options().wrap;
+      break;
 
-      case ID_MENU_VIEW_SHOW_NUMBER:
-        *check = page_window->view_options().show_number;
-        break;
+    case ID_MENU_VIEW_SHOW_NUMBER:
+      *check = page_window->view_options().show_number;
+      break;
 
-      case ID_MENU_VIEW_SHOW_SPACE:
-        *check = page_window->view_options().show_space;
-        break;
+    case ID_MENU_VIEW_SHOW_SPACE:
+      *check = page_window->view_options().show_space;
+      break;
     }
   }
 
   return text_page != NULL;
+}
+
+bool BookFrame::GetToolsMenuState(int menu_id) {
+  if (menu_id == ID_MENU_TOOLS_RESCAN_LEX) {
+    editor::TextBuffer* buffer = ActiveBuffer();
+    return buffer != NULL && buffer->ft_plugin()->IsLexAvailable();
+  }
+
+  return true;
 }
 
 #if JIL_ENABLE_LEADER_KEY
@@ -2853,6 +2848,20 @@ void BookFrame::RemoveRecentFile(const wxString& recent_file, bool update_menu) 
   if (update_menu) {
     UpdateRecentFilesMenu();
   }
+}
+
+//------------------------------------------------------------------------------
+
+void BookFrame::RescanLex() {
+  editor::TextBuffer* buffer = ActiveBuffer();
+  if (buffer != NULL && buffer->ft_plugin()->IsLexAvailable()) {
+    buffer->ScanLex();
+    ShowStatusMessage(_("Lexical information has been updated."), 1);
+  }
+}
+
+void BookFrame::ShowErrors() {
+  // TODO
 }
 
 }  // namespace jil

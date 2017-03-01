@@ -34,25 +34,6 @@ IDI_EDITOR_32 ICON "icon/editor32.ico"
 // TEXTINCLUDE
 //
 
-// TODO: Remove?
-
-// 1 TEXTINCLUDE
-// BEGIN
-    // "resource.h\0"
-// END
-
-// 2 TEXTINCLUDE
-// BEGIN
-    // "#include ""afxres.h""\r\n"
-    // "\0"
-// END
-
-// 3 TEXTINCLUDE
-// BEGIN
-    // "\r\n"
-    // "\0"
-// END
-
 #endif    // APSTUDIO_INVOKED
 
 

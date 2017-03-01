@@ -104,10 +104,6 @@ public:
   // File menu operations.
   void FileNew();
 
-#if JIL_MULTIPLE_WINDOW
-  void FileNewWindow();
-#endif  // JIL_MULTIPLE_WINDOW
-
   void FileOpen();
 
   void FileClose();
@@ -199,10 +195,6 @@ protected:
   void RestoreSplitTree(SplitNode* n);
   SplitNode* CreateDefaultSplitTree();
 
-#if JIL_MULTIPLE_WINDOW
-  void OnActivate(wxActivateEvent& evt);
-#endif  // JIL_MULTIPLE_WINDOW
-
   void OnKeyDownHook(wxKeyEvent& evt);
   // Return true if the event is handled.
   bool HandleKeyDownHook(wxKeyEvent& evt);
@@ -235,15 +227,17 @@ protected:
 
   void OnMenuEdit(wxCommandEvent& evt);
   void OnMenuView(wxCommandEvent& evt);
+  void OnMenuTools(wxCommandEvent& evt);
   void OnMenuHelp(wxCommandEvent& evt);
 
   // Return true if the command function is found and executed.
   bool ExecFuncByMenu(int menu);
 
-  void OnFileUpdateUI(wxUpdateUIEvent& evt);
-  void OnEditUpdateUI(wxUpdateUIEvent& evt);
-  void OnViewUpdateUI(wxUpdateUIEvent& evt);
-  void OnThemeUpdateUI(wxUpdateUIEvent& evt);
+  void OnMenuFileUpdateUI(wxUpdateUIEvent& evt);
+  void OnMenuEditUpdateUI(wxUpdateUIEvent& evt);
+  void OnMenuViewUpdateUI(wxUpdateUIEvent& evt);
+  void OnMenuToolsUpdateUI(wxUpdateUIEvent& evt);
+  void OnMenuThemeUpdateUI(wxUpdateUIEvent& evt);
 
   void OnClose(wxCloseEvent& evt);
 
@@ -408,6 +402,7 @@ private:
   bool GetFileMenuState(int menu_id);
   bool GetEditMenuState(int menu_id);
   bool GetViewMenuState(int menu_id, bool* check = NULL);
+  bool GetToolsMenuState(int menu_id);
 
 #if JIL_ENABLE_LEADER_KEY
   bool GetMenuEnableState(int menu_id);
@@ -459,6 +454,15 @@ private:
 
   void AddRecentFile(const wxString& recent_file, bool update_menu);
   void RemoveRecentFile(const wxString& recent_file, bool update_menu);
+
+  //----------------------------------------------------------------------------
+
+  // Rescan the lex for the active text page.
+  void RescanLex();
+
+  // Show errors and warnings.
+  // E.g., indent function errors.
+  void ShowErrors();
 
 private:
   Options* options_;

@@ -33,7 +33,7 @@ int ReadBytes(const wxString& filename, std::string* bytes, size_t max_bytes) {
 
   size_t count = static_cast<size_t>(fsize);
 
-  if (max_bytes != std::wstring::npos) {
+  if (max_bytes != std::string::npos) {
     // Limit bytes.
     if (count > max_bytes) {
       count = max_bytes;

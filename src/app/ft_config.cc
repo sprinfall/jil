@@ -126,6 +126,7 @@ void FtConfig::MapToFt(const std::string& keys_str,
     }
 
     // Ignore case for file names on Windows.
+    // TODO: It might also be necessary on Linux or Mac. Confirm it.
 #if defined(__WXMSW__)
     key.MakeLower();
 #endif

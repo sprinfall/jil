@@ -64,14 +64,11 @@
 #define kTrMenuFile           _("&File")
 #define kTrMenuEdit           _("&Edit")
 #define kTrMenuView           _("&View")
-//#define kTrMenuTools          _("&Tools")
+#define kTrMenuTools          _("&Tools")
 #define kTrMenuPrefs          _("&Preferences")
 #define kTrMenuHelp           _("&Help")
 
 #define kTrFileNew            _("&New")
-#if JIL_MULTIPLE_WINDOW
-#  define kTrFileNewFrame     _("New &Window")
-#endif  // JIL_MULTIPLE_WINDOW
 #define kTrFileOpen           _("&Open")
 #define kTrFileClose          _("&Close")
 #define kTrFileCloseAll       _("Close A&ll")
@@ -111,6 +108,9 @@
 // For find result page.
 #define kTrEditClearAll       _("C&lear All")
 #define kTrEditGoToLocation   _("&Go To Location")
+
+#define kTrToolsRescanLex     _("&Rescan Lex")
+#define kTrToolsErrors        _("&Errors")
 
 #define kTrPrefsGlobal        _("&Global")
 #define kTrPrefsEditor        _("&Syntax Specific")

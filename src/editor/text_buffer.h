@@ -340,6 +340,9 @@ public:
   Coord GetIndentStrLength(Coord ln) const;
 
   // Get the expected indent (as spaces) of the given line.
+  // The indent function defined in the Lua script of this file type will be
+  // invoked. If no indent function is defined, the indent of the previous
+  // line will be returned.
   Coord GetExpectedIndent(Coord ln) const;
 
   //----------------------------------------------------------------------------
@@ -435,6 +438,9 @@ public:
   void set_scan_lex(bool scan_lex) {
     scan_lex_ = scan_lex;
   }
+
+  // Scan lex for the whole buffer.
+  void ScanLex();
 
   bool GetQuoteInfo(const TextPoint& point, QuoteInfo* quote_info) const;
 
@@ -655,9 +661,6 @@ private:
   // \param quote As input, it's the previous unclosed quote; as output, it's
   //   the unclosed quote after scan lex for this line.
   void ScanLex(TextLine* line, Quote*& quote);
-
-  // Scan lex for the whole buffer.
-  void ScanLex();
 
   // Scan lex from a given line with the optional previous unclosed quote.
   void ScanLex(Coord start_ln, Quote* quote);

@@ -1378,11 +1378,13 @@ Coord TextBuffer::GetIndentStrLength(Coord ln) const {
 }
 
 Coord TextBuffer::GetExpectedIndent(Coord ln) const {
+  // Get the indent function from Lua script.
   const luabridge::LuaRef& indent_func = ft_plugin_->indent_func();
   if (!indent_func.isNil() && indent_func.isFunction()) {
     try {
       return indent_func(this, ln);
     } catch (const luabridge::LuaException& e) {
+      // The indent function must have syntax error(s).
       int ln = 0;
       std::string msg;
       if (ParseLuaError(e.what(), &ln, &msg)) {
@@ -1390,6 +1392,8 @@ Coord TextBuffer::GetExpectedIndent(Coord ln) const {
       }
     }
   }
+
+  // Indent function is not defined or invalid.
   return GetPrevLineIndent(ln, false);
 }
 
@@ -1761,6 +1765,13 @@ bool TextBuffer::CanRedo() const {
 
 //------------------------------------------------------------------------------
 // Lex
+
+void TextBuffer::ScanLex() {
+  assert(ft_plugin_->IsLexAvailable());
+
+  Quote* quote = NULL;
+  ScanLex(1, quote);
+}
 
 bool TextBuffer::GetQuoteInfo(const TextPoint& point,
                               QuoteInfo* quote_info) const {
@@ -2145,7 +2156,6 @@ void TextBuffer::FindRegexStringAll(const std::wstring& str,
   }
 
   try {
-    // NOTE: Throw std::regex_error if the supplied regular expression is not valid.
     std::wregex re(str, re_flags);
     FindRegexAll(re, range, result_ranges);
   } catch (std::regex_error& e) {
@@ -2992,11 +3002,6 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
       quote = NULL;
     }  // else: Quote continues.
   }
-}
-
-void TextBuffer::ScanLex() {
-  Quote* quote = NULL;
-  ScanLex(1, quote);
 }
 
 void TextBuffer::ScanLex(Coord start_ln, Quote* quote) {
