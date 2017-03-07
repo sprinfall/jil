@@ -127,7 +127,9 @@ public:
   bool buffer_modified() const;
   bool buffer_new_created() const;
 
-  // Overriddens of TextListener:
+  //----------------------------------------------------------------------------
+
+  //  TextListener OVERRIDE
   virtual void OnBufferLineChange(LineChangeType type, const LineChangeData& data) override;
   virtual void OnBufferChange(ChangeType type) override;
 
@@ -166,6 +168,9 @@ public:
 
   // Set rulers.
   void SetRulers(const std::vector<int>& rulers);
+
+  // Set view options and update view using the new view options.
+  void SetViewOptions(const ViewOptions& new_view_options);
 
   //----------------------------------------------------------------------------
 
@@ -332,7 +337,7 @@ protected:
   // NOTE: Return raw pointer instead of std::shared_ptr since it's protected.
   WrapHelper* wrap_helper() const;
 
-  // Wrap lines according to the current option.
+  // Wrap or unwrap lines according to the current option.
   void DoWrap();
 
   // Show/hide line numbers according to the current option.
@@ -343,11 +348,14 @@ protected:
   void DoShowHScrollbar();
 
   //----------------------------------------------------------------------------
-  // Handlers for buffer and buffer line changes.
+  // Handlers for buffer line changes.
 
   void HandleLineUpdated(const LineChangeData& data);
   void HandleLineAdded(const LineChangeData& data);
   void HandleLineDeleted(const LineChangeData& data);
+
+  //----------------------------------------------------------------------------
+  // Handlers for buffer changes.
 
   void HandleFileTypeChange();
   void HandleTabOptionsChange();

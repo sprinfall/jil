@@ -244,9 +244,11 @@ bool BookCtrl::RemoveActivePage() {
 }
 
 void BookCtrl::RemoveAllPages(bool from_destroy, const BookPage* except_page) {
-  wxWindowUpdateLocker update_locker(this);
+  if (from_destroy && except_page != NULL) {
+    except_page = NULL;  // Ignored
+  }
 
-  bool removed_any = false;
+  wxWindowUpdateLocker update_locker(this);
 
   for (TabIter it = tabs_.begin(); it != tabs_.end(); ) {
     Tab* tab = *it;
@@ -263,24 +265,23 @@ void BookCtrl::RemoveAllPages(bool from_destroy, const BookPage* except_page) {
     it = tabs_.erase(it);
     stack_tabs_.remove(tab);
 
-    DoRemoveAll(tab);
+    DoRemoveTab(tab, true);
 
     wxDELETE(tab);
-
-    removed_any = true;
   }
 
-  if (removed_any && !from_destroy) {
-    if (!stack_tabs_.empty()) {
-      ActivatePage(stack_tabs_.front()->page, true);
-      PostEvent(kEvtBookPageSwitch);
-    }
-
-    ResizeTabs();
-    tab_panel_->Refresh();
-
-    PostEvent(kEvtBookPageChange);
+  if (from_destroy) {
+    // Since the book ctrl will be destroyed, no need to post events
+    // or refresh.
+    return;
   }
+
+  if (!stack_tabs_.empty()) {  // except_page != NULL
+    ActivatePage(stack_tabs_.front()->page, true);
+  }
+
+  // Post kEvtBookPageChange since pages' removed.
+  PostEvent(kEvtBookPageChange);
 }
 
 void BookCtrl::ActivatePage(BookPage* page, bool ensure_visible) {
@@ -910,14 +911,14 @@ BookPage* BookCtrl::PageByPos(int pos_x) {
   return NULL;
 }
 
-void BookCtrl::ActivatePage(TabIter it, bool ensure_visible) {
+bool BookCtrl::ActivatePage(TabIter it, bool ensure_visible) {
   if (it == tabs_.end()) {
-    return;
+    return false;
   }
 
   Tab* tab = *it;
   if (tab->active) {
-    return;  // Already active
+    return false;  // Already active
   }
 
   // Deactivate previous active page.
@@ -941,6 +942,8 @@ void BookCtrl::ActivatePage(TabIter it, bool ensure_visible) {
   tab_panel_->Refresh();
 
   PostEvent(kEvtBookPageSwitch);
+
+  return true;
 }
 
 bool BookCtrl::RemovePage(TabIter it) {
@@ -957,9 +960,9 @@ bool BookCtrl::RemovePage(TabIter it) {
   tabs_.erase(it);
   stack_tabs_.remove(tab);
 
-  DoRemoveTab(tab);
+  DoRemoveTab(tab, false);
 
-  delete tab;
+  wxDELETE(tab);
 
   // Resize tabs since more space is available.
   ResizeTabs();

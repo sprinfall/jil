@@ -69,32 +69,22 @@ void ToolBook::DoActivateTab(Tab* tab, bool active) {
   }
 }
 
-void ToolBook::DoRemoveTab(Tab* tab) {
+void ToolBook::DoRemoveTab(Tab* tab, bool from_remove_all) {
   tab->page->Page_Close();
 
-  // The page to remove is active; activate another page.
   if (tab->active) {
     page_panel_->GetSizer()->Clear(false);
 
-    if (!IsEmpty()) {
-      // TODO: Duplicate code as DoActivateTab().
-      Tab* active_tab = stack_tabs_.front();
-      active_tab->active = true;
-      active_tab->page->Page_Activate(true);
+    // The page to remove is active; activate another page.
+    if (!from_remove_all && !IsEmpty()) {
+      stack_tabs_.front()->active = true;
+      stack_tabs_.front()->page->Page_Activate(true);
 
       PostEvent(kEvtBookPageSwitch);
     }
   }
 
   page_panel_->Layout();
-}
-
-void ToolBook::DoRemoveAll(Tab* tab) {
-  tab->page->Page_Close();
-
-  if (tab->active) {
-    page_panel_->GetSizer()->Clear(false);
-  }
 }
 
 void ToolBook::OnMenuClose(wxCommandEvent& evt) {

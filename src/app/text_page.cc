@@ -21,11 +21,22 @@ TextPage::TextPage(editor::TextBuffer* buffer)
     , buffer_(buffer) {
   state_ = new PageState();
   state_->view_options = buffer->view_options();
+
+  // Listen to the changes from buffer.
+  buffer_->AttachListener(this);
 }
 
 TextPage::~TextPage() {
+  buffer_->DetachListener(this);
+
   wxDELETE(buffer_);
   wxDELETE(state_);
+}
+
+void TextPage::set_page_window(PageWindow* page_window) {
+  assert(page_window != NULL);
+
+  page_window_ = page_window;
 }
 
 //------------------------------------------------------------------------------
@@ -151,7 +162,16 @@ void TextPage::OnBufferLineChange(editor::LineChangeType type, const editor::Lin
 }
 
 void TextPage::OnBufferChange(editor::ChangeType type) {
-  // TODO: Might need to handle kTabOptionsChange.
+  switch (type) {
+  case editor::kViewOptionsChange:
+    // Update the view options using buffer's view options.
+    // This happens when the user changes the options in Preferences.
+    state_->view_options = buffer_->view_options();
+    break;
+
+  default:
+    break;
+  }
 }
 
 //------------------------------------------------------------------------------

@@ -4,7 +4,7 @@
 
 #include "wx/menu.h"
 
-#include "editor/text_area.h"  // TODO
+#include "editor/text_area.h"
 #include "editor/text_buffer.h"
 #include "editor/util.h"
 #include "editor/wrap.h"
@@ -171,8 +171,6 @@ void PageWindow::GetState(PageState* state) const {
 void PageWindow::SetState(PageState* state) {
   allow_text_change_ = state->allow_text_change;
 
-  view_options_ = state->view_options;
-
   caret_point_ = state->caret_point;
   max_caret_x_ = state->max_caret_x;
 
@@ -192,6 +190,8 @@ void PageWindow::SetState(PageState* state) {
       wrap_helper()->Wrap(NULL);  
     }
   }
+
+  SetViewOptions(state->view_options);
 
   // Rewrap if the client width has been changed.
   if (wrap_helper_) {

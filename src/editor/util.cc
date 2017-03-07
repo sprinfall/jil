@@ -141,14 +141,14 @@ Encoding GetEncodingByName(const std::string& name) {
 
 std::wstring GetEol(FileFormat ff) {
   switch (ff) {
-    case FF_CRLF:
-      return L"\r\n";
-    case FF_LF:
-      return L"\n";
-    case FF_CR:
-      return L"\r";
-    default:
-      return L"";
+  case FF_CRLF:
+    return L"\r\n";
+  case FF_LF:
+    return L"\n";
+  case FF_CR:
+    return L"\r";
+  default:
+    return L"";
   }
 }
 

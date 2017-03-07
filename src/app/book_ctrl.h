@@ -188,7 +188,9 @@ public:
 
   // Remove all pages.
   // \param from_destroy It's going to be destroyed, don't refresh or post event.
-  // \param except_page If specified, this page won't be removed.
+  // \param except_page If specified, this page won't be removed;
+  //                    Ignored if from_destroy is true.
+  //                    E.g., Close All But This.
   void RemoveAllPages(bool from_destroy, const BookPage* except_page = NULL);
 
   size_t PageCount() const {
@@ -229,11 +231,8 @@ protected:
 
   // \param tab The tab which will be deleted, and it has been removed
   //            from the tab list.
-  virtual void DoRemoveTab(Tab* tab) = 0;
-
-  // \param tab The tab which will be deleted during RemoveAllPages(), and it
-  //            has been removed from the tab list.
-  virtual void DoRemoveAll(Tab* tab) = 0;
+  // \param from_remove_all Called from RemoveAllPages.
+  virtual void DoRemoveTab(Tab* tab, bool from_remove_all) = 0;
 
   //----------------------------------------------------------------------------
 
@@ -306,7 +305,8 @@ protected:
   BookPage* PageByPos(int pos_x);
 
   // \param ensure_visible Make sure the active tab will be visible.
-  void ActivatePage(TabIter it, bool ensure_visible);
+  // Return true if the page is newly activated.
+  bool ActivatePage(TabIter it, bool ensure_visible);
 
   bool RemovePage(TabIter it);
 

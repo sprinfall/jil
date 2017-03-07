@@ -624,9 +624,9 @@ void BookFrame::FindAllInAllPages(const std::wstring& str, int flags) {
   }
 }
 
-void BookFrame::FindAllInFolders(const std::wstring& str,
-                                 int flags,
-                                 const wxArrayString& folders) {
+void BookFrame::FindAllInFolder(const std::wstring& str,
+                                int flags,
+                                const wxString& folder) {
   wxCriticalSectionLocker locker(find_thread_cs_);
 
   if (find_thread_ != NULL) {
@@ -639,13 +639,8 @@ void BookFrame::FindAllInFolders(const std::wstring& str,
 
   wxArrayString files;
 
-  size_t folders_count = folders.GetCount();
-  for (size_t i = 0; i < folders_count; ++i) {
-    wxString folder = folders[i];
-
-    if (wxDir::Exists(folder)) {
-      wxDir::GetAllFiles(folder, &files, wxEmptyString, wxDIR_FILES | wxDIR_DIRS);
-    }
+  if (wxDir::Exists(folder)) {
+    wxDir::GetAllFiles(folder, &files, wxEmptyString, wxDIR_FILES | wxDIR_DIRS);
   }
 
   if (files.IsEmpty()) {
@@ -753,10 +748,10 @@ void BookFrame::ReplaceAllInAllPages(const std::wstring& str,
 }
 
 // TODO
-void BookFrame::ReplaceAllInFolders(const std::wstring& str,
-                                    const std::wstring& replace_str,
-                                    int flags,
-                                    const wxArrayString& folders) {
+void BookFrame::ReplaceAllInFolder(const std::wstring& str,
+                                   const std::wstring& replace_str,
+                                   int flags,
+                                   const wxString& folder) {
 }
 
 //------------------------------------------------------------------------------
@@ -1150,29 +1145,9 @@ void BookFrame::ApplyEditorOptionChanges(const wxString& ft_id,
 
     // Apply view option changes.
 
-    // TODO
     if (view_options_changed) {
       buffer->set_view_options(options.view);
-
-    //  if (options.view.wrap != old_options.view.wrap) {
-    //    text_page->Wrap(options.view.wrap);
-    //  }
-
-      //if (options.view.show_number != old_options.view.show_number) {
-      //  text_page->ShowNumber(options.view.show_number);
-      //}
-
-    //  if (options.view.show_space != old_options.view.show_space) {
-    //    text_page->ShowSpace(options.view.show_space);
-    //  }
-
-    //  if (options.view.show_hscrollbar != old_options.view.show_hscrollbar) {
-    //    text_page->ShowHScrollbar(options.view.show_hscrollbar);
-    //  }
-
-    //  if (options.view.rulers != old_options.view.rulers) {
-    //    text_page->SetRulers(options.view.rulers);
-    //  }
+      buffer->Notify(editor::kViewOptionsChange);
     }
   }
 }
@@ -1377,6 +1352,8 @@ void BookFrame::OnClose(wxCloseEvent& evt) {
 }
 
 void BookFrame::OnTextBookPageChange(wxCommandEvent& evt) {
+  wxLogDebug("BookFrame::OnTextBookPageChange");
+
   // Clear status fields if all pages are removed.
   if (text_book_->PageCount() == 0) {
     UpdateStatusFields();
@@ -1399,6 +1376,8 @@ void BookFrame::OnTextBookPageChange(wxCommandEvent& evt) {
 }
 
 void BookFrame::OnTextBookPageSwitch(wxCommandEvent& evt) {
+  wxLogDebug("BookFrame::OnTextBookPageSwitch");
+
   UpdateStatusFields();
 
   if (options_->show_path) {
@@ -2247,7 +2226,6 @@ void BookFrame::AddFrMatchLines(editor::TextBuffer* buffer,
     fr_line->AddLexElem(0, max_ln_size, nr_lex);
 
     // Add lex for matched sub-string.
-    // TODO: Multi-line match when using regex.
     size_t off = range.point_begin().x + max_ln_size + 1;
     size_t len = range.point_end().x - range.point_begin().x;
     fr_line->AddLexElem(off, len, id_lex);
@@ -2703,6 +2681,10 @@ TextPage* BookFrame::TextPageByBufferId(size_t buffer_id) const {
 }
 
 void BookFrame::RemoveAllTextPages(bool from_destroy, const TextPage* except_page) {
+  if (from_destroy) {
+    assert(except_page == NULL);
+  }
+
   std::vector<TextPage*> text_pages = text_book_->TextPages();
 
   // If any buffer is modified, ask for save.

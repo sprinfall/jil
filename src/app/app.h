@@ -182,7 +182,7 @@ private:
 #endif  // JIL_SINGLE_INSTANCE
 
   // Files specified via command line argument.
-  // TODO: Avoid this.
+  // Will be cleared after use.
   wxArrayString cmdline_files_;
 
   Session session_;

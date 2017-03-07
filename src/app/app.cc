@@ -649,8 +649,7 @@ void App::LoadStatusFields() {
   ParseStatusFields(list_setting, &status_fields_);
 }
 
-// TODO:
-// Add version control.
+// TODO: Add version control.
 // If new options are added, increase the version number.
 // If version number is not consistent between resource file and user file,
 // always load resource file firstly.

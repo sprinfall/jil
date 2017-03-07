@@ -155,9 +155,9 @@ public:
 
   void FindAllInAllPages(const std::wstring& str, int flags);
 
-  void FindAllInFolders(const std::wstring& str,
-                        int flags,
-                        const wxArrayString& folders);
+  void FindAllInFolder(const std::wstring& str,
+                       int flags,
+                       const wxString& folder);
 
   // Find string in the file from another thread (async).
   // NOTE: Don't call or trigger any GUI operation (e.g., refresh).
@@ -179,10 +179,10 @@ public:
                             const std::wstring& replace_str,
                             int flags);
 
-  void ReplaceAllInFolders(const std::wstring& str,
-                           const std::wstring& replace_str,
-                           int flags,
-                           const wxArrayString& folders);
+  void ReplaceAllInFolder(const std::wstring& str,
+                          const std::wstring& replace_str,
+                          int flags,
+                          const wxString& folder);
 
 protected:
   void Init();
@@ -424,6 +424,10 @@ private:
   TextPage* TextPageByBufferId(size_t buffer_id) const;
 
   // Remove all text pages from text book.
+  // \param from_destroy It's going to be destroyed.
+  // \param except_page If specified, this page won't be removed;
+  //                    Must be NULL if from_destroy is true.
+  //                    E.g., Close All But This.
   void RemoveAllTextPages(bool from_destroy, const TextPage* except_page);
 
   void SwitchStackPage(bool forward);

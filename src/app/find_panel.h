@@ -202,8 +202,8 @@ protected:
   // Set the foreground color of the find text ctrl.
   void SetFindTextCtrlFgColor(bool valid);
 
-  // Get the folders from control.
-  wxArrayString GetFolders() const;
+  // Get the folder from control.
+  wxString GetFolder() const;
 
 private:
   // Append a folder to folders text ctrl.
@@ -265,8 +265,8 @@ private:
 
   FindLocation location_;
 
-  ui::Label* folders_label_;
-  wxTextCtrl* folders_text_ctrl_;
+  ui::Label* folder_label_;
+  wxTextCtrl* folder_text_ctrl_;
   ui::BitmapButton* add_folder_button_;
 
   ui::BitmapButton* location_button_;

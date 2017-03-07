@@ -27,7 +27,7 @@
 
 #define kTrCurrentPage        _("Current Page")
 #define kTrAllPages           _("All Pages")
-#define kTrFolders            _("Folders")
+#define kTrFolder             _("Folder")
 
 #define kTrUseRegex           _("Use regular expression")
 #define kTrCaseSensitive      _("Case sensitive")
@@ -174,13 +174,13 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   //----------------------------------------------------------------------------
 
-  folders_label_ = new ui::Label(this, ID_FP_FOLDERS_LABEL, kTrFolders);
-  folders_label_->Hide();
+  folder_label_ = new ui::Label(this, ID_FP_FOLDER_LABEL, kTrFolder);
+  folder_label_->Hide();
 
-  folders_text_ctrl_ = new wxTextCtrl(this, ID_FP_FOLDERS_TEXTCTRL);
-  folders_text_ctrl_->Hide();
+  folder_text_ctrl_ = new wxTextCtrl(this, ID_FP_FOLDER_TEXTCTRL);
+  folder_text_ctrl_->Hide();
 
-  int height = folders_text_ctrl_->GetBestSize().GetHeight();
+  int height = folder_text_ctrl_->GetBestSize().GetHeight();
   bitmap_button_best_size_.Set(height, height);
 
   add_folder_button_ = NewBitmapButton(ID_FP_ADD_FOLDER_BUTTON);
@@ -307,7 +307,7 @@ void FindPanel::ReapplyTheme() {
 
   button_style_ = ButtonStyleFromTheme(theme_->GetTheme(THEME_BUTTON));
 
-  folders_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
+  folder_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
 
   add_folder_button_->SetBitmaps(theme_->GetImage(IMAGE_ADD_FOLDER));
 
@@ -446,9 +446,9 @@ void FindPanel::OnFindAll(wxCommandEvent& evt) {
   } else if (location_ == kAllPages) {
     book_frame_->FindAllInAllPages(find_str, flags_);
   } else if (location_ == kFolders) {
-    wxArrayString folders = GetFolders();
-    if (!folders.IsEmpty()) {
-      book_frame_->FindAllInFolders(find_str, flags_, folders);
+    wxString folder = GetFolder();
+    if (!folder.IsEmpty()) {
+      book_frame_->FindAllInFolder(find_str, flags_, folder);
     }
   }
 }
@@ -571,6 +571,7 @@ void FindPanel::HandleFind() {
 void FindPanel::HandleReplace(bool all) {
   wxString find_wxstr = find_text_ctrl_->GetValue();
   if (find_wxstr.IsEmpty()) {
+    // Clear last find string.
     book_frame_->SetLastFindStringAndFlags(L"", flags_);
     return;
   }
@@ -599,9 +600,9 @@ void FindPanel::HandleReplace(bool all) {
     }  // else: Not supported
   } else if (location_ == kFolders) {
     if (all) {
-      wxArrayString folders = GetFolders();
-      if (!folders.IsEmpty()) {
-        book_frame_->ReplaceAllInFolders(find_str, replace_str, flags_, folders);
+      wxString folder = GetFolder();
+      if (!folder.IsEmpty()) {
+        book_frame_->ReplaceAllInFolder(find_str, replace_str, flags_, folder);
       }
     }  // else: Not supported
   }
@@ -624,9 +625,9 @@ void FindPanel::SetLocation(FindLocation location) {
 
   if (location_ == kFolders) {
     // Add current working dir.
-    if (folders_text_ctrl_->GetValue().IsEmpty()) {
+    if (folder_text_ctrl_->GetValue().IsEmpty()) {
       wxString cwd = wxGetCwd();
-      folders_text_ctrl_->SetValue(cwd);
+      folder_text_ctrl_->SetValue(cwd);
     }
   }
 
@@ -653,7 +654,7 @@ void FindPanel::UpdateLocationButton() {
     location_button_->SetToolTip(kTrAllPages);
   } else {
     SetButtonBitmaps(location_button_, IMAGE_LOCATION_FOLDERS);
-    location_button_->SetToolTip(kTrFolders);
+    location_button_->SetToolTip(kTrFolder);
   }
 }
 
@@ -686,22 +687,15 @@ void FindPanel::SetFindTextCtrlFgColor(bool valid) {
   }
 }
 
-wxArrayString FindPanel::GetFolders() const {
-  wxArrayString folders;
-
-  wxString folders_str = folders_text_ctrl_->GetValue();
-  folders_str.Trim(true).Trim(false);
-
-  if (!folders_str.IsEmpty()) {
-    folders = wxSplit(folders_str, kFolderSp);
-  }
-
-  return folders;
+wxString FindPanel::GetFolder() const {
+  wxString folder = folder_text_ctrl_->GetValue();
+  folder.Trim(true).Trim(false);
+  return folder;
 }
 
 // TODO: If a folder includes another folder...
 void FindPanel::AddFolder(const wxString& folder) {
-  wxString folders_str = folders_text_ctrl_->GetValue();
+  wxString folders_str = folder_text_ctrl_->GetValue();
   folders_str.Trim(true).Trim(false);
 
   if (!folders_str.IsEmpty()) {
@@ -724,7 +718,7 @@ void FindPanel::AddFolder(const wxString& folder) {
 
   folders_str += folder;
 
-  folders_text_ctrl_->SetValue(folders_str);
+  folder_text_ctrl_->SetValue(folders_str);
 }
 
 void FindPanel::AddFindString(const wxString& string) {
@@ -776,7 +770,7 @@ wxSizer* FindPanel::CommonLayoutHead(bool with_replace) {
   if (location_ == kFolders) {
     wxSizer* location_head_hsizer = new wxBoxSizer(wxHORIZONTAL);
     location_head_hsizer->AddStretchSpacer(1);  // Make the label right-aligned.
-    location_head_hsizer->Add(folders_label_, 0, wxALIGN_CV);
+    location_head_hsizer->Add(folder_label_, 0, wxALIGN_CV);
     head_vsizer->Add(location_head_hsizer, 1, wxEXPAND);
     head_vsizer->AddSpacer(kPaddingY);
   }
@@ -806,7 +800,7 @@ wxSizer* FindPanel::CommonLayoutBody(bool with_replace) {
 
   if (location_ == kFolders) {
     wxSizer* location_body_hsizer = new wxBoxSizer(wxHORIZONTAL);
-    location_body_hsizer->Add(folders_text_ctrl_, 1, wxALIGN_CV);
+    location_body_hsizer->Add(folder_text_ctrl_, 1, wxALIGN_CV);
     body_vsizer->Add(location_body_hsizer, 1, wxEXPAND);
     body_vsizer->AddSpacer(kPaddingY);
   }
@@ -866,8 +860,8 @@ void FindPanel::ShowReplace(bool show) {
 }
 
 void FindPanel::ShowFolders(bool show) {
-  folders_label_->Show(show);
-  folders_text_ctrl_->Show(show);
+  folder_label_->Show(show);
+  folder_text_ctrl_->Show(show);
   add_folder_button_->Show(show);
 }
 

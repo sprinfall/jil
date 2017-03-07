@@ -235,6 +235,7 @@ bool TextWindow::buffer_new_created() const {
   return buffer_->new_created();
 }
 
+//------------------------------------------------------------------------------
 
 void TextWindow::OnBufferLineChange(LineChangeType type, const LineChangeData& data) {
   if (type != kLineRefresh) {
@@ -267,32 +268,37 @@ void TextWindow::OnBufferLineChange(LineChangeType type, const LineChangeData& d
 
 void TextWindow::OnBufferChange(ChangeType type) {
   switch (type) {
-    case kEncodingChange:
-      PostEvent(kEncodingEvent);
-      break;
+  case kEncodingChange:
+    PostEvent(kEncodingEvent);
+    break;
 
-    case kFileFormatChange:
-      PostEvent(kFileFormatEvent);
-      break;
+  case kFileFormatChange:
+    PostEvent(kFileFormatEvent);
+    break;
 
-    case kFileNameChange:
-      PostEvent(kFileNameEvent);
-      break;
+  case kFileNameChange:
+    PostEvent(kFileNameEvent);
+    break;
 
-    case kModifiedStateChange:
-      PostEvent(kModifiedStateEvent);
-      break;
+  case kModifiedStateChange:
+    PostEvent(kModifiedStateEvent);
+    break;
 
-    case kFileTypeChange:
-      HandleFileTypeChange();
-      break;
+  case kFileTypeChange:
+    HandleFileTypeChange();
+    break;
 
-    case kTabOptionsChange:
-      HandleTabOptionsChange();
-      break;
+  case kTabOptionsChange:
+    HandleTabOptionsChange();
+    break;
 
-    default:
-      break;
+  case kViewOptionsChange:
+    // Update view and view options using the view options from buffer.
+    SetViewOptions(buffer_->view_options());
+    break;
+
+  default:
+    break;
   }
 }
 
@@ -334,6 +340,31 @@ void TextWindow::SetRulers(const std::vector<int>& rulers) {
     text_area_->Refresh();
   }
 }
+
+void TextWindow::SetViewOptions(const ViewOptions& new_view_options) {
+  if (view_options_.wrap != new_view_options.wrap) {
+    Wrap(new_view_options.wrap);
+  }
+
+  if (view_options_.show_number != new_view_options.show_number) {
+    ShowNumber(new_view_options.show_number);
+  }
+
+  if (view_options_.show_space != new_view_options.show_space) {
+    ShowSpace(new_view_options.show_space);
+  }
+
+  if (view_options_.show_hscrollbar != new_view_options.show_hscrollbar) {
+    ShowHScrollbar(new_view_options.show_hscrollbar);
+  }
+
+  if (view_options_.rulers != new_view_options.rulers) {
+    SetRulers(new_view_options.rulers);
+  }
+}
+
+//------------------------------------------------------------------------------
+
 
 #if JIL_ENABLE_LEADER_KEY
 void TextWindow::set_leader_key(Key* key) {
@@ -1060,7 +1091,7 @@ void TextWindow::DoShowNumber() {
 }
 
 //------------------------------------------------------------------------------
-// Handlers for buffer and buffer line changes.
+// Handlers for buffer line changes.
 
 void TextWindow::HandleLineUpdated(const LineChangeData& data) {
   if (!view_options_.wrap) {
@@ -1158,6 +1189,9 @@ void TextWindow::HandleLineDeleted(const LineChangeData& data) {
     line_nr_area_->Refresh();
   }
 }
+
+//------------------------------------------------------------------------------
+// Handlers for buffer changes.
 
 // TODO: tab stop changes need update virtual size, caret pos, etc.
 void TextWindow::HandleFileTypeChange() {

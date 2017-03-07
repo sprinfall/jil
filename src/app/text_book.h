@@ -67,8 +67,7 @@ public:
 
 protected:
   virtual void DoActivateTab(Tab* tab, bool active) override;
-  virtual void DoRemoveTab(Tab* tab) override;
-  virtual void DoRemoveAll(Tab* tab) override;
+  virtual void DoRemoveTab(Tab* tab, bool from_remove_all) override;
 
   void Init();
   void CreatePageWindow();

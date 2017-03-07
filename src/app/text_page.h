@@ -68,10 +68,8 @@ public:
   explicit TextPage(editor::TextBuffer* buffer);
   virtual ~TextPage();
 
-  // You must call this!
-  void set_page_window(PageWindow* page_window) {
-    page_window_ = page_window;
-  }
+  // NOTE: You must call this!
+  void set_page_window(PageWindow* page_window);
 
   //----------------------------------------------------------------------------
   // OVERRIDE of BookPage
@@ -146,7 +144,9 @@ private:
   void UpdateCaretPoint(const editor::TextPoint& point, bool line_step, bool vspace);
 
 private:
-  PageWindow* page_window_;  // Always != NULL.
+  // The page window in which this text page will be set to
+  // when it becomes active.
+  PageWindow* page_window_;
 
   editor::TextBuffer* buffer_;
   PageState* state_;

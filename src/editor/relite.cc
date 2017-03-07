@@ -82,42 +82,42 @@ bool Atom::Determinable() const {
 
 bool Atom::MatchChar(wchar_t c, bool ignore_case) const {
   switch (type_) {
-    case kNormal:
-      if (!ignore_case) {
-        if (c != c_) {
-          return false;
-        }
-      } else {
-        if (!WcharIcCmp(c, c_)) {
-          return false;
-        }
-      }
-      break;
-
-    case kWildcard:
-      // Wildcard matches any charactor.
-      break;
-
-    case kSpace:
-      if (!IsSpace(c)) {
+  case kNormal:
+    if (!ignore_case) {
+      if (c != c_) {
         return false;
       }
-      break;
-
-    case kDigit:
-      if (!std::iswdigit(c)) {
+    } else {
+      if (!WcharIcCmp(c, c_)) {
         return false;
       }
-      break;
+    }
+    break;
 
-    case kBound:
-      if (!IsDelimiter(c)) {
-        return false;
-      }
-      break;
+  case kWildcard:
+    // Wildcard matches any charactor.
+    break;
 
-    default:
+  case kSpace:
+    if (!IsSpace(c)) {
       return false;
+    }
+    break;
+
+  case kDigit:
+    if (!std::iswdigit(c)) {
+      return false;
+    }
+    break;
+
+  case kBound:
+    if (!IsDelimiter(c)) {
+      return false;
+    }
+    break;
+
+  default:
+    return false;
   }
 
   return true;
@@ -237,146 +237,146 @@ bool Regex::Compile() {
     wchar_t c = pattern_[i];
 
     switch (c) {
-      case L'\\':
-        if (escaped) {
-          escaped = false;
-          word.append(1, c);
-        } else {
-          escaped = true;
-        }
-
-        break;
-
-      case L's':
-        if (escaped) {  // \s
-          escaped = false;
-          CompileWord(word);
-          nodes_.push_back(new Atom(Atom::kSpace));
-        } else {
-          word.append(1, c);
-        }
-
-        break;
-
-      case L'd':
-        if (escaped) {  // \d
-          escaped = false;
-          CompileWord(word);
-          nodes_.push_back(new Atom(Atom::kDigit));
-        } else {
-          word.append(1, c);
-        }
-
-        break;
-
-      case L'b':
-        if (escaped) {  // \b
-          escaped = false;
-          CompileWord(word);
-          nodes_.push_back(new Atom(Atom::kBound));
-        } else {
-          word.append(1, c);
-        }
-
-        break;
-
-      case L'.':
-        if (escaped) {  // \.
-          escaped = false;
-          word.append(1, c);
-        } else {
-          CompileWord(word);
-          nodes_.push_back(new Atom(Atom::kWildcard));
-        }
-
-        break;
-
-      case L'?':
-      case L'*':
-      case L'+':
-        if (escaped) {
-          escaped = false;
-          word.append(1, c);
-        } else {
-          // Repeat the last char of word.
-          if (!word.empty()) {
-            wchar_t lc = word[word.size() - 1];  // Last char
-
-            // Remove the last char from word.
-            word.resize(word.size() - 1);
-            CompileWord(word);
-
-            nodes_.push_back(new Atom(Atom::kNormal, lc));
-          } else {
-            CompileWord(word);
-          }
-
-          Atom* atom = nodes_.empty() ? NULL : nodes_.back()->AsAtom();
-          if (atom != NULL) {
-            atom->set_repeat(RepeatFromChar(c));
-          } else {
-            return false;
-          }
-        }
-
-        break;
-
-      case L'(':
-        if (escaped) {
-          escaped = false;
-          word.append(1, c);
-        } else {
-          if (grouped) {
-            return false;
-          }
-          CompileWord(word);
-          nodes_.push_back(new Group);
-          grouped = true;  // Open a new group.
-        }
-        break;
-
-      case L')':
-        if (escaped) {
-          escaped = false;
-          word.append(1, c);
-        } else {
-          if (!grouped) {
-            return false;
-          }
-          CompileWord(word);
-          nodes_.push_back(new Group);
-          grouped = false;  // Close current group.
-        }
-        break;
-
-      case L'[':
-      case L']':
-        if (escaped) {
-          escaped = false;
-          word.append(1, c);
-        } else {
-          return false;  // Not supported yet
-        }
-        break;
-
-      case L'$':
-        if (escaped) {
-          escaped = false;
-          word.append(1, c);
-        } else {
-          if (i != size - 1) {
-            // $ should always be the last char.
-            return false;
-          }
-          CompileWord(word);
-          nodes_.push_back(new Atom(Atom::kEnd));
-        }
-
-        break;
-
-      default:
+    case L'\\':
+      if (escaped) {
+        escaped = false;
         word.append(1, c);
-        break;
+      } else {
+        escaped = true;
+      }
+
+      break;
+
+    case L's':
+      if (escaped) {  // \s
+        escaped = false;
+        CompileWord(word);
+        nodes_.push_back(new Atom(Atom::kSpace));
+      } else {
+        word.append(1, c);
+      }
+
+      break;
+
+    case L'd':
+      if (escaped) {  // \d
+        escaped = false;
+        CompileWord(word);
+        nodes_.push_back(new Atom(Atom::kDigit));
+      } else {
+        word.append(1, c);
+      }
+
+      break;
+
+    case L'b':
+      if (escaped) {  // \b
+        escaped = false;
+        CompileWord(word);
+        nodes_.push_back(new Atom(Atom::kBound));
+      } else {
+        word.append(1, c);
+      }
+
+      break;
+
+    case L'.':
+      if (escaped) {  // \.
+        escaped = false;
+        word.append(1, c);
+      } else {
+        CompileWord(word);
+        nodes_.push_back(new Atom(Atom::kWildcard));
+      }
+
+      break;
+
+    case L'?':
+    case L'*':
+    case L'+':
+      if (escaped) {
+        escaped = false;
+        word.append(1, c);
+      } else {
+        // Repeat the last char of word.
+        if (!word.empty()) {
+          wchar_t lc = word[word.size() - 1];  // Last char
+
+          // Remove the last char from word.
+          word.resize(word.size() - 1);
+          CompileWord(word);
+
+          nodes_.push_back(new Atom(Atom::kNormal, lc));
+        } else {
+          CompileWord(word);
+        }
+
+        Atom* atom = nodes_.empty() ? NULL : nodes_.back()->AsAtom();
+        if (atom != NULL) {
+          atom->set_repeat(RepeatFromChar(c));
+        } else {
+          return false;
+        }
+      }
+
+      break;
+
+    case L'(':
+      if (escaped) {
+        escaped = false;
+        word.append(1, c);
+      } else {
+        if (grouped) {
+          return false;
+        }
+        CompileWord(word);
+        nodes_.push_back(new Group);
+        grouped = true;  // Open a new group.
+      }
+      break;
+
+    case L')':
+      if (escaped) {
+        escaped = false;
+        word.append(1, c);
+      } else {
+        if (!grouped) {
+          return false;
+        }
+        CompileWord(word);
+        nodes_.push_back(new Group);
+        grouped = false;  // Close current group.
+      }
+      break;
+
+    case L'[':
+    case L']':
+      if (escaped) {
+        escaped = false;
+        word.append(1, c);
+      } else {
+        return false;  // Not supported yet
+      }
+      break;
+
+    case L'$':
+      if (escaped) {
+        escaped = false;
+        word.append(1, c);
+      } else {
+        if (i != size - 1) {
+          // $ should always be the last char.
+          return false;
+        }
+        CompileWord(word);
+        nodes_.push_back(new Atom(Atom::kEnd));
+      }
+
+      break;
+
+    default:
+      word.append(1, c);
+      break;
     }
   }
 

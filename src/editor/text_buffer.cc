@@ -44,31 +44,31 @@ static bool IsBracketR(wchar_t c) {
 
 static Bracket BracketL(wchar_t c) {
   switch (c) {
-    case L'(':
-      return kParenthesis;
-    case L'{':
-      return kBrace;
-    case L'[':
-      return kSquareBracket;
-    case L'<':
-      return kAngleBracket;
-    default:
-      return kNoBracket;
+  case L'(':
+    return kParenthesis;
+  case L'{':
+    return kBrace;
+  case L'[':
+    return kSquareBracket;
+  case L'<':
+    return kAngleBracket;
+  default:
+    return kNoBracket;
   }
 }
 
 static Bracket BracketR(wchar_t c) {
   switch (c) {
-    case L')':
-      return kParenthesis;
-    case L'}':
-      return kBrace;
-    case L']':
-      return kSquareBracket;
-    case L'>':
-      return kAngleBracket;
-    default:
-      return kNoBracket;
+  case L')':
+    return kParenthesis;
+  case L'}':
+    return kBrace;
+  case L']':
+    return kSquareBracket;
+  case L'>':
+    return kAngleBracket;
+  default:
+    return kNoBracket;
   }
 }
 

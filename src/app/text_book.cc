@@ -107,7 +107,6 @@ std::vector<TextPage*> TextBook::StackTextPages() const {
 void TextBook::DoActivateTab(Tab* tab, bool active) {
   if (active) {
     tab->active = true;
-
     tab->page->Page_Activate(true);
 
     if (!page_window_->IsShown()) {
@@ -116,36 +115,41 @@ void TextBook::DoActivateTab(Tab* tab, bool active) {
       page_panel_->Layout();
     }
   } else {
-    // TODO
     tab->active = false;
+    tab->page->Page_Activate(false);
   }
 }
 
-void TextBook::DoRemoveTab(Tab* tab) {
-  // The page to remove is active; activate another page.
+void TextBook::DoRemoveTab(Tab* tab, bool from_remove_all) {
   if (tab->active) {
-    if (!IsEmpty()) {
-      Tab* active_tab = stack_tabs_.front();
-      active_tab->active = true;
-      active_tab->page->Page_Activate(true);
+    bool placeholder = false;
 
-      PostEvent(kEvtBookPageSwitch);
+    if (!from_remove_all) {
+      if (!IsEmpty()) {
+        // Activate another page.
+        Tab* next_active_tab = stack_tabs_.front();
+
+        // NOTE: You can't just call ActivateTab(next_active_tab->page, true)!
+        next_active_tab->active = true;
+        next_active_tab->page->Page_Activate(true);
+        MakeActiveTabVisible(true);  // Normally, should be already visible.
+
+        PostEvent(kEvtBookPageSwitch);
+      } else {
+        placeholder = true;
+      }
+    } else {
+      placeholder = true;
     }
-  }
 
-  if (IsEmpty()) {
-    // No pages left, set placeholder page and hide page window.
-    placeholder_page_->Page_Activate(true);
-    page_window_->Hide();
-    page_panel_->Layout();
-  }
+    if (placeholder) {
+      // Activate placeholder page and hide page window.
+      // NOTE: Don't have to post kEvtBookPageSwitch.
+      placeholder_page_->Page_Activate(true);
 
-  delete tab->page;
-}
-
-void TextBook::DoRemoveAll(Tab* tab) {
-  if (tab->active) {
-    page_window_->SetPage(placeholder_page_);
+      page_window_->Hide();
+      //page_panel_->Layout();
+    }
   }
 
   delete tab->page;
@@ -173,7 +177,7 @@ void TextBook::CreatePageWindow() {
   page_window_->set_binding(binding_);
 
   page_window_->Create(page_panel_, ID_TEXT_WINDOW, true);
-
+   
   // TODO: SetTextFont causes Refresh, avoid it.
   page_window_->SetTextFont(options_->fonts[FONT_TEXT]);
   page_window_->SetLinePadding(options_->line_padding);

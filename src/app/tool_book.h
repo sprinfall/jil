@@ -23,8 +23,7 @@ protected:
   virtual void HandleTabMouseRightUp(wxMouseEvent& evt) override;
 
   virtual void DoActivateTab(Tab* tab, bool active) override;
-  virtual void DoRemoveTab(Tab* tab) override;
-  virtual void DoRemoveAll(Tab* tab) override;
+  virtual void DoRemoveTab(Tab* tab, bool from_remove_all) override;
 
   // Handlers for right click menu items on the tab area.
   void OnMenuClose(wxCommandEvent& evt);

@@ -81,34 +81,34 @@ void StatusBar::UpdateFieldSizes() {
     FieldInfo& field_info = field_infos_[i];
 
     switch (field_info.size_type) {
-      case kFit:
-        GetTextExtent(GetFieldValue(field_info.id), &field_info.size, NULL);
+    case kFit:
+      GetTextExtent(GetFieldValue(field_info.id), &field_info.size, NULL);
 
-        field_info.size += padding_.x + padding_.x;  // Only for this size type.
-        field_info.size += field_info.size_value;  // Extra padding.
+      field_info.size += padding_.x + padding_.x;  // Only for this size type.
+      field_info.size += field_info.size_value;  // Extra padding.
 
-        if (field_info.min_size > 0) {
-          int min_pixels = char_size_.x * field_info.min_size;
-          if (field_info.size < min_pixels) {
-            field_info.size = min_pixels;
-          }
+      if (field_info.min_size > 0) {
+        int min_pixels = char_size_.x * field_info.min_size;
+        if (field_info.size < min_pixels) {
+          field_info.size = min_pixels;
         }
+      }
 
-        break;
+      break;
 
-      case kFixed:
-        field_info.size = char_size_.x * field_info.size_value;
-        break;
+    case kFixed:
+      field_info.size = char_size_.x * field_info.size_value;
+      break;
 
-      case kPercentage:
-        field_info.size = field_info.size_value * client_size / 100;
-        break;
+    case kPercentage:
+      field_info.size = field_info.size_value * client_size / 100;
+      break;
 
-      case kStretch:
-        // Reset size. Set it later.
-        field_info.size = 0;
-        ++stretch_field_count;
-        break;
+    case kStretch:
+      // Reset size. Set it later.
+      field_info.size = 0;
+      ++stretch_field_count;
+      break;
     }
 
     if (field_info.size > 0) {
