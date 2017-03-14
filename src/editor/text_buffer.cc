@@ -1260,6 +1260,44 @@ void TextBuffer::HandleLineChange(LineChangeType type, Coord first_ln, Coord las
 }
 
 //------------------------------------------------------------------------------
+// Undo-able buffer change (with action(s) created).
+
+void TextBuffer::UndoableInsertString(const TextPoint& point,
+                                      const std::wstring& str,
+                                      bool grouped) {
+  InsertStringAction* isa = new InsertStringAction(this, point, str);
+
+  isa->set_update_caret(false);
+  isa->set_grouped(grouped);
+
+  AddAction(isa);
+}
+
+void TextBuffer::UndoableDeleteRange(const TextRange& range,
+                                     TextDir dir,
+                                     bool rect,
+                                     bool grouped) {
+  DeleteRangeAction* dra = new DeleteRangeAction(this, range, dir, rect, false);
+
+  dra->set_update_caret(false);
+  dra->set_grouped(grouped);
+
+  AddAction(dra);
+}
+
+void TextBuffer::UndoableReplace(const TextRange& range,
+                                 const std::wstring& replace_str,
+                                 bool grouped) {
+  grouped = grouped && !replace_str.empty();
+
+  UndoableDeleteRange(range, editor::kForward, false, grouped);
+
+  if (!replace_str.empty()) {
+    UndoableInsertString(range.point_begin(), replace_str, grouped);
+  }
+}
+
+//------------------------------------------------------------------------------
 
 TextRange TextBuffer::FindString(const std::wstring& str,
                                  const TextRange& range,

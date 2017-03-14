@@ -279,6 +279,22 @@ public:
   void HandleLineChange(LineChangeType type, Coord first_ln, Coord last_ln = 0);
 
   //----------------------------------------------------------------------------
+  // Undo-able buffer change (with action(s) created).
+
+  void UndoableInsertString(const TextPoint& point,
+                            const std::wstring& str,
+                            bool grouped);
+
+  void UndoableDeleteRange(const TextRange& range,
+                           TextDir dir,
+                           bool rect,
+                           bool grouped);
+
+  void UndoableReplace(const TextRange& range,
+                       const std::wstring& replace_str,
+                       bool grouped);
+
+  //----------------------------------------------------------------------------
   // Find & Replace
 
   // \param reversely Currently, only for non-regex find.

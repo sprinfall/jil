@@ -143,7 +143,9 @@ bool TextPage::Page_Save() {
 //------------------------------------------------------------------------------
 
 void TextPage::OnBufferLineChange(editor::LineChangeType type, const editor::LineChangeData& data) {
-  if (state_->view_options.wrap && state_->wrap_helper != NULL) {
+  // Update wrap info.
+  bool wrap = state_->view_options.wrap && state_->wrap_helper != NULL;
+  if (wrap) {
     if (type == editor::kLineAdded) {
       for (editor::Coord ln = data.first(); ln <= data.last(); ++ln) {
         state_->wrap_helper->UpdateLineWrap(ln);
@@ -159,10 +161,29 @@ void TextPage::OnBufferLineChange(editor::LineChangeType type, const editor::Lin
       }
     }
   }
+
+  // If the selection intersects with the changed line range, clear
+  // the selection.
+  if (!state_->selection.IsEmpty()) {
+    if (data.IntersectWith(state_->selection.GetLineRange())) {
+      state_->selection.Reset();
+    }
+  }
+
+  // NOTE:
+  // Leave caret point as it is.
+  // You can update it if it's in one of the changed lines. But it's
+  // not necessary.
 }
 
 void TextPage::OnBufferChange(editor::ChangeType type) {
   switch (type) {
+  case editor::kModifiedStateChange:
+    // Tell page window to send an event to its parent (TextBook) so that
+    // the tab area could be refreshed.
+    page_window_->OnPageModifiedStateChange(this);
+    break;
+
   case editor::kViewOptionsChange:
     // Update the view options using buffer's view options.
     // This happens when the user changes the options in Preferences.
@@ -186,109 +207,15 @@ void TextPage::Detach() {
 
 //------------------------------------------------------------------------------
 
-void TextPage::InsertString(const editor::TextPoint& point,
-                            const std::wstring& str,
-                            bool grouped,
-                            bool update_caret) {
-  editor::InsertStringAction* isa = new editor::InsertStringAction(buffer_, point, str);
-
-  isa->set_caret_point(state_->caret_point);
-  isa->set_update_caret(update_caret);
-  isa->set_grouped(grouped);
-
-  Exec(isa);
-}
-
-void TextPage::DeleteRange(const editor::TextRange& range,
-                           editor::TextDir dir,
-                           bool rect,
-                           bool grouped,
-                           bool selected,
-                           bool update_caret) {
-  editor::DeleteRangeAction* dra = new editor::DeleteRangeAction(buffer_, range, dir, rect, selected);
-
-  dra->set_caret_point(state_->caret_point);
-  dra->set_update_caret(update_caret);
-  dra->set_grouped(grouped);
-
-  Exec(dra);
-}
-
 void TextPage::Replace(const editor::TextRange& range,
                        const std::wstring& replace_str,
                        bool grouped) {
   assert(page_window_ != NULL);
 
-  if (page_window_->page() == this) {  // I'm the active page.
+  if (page_window_->page() == this) {  // Active page.
     page_window_->Replace(range, replace_str, grouped);
   } else {
-    grouped = grouped && !replace_str.empty();
-
-    DeleteRange(range, editor::kForward, false, grouped, false, false);
-
-    if (!replace_str.empty()) {
-      InsertString(range.point_begin(), replace_str, grouped, false);
-    }
-
-    if (!state_->selection.IsEmpty()) {
-      if (!state_->selection.GetLineRange().Intersect(range.GetLineRange()).IsEmpty()) {
-        state_->selection.Reset();
-      }
-    }
-  }
-}
-
-void TextPage::Exec(editor::Action* action) {
-  action = buffer_->AddAction(action);
-
-  if (action != NULL) {
-    UpdateAfterExec(action);
-  }
-}
-
-void TextPage::UpdateAfterExec(editor::Action* action) {
-  editor::RangeAction* ra = action->AsRangeAction();
-
-  if (action->update_caret()) {
-    UpdateCaretPointAfterAction(action->CaretPointAfterExec(), ra);
-  }
-}
-
-void TextPage::UpdateCaretPointAfterAction(const editor::TextPoint& point, editor::RangeAction* ra) {
-  bool vspace = false;
-
-  if (ra != NULL && ra->rect()) {
-    // Allow virtual spaces for rect range action.
-    vspace = true;
-  }
-
-  UpdateCaretPoint(point, false, vspace);
-}
-
-void TextPage::UpdateCaretPoint(const editor::TextPoint& point, bool line_step, bool vspace) {
-  editor::TextPoint p(point);
-
-  // Adjust the new caret point.
-  editor::Coord line_length = buffer_->LineLength(p.y);
-  if (line_step) {
-    // The caret point is changed by moving to previous/next line or GoTo(ln).
-    p.x = std::min(state_->max_caret_x, line_length);
-  } else {
-    if (!vspace) {  // Virtual space not allowed.
-      if (p.x > line_length) {
-        p.x = line_length;
-      }
-    }
-  }
-
-  if (p == state_->caret_point) {
-    return;
-  }
-
-  state_->caret_point = p;
-
-  if (!line_step) {
-    state_->max_caret_x = p.x;
+    buffer_->UndoableReplace(range, replace_str, grouped);
   }
 }
 

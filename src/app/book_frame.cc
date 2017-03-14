@@ -251,6 +251,12 @@ bool BookFrame::Show(bool show) {
   return wxFrame::Show(show);
 }
 
+void BookFrame::SetFocusToTextBook() {
+  text_book_->SetFocus();
+}
+
+//------------------------------------------------------------------------------
+
 TextPage* BookFrame::OpenFile(const wxString& file_name, bool active, bool silent) {
   return DoOpenFile(file_name, active, silent, true, true);
 }
@@ -745,13 +751,55 @@ void BookFrame::ReplaceAllInAllPages(const std::wstring& str,
   for (size_t i = 0; i < text_pages.size(); ++i) {
     ReplaceAll(str, replace_str, flags, text_pages[i]);
   }
+
+  // Set focus to the page window after Replace All.
+  SetFocusToTextBook();
 }
 
-// TODO
 void BookFrame::ReplaceAllInFolder(const std::wstring& str,
                                    const std::wstring& replace_str,
                                    int flags,
                                    const wxString& folder) {
+  wxArrayString files;
+
+  if (wxDir::Exists(folder)) {
+    wxDir::GetAllFiles(folder, &files, wxEmptyString, wxDIR_FILES | wxDIR_DIRS);
+  }
+
+  if (files.IsEmpty()) {
+    return;
+  }
+
+  size_t count = files.GetCount();
+  for (size_t i = 0; i < count; ++i) {
+    AsyncReplaceInFile(str, replace_str, flags, files[i]);
+  }
+}
+
+int BookFrame::AsyncReplaceInFile(const std::wstring& str,
+                                  const std::wstring& replace_str,
+                                  int flags,
+                                  const wxString& file) {
+  using namespace editor;
+
+  wxFileName fn(file);
+  TextPage* text_page = TextPageByFileName(fn);
+
+  if (text_page != NULL) {
+    ReplaceAll(str, replace_str, flags, text_page);
+  } else {
+    TextBuffer* new_buffer = CreateBuffer(fn, NewBufferId(), true);
+    if (new_buffer == NULL) {
+      // TODO: Error handling.
+    } else {
+      if (ReplaceAll(str, replace_str, flags, new_buffer)) {
+        // Create text page for this buffer.
+        text_book_->AddPage(new_buffer, false);
+      }
+    }
+  }
+
+  return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -2152,24 +2200,49 @@ void BookFrame::ReplaceAll(const std::wstring& str,
     return;
   }
 
-  // If there are multiple result ranges, group the replace actions so
-  // that they could be undone together.
-  bool group = result_ranges.size() > 1;
-  if (group) {
-    buffer->AddGroupAction();
-  }
+  // Group the replace actions (actually, delete and insert actions) so that
+  // they could be undone together.
+  buffer->AddGroupAction();
 
   // Replace in reverse order so that one replace action won't break the
   // remaining result ranges.
   std::list<TextRange>::reverse_iterator it = result_ranges.rbegin();
   for (; it != result_ranges.rend(); ++it) {
-    // NOTE: Can't group here, because group doesn't support embedding.
+    // NOTE: No group here, because group doesn't support embedding.
     text_page->Replace(*it, replace_str, false);
   }
 
-  if (group) {
-    buffer->AddGroupAction();
+  buffer->AddGroupAction();
+}
+
+bool BookFrame::ReplaceAll(const std::wstring& str,
+                           const std::wstring& replace_str,
+                           int flags,
+                           editor::TextBuffer* buffer) {
+  using namespace editor;
+
+  std::list<TextRange> result_ranges;
+  FindAll(str, flags, buffer, &result_ranges);
+
+  if (result_ranges.empty()) {
+    return false;
   }
+
+  // Group the replace actions (actually, delete and insert actions) so that
+  // they could be undone together.
+  buffer->AddGroupAction();
+
+  // Replace in reverse order so that one replace action won't break the
+  // remaining result ranges.
+  std::list<TextRange>::reverse_iterator it = result_ranges.rbegin();
+  for (; it != result_ranges.rend(); ++it) {
+    // NOTE: No group here, because group doesn't support embedding.
+    buffer->UndoableReplace(*it, replace_str, false);
+  }
+
+  buffer->AddGroupAction();
+
+  return true;
 }
 
 void BookFrame::AddFrFilePathLine(editor::TextBuffer* buffer, editor::TextBuffer* fr_buffer) {

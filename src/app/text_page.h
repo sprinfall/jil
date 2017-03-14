@@ -116,32 +116,12 @@ public:
 
   //----------------------------------------------------------------------------
 
-  // TODO: Avoid duplication with editor::TextWindow.
-
-  void InsertString(const editor::TextPoint& point,
-                    const std::wstring& str,
-                    bool grouped,
-                    bool update_caret);
-
-  void DeleteRange(const editor::TextRange& range,
-                   editor::TextDir dir,
-                   bool rect,
-                   bool grouped,
-                   bool selected,
-                   bool update_caret);
-
+  // Replace seems to be the only operation which will take place on an
+  // inactive text page. This function is a wrapper which hides the difference
+  // between replace in active page and in inactive pages.
   void Replace(const editor::TextRange& range,
                const std::wstring& replace_str,
                bool grouped);
-
-private:
-  void Exec(editor::Action* action);
-
-  void UpdateAfterExec(editor::Action* action);
-
-  void UpdateCaretPointAfterAction(const editor::TextPoint& point, editor::RangeAction* ra);
-
-  void UpdateCaretPoint(const editor::TextPoint& point, bool line_step, bool vspace);
 
 private:
   // The page window in which this text page will be set to

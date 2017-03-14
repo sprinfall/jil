@@ -15,7 +15,7 @@ public:
   explicit FindThread(BookFrame* book_frame);
   virtual ~FindThread();
 
-  void set_str(const std::wstring& str) {
+  void set_str(const std::wstring& str) {  // TODO: Use move to avoid copy.
     str_ = str;
   }
 

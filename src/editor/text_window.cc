@@ -674,6 +674,18 @@ void TextWindow::Replace(const TextRange& range,
       ClearSelection();
     }
   }
+
+  // Update caret point if necessary.
+  if (range.HasLine(caret_point_.y)) {
+    Coord line_length = buffer_->LineLength(caret_point_.y);
+    if (caret_point_.x > line_length) {
+      caret_point_.x = line_length;
+
+      // NOTE: Don't have to call UpdateCaretPoint.
+      UpdateCaretPosition();
+      PostEvent(kCaretEvent);
+    }
+  }
 }
 
 void TextWindow::ScrollText(TextUnit text_unit, SeekType seek_type) {
@@ -865,7 +877,7 @@ void TextWindow::UpdateCaretPoint(const TextPoint& point, bool line_step, bool s
   UpdateCaretPosition();
 
   // Notify the caret change.
-  PostEvent(TextWindow::kCaretEvent);
+  PostEvent(kCaretEvent);
 }
 
 //------------------------------------------------------------------------------
@@ -1226,7 +1238,7 @@ void TextWindow::HandleFileTypeChange() {
 
   Thaw();
 
-  PostEvent(TextWindow::kFileTypeEvent);
+  PostEvent(kFileTypeEvent);
 }
 
 void TextWindow::HandleTabOptionsChange() {
@@ -1247,7 +1259,7 @@ void TextWindow::HandleTabOptionsChange() {
 
   expand_tab_ = buffer_->text_options().expand_tab;
 
-  PostEvent(TextWindow::kTabOptionsEvent);
+  PostEvent(kTabOptionsEvent);
 }
 
 //------------------------------------------------------------------------------
@@ -2444,7 +2456,7 @@ bool TextWindow::OnTextKeyDown(wxKeyEvent& evt) {
   // Reset leader key no matter if the text function is found or not.
   if (!leader_key_->IsEmpty()) {
     leader_key_->Reset();
-    PostEvent(TextWindow::kLeaderKeyEvent);
+    PostEvent(kLeaderKeyEvent);
   }
 #endif  // JIL_ENABLE_LEADER_KEY
 
@@ -2475,7 +2487,7 @@ void TextWindow::OnTextChar(wxKeyEvent& evt) {
 }
 
 void TextWindow::OnTextSetFocus(wxFocusEvent& evt) {
-  PostEvent(TextWindow::kGetFocusEvent);
+  PostEvent(kGetFocusEvent);
 }
 
 //------------------------------------------------------------------------------
@@ -3189,9 +3201,10 @@ LineRange TextWindow::GetClientLineRange() const {
 
 //------------------------------------------------------------------------------
 
-void TextWindow::PostEvent(int event_type) {
+void TextWindow::PostEvent(int event_type, void* client_data) {
   wxCommandEvent evt(kTextWindowEvent, GetId());
   evt.SetEventObject(this);
+  evt.SetClientData(client_data);
   evt.SetInt(event_type);
   GetParent()->GetEventHandler()->AddPendingEvent(evt);
 }

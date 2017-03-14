@@ -608,7 +608,8 @@ protected:
 
   //----------------------------------------------------------------------------
 
-  void PostEvent(int event_type);
+  // \param client_data Optional client data.
+  void PostEvent(int event_type, void* client_data = NULL);
 
   wxMenuItem* AppendMenuItem(wxMenu* menu,
                              int id,

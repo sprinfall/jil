@@ -96,6 +96,13 @@ void LineRange::Substract(const LineRange& rhs,
   }
 }
 
+bool LineRange::IntersectWith(const LineRange& rhs) const {
+  if (IsEmpty() || rhs.IsEmpty()) {
+    return false;
+  }
+  return (Has(rhs.first_) || Has(rhs.last_));
+}
+
 wxString LineRange::ToString() const {
   return wxString::Format(wxT("[%d, %d]"), first_, last_);
 }

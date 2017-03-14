@@ -3,6 +3,24 @@
 
 using namespace jil::editor;
 
+TEST(LineRange, IntersectWith_Empty) {
+  LineRange lr1;
+  LineRange lr2;
+  EXPECT_FALSE(lr1.IntersectWith(lr2));
+}
+
+TEST(LineRange, IntersectWith) {
+  LineRange lr1(1, 3);
+  LineRange lr2(5, 8);
+  EXPECT_FALSE(lr1.IntersectWith(lr2));
+
+  lr2.Set(3, 5);
+  EXPECT_TRUE(lr1.IntersectWith(lr2));
+
+  lr1.Set(4, 6);
+  EXPECT_TRUE(lr1.IntersectWith(lr2));
+}
+
 TEST(TextRange, IsEmpty) {
   TextRange range;
   EXPECT_TRUE(range.IsEmpty());

@@ -91,6 +91,10 @@ public:
     binding_ = binding;
   }
 
+  void SetFocusToTextBook();
+
+  //----------------------------------------------------------------------------
+
   // \param silent Don't popup error message box on failure.
   // Return the text page of this file.
   TextPage* OpenFile(const wxString& file_name, bool active, bool silent);
@@ -183,6 +187,11 @@ public:
                           const std::wstring& replace_str,
                           int flags,
                           const wxString& folder);
+
+  int AsyncReplaceInFile(const std::wstring& str,
+                         const std::wstring& replace_str,
+                         int flags,
+                         const wxString& file);
 
 protected:
   void Init();
@@ -350,11 +359,19 @@ private:
                editor::TextBuffer* buffer,
                std::list<editor::TextRange>* result_ranges);
 
-  // Replace all in the given buffer.
+  // Replace all in the given text page.
   void ReplaceAll(const std::wstring& str,
                   const std::wstring& replace_str,
                   int flags,
                   TextPage* text_page);
+
+  // Replace all in the given text buffer.
+  // Used to replace in a folder before create the text page.
+  // Return true if any string was really replaced.
+  bool ReplaceAll(const std::wstring& str,
+                  const std::wstring& replace_str,
+                  int flags,
+                  editor::TextBuffer* buffer);
 
   void AddFrFilePathLine(editor::TextBuffer* buffer, editor::TextBuffer* fr_buffer);
 

@@ -12,6 +12,8 @@ class TextPage;
 class PageWindow : public editor::TextWindow {
   DECLARE_CLASS(PageWindow)
 
+  friend class TextPage;
+
 public:
   explicit PageWindow(TextPage* page);
   virtual ~PageWindow();
@@ -35,6 +37,9 @@ protected:
 
   void GetState(PageState* state) const;
   void SetState(PageState* state);
+
+private:
+  void OnPageModifiedStateChange(TextPage* page);
 
 private:
   TextPage* page_;  // Always != NULL.

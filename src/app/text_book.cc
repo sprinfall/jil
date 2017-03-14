@@ -318,14 +318,18 @@ std::vector<TextPage*> TextBook::TextPagesFromTabs(const TabList& tabs) const {
 void TextBook::OnTextWindowEvent(wxCommandEvent& evt) {
   evt.Skip();  // Skip for book frame.
 
+  using namespace editor;
+
   int type = evt.GetInt();
 
-  if (type == editor::TextWindow::kEncodingEvent) {
+  if (type == TextWindow::kEncodingEvent) {
     // Book frame needs this to update encoding field of status bar.
     evt.Skip();
-  } else if (type == editor::TextWindow::kFileNameEvent) {
+  } else if (type == TextWindow::kFileNameEvent) {
     ResizeActiveTab();
-  } else if (type == editor::TextWindow::kModifiedStateEvent) {
+  } else if (type == TextWindow::kModifiedStateEvent) {
+    // evt.GetClientData(), if not NULL, would be the non-active text page
+    // which was modified by Replace All, for example.
     tab_panel_->Refresh();
   }
 }

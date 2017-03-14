@@ -96,6 +96,8 @@ public:
   LineRange Intersect(const LineRange& rhs) const;
   void Substract(const LineRange& rhs, LineRange* sub1, LineRange* sub2) const;
 
+  bool IntersectWith(const LineRange& rhs) const;
+
   wxString ToString() const;
 
 private:

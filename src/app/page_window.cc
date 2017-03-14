@@ -203,4 +203,10 @@ void PageWindow::SetState(PageState* state) {
   }
 }
 
+void PageWindow::OnPageModifiedStateChange(TextPage* page) {
+  // Pass the text page, whose modified state has changed, as client data,
+  // though it might not be useful to the final event handler.
+  PostEvent(editor::TextWindow::kModifiedStateEvent, page);
+}
+
 }  // namespace jil
