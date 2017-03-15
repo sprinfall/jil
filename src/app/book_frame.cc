@@ -1426,6 +1426,15 @@ void BookFrame::OnTextBookPageChange(wxCommandEvent& evt) {
 void BookFrame::OnTextBookPageSwitch(wxCommandEvent& evt) {
   wxLogDebug("BookFrame::OnTextBookPageSwitch");
 
+  // Switch Current Working Dir to the path of the new activated buffer.
+  if (options_->switch_cwd) {
+    editor::TextBuffer* buffer = ActiveBuffer();
+    if (buffer != NULL && !buffer->new_created()) {
+      wxString cwd = buffer->file_path(wxPATH_GET_VOLUME, wxPATH_NATIVE);
+      wxSetWorkingDirectory(cwd);
+    }
+  }
+
   UpdateStatusFields();
 
   if (options_->show_path) {
@@ -1454,14 +1463,8 @@ void BookFrame::UpdateStatusFields() {
 
     // Update field values.
 
-    editor::TextBuffer* buffer = page_window->buffer();
-
-    if (options_->switch_cwd && !buffer->new_created()) {
-      if (status_bar_->HasField(StatusBar::kField_Cwd)) {
-        wxString cwd = buffer->file_path(wxPATH_GET_VOLUME, wxPATH_NATIVE);
-        wxSetWorkingDirectory(cwd);
-        status_bar_->SetFieldValue(StatusBar::kField_Cwd, cwd, false);
-      }
+    if (status_bar_->HasField(StatusBar::kField_Cwd)) {
+      status_bar_->SetFieldValue(StatusBar::kField_Cwd, wxGetCwd(), false);
     }
 
     UpdateStatusCaret(page_window, false);

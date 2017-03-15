@@ -30,6 +30,9 @@ StatusBar::StatusBar()
 }
 
 StatusBar::~StatusBar() {
+  if (msg_timer_ != NULL) {
+    wxDELETE(msg_timer_);
+  }
 }
 
 bool StatusBar::Create(wxWindow* parent, wxWindowID id) {
@@ -144,6 +147,10 @@ void StatusBar::UpdateFieldSizes() {
 }
 
 void StatusBar::SetFieldValue(FieldId id, const wxString& value, bool refresh) {
+  if (field_values_[id] == value) {
+    return;
+  }
+
   field_values_[id] = value;
 
   if (!refresh) {
