@@ -2727,7 +2727,7 @@ void BookFrame::UpdateRecentFilesMenu() {
   std::list<wxString>::iterator it = recent_files_.begin();
   for (size_t i = 0; i < expected_count; ++i, ++it) {
     int id = ID_MENU_FILE_RECENT_FILE_0 + i;
-    // NOTE (2016-06-05): Assert fail if use "%d" instead of "%lu" in Linux.
+    // NOTE (2016-06-05): Assert fail if use "%d" instead of "%lu" on Linux.
     wxString label = wxString::Format(wxT("%lu. "), i) + *it;
     recent_files_menu_->SetLabel(id, label);
   }
@@ -2764,21 +2764,33 @@ void BookFrame::RemoveAllTextPages(bool from_destroy, const TextPage* except_pag
   std::vector<TextPage*> text_pages = text_book_->TextPages();
 
   // If any buffer is modified, ask for save.
+  // If there are multiple buffers modified, add a check box to the save
+  // confirm dialog so that the user doesn't have to confirm multiple times.
+
+  std::vector<TextPage*> new_created_text_pages;
+  std::vector<TextPage*> modified_text_pages;
 
   for (TextPage* text_page : text_pages) {
-    if (text_page != except_page && text_page->buffer()->modified()) {
-      int code = ConfirmSave(text_page);
-
-      if (code == wxCANCEL) {
-        return;
-      }
-
-      if (code == wxYES) {
-        if (!Save(text_page->buffer(), this)) {
-          // Fail or cancel to save.
-          return;
+    if (text_page != except_page) {
+      if (text_page->buffer()->modified()) {
+        if (text_page->buffer()->new_created()) {
+          new_created_text_pages.push_back(text_page);
+        } else {
+          modified_text_pages.push_back(text_page);
         }
       }
+    }
+  }
+
+  if (!new_created_text_pages.empty()) {
+    if (!SaveNewCreatedWithConfirm(this, new_created_text_pages)) {
+      return;  // Failed to canceled.
+    }
+  }
+
+  if (!modified_text_pages.empty()) {
+    if (!SaveModifiedWithConfirm(this, modified_text_pages)) {
+      return;  // Failed to canceled.
     }
   }
 
