@@ -141,7 +141,7 @@ protected:
   void OnMenuAllPages(wxCommandEvent& evt);
   void OnMenuFolders(wxCommandEvent& evt);
 
-  void OnAddFolderButtonClick(wxCommandEvent& evt);
+  void OnBrowseButtonClick(wxCommandEvent& evt);
 
   void OnLocationButtonClick(wxCommandEvent& evt);
 
@@ -159,6 +159,8 @@ protected:
 
   void OnFindText(wxCommandEvent& evt);
   void OnFindTextEnter(wxCommandEvent& evt);
+
+  void OnFolderText(wxCommandEvent& evt);
 
   // Handle find text change, including:
   // - Enable find & replace buttons;
@@ -199,16 +201,16 @@ protected:
 
   bool IsFindStringValid(const wxString& find_wxstr, bool empty_as_valid) const;
 
-  // Set the foreground color of the find text ctrl.
-  void SetFindTextCtrlFgColor(bool valid);
+  // Set the foreground color of the text ctrl.
+  void SetTextCtrlFgColor(wxTextCtrl* text_ctrl, bool valid);
 
-  // Get the folder from control.
+  // Get folder from folder text ctrl.
   wxString GetFolder() const;
 
-private:
-  // Append a folder to folders text ctrl.
-  void AddFolder(const wxString& folder);
+  // Set folder to folder text ctrl.
+  void SetFolder(const wxString& folder);
 
+private:
   // Add a string to find history and find combobox.
   void AddFindString(const wxString& string);
 
@@ -223,8 +225,8 @@ private:
   wxSizer* CommonLayoutBody(bool with_replace);
   wxSizer* CommonLayoutFoot(bool with_replace);
 
-  void ShowReplace(bool show);
-  void ShowFolders(bool show);
+  void ShowReplaceCtrls(bool show);
+  void ShowFolderCtrls(bool show);
 
   // Enable or disable find and replace buttons.
   void EnableButtons(bool enable);
@@ -267,7 +269,7 @@ private:
 
   ui::Label* folder_label_;
   wxTextCtrl* folder_text_ctrl_;
-  ui::BitmapButton* add_folder_button_;
+  ui::TextButton* browse_button_;
 
   ui::BitmapButton* location_button_;
   ui::BitmapToggleButton* use_regex_tbutton_;

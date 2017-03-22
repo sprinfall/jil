@@ -114,7 +114,6 @@ Session::Session()
     , find_history_limit_(kFindHistoryLimit)
     , find_flags_(0)
     , find_location_(kCurrentPage)
-    , show_options_(false)
     , split_root_(NULL) {
 }
 
@@ -162,8 +161,6 @@ bool Session::Load(const wxString& file) {
     if (location >= 0 && location < kFindLocations) {
       find_location_ = static_cast<FindLocation>(location);
     }
-
-    show_options_ = fp_setting.GetBool();
   }
 
   //----------------------------------------------------------------------------

@@ -9,36 +9,70 @@ namespace jil {
 
 class BookFrame;
 
-// Thread for Find All.
-class FindThread : public wxThread {
+////////////////////////////////////////////////////////////////////////////////
+
+class FindThreadBase : public wxThread {
 public:
-  explicit FindThread(BookFrame* book_frame);
-  virtual ~FindThread();
+  FindThreadBase(BookFrame* book_frame,
+                 const std::wstring& str,
+                 int flags);
 
-  void set_str(const std::wstring& str) {  // TODO: Use move to avoid copy.
-    str_ = str;
-  }
+  virtual ~FindThreadBase();
 
-  void set_flags(int flags) {
-    flags_ = flags;
-  }
-
-  // TODO: Avoid copy
+  // TODO: Avoid copy.
   void set_files(const wxArrayString& files) {
     files_ = files;
   }
 
+  bool IsReplace() const;
+
 protected:
   virtual ExitCode Entry() override;
 
-  void QueueEvent(int new_fr_lines, const wxString& file);
+  virtual int HandleFile(const wxString& file) = 0;
 
-private:
+  void QueueEvent(int ivalue, const wxString& file);
+
+protected:
   BookFrame* book_frame_;
 
   std::wstring str_;  // The string to find.
   int flags_;  // Find flags.
   wxArrayString files_;  // The files in which to find.
+
+  int event_id_;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class FindThread : public FindThreadBase {
+public:
+  FindThread(BookFrame* book_frame,
+             const std::wstring& str,
+             int flags);
+
+  virtual ~FindThread();
+
+protected:
+  virtual int HandleFile(const wxString& file) override;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class ReplaceThread : public FindThreadBase {
+public:
+  ReplaceThread(BookFrame* book_frame,
+                const std::wstring& str,
+                const std::wstring& replace_str,
+                int flags);
+
+  virtual ~ReplaceThread();
+
+protected:
+  virtual int HandleFile(const wxString& file) override;
+
+private:
+  std::wstring replace_str_;
 };
 
 }  // namespace jil

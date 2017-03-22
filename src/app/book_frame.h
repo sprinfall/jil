@@ -35,7 +35,7 @@ class BookCtrl;
 class BookPage;
 class FindResultPage;
 class FindPanel;
-class FindThread;
+class FindThreadBase;
 class PageWindow;
 class Session;
 class Splitter;
@@ -54,7 +54,7 @@ public:
     COLORS,
   };
 
-  friend class FindThread;
+  friend class FindThreadBase;
 
 public:
   BookFrame();
@@ -90,8 +90,6 @@ public:
   void set_binding(editor::Binding* binding) {
     binding_ = binding;
   }
-
-  void SetFocusToTextBook();
 
   //----------------------------------------------------------------------------
 
@@ -188,6 +186,7 @@ public:
                           int flags,
                           const wxString& folder);
 
+  // Return the ID of the new buffer being replaced.
   int AsyncReplaceInFile(const std::wstring& str,
                          const std::wstring& replace_str,
                          int flags,
@@ -392,6 +391,7 @@ private:
   void ClearFindResult(FindResultPage* fr_page);
 
   void OnFindThreadEvent(wxThreadEvent& evt);
+  void OnReplaceThreadEvent(wxThreadEvent& evt);
 
   // Terminate find thread if it's running.
   void StopFindThread();
@@ -517,11 +517,17 @@ private:
   std::wstring find_str_;  // Last find string.
   int find_flags_;  // Last find flags (excluding kFind_Reversely).
 
-  // A thread searching text in the given folders.
-  FindThread* find_thread_;
+  // The thread to search or replace text in a given folder.
+  FindThreadBase* find_thread_;
 
   // Critical section to guard the find thread.
   wxCriticalSection find_thread_cs_;
+
+  // Temporary buffers which have been changed by the replace thread.
+  std::map<size_t, editor::TextBuffer*> replaced_buffers_;
+
+  // Critical section to guard the replaced buffers.
+  wxCriticalSection replaced_buffers_cs_;
 
 #if JIL_ENABLE_LEADER_KEY
   editor::Key leader_key_;

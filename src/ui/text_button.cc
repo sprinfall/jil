@@ -26,8 +26,8 @@ bool TextButton::Create(wxWindow* parent,
 }
 
 wxSize TextButton::DoGetBestSize() const {
-  if (user_best_size_ != wxDefaultSize) {
-    return user_best_size_;
+  if (min_size_ != wxDefaultSize) {
+    return min_size_;
   }
 
   wxSize best_size;

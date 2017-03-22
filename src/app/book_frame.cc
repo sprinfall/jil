@@ -130,6 +130,7 @@ EVT_MENU_RANGE(ID_MENU_FILE_TYPE_BEGIN, ID_MENU_FILE_TYPE_END - 1, BookFrame::On
 EVT_FIND_PANEL_LAYOUT(ID_FIND_PANEL, BookFrame::OnFindPanelLayoutEvent)
 
 EVT_THREAD(ID_FIND_THREAD_EVENT, BookFrame::OnFindThreadEvent)
+EVT_THREAD(ID_REPLACE_THREAD_EVENT, BookFrame::OnReplaceThreadEvent)
 
 END_EVENT_TABLE()
 
@@ -249,10 +250,6 @@ bool BookFrame::Show(bool show) {
   }
 
   return wxFrame::Show(show);
-}
-
-void BookFrame::SetFocusToTextBook() {
-  text_book_->SetFocus();
 }
 
 //------------------------------------------------------------------------------
@@ -653,9 +650,7 @@ void BookFrame::FindAllInFolder(const std::wstring& str,
     return;
   }
 
-  find_thread_ = new FindThread(this);
-  find_thread_->set_str(str);
-  find_thread_->set_flags(flags);
+  find_thread_ = new FindThread(this, str, flags);
   find_thread_->set_files(files);
 
   if (find_thread_->Run() != wxTHREAD_NO_ERROR) {
@@ -740,6 +735,9 @@ void BookFrame::ReplaceAllInActivePage(const std::wstring& str,
   wxBusyCursor busy;
 
   ReplaceAll(str, replace_str, flags, text_page);
+
+  // Set focus to the page window after Replace All.
+  text_book_->SetFocus();
 }
 
 void BookFrame::ReplaceAllInAllPages(const std::wstring& str,
@@ -753,15 +751,21 @@ void BookFrame::ReplaceAllInAllPages(const std::wstring& str,
   }
 
   // Set focus to the page window after Replace All.
-  SetFocusToTextBook();
+  text_book_->SetFocus();
 }
 
 void BookFrame::ReplaceAllInFolder(const std::wstring& str,
                                    const std::wstring& replace_str,
                                    int flags,
                                    const wxString& folder) {
-  wxArrayString files;
+  wxCriticalSectionLocker locker(find_thread_cs_);
 
+  if (find_thread_ != NULL) {
+    wxLogDebug(wxT("Find thread is still running."));
+    return;
+  }
+
+  wxArrayString files;
   if (wxDir::Exists(folder)) {
     wxDir::GetAllFiles(folder, &files, wxEmptyString, wxDIR_FILES | wxDIR_DIRS);
   }
@@ -770,9 +774,17 @@ void BookFrame::ReplaceAllInFolder(const std::wstring& str,
     return;
   }
 
-  size_t count = files.GetCount();
-  for (size_t i = 0; i < count; ++i) {
-    AsyncReplaceInFile(str, replace_str, flags, files[i]);
+  ReplaceThread* replace_thread = new ReplaceThread(this, str, replace_str, flags);
+  replace_thread->set_files(files);
+
+  find_thread_ = replace_thread;
+
+  // Since there might be many new files opened during replace, set batch mode
+  // to avoid unnecessary refreshing.
+  text_book_->StartBatch();
+
+  if (find_thread_->Run() != wxTHREAD_NO_ERROR) {
+    wxDELETE(find_thread_);
   }
 }
 
@@ -787,19 +799,24 @@ int BookFrame::AsyncReplaceInFile(const std::wstring& str,
 
   if (text_page != NULL) {
     ReplaceAll(str, replace_str, flags, text_page);
-  } else {
-    TextBuffer* new_buffer = CreateBuffer(fn, NewBufferId(), true);
-    if (new_buffer == NULL) {
-      // TODO: Error handling.
-    } else {
-      if (ReplaceAll(str, replace_str, flags, new_buffer)) {
-        // Create text page for this buffer.
-        text_book_->AddPage(new_buffer, false);
-      }
-    }
+    return wxNOT_FOUND;
   }
 
-  return 0;
+  TextBuffer* new_buffer = CreateBuffer(fn, NewBufferId(), true);
+  if (new_buffer == NULL) {
+    // TODO: Error handling.
+    return wxNOT_FOUND;
+  }
+
+  if (ReplaceAll(str, replace_str, flags, new_buffer)) {
+    wxCriticalSectionLocker locker(replaced_buffers_cs_);
+    replaced_buffers_[new_buffer->id()] = new_buffer;
+    return static_cast<int>(new_buffer->id());
+  } else {
+    // Nothing was replaced, free the buffer.
+    delete new_buffer;
+    return wxNOT_FOUND;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1676,6 +1693,13 @@ void BookFrame::HandleFindResultPageLocalize(FindResultPage* fr_page) {
 }
 
 void BookFrame::HandleFindResultPageDestroy() {
+  {
+    wxCriticalSectionLocker locker(find_thread_cs_);
+    if (find_thread_ == NULL || find_thread_->IsReplace()) {
+      return;
+    }
+  }
+
   StopFindThread();
 }
 
@@ -2366,6 +2390,33 @@ void BookFrame::OnFindThreadEvent(wxThreadEvent& evt) {
   wxString file = evt.GetString();
   wxString msg = wxString::Format(kTrSearchInFile, file);
   ShowStatusMessage(msg);
+}
+
+void BookFrame::OnReplaceThreadEvent(wxThreadEvent& evt) {
+  size_t buffer_id = evt.GetInt();
+
+  if (buffer_id == wxNOT_FOUND) {
+    text_book_->EndBatch();
+
+    // Replace thread is completed, clear the status message.
+    ShowStatusMessage(wxEmptyString);
+    return;
+  }
+
+  // Show status message.
+  wxString file = evt.GetString();
+  wxString msg = wxString::Format(kTrSearchInFile, file);
+  ShowStatusMessage(msg);
+
+  // Create text page for the new buffer.
+  wxCriticalSectionLocker locker(replaced_buffers_cs_);
+  std::map<size_t, editor::TextBuffer*>::iterator it = replaced_buffers_.find(buffer_id);
+  if (it != replaced_buffers_.end()) {
+    editor::TextBuffer* new_buffer = it->second;
+    replaced_buffers_.erase(it);
+    text_book_->AddPage(new_buffer, false);
+    // TODO: Update recent file list?
+  }
 }
 
 void BookFrame::StopFindThread() {

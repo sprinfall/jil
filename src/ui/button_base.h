@@ -48,8 +48,8 @@ public:
     padding_ = padding;
   }
 
-  void set_user_best_size(const wxSize& user_best_size) {
-    user_best_size_ = user_best_size;
+  void set_min_size(const wxSize& min_size) {
+    min_size_ = min_size;
   }
 
   void set_draw_bg(bool draw_bg) {
@@ -92,7 +92,7 @@ protected:
   bool pressed_;
 
   wxSize padding_;
-  wxSize user_best_size_;
+  wxSize min_size_;
 
   bool draw_bg_;
   bool draw_border_;

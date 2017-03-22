@@ -98,11 +98,11 @@ public:
     find_location_ = find_location;
   }
 
-  bool show_options() const {
-    return show_options_;
+  const wxString& find_folder() const {
+    return find_folder_;
   }
-  void set_show_options(bool show_options) {
-    show_options_ = show_options;
+  void set_find_folder(const wxString& find_folder) {
+    find_folder_ = find_folder;
   }
 
   //----------------------------------------------------------------------------
@@ -180,7 +180,7 @@ private:
 
   FindLocation find_location_;
 
-  bool show_options_;
+  wxString find_folder_;
 
   SplitNode* split_root_;
 

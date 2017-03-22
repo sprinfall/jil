@@ -26,7 +26,7 @@ ButtonBase::ButtonBase(SharedButtonStyle style)
     , click_type_(kClickOnUp)
     , hover_(false)
     , pressed_(false)
-    , user_best_size_(wxDefaultSize)
+    , min_size_(wxDefaultSize)
     , draw_bg_(true)
     , draw_border_(true) {
 }

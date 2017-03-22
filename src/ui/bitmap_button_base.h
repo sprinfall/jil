@@ -33,7 +33,7 @@ public:
   void SetBitmapsND(const wxBitmap& normal, const wxBitmap& disabled);
 
 protected:
-  wxSize DoGetBestSize() const override;
+  virtual wxSize DoGetBestSize() const override;
 
   virtual void DrawFg(wxDC& dc, ButtonStyle::State state) override;
 

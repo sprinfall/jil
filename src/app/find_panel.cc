@@ -44,8 +44,6 @@ namespace jil {
 const int kPaddingX = 7;
 const int kPaddingY = 2;
 
-static const wxChar kFolderSp = wxT(';');
-
 DEFINE_EVENT_TYPE(kFindPanelLayoutEvent)
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -113,7 +111,7 @@ EVT_MENU          (ID_FP_MENU_CURRENT_PAGE,       FindPanel::OnMenuCurrentPage)
 EVT_MENU          (ID_FP_MENU_ALL_PAGES,          FindPanel::OnMenuAllPages)
 EVT_MENU          (ID_FP_MENU_FOLDERS,            FindPanel::OnMenuFolders)
 
-EVT_BUTTON        (ID_FP_ADD_FOLDER_BUTTON,       FindPanel::OnAddFolderButtonClick)
+EVT_BUTTON        (ID_FP_BROWSE_BUTTON,           FindPanel::OnBrowseButtonClick)
 
 EVT_BUTTON        (ID_FP_LOCATION_BUTTON,         FindPanel::OnLocationButtonClick)
 
@@ -134,6 +132,9 @@ EVT_TEXT_ENTER    (ID_FP_FIND_TEXTCTRL,           FindPanel::OnFindTextEnter)
 
 EVT_TEXT_HISTORY  (ID_FP_FIND_TEXTCTRL,           FindPanel::OnFindTextHistory)
 EVT_TEXT_HISTORY  (ID_FP_REPLACE_TEXTCTRL,        FindPanel::OnReplaceTextHistory)
+
+EVT_TEXT          (ID_FP_FOLDER_TEXTCTRL,         FindPanel::OnFolderText)
+
 
 EVT_MENU_RANGE    (ID_MENU_FIND_HISTORY_BEGIN,\
                    ID_MENU_FIND_HISTORY_END,\
@@ -183,8 +184,8 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
   int height = folder_text_ctrl_->GetBestSize().GetHeight();
   bitmap_button_best_size_.Set(height, height);
 
-  add_folder_button_ = NewBitmapButton(ID_FP_ADD_FOLDER_BUTTON);
-  add_folder_button_->Hide();
+  browse_button_ = NewTextButton(ID_FP_BROWSE_BUTTON, wxT("..."));
+  browse_button_->Hide();
 
   //----------------------------------------------------------------------------
 
@@ -233,7 +234,7 @@ bool FindPanel::Create(BookFrame* book_frame, wxWindowID id) {
 
   SetSizer(new wxBoxSizer(wxVERTICAL));
 
-  ShowFolders(location_ == kFolders);
+  ShowFolderCtrls(location_ == kFolders);
 
   UpdateLayout();
 
@@ -257,6 +258,7 @@ FindPanel::~FindPanel() {
 bool FindPanel::Destroy() {
   session_->set_find_flags(flags_);
   session_->set_find_location(location_);
+  session_->set_find_folder(GetFolder());
   return wxPanel::Destroy();
 }
 
@@ -309,8 +311,6 @@ void FindPanel::ReapplyTheme() {
 
   folder_label_->SetForegroundColour(theme_->GetColor(COLOR_FG));
 
-  add_folder_button_->SetBitmaps(theme_->GetImage(IMAGE_ADD_FOLDER));
-
   UpdateLocationButton();
 
   SetButtonBitmapsNH(use_regex_tbutton_,
@@ -332,7 +332,7 @@ void FindPanel::ReapplyTheme() {
                       IMAGE_REVERSELY_DISABLED);
 }
 
-void FindPanel::OnPaint(wxPaintEvent& evt) {
+void FindPanel::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
   wxAutoBufferedPaintDC dc(this);
 #if !wxALWAYS_NATIVE_DOUBLE_BUFFER
   dc.SetBackground(GetBackgroundColour());
@@ -356,29 +356,29 @@ void FindPanel::OnPaint(wxPaintEvent& evt) {
   dc.DrawLine(bg_rect.x, border_y, bg_rect.GetRight() + 1, border_y);
 }
 
-void FindPanel::OnMenuCurrentPage(wxCommandEvent& evt) {
+void FindPanel::OnMenuCurrentPage(wxCommandEvent& WXUNUSED(evt)) {
   SetLocation(kCurrentPage);
 }
 
-void FindPanel::OnMenuAllPages(wxCommandEvent& evt) {
+void FindPanel::OnMenuAllPages(wxCommandEvent& WXUNUSED(evt)) {
   SetLocation(kAllPages);
 }
 
-void FindPanel::OnMenuFolders(wxCommandEvent& evt) {
+void FindPanel::OnMenuFolders(wxCommandEvent& WXUNUSED(evt)) {
   SetLocation(kFolders);
 }
 
-void FindPanel::OnAddFolderButtonClick(wxCommandEvent& evt) {
+void FindPanel::OnBrowseButtonClick(wxCommandEvent& WXUNUSED(evt)) {
   wxString default_path = wxGetCwd();
   long style = wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST;
   wxDirDialog dlg(this, wxDirSelectorPromptStr, default_path, style);
 
   if (dlg.ShowModal() == wxID_OK) {
-    AddFolder(dlg.GetPath());
+    SetFolder(dlg.GetPath());
   }
 }
 
-void FindPanel::OnLocationButtonClick(wxCommandEvent& evt) {
+void FindPanel::OnLocationButtonClick(wxCommandEvent& WXUNUSED(evt)) {
   SetLocation(GetNextLocation(location_));
   UpdateLocationButton();
 }
@@ -414,7 +414,7 @@ void FindPanel::OnReverselyToggle(wxCommandEvent& evt) {
   flags_ = SetBit(flags_, kFind_Reversely, evt.IsChecked());
 }
 
-void FindPanel::OnMatchWordButtonUpdateUI(wxUpdateUIEvent& evt) {
+void FindPanel::OnMatchWordButtonUpdateUI(wxUpdateUIEvent& WXUNUSED(evt)) {
   // NOTE (Disable Match Whole Word option if use regex):
   // You can't just surround the regex string with '\b' to match the whole
   // word, because '\b' can't match EOL.
@@ -422,13 +422,13 @@ void FindPanel::OnMatchWordButtonUpdateUI(wxUpdateUIEvent& evt) {
   match_word_tbutton_->Enable(!GetBit(flags_, kFind_UseRegex));
 }
 
-void FindPanel::OnFind(wxCommandEvent& evt) {
+void FindPanel::OnFind(wxCommandEvent& WXUNUSED(evt)) {
   if (location_ == kCurrentPage) {
     HandleFind();
   }  // else: Not supported.
 }
 
-void FindPanel::OnFindAll(wxCommandEvent& evt) {
+void FindPanel::OnFindAll(wxCommandEvent& WXUNUSED(evt)) {
   wxString find_wxstr = find_text_ctrl_->GetValue();
   if (find_wxstr.IsEmpty()) {
     book_frame_->SetLastFindStringAndFlags(L"", flags_);
@@ -453,24 +453,33 @@ void FindPanel::OnFindAll(wxCommandEvent& evt) {
   }
 }
 
-void FindPanel::OnReplace(wxCommandEvent& evt) {
+void FindPanel::OnReplace(wxCommandEvent& WXUNUSED(evt)) {
   if (location_ == kCurrentPage) {
     HandleReplace(false);
   }  // else: Not supported.
 }
 
-void FindPanel::OnReplaceAll(wxCommandEvent& evt) {
+void FindPanel::OnReplaceAll(wxCommandEvent& WXUNUSED(evt)) {
   HandleReplace(true);
 }
 
-void FindPanel::OnFindText(wxCommandEvent& evt) {
+void FindPanel::OnFindText(wxCommandEvent& WXUNUSED(evt)) {
   HandleFindTextChange();
 }
 
-void FindPanel::OnFindTextEnter(wxCommandEvent& evt) {
+void FindPanel::OnFindTextEnter(wxCommandEvent& WXUNUSED(evt)) {
   if (location_ == kCurrentPage) {
     HandleFind();
   }
+}
+
+// Highlight the folder text ctrl in red if the folder is not valid.
+// NOTE: Don't disable buttons.
+void FindPanel::OnFolderText(wxCommandEvent& WXUNUSED(evt)) {
+  wxString folder = GetFolder();
+  bool valid = !folder.IsEmpty() && wxDirExists(folder);
+
+  SetTextCtrlFgColor(folder_text_ctrl_, valid);
 }
 
 void FindPanel::HandleFindTextChange() {
@@ -478,7 +487,7 @@ void FindPanel::HandleFindTextChange() {
   bool valid = IsFindStringValid(find_wxstr, false);
 
   EnableButtons(valid);
-  SetFindTextCtrlFgColor(find_wxstr.IsEmpty() || valid);
+  SetTextCtrlFgColor(find_text_ctrl_, find_wxstr.IsEmpty() || valid);
 
   // NOTE:
   // Find incrementally even if the find string is empty or invalid so that
@@ -496,13 +505,13 @@ void FindPanel::FindIncrementally(const wxString& find_wxstr) {
   book_frame_->FindInActivePageIncrementally(find_str, flags_);
 }
 
-void FindPanel::OnFindTextHistory(wxCommandEvent& evt) {
+void FindPanel::OnFindTextHistory(wxCommandEvent& WXUNUSED(evt)) {
   ShowHistoryMenu(session_->find_strings(),
                   ID_MENU_FIND_HISTORY_BEGIN,
                   find_text_ctrl_);
 }
 
-void FindPanel::OnReplaceTextHistory(wxCommandEvent& evt) {
+void FindPanel::OnReplaceTextHistory(wxCommandEvent& WXUNUSED(evt)) {
   ShowHistoryMenu(session_->replace_strings(),
                   ID_MENU_REPLACE_HISTORY_BEGIN,
                   replace_text_ctrl_);
@@ -617,19 +626,11 @@ void FindPanel::SetLocation(FindLocation location) {
   location_ = location;
 
   if (folders) {
-    ShowFolders(location == kFolders);
+    ShowFolderCtrls(location == kFolders);
     PostLayoutEvent();
   }
 
   UpdateLayout();
-
-  if (location_ == kFolders) {
-    // Add current working dir.
-    if (folder_text_ctrl_->GetValue().IsEmpty()) {
-      wxString cwd = wxGetCwd();
-      folder_text_ctrl_->SetValue(cwd);
-    }
-  }
 
   // Support Reversely option only for finding in current page.
   reversely_tbutton_->Enable(location_ == kCurrentPage);
@@ -679,11 +680,11 @@ bool FindPanel::IsFindStringValid(const wxString& find_wxstr, bool empty_as_vali
   return true;
 }
 
-void FindPanel::SetFindTextCtrlFgColor(bool valid) {
+void FindPanel::SetTextCtrlFgColor(wxTextCtrl* text_ctrl, bool valid) {
   wxColor color = valid ? fg_color_ : invalid_fg_color_;
-  if (color != find_text_ctrl_->GetForegroundColour()) {
-    find_text_ctrl_->SetForegroundColour(color);
-    find_text_ctrl_->Refresh();
+  if (color != text_ctrl->GetForegroundColour()) {
+    text_ctrl->SetForegroundColour(color);
+    text_ctrl->Refresh();
   }
 }
 
@@ -693,32 +694,10 @@ wxString FindPanel::GetFolder() const {
   return folder;
 }
 
-// TODO: If a folder includes another folder...
-void FindPanel::AddFolder(const wxString& folder) {
-  wxString folders_str = folder_text_ctrl_->GetValue();
-  folders_str.Trim(true).Trim(false);
-
-  if (!folders_str.IsEmpty()) {
-    wxArrayString folders = wxSplit(folders_str, kFolderSp);
-
-    // Check if the folder already exists.
-    size_t count = folders.GetCount();
-    wxFileName new_fn = wxFileName::DirName(folder);
-    for (size_t i = 0; i < count; ++i) {
-      wxFileName fn = wxFileName::DirName(folders[i]);
-      if (fn.IsOk() && fn == new_fn) {
-        return;
-      }
-    }
+void FindPanel::SetFolder(const wxString& folder) {
+  if (folder_text_ctrl_->GetValue() != folder) {
+    folder_text_ctrl_->SetValue(folder);
   }
-
-  if (!folders_str.IsEmpty() && !folders_str.EndsWith(wxT(";"))) {
-    folders_str += kFolderSp;
-  }
-
-  folders_str += folder;
-
-  folder_text_ctrl_->SetValue(folders_str);
 }
 
 void FindPanel::AddFindString(const wxString& string) {
@@ -732,7 +711,7 @@ void FindPanel::AddReplaceString(const wxString& string) {
 void FindPanel::LayoutAsFind() {
   Freeze();
   find_button_->Show(location_ == kCurrentPage);
-  ShowReplace(false);
+  ShowReplaceCtrls(false);
   CommonLayout(false);
   Thaw();
 }
@@ -740,7 +719,7 @@ void FindPanel::LayoutAsFind() {
 void FindPanel::LayoutAsReplace() {
   Freeze();
   find_button_->Show(location_ == kCurrentPage);
-  ShowReplace(true);
+  ShowReplaceCtrls(true);
   CommonLayout(true);
   Thaw();
 }
@@ -824,7 +803,7 @@ wxSizer* FindPanel::CommonLayoutFoot(bool with_replace) {
 
   if (location_ == kFolders) {
     wxSizer* location_foot_hsizer = new wxBoxSizer(wxHORIZONTAL);
-    location_foot_hsizer->Add(add_folder_button_, 0, wxALIGN_CV);
+    location_foot_hsizer->Add(browse_button_, 0, wxALIGN_CV);
     foot_vsizer->Add(location_foot_hsizer, 1, wxEXPAND);
     foot_vsizer->AddSpacer(kPaddingY);
   }
@@ -853,16 +832,27 @@ wxSizer* FindPanel::CommonLayoutFoot(bool with_replace) {
   return foot_vsizer;
 }
 
-void FindPanel::ShowReplace(bool show) {
+void FindPanel::ShowReplaceCtrls(bool show) {
   replace_text_ctrl_->Show(show);
   replace_button_->Show(show && location_ == kCurrentPage);
   replace_all_button_->Show(show);
 }
 
-void FindPanel::ShowFolders(bool show) {
+void FindPanel::ShowFolderCtrls(bool show) {
   folder_label_->Show(show);
   folder_text_ctrl_->Show(show);
-  add_folder_button_->Show(show);
+  browse_button_->Show(show);
+
+  if (show) {
+    // Add current working dir as the default folder.
+    if (folder_text_ctrl_->GetValue().IsEmpty()) {
+      wxString folder = session_->find_folder();
+      if (folder.IsEmpty()) {
+        folder = wxGetCwd();
+      }
+      SetFolder(folder);
+    }
+  }
 }
 
 void FindPanel::EnableButtons(bool enable) {
@@ -875,7 +865,7 @@ void FindPanel::EnableButtons(bool enable) {
 ui::BitmapButton* FindPanel::NewBitmapButton(int id, bool draw_bg, bool draw_border) {
   ui::BitmapButton* button = new ui::BitmapButton(button_style_);
   button->Create(this, id);
-  button->set_user_best_size(bitmap_button_best_size_);
+  button->set_min_size(bitmap_button_best_size_);
   button->set_draw_bg(draw_bg);
   button->set_draw_border(draw_border);
   return button;
@@ -884,7 +874,7 @@ ui::BitmapButton* FindPanel::NewBitmapButton(int id, bool draw_bg, bool draw_bor
 ui::BitmapToggleButton* FindPanel::NewBitmapToggleButton(int id, bool draw_bg, bool draw_border) {
   ui::BitmapToggleButton* button = new ui::BitmapToggleButton(button_style_);
   button->Create(this, id);
-  button->set_user_best_size(bitmap_button_best_size_);
+  button->set_min_size(bitmap_button_best_size_);
   button->set_draw_bg(draw_bg);
   button->set_draw_border(draw_border);
   return button;
