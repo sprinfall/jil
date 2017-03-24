@@ -15,11 +15,12 @@
 namespace jil {
 
 class Setting;
+
 typedef std::map<std::string, Setting> SettingMap;
 
 // Wrapper of config_setting_t.
 class Setting {
- public:
+public:
   enum Type {
     // Make type names simpler.
     kNone     = CONFIG_TYPE_NONE,
@@ -36,7 +37,9 @@ class Setting {
   Setting(config_setting_t* ref = NULL) : ref_(ref) {
   }
 
-  operator bool() const { return ref_ != NULL; }
+  operator bool() const {
+    return ref_ != NULL;
+  }
 
   const char* name() const {
     return ref_->name;
@@ -84,44 +87,22 @@ class Setting {
 
   // For scalar setting.
 
-  int GetInt() const {
-    return config_setting_get_int(ref_);
-  }
+  int GetInt() const;
+  void SetInt(int i);
 
-  void SetInt(int i) {
-    config_setting_set_int(ref_, i);
-  }
+  bool GetBool() const;
+  void SetBool(bool b);
 
-  bool GetBool() const {
-    return config_setting_get_bool(ref_) != 0;
-  }
+  double GetFloat() const;
+  void SetFloat(double f);
 
-  void SetBool(bool b) {
-    config_setting_set_bool(ref_, b);
-  }
+  const char* GetString() const;
+  void SetString(const char* str);
 
-  double GetFloat() const {
-    return config_setting_get_float(ref_);
-  }
+  wxString GetWxString(bool utf8) const;
+  void SetWxString(const wxString& wxstr, bool utf8);
 
-  void SetFloat(double f) {
-    config_setting_set_float(ref_, f);
-  }
-
-  const char* GetString() const {
-    const char* str = config_setting_get_string(ref_);
-    return str == NULL ? "" : str;
-  }
-
-  void SetString(const char* str) {
-    config_setting_set_string(ref_, str);
-  }
-
-  wxColour GetColor() const {
-    wxColour color;
-    color.Set(wxString::FromAscii(GetString()));
-    return color;
-  }
+  wxColour GetColor() const;
 
   // For group setting.
 
@@ -137,6 +118,9 @@ class Setting {
   const char* GetString(const char* name) const;
   void SetString(const char* name, const char* str);
 
+  wxString GetWxString(const char* name, bool utf8) const;
+  void SetWxString(const char* name, const wxString& wxstr, bool utf8);
+
   wxColour GetColor(const char* name) const;
 
   // NOTE: Don't return wxFont directly, let the user decide it.
@@ -145,7 +129,7 @@ class Setting {
 
   void AsMap(SettingMap* setting_map) const;
 
- private:
+private:
   void set_ref(config_setting_t* ref = NULL) {
     ref_ = ref;
   }
@@ -157,7 +141,7 @@ class Setting {
 
 // Wrapper of config_t.
 class Config {
- public:
+public:
   Config() {
     config_init(&cfg_);
   }
@@ -177,7 +161,7 @@ class Config {
     return Setting(config_lookup(&cfg_, path));
   }
 
- private:
+private:
   config_t cfg_;
 };
 
