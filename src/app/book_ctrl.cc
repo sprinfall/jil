@@ -832,7 +832,7 @@ BookCtrl::TabIter BookCtrl::MakeTabVisible(TabIter it, bool check, bool refresh)
   Tab* tab = *it;
   size_t count = visible_tabs_count_;
 
-  while (count >= 0) {
+  while (true) {
     // Insert the tab AFTER the last visible tab.
     // NOTE: list.insert() inserts before the given position.
     tabs_.erase(it);
