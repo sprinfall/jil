@@ -24,8 +24,8 @@ public:
   Session();
   ~Session();
 
-  bool Load(const wxString& file);
-  bool Save(const wxString& file);
+  bool Load(const wxString& cfg_file);
+  bool Save(const wxString& cfg_file);
 
   //----------------------------------------------------------------------------
   // Book frame

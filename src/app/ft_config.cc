@@ -29,10 +29,10 @@ FtConfig::~FtConfig() {
   editor::ClearContainer(&internal_file_types_);
 }
 
-bool FtConfig::Load(const wxString& ft_config_file) {
+bool FtConfig::Load(const wxString& ft_cfg_file) {
   Config config;
-  if (!config.Load(ft_config_file)) {
-    wxLogError(wxT("Failed to load config file: %s"), ft_config_file);
+  if (!config.Load(ft_cfg_file)) {
+    wxLogError(wxT("Failed to load config file: %s"), ft_cfg_file);
     return false;
   }
 

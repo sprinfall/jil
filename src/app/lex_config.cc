@@ -138,14 +138,14 @@ bool ParseQuoteSetting(const Setting& quote_setting,
 
 }  // namespace
 
-bool LoadLexFile(const wxString& lex_file, FtPlugin* ft_plugin) {
-  if (!wxFileName::FileExists(lex_file)) {
+bool LoadLexFile(const wxString& lex_cfg_file, FtPlugin* ft_plugin) {
+  if (!wxFileName::FileExists(lex_cfg_file)) {
     wxLogInfo(wxT("Lex file for [%s] doesn't exist."), ft_plugin->id().c_str());
     return false;
   }
 
   Config lex_cfg;
-  if (!lex_cfg.Load(lex_file)) {
+  if (!lex_cfg.Load(lex_cfg_file)) {
     wxLogError(wxT("Failed to parse lex file for [%s]!"), ft_plugin->id().c_str());
     return false;
   }

@@ -275,10 +275,10 @@ BindingConfig::BindingConfig(Binding* binding)
 BindingConfig::~BindingConfig() {
 }
 
-bool BindingConfig::Load(const wxString& file) {
+bool BindingConfig::Load(const wxString& binding_cfg_file) {
   Config config;
-  if (!config.Load(file)) {
-    wxLogDebug(wxT("Failed to load binding file: %s"), file.c_str());
+  if (!config.Load(binding_cfg_file)) {
+    wxLogDebug(wxT("Failed to load binding file: %s"), binding_cfg_file.c_str());
     return false;
   }
 

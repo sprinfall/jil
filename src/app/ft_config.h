@@ -30,7 +30,7 @@ public:
   FtConfig();
   ~FtConfig();
 
-  bool Load(const wxString& ft_config_file);
+  bool Load(const wxString& ft_cfg_file);
 
   const FileTypes& file_types() const {
     return file_types_;

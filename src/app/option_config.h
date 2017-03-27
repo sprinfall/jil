@@ -20,11 +20,11 @@ class Options;
 
 std::string ResolutionToStr(Resolution resolution);
 
-bool LoadGlobalOptionsFile(const wxString& file, Options* options);
-bool SaveGlobalOptionsFile(const wxString& file, const Options& options);
+bool LoadGlobalOptionsFile(const wxString& cfg_file, Options* options);
+bool SaveGlobalOptionsFile(const wxString& cfg_file, const Options& options);
 
-bool LoadEditorOptionsFile(const wxString& file, editor::Options* options);
-bool SaveEditorOptionsFile(const wxString& file, const editor::Options& options);
+bool LoadEditorOptionsFile(const wxString& cfg_file, editor::Options* options);
+bool SaveEditorOptionsFile(const wxString& cfg_file, const editor::Options& options);
 
 }  // namespace jil
 

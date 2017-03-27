@@ -324,15 +324,15 @@ static void ParseGlobalOptions(const Setting& setting, Options* options) {
   GetBool(setting_map, OPT_B_SHOW_PATH, &options->show_path);
 }
 
-bool LoadGlobalOptionsFile(const wxString& file, Options* options) {
-  if (!wxFileName::FileExists(file)) {
-    wxLogInfo(wxT("Options file doesn't exist: %s"), file);
+bool LoadGlobalOptionsFile(const wxString& cfg_file, Options* options) {
+  if (!wxFileName::FileExists(cfg_file)) {
+    wxLogInfo(wxT("Options file doesn't exist: %s"), cfg_file);
     return false;
   }
 
   Config config;
-  if (!config.Load(file)) {
-    wxLogError(wxT("Failed to parse options file: %s"), file);
+  if (!config.Load(cfg_file)) {
+    wxLogError(wxT("Failed to parse options file: %s"), cfg_file);
     return false;
   }
 
@@ -341,7 +341,7 @@ bool LoadGlobalOptionsFile(const wxString& file, Options* options) {
   return true;
 }
 
-bool SaveGlobalOptionsFile(const wxString& file, const Options& options) {
+bool SaveGlobalOptionsFile(const wxString& cfg_file, const Options& options) {
   Config config;
   Setting root_setting = config.Root();
 
@@ -365,8 +365,8 @@ bool SaveGlobalOptionsFile(const wxString& file, const Options& options) {
   root_setting.SetBool(OPT_B_RESTORE_FILES, options.restore_files);
   root_setting.SetBool(OPT_B_SHOW_PATH, options.show_path);
 
-  if (!config.Save(file)) {
-    wxLogError(wxT("Failed to save options file: %s"), file);
+  if (!config.Save(cfg_file)) {
+    wxLogError(wxT("Failed to save options file: %s"), cfg_file);
     return false;
   }
 
@@ -428,15 +428,15 @@ static void ParseEditorOptions(const Setting& setting, editor::Options* options)
   }
 }
 
-bool LoadEditorOptionsFile(const wxString& file, editor::Options* options) {
-  if (!wxFileName::FileExists(file)) {
-    wxLogInfo(wxT("Options file doesn't exist: %s"), file);
+bool LoadEditorOptionsFile(const wxString& cfg_file, editor::Options* options) {
+  if (!wxFileName::FileExists(cfg_file)) {
+    wxLogInfo(wxT("Options file doesn't exist: %s"), cfg_file);
     return false;
   }
 
   Config config;
-  if (!config.Load(file)) {
-    wxLogError(wxT("Failed to parse options file: %s"), file);
+  if (!config.Load(cfg_file)) {
+    wxLogError(wxT("Failed to parse options file: %s"), cfg_file);
     return false;
   }
 
@@ -470,7 +470,7 @@ static void AddOptionPair(Setting& setting, const editor::OptionPair& option_pai
   }
 }
 
-bool SaveEditorOptionsFile(const wxString& file, const editor::Options& options) {
+bool SaveEditorOptionsFile(const wxString& cfg_file, const editor::Options& options) {
   using namespace editor;
 
   Config config;
@@ -516,8 +516,8 @@ bool SaveEditorOptionsFile(const wxString& file, const editor::Options& options)
     rulers_setting.Add(NULL, Setting::kInt).SetInt(ruler);
   }
 
-  if (!config.Save(file)) {
-    wxLogError(wxT("Failed to save options file: %s"), file);
+  if (!config.Save(cfg_file)) {
+    wxLogError(wxT("Failed to save options file: %s"), cfg_file);
     return false;
   }
 

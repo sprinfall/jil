@@ -17,19 +17,19 @@ class Binding;
 }  // namespace editor
 
 class BindingConfig {
- public:
+public:
   explicit BindingConfig(editor::Binding* binding);
   ~BindingConfig();
 
-  bool Load(const wxString& file);
+  bool Load(const wxString& binding_cfg_file);
 
- private:
+private:
   // Example: "delete.word.next", "ctrl+delete", kNormalMode
   bool ParseBinding(const std::string& cmd, const std::string& key, int modes);
 
   bool ParseBindingItem(const Setting& setting);
 
- private:
+private:
   editor::Binding* binding_;
 };
 

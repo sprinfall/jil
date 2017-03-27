@@ -123,9 +123,9 @@ Session::~Session() {
   }
 }
 
-bool Session::Load(const wxString& file) {
+bool Session::Load(const wxString& cfg_file) {
   Config config;
-  if (!config.Load(file)) {
+  if (!config.Load(cfg_file)) {
     return false;
   }
 
@@ -193,12 +193,10 @@ bool Session::Load(const wxString& file) {
 
   GetStringArray(root_setting, RECENT_FILES, &recent_files_);
 
-  // Filter out unexisted files.
-
   return true;
 }
 
-bool Session::Save(const wxString& file) {
+bool Session::Save(const wxString& cfg_file) {
   Config config;
 
   Setting root_setting = config.Root();
@@ -260,7 +258,7 @@ bool Session::Save(const wxString& file) {
   SetStringArray(root_setting, RECENT_FILES, recent_files_);
 
   // Save to file.
-  return config.Save(file);
+  return config.Save(cfg_file);
 }
 
 bool Session::AddHistoryString(std::list<wxString>& strings, const wxString& s, size_t limit) {

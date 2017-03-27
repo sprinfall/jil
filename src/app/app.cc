@@ -59,25 +59,25 @@ namespace jil {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-static const wxChar   kDotChar          = wxT('.');
-static const wxString kSpaceStr         = wxT(" ");
+static const wxChar kDotChar = wxT('.');
+static const wxString kSpaceStr = wxT(" ");
 
-static const wxString kCfgExt           = wxT(".cfg");
+static const wxString kCfgExt = wxT(".cfg");
 
-static const wxString kFtPluginDir      = wxT("ftplugin");
-static const wxString kThemeDir         = wxT("theme");
+static const wxString kFtPluginDir = wxT("ftplugin");
+static const wxString kThemeDir = wxT("theme");
 
-static const wxString kLexFile          = wxT("lex.cfg");
-static const wxString kOptionsFile      = wxT("options.cfg");
-static const wxString kIndentFile       = wxT("indent.lua");
-static const wxString kStatusFieldsFile = wxT("status_fields.cfg");
-static const wxString kSessionFile      = wxT("session.cfg");
-static const wxString kBindingFile      = wxT("binding.cfg");
-static const wxString kFileTypesFile    = wxT("file_types.cfg");
+static const wxString kLexCfgFile = wxT("lex.cfg");
+static const wxString kOptionsCfgFile = wxT("options.cfg");
+static const wxString kIndentLuaFile = wxT("indent.lua");
+static const wxString kSessionCfgFile = wxT("session.cfg");
+static const wxString kBindingCfgFile = wxT("binding.cfg");
+static const wxString kFtCfgFile = wxT("ft.cfg");
+static const wxString kStatusFieldsCfgFile = wxT("status_fields.cfg");
 
 // For Unix, this name is used to create the domain socket.
-static const wxString kIpcService       = wxT("jil_ipc_service");
-static const wxString kIpcTopic         = wxT("jil_ipc_topic");
+static const wxString kIpcService = wxT("jil_ipc_service");
+static const wxString kIpcTopic = wxT("jil_ipc_topic");
 
 ////////////////////////////////////////////////////////////////////////////////
 // Text functions.
@@ -347,7 +347,7 @@ bool App::OnInit() {
   LoadFileTypes();
 
   // Load session.
-  session_.Load(user_data_dir + kSessionFile);
+  session_.Load(user_data_dir + kSessionCfgFile);
 
   editor::InitLua(lua_state_);
 
@@ -390,7 +390,7 @@ int App::OnExit() {
   // eating memory), otherwise the clipboard will be emptied on exit.
   wxTheClipboard->Flush();
 
-  session_.Save(UserDataFile(kSessionFile));
+  session_.Save(UserDataFile(kSessionCfgFile));
 
   delete wxLog::SetActiveTarget(NULL);
   if (log_file_ != NULL) {
@@ -437,12 +437,12 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
   //----------------------------------------------------------------------------
   // Load lex
 
-  wxString ft_lex_file = ft_plugin_user_dir + kLexFile;
-  if (!wxFileName::FileExists(ft_lex_file)) {
-    ft_lex_file = ft_plugin_dir + kLexFile;
+  wxString ft_lex_cfg_file = ft_plugin_user_dir + kLexCfgFile;
+  if (!wxFileName::FileExists(ft_lex_cfg_file)) {
+    ft_lex_cfg_file = ft_plugin_dir + kLexCfgFile;
   }
 
-  LoadLexFile(ft_lex_file, ft_plugin);
+  LoadLexFile(ft_lex_cfg_file, ft_plugin);
 
   //----------------------------------------------------------------------------
   // Load editor options
@@ -450,13 +450,13 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
   // Copy global editor options.
   editor::Options ft_editor_options = editor_options_;
 
-  wxString ft_options_file = ft_plugin_user_dir + kOptionsFile;
-  if (!wxFileName::FileExists(ft_options_file)) {
-    ft_options_file = ft_plugin_dir + kOptionsFile;
+  wxString ft_options_cfg_file = ft_plugin_user_dir + kOptionsCfgFile;
+  if (!wxFileName::FileExists(ft_options_cfg_file)) {
+    ft_options_cfg_file = ft_plugin_dir + kOptionsCfgFile;
   }
 
   // Overwrite with the file type specific values.
-  LoadEditorOptionsFile(ft_options_file, &ft_editor_options);
+  LoadEditorOptionsFile(ft_options_cfg_file, &ft_editor_options);
 
   ft_plugin->set_options(ft_editor_options);
 
@@ -467,7 +467,7 @@ editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
 
   // Load indent function from Lua script.
   std::string lua_error;
-  if (editor::LoadLuaFile(lua_state_, kIndentFile, &lua_error)) {
+  if (editor::LoadLuaFile(lua_state_, kIndentLuaFile, &lua_error)) {
     std::string ns = ft.id.ToStdString();
     luabridge::LuaRef indent_func = editor::GetLuaValue(lua_state_, ns.c_str(), "indent");
     ft_plugin->set_indent_func(indent_func);
@@ -491,7 +491,7 @@ editor::FtPlugin* App::GetFtPluginByFileName(const wxFileName& fn) {
 }
 
 bool App::SaveUserGlobalOptions() {
-  wxString options_file = UserDataFile(kOptionsFile);
+  wxString options_file = UserDataFile(kOptionsCfgFile);
   return SaveGlobalOptionsFile(options_file, options_);
 }
 
@@ -503,7 +503,7 @@ bool App::SaveUserEditorOptions(const wxString& ft_id, const editor::Options& op
     return false;
   }
 
-  return SaveEditorOptionsFile(ft_options_dir + kOptionsFile, options);
+  return SaveEditorOptionsFile(ft_options_dir + kOptionsCfgFile, options);
 }
 
 bool App::ReloadTheme(const wxString& theme_name) {
@@ -630,14 +630,14 @@ bool App::InitIpc() {
 }
 
 void App::LoadStatusFields() {
-  wxString status_fields_file = UserDataFile(kStatusFieldsFile);
-  if (!wxFileName::FileExists(status_fields_file)) {
-    status_fields_file = ResourceFile(kStatusFieldsFile);
+  wxString status_fields_cfg_file = UserDataFile(kStatusFieldsCfgFile);
+  if (!wxFileName::FileExists(status_fields_cfg_file)) {
+    status_fields_cfg_file = ResourceFile(kStatusFieldsCfgFile);
   }
 
   Config config;
-  if (!config.Load(status_fields_file)) {
-    ShowError(wxString::Format(kTrCfgFileLoadFail, status_fields_file));
+  if (!config.Load(status_fields_cfg_file)) {
+    ShowError(wxString::Format(kTrCfgFileLoadFail, status_fields_cfg_file));
     return;
   }
 
@@ -654,17 +654,17 @@ void App::LoadStatusFields() {
 // If version number is not consistent between resource file and user file,
 // always load resource file firstly.
 void App::LoadOptions() {
-  wxString global_options_file = UserDataFile(kOptionsFile);
+  wxString global_options_file = UserDataFile(kOptionsCfgFile);
   if (!wxFileName::FileExists(global_options_file)) {
     wxLogInfo(wxT("No user options config file."));
-    global_options_file = ResourceFile(kOptionsFile);
+    global_options_file = ResourceFile(kOptionsCfgFile);
   }
 
   if (!LoadGlobalOptionsFile(global_options_file, &options_)) {
     ShowError(wxString::Format(kTrCfgFileLoadFail, global_options_file));
   }
 
-  wxString editor_options_file = ResourceFile(kFtPluginDir, wxT("__default"), kOptionsFile);
+  wxString editor_options_file = ResourceFile(kFtPluginDir, wxT("__default"), kOptionsCfgFile);
   LoadEditorOptionsFile(editor_options_file, &editor_options_);
 }
 
@@ -858,13 +858,13 @@ bool App::LoadBinding() {
   BindingConfig binding_config(binding_);
 
   // Always load default binding.
-  wxString binding_file = ResourceFile(kBindingFile);
-  if (!binding_config.Load(binding_file)) {
-    ShowError(wxString::Format(kTrCfgFileLoadFail, binding_file));
+  wxString binding_cfg_file = ResourceFile(kBindingCfgFile);
+  if (!binding_config.Load(binding_cfg_file)) {
+    ShowError(wxString::Format(kTrCfgFileLoadFail, binding_cfg_file));
     return false;
   }
 
-  if (!binding_config.Load(UserDataFile(kBindingFile))) {
+  if (!binding_config.Load(UserDataFile(kBindingCfgFile))) {
     wxLogInfo(wxT("No user binding."));
   }
 
@@ -875,10 +875,10 @@ bool App::LoadBinding() {
 
 bool App::LoadFileTypes() {
   // Load other file types from config file.
-  wxString ft_config_file = path::ResourceDir() + kFileTypesFile;
+  wxString ft_cfg_file = path::ResourceDir() + kFtCfgFile;
 
-  if (!ft_config_.Load(ft_config_file)) {
-    ShowError(wxString::Format(kTrCfgFileLoadFail, ft_config_file));
+  if (!ft_config_.Load(ft_cfg_file)) {
+    ShowError(wxString::Format(kTrCfgFileLoadFail, ft_cfg_file));
     return false;
   }
 

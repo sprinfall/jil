@@ -13,7 +13,7 @@ class FtPlugin;
 }
 
 // Parse the lex file, set lex data to file type.
-bool LoadLexFile(const wxString& lex_file, editor::FtPlugin* ft_plugin);
+bool LoadLexFile(const wxString& lex_cfg_file, editor::FtPlugin* ft_plugin);
 
 }  // namespace jil
 
