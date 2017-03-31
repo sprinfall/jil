@@ -20,11 +20,18 @@
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #endif //_WIN32
 
+// For cursors, etc.
+#include "wx/msw/wx.rc"
+
 // This is icon bundle with several different size icons.
 // Windows Explorer will display the jil.exe with these icons.
+// NOTE:
+// Don't define IDI_EDITOR in resource.h as a number, otherwise the exe
+// icon will be wxICON_AAA defined in wx.rc.
 IDI_EDITOR ICON "icon/editor.ico"
 
 // For wxTopLevelWindow::SetIcons().
+// Only 16 and 32 sizes are needed.
 IDI_EDITOR_16 ICON "icon/editor16.ico"
 IDI_EDITOR_32 ICON "icon/editor32.ico"
 
