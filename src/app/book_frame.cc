@@ -349,7 +349,7 @@ void BookFrame::FileNew() {
 
   TextBuffer* buffer = new TextBuffer(NewBufferId(), ft_plugin, options_->file_encoding);
 
-  text_book_->AddPage(buffer, true);
+  text_book_->AddTextPage(buffer, true);
 }
 
 void BookFrame::FileOpen() {
@@ -2414,7 +2414,7 @@ void BookFrame::OnReplaceThreadEvent(wxThreadEvent& evt) {
   if (it != replaced_buffers_.end()) {
     editor::TextBuffer* new_buffer = it->second;
     replaced_buffers_.erase(it);
-    text_book_->AddPage(new_buffer, false);
+    text_book_->AddTextPage(new_buffer, false);
     // TODO: Update recent file list?
   }
 }
@@ -2579,9 +2579,9 @@ void BookFrame::LoadMenus() {
   //----------------------------------------------------------------------------
   // Preferences
 
-  wxMenu* prefs_menu = new wxMenu;
-
 #if !defined (__WXOSX__)
+
+  wxMenu* prefs_menu = new wxMenu;
 
   AppendMenuItem(prefs_menu, wxID_PREFERENCES, kTrPrefsGlobal);
 
@@ -2596,9 +2596,9 @@ void BookFrame::LoadMenus() {
   prefs_menu->AppendSubMenu(theme_menu, kTrPrefsTheme);
   InitThemeMenu(theme_menu);
 
-#endif  // !defined (__WXOSX__)
-
   menu_bar->Append(prefs_menu, kTrMenuPrefs);
+
+#endif  // !defined (__WXOSX__)
 
   //----------------------------------------------------------------------------
   // Help
@@ -2921,7 +2921,7 @@ TextPage* BookFrame::DoOpenFile(const wxFileName& fn,
       return NULL;
     }
 
-    text_page = text_book_->AddPage(buffer, active);
+    text_page = text_book_->AddTextPage(buffer, active);
   }
 
   if (update_recent_files) {

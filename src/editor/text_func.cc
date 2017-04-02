@@ -300,9 +300,9 @@ struct XmlStringWriter : public pugi::xml_writer {
 };
 
 void Format(TextWindow* tw) {
+  /*
   TextBuffer* buffer = tw->buffer();
 
-  /*
   std::wstring text;
   buffer->GetText(&text);
 

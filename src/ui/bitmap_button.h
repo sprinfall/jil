@@ -27,7 +27,7 @@ public:
 protected:
   ButtonStyle::State GetState() const override;
 
-  void PostEvent() override;
+  virtual void PostEvent() override;
 };
 
 }  // namespace ui

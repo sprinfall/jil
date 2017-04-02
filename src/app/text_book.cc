@@ -83,7 +83,7 @@ void TextBook::SetFocus() {
   }
 }
 
-TextPage* TextBook::AddPage(editor::TextBuffer* buffer, bool active) {
+TextPage* TextBook::AddTextPage(editor::TextBuffer* buffer, bool active) {
   TextPage* page = new TextPage(buffer);
   page->set_page_window(page_window_);
   BookCtrl::AddPage(page, active);

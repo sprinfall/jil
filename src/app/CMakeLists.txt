@@ -149,7 +149,21 @@ endif()
 # NOTE: Put ${wxWidgets_LIBRARIES} after others, or there will be link errors in Linux/GTK+.
 target_link_libraries(${TARGET_NAME} ${EXTRA_LIBS} ${wxWidgets_LIBRARIES})
 
+if(APPLE)
+    set_target_properties(${TARGET_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in)
+
+    set(MACOSX_BUNDLE_ICON_FILE editor.icns)
+    set(MACOSX_BUNDLE_BUNDLE_NAME ${TARGET_OUTPUT_NAME})
+
+    # Version displayed on App Store and Finder, at most three parts: x.y.z
+    set(MACOSX_BUNDLE_SHORT_VERSION_STRING 1.0.0)
+
+    # Internal project version, could be any format.
+    set(MACOSX_BUNDLE_BUNDLE_VERSION 1.1.0)
+endif()
+
 set_target_properties(${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_NAME ${TARGET_OUTPUT_NAME})
+
 if(MSVC)
     set_target_properties(${TARGET_NAME} PROPERTIES COMPILE_FLAGS "/wd4290")
 endif()
@@ -179,9 +193,6 @@ elseif(APPLE)
 
     message(STATUS "Mac install bin dir: " ${MAC_INSTALL_BIN_DIR})
     message(STATUS "Mac install res dir: " ${MAC_INSTALL_RES_DIR})
-
-    # TODO: Is there any variable for the target output dir?
-    #install(FILES ${CMAKE_INSTALL_PREFIX}/liblibconfig.dylib DESTINATION ${MAC_INSTALL_BIN_DIR})
 
     install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/options.cfg DESTINATION ${MAC_INSTALL_RES_DIR})
     install(FILES ${PROJECT_SOURCE_DIR}/data/jilfiles/binding.cfg DESTINATION ${MAC_INSTALL_RES_DIR})

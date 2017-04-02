@@ -49,7 +49,7 @@ public:
 protected:
   ButtonStyle::State GetState() const override;
 
-  void PostEvent() override;
+  virtual void PostEvent() override;
 
 private:
   bool toggle_;

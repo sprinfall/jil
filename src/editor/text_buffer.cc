@@ -333,8 +333,8 @@ static FileError ReadFile(const wxString& file_path,
 TextBuffer::TextBuffer(size_t id, FtPlugin* ft_plugin, const Encoding& file_encoding)
     : id_(id)
     , ft_plugin_(ft_plugin)
-    , file_encoding_(file_encoding)
-    , options_(ft_plugin->options()) {
+    , options_(ft_plugin->options())
+    , file_encoding_(file_encoding) {
 
   Init();
 
@@ -1673,6 +1673,9 @@ TextPoint TextBuffer::Seek(const TextPoint& point, TextUnit text_unit, SeekType 
       return point_end();
     }
     break;
+
+  default:
+    break;
   }
 
   return point;
@@ -1734,8 +1737,6 @@ void TextBuffer::AddInsertCharAction(InsertCharAction* insert_char_action) {
     PushUndoAction(insert_char_action);
     insert_char_action->Exec();
   } else {
-    bool modified_backup = modified();
-
     if (!recent_ic_actions_.empty()) {
       InsertCharAction* prev_insert_char_action = recent_ic_actions_.back();
 

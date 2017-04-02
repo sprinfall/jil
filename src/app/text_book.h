@@ -58,7 +58,7 @@ public:
 
   // Add a page for the buffer.
   // Return the new created page.
-  TextPage* AddPage(editor::TextBuffer* buffer, bool active);
+  TextPage* AddTextPage(editor::TextBuffer* buffer, bool active);
 
   TextPage* ActiveTextPage() const;
 

@@ -37,8 +37,6 @@ protected:
 
   virtual void DrawFg(wxDC& dc, ButtonStyle::State state) override;
 
-  virtual void PostEvent() = 0;
-
 protected:
   wxBitmap bitmaps_[ButtonStyle::STATES];
 };

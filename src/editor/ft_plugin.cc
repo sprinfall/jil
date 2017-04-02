@@ -28,8 +28,8 @@ inline bool operator<=(const WordLexPair& lhs, const WordLexPair& rhs) {
 FtPlugin::FtPlugin(const FileType& file_type, lua_State* lua_state)
     : file_type_(file_type)
     , lua_state_(lua_state)
-    , ignore_case_(false)
-    , indent_func_(lua_state_) {
+    , indent_func_(lua_state_)
+    , ignore_case_(false) {
   wcsncmp_ = wcsncmp;
 }
 

@@ -59,7 +59,6 @@ namespace jil {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-static const wxChar kDotChar = wxT('.');
 static const wxString kSpaceStr = wxT(" ");
 
 static const wxString kCfgExt = wxT(".cfg");

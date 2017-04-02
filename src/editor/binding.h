@@ -19,6 +19,9 @@ namespace editor {
 // Void function interface.
 class VoidFunc {
 public:
+  virtual ~VoidFunc() {
+  }
+
   virtual void Exec() = 0;
 };
 
@@ -28,6 +31,9 @@ class VoidFuncWrap : public VoidFunc {
 
 public:
   VoidFuncWrap(Func func) : func_(func) {
+  }
+
+  virtual ~VoidFuncWrap() {
   }
 
 protected:

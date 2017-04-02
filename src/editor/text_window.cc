@@ -2428,7 +2428,7 @@ bool TextWindow::OnTextKeyDown(wxKeyEvent& evt) {
 #endif  // JIL_ENABLE_LEADER_KEY
     if (modifiers == 0) {
       // Standard ASCII characters || ASCII extended characters.
-      if (code >= 33 && code <= 126 || code >= 128 && code <= 255) {
+      if ((code >= 33 && code <= 126) || (code >= 128 && code <= 255)) {
         return false;
       }
     } else if (modifiers == wxMOD_SHIFT && code < 127) {

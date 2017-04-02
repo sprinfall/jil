@@ -140,8 +140,8 @@ DeleteAction::DeleteAction(TextBuffer* buffer,
                            TextUnit text_unit,
                            SeekType seek_type)
     : Action(buffer, point)
-    , seek_type_(seek_type)
     , text_unit_(text_unit)
+    , seek_type_(seek_type)
     , count_(1) {
 }
 
@@ -746,9 +746,6 @@ void CommentAction::Exec() {
   change_infos_.clear();
 
   effective_ = true;
-
-  // Comment options.
-  bool add_space = buffer_->text_options().comment_add_space;
 
   if (range_.IsEmpty()) {
     CommentLines(range_.GetLineRange());

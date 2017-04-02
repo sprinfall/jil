@@ -68,8 +68,7 @@ protected:
     dc.Clear();
 
     size_t rows = 0;
-    wxRect rect = GetClientRect();
-    int x = 0;
+
     int y = kPaddingY;
     for (size_t i = 0; i < tip_model_->tips.size(); ++i) {
       dc.DrawText(tip_model_->tips[i], kPaddingX, y);
