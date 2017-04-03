@@ -365,6 +365,7 @@ bool App::OnInit() {
     return false;
   }
 
+  LoadIcons();
   book_frame->SetIcons(icons_);
 
   SetTopWindow(book_frame);

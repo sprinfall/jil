@@ -311,7 +311,7 @@ int BookCtrl::GetStackIndex(BookPage* page) const {
 
 void BookCtrl::MovePageToStackFront(BookPage* page) {
   TabConstIter it = stack_tabs_.begin();
-  for (int i = 0; it != stack_tabs_.end(); ++it) {
+  for (; it != stack_tabs_.end(); ++it) {
     Tab* tab = *it;
     if (tab->page == page) {
       stack_tabs_.erase(it);
@@ -494,6 +494,7 @@ void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
 
   int x = rect.x;
 
+  // Draw the bottom line of the left pending area.
   dc.SetPen(active_tab_pen);
   dc.DrawLine(x, bottom, x + tab_panel_padding_x_, bottom);
 
@@ -508,22 +509,28 @@ void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
     // Background
 
     wxRect tab_bg_rect = tab_rect;
-    tab_bg_rect.Deflate(1, 0);
-    tab_bg_rect.height += 1;  // + 1 to make the bottom line invisible.
 
     if (tab->active) {
-      dc.SetPen(active_tab_pen);
+      // Fill
+      dc.SetPen(*wxTRANSPARENT_PEN);
       dc.SetBrush(active_tab_brush);
-      dc.DrawLine(tab_rect.x, bottom, tab_rect.x + tab->size, bottom);
       dc.DrawRectangle(tab_bg_rect);
+
+      // Borders (left, top and right, no bottom)
+      dc.SetPen(active_tab_pen);
+      dc.DrawLine(tab_rect.x, bottom, tab_rect.x, tab_rect.y);
+      dc.DrawLine(tab_rect.x, tab_rect.y, tab_rect.GetRight(), tab_rect.y);
+      dc.DrawLine(tab_rect.GetRight(), bottom, tab_rect.GetRight(), tab_rect.y);
     } else {
       if (!tab_pen.IsTransparent() || !tab_brush.IsTransparent()) {
         dc.SetPen(tab_pen);
         dc.SetBrush(tab_brush);
         dc.DrawRectangle(tab_bg_rect);
       }
+
+      // Bottom line
       dc.SetPen(active_tab_pen);
-      dc.DrawLine(tab_rect.x, bottom, tab_rect.x + tab->size, bottom);
+      dc.DrawLine(tab_rect.x, bottom, tab_rect.GetRight(), bottom);
     }
 
     // Foreground
@@ -1048,6 +1055,7 @@ wxRect BookCtrl::GetTabRect(int tab_x, int tab_width, const wxRect& tab_panel_re
   wxRect tab_rect(tab_x, tab_panel_rect.y, tab_width, tab_panel_rect.height);
   tab_rect.y += tab_margin_top_;
   tab_rect.height -= tab_margin_top_;
+
   return tab_rect;
 }
 

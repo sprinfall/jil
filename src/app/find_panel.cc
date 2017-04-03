@@ -334,10 +334,8 @@ void FindPanel::ReapplyTheme() {
 
 void FindPanel::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
   wxAutoBufferedPaintDC dc(this);
-#if !wxALWAYS_NATIVE_DOUBLE_BUFFER
   dc.SetBackground(GetBackgroundColour());
   dc.Clear();
-#endif
 
   wxRect rect = GetClientRect();
   wxRect update_rect = GetUpdateClientRect();

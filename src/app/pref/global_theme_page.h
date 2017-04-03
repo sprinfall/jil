@@ -35,7 +35,6 @@ private:
   Options* options_;
 
   wxComboBox* theme_combo_box_;
-  wxComboBox* icon_combo_box_;
   wxCheckBox* enlarge_icons_check_box_;
 };
 

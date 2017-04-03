@@ -385,7 +385,7 @@ static void ParseEditorOptions(const Setting& setting, editor::Options* options)
 
   GetInt(setting_map, OPT_I_TAB_STOP, &options->text.tab_stop);
   GetBool(setting_map, OPT_B_EXPAND_TAB, &options->text.expand_tab);
-  GetBool(setting_map, OPT_S_DELIMITERS, &options->text.guess_tab);
+  GetBool(setting_map, OPT_B_GUESS_TAB, &options->text.guess_tab);
 
   GetWString(setting_map, OPT_S_DELIMITERS, &options->text.delimiters);
 
@@ -481,7 +481,7 @@ bool SaveEditorOptionsFile(const wxString& cfg_file, const editor::Options& opti
 
   root_setting.SetInt(OPT_I_TAB_STOP, options.text.tab_stop);
   root_setting.SetBool(OPT_B_EXPAND_TAB, options.text.expand_tab);
-  root_setting.SetBool(OPT_S_DELIMITERS, options.text.guess_tab);
+  root_setting.SetBool(OPT_B_GUESS_TAB, options.text.guess_tab);
 
   root_setting.SetString(OPT_S_DELIMITERS, wxString(options.text.delimiters).ToAscii().data());
 

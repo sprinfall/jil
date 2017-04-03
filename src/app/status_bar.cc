@@ -213,15 +213,15 @@ void StatusBar::OnPaint(wxPaintEvent& evt) {
   const wxRect rect = GetClientRect();
   wxRect update_rect = GetUpdateClientRect();
 
-  // Background
-  wxRect bg_rect(update_rect.x, 0, update_rect.width, 0);
-  bg_rect.y = rect.y + 2;
-  bg_rect.height = rect.height - 2;
-  wxColour bg_top = theme_->GetColor(COLOR_BG_TOP);
-  wxColour bg_bottom = theme_->GetColor(COLOR_BG_BOTTOM);
-  dc.GradientFillLinear(bg_rect, bg_bottom, bg_top, wxNORTH);
+  // Gradient filled Background.
+  wxRect bg_rect(update_rect);
+  bg_rect.y = rect.y + 1;
+  bg_rect.height = rect.height - 1;
+  wxColour bg_top_color = theme_->GetColor(COLOR_BG_TOP);
+  wxColour bg_bottom_color = theme_->GetColor(COLOR_BG_BOTTOM);
+  dc.GradientFillLinear(bg_rect, bg_bottom_color, bg_top_color, wxNORTH);
 
-  // Borders
+  // Outer and inner borders.
   int border_y = rect.y;
   dc.SetPen(wxPen(theme_->GetColor(COLOR_BORDER_OUTER)));
   dc.DrawLine(bg_rect.x, border_y, bg_rect.GetRight() + 1, border_y);

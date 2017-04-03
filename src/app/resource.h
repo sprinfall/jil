@@ -13,7 +13,8 @@
 #endif
 #endif
 
-#define IDI_EDITOR                      102
+// NOTE: The value order matters! See RC file for details.
+//#define IDI_EDITOR 102  // No!!! Don't do this! See RC file.
 #define IDI_EDITOR_16                   103
 #define IDI_EDITOR_32                   104
 

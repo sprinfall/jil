@@ -35,12 +35,12 @@ static bool IsBracketL(wchar_t c) {
          c == L'<';
 }
 
-static bool IsBracketR(wchar_t c) {
-  return c == L')' ||
-         c == L'}' ||
-         c == L']' ||
-         c == L'>';
-}
+//static bool IsBracketR(wchar_t c) {
+//  return c == L')' ||
+//         c == L'}' ||
+//         c == L']' ||
+//         c == L'>';
+//}
 
 static Bracket BracketL(wchar_t c) {
   switch (c) {
