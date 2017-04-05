@@ -215,6 +215,8 @@ public:
 
   TextLine* Line(Coord ln) const;
 
+  TextLine* LastLine() const;
+
   const TextLine* LineById(size_t id) const;
 
   // Return kInvCoord if the line with the given ID doesn't exist.

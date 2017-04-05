@@ -632,6 +632,11 @@ TextLine* TextBuffer::Line(Coord ln) const {
   return lines_[ln - 1];
 }
 
+TextLine* TextBuffer::LastLine() const {
+  assert(!lines_.empty());
+  return lines_[lines_.size() - 1];
+}
+
 const TextLine* TextBuffer::LineById(size_t id) const {
   TextLines::const_iterator it = lines_.begin();
   for (; it != lines_.end(); ++it) {
