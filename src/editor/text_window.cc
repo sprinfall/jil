@@ -5,7 +5,10 @@
 #include <cmath>
 #include <vector>
 
+#if JIL_USE_WX_CARET
 #include "wx/caret.h"
+#endif
+
 #include "wx/dcbuffer.h"
 #include "wx/menu.h"
 #include "wx/log.h"
@@ -45,6 +48,14 @@ DEFINE_EVENT_TYPE(kTextWindowEvent);
 
 ////////////////////////////////////////////////////////////////////////////////
 
+enum {
+  ID_SCROLL_TIMER = wxID_HIGHEST + 100,
+
+#if !JIL_USE_WX_CARET
+  ID_CARET_BLINKING_TIMER,
+#endif
+};
+
 static const int kMarginTop = 3;
 static const int kMarginBottom = 0;
 static const int kTextMarginLeft = 0;
@@ -65,8 +76,11 @@ IMPLEMENT_CLASS(TextWindow, wxScrolledWindow)
 BEGIN_EVENT_TABLE(TextWindow, wxScrolledWindow)
 EVT_SIZE(TextWindow::OnSize)
 
-// NOTE: It seems that text window never gets focus.
-//EVT_SET_FOCUS(TextWindow::OnSetFocus)
+EVT_TIMER(ID_SCROLL_TIMER, TextWindow::OnScrollTimer)
+
+#if !JIL_USE_WX_CARET
+EVT_TIMER(ID_CARET_BLINKING_TIMER, TextWindow::OnCaretBlinkingTimer)
+#endif
 
 END_EVENT_TABLE()
 
@@ -120,11 +134,16 @@ bool TextWindow::Create(wxWindow* parent, wxWindowID id, bool hide) {
   // Font, char size, line height, caret size, scrollbar, ... will be set in
   // SetTextFont() which shall be called after Create().
 
+#if JIL_USE_WX_CARET
   // Caret
   // NOTE: Can't set height to -1 under GTK or there will be bitmap create assert failure.
   wxCaret* caret = new wxCaret(text_area_, 1, 1);
   text_area_->SetCaret(caret);
   caret->Show();
+#else
+  caret_.timer = new wxTimer(this, ID_CARET_BLINKING_TIMER);
+  caret_.timer->Start(600, false);
+#endif  // JIL_USE_WX_CARET
 
   // Attach buffer listener when text window is actually created.
   buffer_->AttachListener(this);
@@ -133,12 +152,11 @@ bool TextWindow::Create(wxWindow* parent, wxWindowID id, bool hide) {
 }
 
 TextWindow::~TextWindow() {
-  if (scroll_timer_ != NULL) {
-    if (scroll_timer_->IsRunning()) {
-      scroll_timer_->Stop();
-    }
-    wxDELETE(scroll_timer_);
-  }
+  StopScrollTimer();
+
+#if !JIL_USE_WX_CARET
+  wxDELETE(caret_.timer);
+#endif
 
   if (buffer_ != NULL) {
     buffer_->DetachListener(this);
@@ -683,6 +701,7 @@ void TextWindow::Replace(const TextRange& range,
 
       // NOTE: Don't have to call UpdateCaretPoint.
       UpdateCaretPosition();
+
       PostEvent(kCaretEvent);
     }
   }
@@ -855,14 +874,8 @@ void TextWindow::UpdateCaretPoint(const TextPoint& point, bool line_step, bool s
     return;
   }
 
-  // Refresh the highlight of the caret line.
-  if (caret_point_.y != p.y) {
-    RefreshLineNrByLine(caret_point_.y);  // Erase
-    caret_point_ = p;
-    RefreshLineNrByLine(caret_point_.y);
-  } else {
-    caret_point_ = p;
-  }
+  int old_caret_y = caret_point_.y;
+  caret_point_ = p;
 
   if (!line_step) {
     max_caret_x_ = p.x;
@@ -875,6 +888,17 @@ void TextWindow::UpdateCaretPoint(const TextPoint& point, bool line_step, bool s
   // NOTE:
   // If you update caret position before scroll, the position will be wrong.
   UpdateCaretPosition();
+
+  // Refresh the highlight of the caret line.
+  if (caret_point_.y != old_caret_y) {
+    RefreshLineNrByLine(old_caret_y);  // Erase
+    RefreshLineNrByLine(caret_point_.y);
+
+#if !JIL_USE_WX_CARET
+    RefreshTextByLine(old_caret_y);  // Erase
+    RefreshTextByLine(caret_point_.y);
+#endif
+  }
 
   // Notify the caret change.
   PostEvent(kCaretEvent);
@@ -1017,8 +1041,13 @@ void TextWindow::Init() {
   line_nr_width_ = 0;
 
   caret_point_.Set(0, 1);
-
   max_caret_x_ = 0;
+
+#if !JIL_USE_WX_CARET
+  caret_.pen = wxPen(*wxLIGHT_GREY, 2);
+  caret_.timer = NULL;
+  caret_.show = false;
+#endif
 
   down_modifiers_ = 0;
 
@@ -1067,25 +1096,23 @@ void TextWindow::DoWrap() {
 
   if (wrap_changed) {
     UpdateTextSize();
-  }
 
-  // Virtual height might change due to the wrap change.
-  // The wrap-on virtual width is also different from the wrap-off one.
-  UpdateVirtualSize();
+    // Virtual height might change due to the wrap change.
+    // The wrap-on virtual width is also different from the wrap-off one.
+    UpdateVirtualSize();
 
-  if (wrap_changed) {
+    // Caret position might change due to the wrap change.
+    UpdateCaretPosition();
+
     text_area_->Refresh();
 
     if (wrap_delta != 0) {
       line_nr_area_->Refresh();
     }
+
+    // TODO
+    //ScrollToPoint(caret_point_);
   }
-
-  // Caret position might change due to the wrap change.
-  UpdateCaretPosition();
-
-  // TODO
-  //ScrollToPoint(caret_point_);
 }
 
 void TextWindow::DoShowHScrollbar() {
@@ -1252,9 +1279,9 @@ void TextWindow::HandleTabOptionsChange() {
       UpdateVirtualSize();
     }
 
-    text_area_->Refresh();
-
     UpdateCaretPosition();
+
+    text_area_->Refresh();
   }
 
   expand_tab_ = buffer_->text_options().expand_tab;
@@ -1391,15 +1418,15 @@ void TextWindow::OnTextSize(wxSizeEvent& evt) {
       UpdateVirtualSize();
 
       if (wrap_changed) {
-        // The text has to be repainted since the wrap changes.
-        text_area_->Refresh();
-
         if (wrap_delta != 0) {
           line_nr_area_->Refresh();
         }
 
         // Caret position might change due to the wrap change.
         UpdateCaretPosition();
+
+        // The text has to be repainted since the wrap changes.
+        text_area_->Refresh();
       }
     }
   }
@@ -1448,12 +1475,17 @@ void TextWindow::HandleTextPaint(Renderer& renderer) {
   assert(!view_options_.wrap);
 
   // Get the lines to paint.
-  wxRect rect = text_area_->GetUpdateClientRect();
-  LineRange line_range(LineFromScrolledY(rect.GetTop()),
-                       LineFromScrolledY(rect.GetBottom()));
-  if (line_range.IsEmpty()) {
+  wxRect update_rect = text_area_->GetUpdateClientRect();
+  LineRange update_line_range = LineRangeFromClientRect(update_rect);
+  if (update_line_range.IsEmpty()) {
     return;  // No lines to paint.
   }
+
+#if 1
+  wxLogDebug("Paint text lines: %d - %d",
+             update_line_range.first(),
+             update_line_range.last());
+#endif
 
   const wxRect client_rect = text_area_->GetClientRect();
   int x = client_rect.GetLeft();
@@ -1463,18 +1495,18 @@ void TextWindow::HandleTextPaint(Renderer& renderer) {
 
   const Coord line_count = buffer_->LineCount();
 
-  int y1 = client_rect.y + line_height_ * (line_range.first() - 1);
+  int y1 = client_rect.y + line_height_ * (update_line_range.first() - 1);
   int y2 = y1;  // Don't change y1 , it will be used to draw rulers.
 
-  Coord ln = line_range.first();
-  for (; ln <= line_range.last() && ln <= line_count; ++ln) {
+  Coord ln = update_line_range.first();
+  for (; ln <= update_line_range.last() && ln <= line_count; ++ln) {
     DrawTextLine(renderer, ln, x, y2);
   }
 
-  // Blank lines.
-  if (ln <= line_range.last()) {
+  // Blank lines
+  if (ln <= update_line_range.last()) {
     const wxColour& blank_bg = style_->Get(Style::kBlank)->bg();
-    int blank_h = line_height_ * (line_range.last() - ln + 1);
+    int blank_h = line_height_ * (update_line_range.last() - ln + 1);
 
     if (blank_bg != style_->Get(Style::kNormal)->bg()) {
       renderer.SetStyle(blank_bg, blank_bg, true);
@@ -1488,49 +1520,58 @@ void TextWindow::HandleTextPaint(Renderer& renderer) {
     y2 += blank_h;
   }
 
-  // Rulers.
+  // Rulers
   if (!view_options_.rulers.empty()) {
     renderer.SetPen(wxPen(theme_->GetColor(COLOR_RULER)), true);
 
     for (size_t i = 0; i < view_options_.rulers.size(); ++i) {
       int ruler_x = x + char_size_.x * view_options_.rulers[i];
-      renderer.DrawLine(ruler_x, y1, ruler_x, y2);
+      renderer.DrawLineV(ruler_x, y1, y2);
     }
 
     renderer.RestorePen();
   }
+
+#if !JIL_USE_WX_CARET
+  DrawCaret(renderer, update_line_range);
+#endif
 }
 
 void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
   assert(view_options_.wrap);
 
   // Get the lines to paint.
-  wxRect rect = text_area_->GetUpdateClientRect();
-  LineRange wrapped_line_range(LineFromScrolledY(rect.GetTop()),
-                               LineFromScrolledY(rect.GetBottom()));
-  if (wrapped_line_range.IsEmpty()) {
+  wxRect update_rect = text_area_->GetUpdateClientRect();
+  LineRange wrapped_update_line_range = LineRangeFromClientRect(update_rect);
+  if (wrapped_update_line_range.IsEmpty()) {
     return;  // No lines to paint.
   }
+
+#if 1
+  wxLogDebug("Paint wrapped text lines: %d - %d",
+             wrapped_update_line_range.first(),
+             wrapped_update_line_range.last());
+#endif
 
   const Coord wrapped_line_count = wrap_helper()->WrappedLineCount();
 
   LineRange blank_line_range;
 
-  if (wrapped_line_range.first() > wrapped_line_count) {
-    blank_line_range = wrapped_line_range;
-    wrapped_line_range.Set(0);  // No text to draw.
+  if (wrapped_update_line_range.first() > wrapped_line_count) {
+    blank_line_range = wrapped_update_line_range;
+    wrapped_update_line_range.Set(0);  // No text to draw.
   } else {
-    if (wrapped_line_range.last() > wrapped_line_count) {
-      blank_line_range.Set(wrapped_line_count + 1, wrapped_line_range.last());
+    if (wrapped_update_line_range.last() > wrapped_line_count) {
+      blank_line_range.Set(wrapped_line_count + 1, wrapped_update_line_range.last());
       // Remove the blank lines.
-      wrapped_line_range.set_last(wrapped_line_count);
+      wrapped_update_line_range.set_last(wrapped_line_count);
     }
   }
 
   // Unwrap the wrapped line range.
-  LineRange line_range;
-  if (!wrapped_line_range.IsEmpty()) {
-    line_range = wrap_helper()->UnwrapLineRange(wrapped_line_range);
+  LineRange update_line_range;
+  if (!wrapped_update_line_range.IsEmpty()) {
+    update_line_range = wrap_helper()->UnwrapLineRange(wrapped_update_line_range);
   }
 
   // NOTE: Text background is not supported.
@@ -1539,15 +1580,15 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
   const wxRect client_rect = text_area_->GetClientRect();
   int x = client_rect.GetLeft();
 
-  if (!line_range.IsEmpty()) {
-    Coord wrapped_first_ln = wrap_helper()->WrapLineNr(line_range.first());
+  if (!update_line_range.IsEmpty()) {
+    Coord wrapped_first_ln = wrap_helper()->WrapLineNr(update_line_range.first());
     int y1 = client_rect.y + line_height_ * (wrapped_first_ln - 1);
     int y2 = y1;  // Don't change y1 , it will be used to draw rulers.
 
     const Coord line_count = buffer_->LineCount();
 
-    Coord ln = line_range.first();
-    for (; ln <= line_range.last() && ln <= line_count; ++ln) {
+    Coord ln = update_line_range.first();
+    for (; ln <= update_line_range.last() && ln <= line_count; ++ln) {
       DrawWrappedTextLine(renderer, ln, x, y2);
     }
 
@@ -1557,7 +1598,7 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
 
       for (size_t i = 0; i < view_options_.rulers.size(); ++i) {
         int ruler_x = x + char_size_.x * view_options_.rulers[i];
-        renderer.DrawLine(ruler_x, y1, ruler_x, y2);
+        renderer.DrawLineV(ruler_x, y1, y2);
       }
 
       renderer.RestorePen();
@@ -1587,13 +1628,30 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
       int y2 = y + h;
       for (size_t i = 0; i < view_options_.rulers.size(); ++i) {
         int ruler_x = x + char_size_.x * view_options_.rulers[i];
-        renderer.DrawLine(ruler_x, y, ruler_x, y2);
+        renderer.DrawLineV(ruler_x, y, y2);
       }
 
       renderer.RestorePen();
     }
   }
+
+#if !JIL_USE_WX_CARET
+  DrawCaret(renderer, update_line_range);
+#endif
 }
+
+#if !JIL_USE_WX_CARET
+
+void TextWindow::DrawCaret(Renderer& renderer, const LineRange& update_line_range) {
+  if (caret_.show && update_line_range.Has(caret_point_.y)) {
+    renderer.SetPen(caret_.pen, false);
+
+    int height = line_height_ - 1;  // TODO: Verify -1 on Mac and GTK.
+    renderer.DrawLineV(caret_.pos.x, caret_.pos.y, caret_.pos.y + height);
+  }
+}
+
+#endif  // !JIL_USE_WX_CARET
 
 void TextWindow::DrawTextLine(Renderer& renderer, Coord ln, int x, int& y) {
   assert(!view_options_.wrap);
@@ -1641,7 +1699,7 @@ void TextWindow::DrawTextLineSelection(Renderer& renderer, Coord ln, int x, int 
 
       // Draw a vertical line for empty rect selection.
       int _x = GetLineWidth(line, 0, line_selection.begin());
-      renderer.DrawLine(_x, y, _x, y + line_height_);
+      renderer.DrawLineV(_x, y, y + line_height_);
 
       renderer.RestoreStyle();
     }
@@ -2242,8 +2300,7 @@ void TextWindow::StartScrollTimer() {
   }
 
   if (scroll_timer_ == NULL) {
-    scroll_timer_ = new wxTimer(this, wxID_ANY);
-    Connect(scroll_timer_->GetId(), wxEVT_TIMER, wxTimerEventHandler(TextWindow::OnScrollTimer));
+    scroll_timer_ = new wxTimer(this, ID_SCROLL_TIMER);
   }
 
   if (scroll_timer_->IsRunning()) {
@@ -2266,7 +2323,6 @@ void TextWindow::StartScrollTimer() {
 
 void TextWindow::StopScrollTimer() {
   if (scroll_timer_ != NULL) {
-    Disconnect(wxEVT_TIMER, scroll_timer_->GetId());
     if (scroll_timer_->IsRunning()) {
       scroll_timer_->Stop();
     }
@@ -2282,6 +2338,13 @@ void TextWindow::OnScrollTimer(wxTimerEvent& evt) {
   }
   SelectByDragging();
 }
+
+#if !JIL_USE_WX_CARET
+void TextWindow::OnCaretBlinkingTimer(wxTimerEvent& evt) {
+  RefreshTextByLine(caret_point_.y);
+  caret_.show = !caret_.show;
+}
+#endif
 
 void TextWindow::HandleTextLeftUp(wxMouseEvent& evt) {
   if (text_area_->HasCapture()) {
@@ -2506,10 +2569,9 @@ void TextWindow::HandleLineNrPaint(wxDC& dc) {
   assert(!view_options_.wrap);
 
   // Get the lines to paint.
-  wxRect rect = line_nr_area_->GetUpdateClientRect();
-  LineRange line_range(LineFromScrolledY(rect.GetTop()),
-                       LineFromScrolledY(rect.GetBottom()));
-  if (line_range.IsEmpty()) {
+  wxRect update_rect = line_nr_area_->GetUpdateClientRect();
+  LineRange update_line_range = LineRangeFromClientRect(update_rect);
+  if (update_line_range.IsEmpty()) {
     return;  // No lines to paint.
   }
 
@@ -2517,22 +2579,22 @@ void TextWindow::HandleLineNrPaint(wxDC& dc) {
 
   LineRange blank_line_range;
 
-  if (line_range.first() > line_count) {
-    blank_line_range = line_range;
-    line_range.Set(0);  // No text to draw.
+  if (update_line_range.first() > line_count) {
+    blank_line_range = update_line_range;
+    update_line_range.Set(0);  // No text to draw.
   } else {
-    if (line_range.last() > line_count) {
-      blank_line_range.Set(line_count + 1, line_range.last());
-      line_range.set_last(line_count);  // Remove the blank lines.
+    if (update_line_range.last() > line_count) {
+      blank_line_range.Set(line_count + 1, update_line_range.last());
+      update_line_range.set_last(line_count);  // Remove the blank lines.
     }
   }
 
   const wxRect client_rect = line_nr_area_->GetClientRect();
   int x = client_rect.GetLeft() + GetUnscrolledX(0);
 
-  if (!line_range.IsEmpty()) {
+  if (!update_line_range.IsEmpty()) {
     // Caret line highlight.
-    if (line_range.Has(caret_point_.y)) {
+    if (update_line_range.Has(caret_point_.y)) {
       const wxColour& bg = style_->Get(Style::kCaretLine)->bg();
       dc.SetPen(wxPen(bg));
       dc.SetBrush(wxBrush(bg));
@@ -2548,12 +2610,12 @@ void TextWindow::HandleLineNrPaint(wxDC& dc) {
       dc.SetFont(line_nr_area_->GetFont());
       dc.SetTextForeground(style_->Get(Style::kNumber)->fg());
 
-      int y = client_rect.y + line_height_ * (line_range.first() - 1);
+      int y = client_rect.y + line_height_ * (update_line_range.first() - 1);
       int w = client_rect.width - kLineNrPaddingRight;
       wxRect rect(x, y, w, line_height_);
 
       wxString label;
-      for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
+      for (Coord ln = update_line_range.first(); ln <= update_line_range.last(); ++ln) {
         label.Printf(_T("%d"), ln);
         dc.DrawLabel(label, rect, wxALIGN_CENTER_VERTICAL | wxALIGN_RIGHT);
         rect.y += line_height_;
@@ -2579,7 +2641,7 @@ void TextWindow::HandleLineNrPaint(wxDC& dc) {
     }
 
     // Draw a tilde for each blank line.
-    if (!view_options_.show_number || line_range.IsEmpty()) {
+    if (!view_options_.show_number || update_line_range.IsEmpty()) {
       // Font is not set yet.
       dc.SetFont(line_nr_area_->GetFont());
     }
@@ -2805,18 +2867,31 @@ TextPoint TextWindow::CalcCaretPoint(const wxPoint& pos, bool vspace) {
 }
 
 wxRect TextWindow::ClientRectFromLineRange(wxWindow* area, const LineRange& line_range) const {
-  LineRange line_range_copy = line_range;
+  wxRect client_rect = area->GetClientRect();
+
+  Coord line_first = 1;
+  Coord line_count = 1;
+
   if (view_options_.wrap) {
-    line_range_copy = wrap_helper()->WrapLineRange(line_range_copy);
+    LineRange line_range_copy = wrap_helper()->WrapLineRange(line_range);
+    line_first = line_range_copy.first();
+    line_count = line_range_copy.LineCount();
+  } else {
+    line_first = line_range.first();
+    line_count = line_range.LineCount();
   }
 
-  int scrolled_y = GetScrolledY(line_height_ * (line_range_copy.first() - 1));
+  int scrolled_y = client_rect.y + GetScrolledY(line_height_ * (line_first - 1));
 
-  const wxRect client_rect = area->GetClientRect();
-  return wxRect(0,
+  return wxRect(client_rect.x,
                 scrolled_y,
-                client_rect.GetWidth(),
-                line_height_ * line_range_copy.LineCount());
+                client_rect.width,
+                line_height_ * line_count);
+}
+
+LineRange TextWindow::LineRangeFromClientRect(const wxRect& client_rect) const {
+  return LineRange(LineFromScrolledY(client_rect.GetTop()),
+                   LineFromScrolledY(client_rect.GetBottom()));
 }
 
 wxRect TextWindow::ClientRectAfterLine(wxWindow* area, Coord ln, bool included) const {
@@ -2934,8 +3009,11 @@ void TextWindow::HandleLineHeightChange() {
   UpdateTextSize();
   UpdateVirtualSize();
 
+#if JIL_USE_WX_CARET
   // Update caret size and position.
   text_area_->GetCaret()->SetSize(kCaretWidth, line_height_);
+#endif
+
   UpdateCaretPosition();
 }
 
@@ -3020,10 +3098,14 @@ void TextWindow::UpdateCaretPosition() {
   int unscrolled_x = GetLineWidth(caret_point_.y, x_off, caret_point_.x);
   int unscrolled_y = (y - 1) * line_height_;
 
+#if JIL_USE_WX_CARET
   wxPoint p;
   CalcScrolledPosition(unscrolled_x, unscrolled_y, &p.x, &p.y);
-
   text_area_->GetCaret()->Move(p);
+#else
+  caret_.pos.x = unscrolled_x;
+  caret_.pos.y = unscrolled_y;
+#endif
 }
 
 //------------------------------------------------------------------------------

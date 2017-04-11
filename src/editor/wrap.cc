@@ -67,7 +67,7 @@ bool WrapInfo::Wrap(int tab_stop,
   *delta = static_cast<int>(new_offsets.size()) -
            static_cast<int>(offsets_.size());
 
-  if (delta != 0 || new_offsets != offsets_) {
+  if (*delta != 0 || new_offsets != offsets_) {
     offsets_.swap(new_offsets);
     return true;
   }

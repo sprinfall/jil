@@ -48,6 +48,14 @@ public:
 
   void DrawLine(int x1, int y1, int x2, int y2);
 
+  inline void DrawLineH(int x1, int x2, int y) {
+    DrawLine(x1, y, x2, y);
+  }
+
+  inline void DrawLineV(int x, int y1, int y2) {
+    DrawLine(x, y1, x, y2);
+  }
+
   void DrawRectangle(int x, int y, int w, int h);
   void DrawRectangle(const wxRect& rect);
   void DrawRoundedRectangle(const wxRect& rect, double radius);
