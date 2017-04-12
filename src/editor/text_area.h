@@ -27,6 +27,7 @@ protected:
   void OnChar(wxKeyEvent& evt);
   void OnMouseCaptureLost(wxMouseCaptureLostEvent& evt);
   void OnSetFocus(wxFocusEvent& evt);
+  void OnKillFocus(wxFocusEvent& evt);
 
 private:
   TextWindow* text_window_;

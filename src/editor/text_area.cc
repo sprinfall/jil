@@ -11,13 +11,14 @@ namespace jil {
 namespace editor {
 
 BEGIN_EVENT_TABLE(TextArea, wxPanel)
-EVT_PAINT(TextArea::OnPaint)
-EVT_SIZE(TextArea::OnSize)
-EVT_MOUSE_EVENTS(TextArea::OnMouse)
-EVT_KEY_DOWN(TextArea::OnKeyDown)
-EVT_CHAR(TextArea::OnChar)
-EVT_MOUSE_CAPTURE_LOST(TextArea::OnMouseCaptureLost)
-EVT_SET_FOCUS(TextArea::OnSetFocus)
+EVT_PAINT               (TextArea::OnPaint)
+EVT_SIZE                (TextArea::OnSize)
+EVT_MOUSE_EVENTS        (TextArea::OnMouse)
+EVT_KEY_DOWN            (TextArea::OnKeyDown)
+EVT_CHAR                (TextArea::OnChar)
+EVT_MOUSE_CAPTURE_LOST  (TextArea::OnMouseCaptureLost)
+EVT_SET_FOCUS           (TextArea::OnSetFocus)
+EVT_KILL_FOCUS          (TextArea::OnKillFocus)
 END_EVENT_TABLE()
 
 TextArea::TextArea(TextWindow* text_window)
@@ -89,6 +90,11 @@ void TextArea::OnMouseCaptureLost(wxMouseCaptureLostEvent& evt) {
 
 void TextArea::OnSetFocus(wxFocusEvent& evt) {
   text_window_->OnTextSetFocus(evt);
+  evt.Skip();  // Skip for default handling.
+}
+
+void TextArea::OnKillFocus(wxFocusEvent& evt) {
+  text_window_->OnTextKillFocus(evt);
   evt.Skip();  // Skip for default handling.
 }
 

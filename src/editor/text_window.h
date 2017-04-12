@@ -472,7 +472,11 @@ protected:
   void OnScrollTimer(wxTimerEvent& evt);
 
 #if !JIL_USE_WX_CARET
-  void OnCaretBlinkingTimer(wxTimerEvent& evt);
+  void OnCaretTimer(wxTimerEvent& evt);
+
+  void StartCaretTimer();
+  void StopCaretTimer();
+  void RestartCaretTimer();
 #endif
 
   void HandleTextLeftUp(wxMouseEvent& evt);
@@ -493,6 +497,7 @@ protected:
   void OnTextChar(wxKeyEvent& evt);
 
   void OnTextSetFocus(wxFocusEvent& evt);
+  void OnTextKillFocus(wxFocusEvent& evt);
 
   //----------------------------------------------------------------------------
   // Delegated event handlers from LineNrArea.
@@ -705,6 +710,7 @@ protected:
     wxPoint pos;        // Unscrolled caret position.
     wxPen pen;          // Color and size.
     wxTimer* timer;     // Blinking timer.
+    int interval_ms;    // Blinking interval (milliseconds).
     bool show;
   };
 

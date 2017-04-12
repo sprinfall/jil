@@ -52,7 +52,7 @@ enum {
   ID_SCROLL_TIMER = wxID_HIGHEST + 100,
 
 #if !JIL_USE_WX_CARET
-  ID_CARET_BLINKING_TIMER,
+  ID_CARET_TIMER,
 #endif
 };
 
@@ -74,14 +74,11 @@ static const wxString kTilde = wxT("~");
 IMPLEMENT_CLASS(TextWindow, wxScrolledWindow)
 
 BEGIN_EVENT_TABLE(TextWindow, wxScrolledWindow)
-EVT_SIZE(TextWindow::OnSize)
-
-EVT_TIMER(ID_SCROLL_TIMER, TextWindow::OnScrollTimer)
-
+EVT_SIZE      (TextWindow::OnSize)
+EVT_TIMER     (ID_SCROLL_TIMER,   TextWindow::OnScrollTimer)
 #if !JIL_USE_WX_CARET
-EVT_TIMER(ID_CARET_BLINKING_TIMER, TextWindow::OnCaretBlinkingTimer)
+EVT_TIMER     (ID_CARET_TIMER,    TextWindow::OnCaretTimer)
 #endif
-
 END_EVENT_TABLE()
 
 //------------------------------------------------------------------------------
@@ -141,8 +138,8 @@ bool TextWindow::Create(wxWindow* parent, wxWindowID id, bool hide) {
   text_area_->SetCaret(caret);
   caret->Show();
 #else
-  caret_.timer = new wxTimer(this, ID_CARET_BLINKING_TIMER);
-  caret_.timer->Start(600, false);
+  caret_.timer = new wxTimer(this, ID_CARET_TIMER);
+  caret_.timer->Start(caret_.interval_ms, false);
 #endif  // JIL_USE_WX_CARET
 
   // Attach buffer listener when text window is actually created.
@@ -889,13 +886,25 @@ void TextWindow::UpdateCaretPoint(const TextPoint& point, bool line_step, bool s
   // If you update caret position before scroll, the position will be wrong.
   UpdateCaretPosition();
 
+#if !JIL_USE_WX_CARET
+  // Restart the caret blinking timer so that the caret could be painted
+  // immediately after the caret change.
+  RestartCaretTimer();
+#endif
+
   // Refresh the highlight of the caret line.
   if (caret_point_.y != old_caret_y) {
     RefreshLineNrByLine(old_caret_y);  // Erase
     RefreshLineNrByLine(caret_point_.y);
 
 #if !JIL_USE_WX_CARET
+    // Refresh the caret.
     RefreshTextByLine(old_caret_y);  // Erase
+    RefreshTextByLine(caret_point_.y);
+#endif
+  } else {
+#if !JIL_USE_WX_CARET
+    // Refresh the caret.
     RefreshTextByLine(caret_point_.y);
 #endif
   }
@@ -1046,6 +1055,7 @@ void TextWindow::Init() {
 #if !JIL_USE_WX_CARET
   caret_.pen = wxPen(*wxLIGHT_GREY, 2);
   caret_.timer = NULL;
+  caret_.interval_ms = 600;
   caret_.show = false;
 #endif
 
@@ -2340,11 +2350,34 @@ void TextWindow::OnScrollTimer(wxTimerEvent& evt) {
 }
 
 #if !JIL_USE_WX_CARET
-void TextWindow::OnCaretBlinkingTimer(wxTimerEvent& evt) {
+
+void TextWindow::OnCaretTimer(wxTimerEvent& evt) {
   RefreshTextByLine(caret_point_.y);
   caret_.show = !caret_.show;
 }
-#endif
+
+void TextWindow::StartCaretTimer() {
+  if (!caret_.timer->IsRunning()) {
+    caret_.timer->Start(caret_.interval_ms, false);
+  }
+}
+
+void TextWindow::StopCaretTimer() {
+  if (caret_.timer->IsRunning()) {
+    caret_.timer->Stop();
+  }
+}
+
+void TextWindow::RestartCaretTimer() {
+  if (caret_.timer->IsRunning()) {
+    caret_.timer->Stop();
+  }
+
+  caret_.show = true;
+  caret_.timer->Start(caret_.interval_ms, false);
+}
+
+#endif  // !JIL_USE_WX_CARET
 
 void TextWindow::HandleTextLeftUp(wxMouseEvent& evt) {
   if (text_area_->HasCapture()) {
@@ -2551,6 +2584,14 @@ void TextWindow::OnTextChar(wxKeyEvent& evt) {
 
 void TextWindow::OnTextSetFocus(wxFocusEvent& evt) {
   PostEvent(kGetFocusEvent);
+
+  // Restore the caret blinking timer.
+  StartCaretTimer();
+}
+
+void TextWindow::OnTextKillFocus(wxFocusEvent& evt) {
+  // Don't show caret when focus is lost.
+  StopCaretTimer();
 }
 
 //------------------------------------------------------------------------------
