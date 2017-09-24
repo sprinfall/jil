@@ -2300,35 +2300,49 @@ void BookFrame::AddFrMatchLines(editor::TextBuffer* buffer,
   Lex nr_lex(kLexConstant, kLexConstantNumber);
   Lex id_lex(kLexIdentifier);
 
+  Coord prev_ln = 0;
+
   for (const TextRange& range : result_ranges) {
     Coord ln = range.point_begin().y;
     std::wstring ln_str = base::LexicalCast<std::wstring>(ln);
 
+    // Right align the line number.
     if (ln_str.size() < max_ln_size) {
-      // Right align the line number.
       ln_str.insert(ln_str.begin(), max_ln_size - ln_str.size(), kSpaceChar);
     }
 
-    TextLine* line = buffer->Line(ln);
+    TextLine* fr_line = NULL;
 
-    std::wstring fr_line_data = ln_str + L" " + line->data();
-    TextLine* fr_line = fr_buffer->AppendLine(fr_line_data);
+    if (ln == prev_ln) {
+      // If the find result is from the same line as the previous one, don't
+      // append a new line to find result buffer.
+      fr_line = fr_buffer->LastLine();
+    } else {
+      // Get the source line.
+      TextLine* line = buffer->Line(ln);
 
-    // Save the file path, buffer id and source line id in the extra data.
-    // TODO:
-    // If the buffer is temporarily opened, can't save line id, should save line number instead.
-    // Can't save buffer id either.
-    // Even if the buffer is not temp, it might be closed.
-    FrExtraData fr_extra_data = { file_path, buffer->id(), line->id() };
-    fr_line->set_extra_data(fr_extra_data);
+      // Append to find result buffer.
+      std::wstring fr_line_data = ln_str + L" " + line->data();
+      fr_line = fr_buffer->AppendLine(fr_line_data);
 
-    // Add lex for line number.
-    fr_line->AddLexElem(0, max_ln_size, nr_lex);
+      // Save the file path, buffer id and source line id in the extra data.
+      // TODO:
+      // If the buffer is temporarily opened, can't save line id, should save line number instead.
+      // Can't save buffer id either.
+      // Even if the buffer is not temp, it might be closed.
+      FrExtraData fr_extra_data = { file_path, buffer->id(), line->id() };
+      fr_line->set_extra_data(fr_extra_data);
 
-    // Add lex for matched sub-string.
+      // Add lex for line number.
+      fr_line->AddLexElem(0, max_ln_size, nr_lex);
+    }
+
+    // Highlight the matched sub-string.
     size_t off = range.point_begin().x + max_ln_size + 1;
     size_t len = range.point_end().x - range.point_begin().x;
     fr_line->AddLexElem(off, len, id_lex);
+
+    prev_ln = ln;
   }
 }
 

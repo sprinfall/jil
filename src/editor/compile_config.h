@@ -13,6 +13,11 @@
 // Rectangle selection. Not fully implemented.
 #define JIL_ENABLE_RECT_SELECT 0
 
+// Use wxCaret or not for TextWindow.
+// wxCaret has no native implementation on Mac or GTK, and it's buggy.
+// Alternatively, we implement a caret by ourselves.
+#define JIL_USE_WX_CARET 0
+
 // Compound key shortcut (e.g., Ctrl+K,Ctrl+O) support (Windows only).
 // Need to disable accelerator (set wxUSE_ACCEL to 0).
 #define JIL_ENABLE_LEADER_KEY 0

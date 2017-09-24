@@ -6,6 +6,7 @@
 #include <memory>  // std::shared_ptr
 #include <string>
 
+#include "wx/pen.h"
 #include "wx/scrolwin.h"
 
 #include "editor/binding.h"
@@ -393,6 +394,10 @@ protected:
   void HandleTextPaint(Renderer& renderer);
   void HandleWrappedTextPaint(Renderer& renderer);
 
+#if !JIL_USE_WX_CARET
+  void DrawCaret(Renderer& renderer, const LineRange& update_line_range);
+#endif
+
   void DrawTextLine(Renderer& renderer, Coord ln, int x, int& y);
   void DrawTextLineSelection(Renderer& renderer, Coord ln, int x, int y);
 
@@ -466,6 +471,14 @@ protected:
   void StopScrollTimer();
   void OnScrollTimer(wxTimerEvent& evt);
 
+#if !JIL_USE_WX_CARET
+  void OnCaretTimer(wxTimerEvent& evt);
+
+  void StartCaretTimer();
+  void StopCaretTimer();
+  void RestartCaretTimer();
+#endif
+
   void HandleTextLeftUp(wxMouseEvent& evt);
   void HandleTextRightDown(wxMouseEvent& evt);
   virtual void HandleTextRightUp(wxMouseEvent& evt);
@@ -484,6 +497,7 @@ protected:
   void OnTextChar(wxKeyEvent& evt);
 
   void OnTextSetFocus(wxFocusEvent& evt);
+  void OnTextKillFocus(wxFocusEvent& evt);
 
   //----------------------------------------------------------------------------
   // Delegated event handlers from LineNrArea.
@@ -512,6 +526,12 @@ protected:
 
   // Get the client rect of text or line nr area from the given line range.
   wxRect ClientRectFromLineRange(wxWindow* area, const LineRange& line_range) const;
+
+  // Get the line range from the given client rect.
+  // NOTE:
+  // If wrap is on, the line range will be wrapped line range. The user should
+  // convert it to actual line range if necessary.
+  LineRange LineRangeFromClientRect(const wxRect& client_rect) const;
 
   wxRect ClientRectAfterLine(wxWindow* area, Coord ln, bool included) const;
 
@@ -683,6 +703,20 @@ protected:
   // *********
   // ********|********************
   Coord max_caret_x_;
+
+#if !JIL_USE_WX_CARET
+
+  struct Caret {
+    wxPoint pos;        // Unscrolled caret position.
+    wxPen pen;          // Color and size.
+    wxTimer* timer;     // Blinking timer.
+    int interval_ms;    // Blinking interval (milliseconds).
+    bool show;
+  };
+
+  Caret caret_;
+
+#endif  // !JIL_USE_WX_CARET
 
 #if JIL_ENABLE_LEADER_KEY
   // A reference to an external Key object.
