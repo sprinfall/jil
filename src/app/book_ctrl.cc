@@ -530,7 +530,7 @@ void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
 
       // Bottom line
       dc.SetPen(active_tab_pen);
-      dc.DrawLine(tab_rect.x, bottom, tab_rect.GetRight(), bottom);
+      dc.DrawLine(tab_rect.x, bottom, tab_rect.GetRight() + 1, bottom);
     }
 
     // Foreground

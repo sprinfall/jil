@@ -855,11 +855,13 @@ void TextWindow::UpdateCaretPoint(const TextPoint& point, bool line_step, bool s
     return;
   }
 
+  int old_caret_y = caret_point_.y;
+
   // Refresh the highlight of the caret line.
   if (caret_point_.y != p.y) {
-    RefreshLineNrByLine(caret_point_.y);  // Erase
     caret_point_ = p;
-    RefreshLineNrByLine(caret_point_.y);
+    RefreshLineNrByLine(old_caret_y, true);
+    RefreshLineNrByLine(caret_point_.y, true);
   } else {
     caret_point_ = p;
   }
@@ -875,6 +877,11 @@ void TextWindow::UpdateCaretPoint(const TextPoint& point, bool line_step, bool s
   // NOTE:
   // If you update caret position before scroll, the position will be wrong.
   UpdateCaretPosition();
+
+#if defined (__WXOSX__)
+  // Refresh is needed on Mac to erase the old caret.
+  RefreshTextByLine(old_caret_y, true);
+#endif
 
   // Notify the caret change.
   PostEvent(kCaretEvent);
@@ -2534,11 +2541,12 @@ void TextWindow::HandleLineNrPaint(wxDC& dc) {
     // Caret line highlight.
     if (line_range.Has(caret_point_.y)) {
       const wxColour& bg = style_->Get(Style::kCaretLine)->bg();
+
       dc.SetPen(wxPen(bg));
       dc.SetBrush(wxBrush(bg));
 
-      int y = client_rect.GetTop() + line_height_ * (caret_point_.y - 1);
-      int w = client_rect.GetWidth() - kLineNrHlPaddingRight;
+      int y = client_rect.y + line_height_ * (caret_point_.y - 1);
+      int w = client_rect.width - kLineNrHlPaddingRight;
 
       dc.DrawRectangle(x, y, w, line_height_);
     }
@@ -2813,9 +2821,10 @@ wxRect TextWindow::ClientRectFromLineRange(wxWindow* area, const LineRange& line
   int scrolled_y = GetScrolledY(line_height_ * (line_range_copy.first() - 1));
 
   const wxRect client_rect = area->GetClientRect();
+
   return wxRect(0,
                 scrolled_y,
-                client_rect.GetWidth(),
+                client_rect.width,
                 line_height_ * line_range_copy.LineCount());
 }
 
@@ -2935,7 +2944,14 @@ void TextWindow::HandleLineHeightChange() {
   UpdateVirtualSize();
 
   // Update caret size and position.
-  text_area_->GetCaret()->SetSize(kCaretWidth, line_height_);
+  int caret_height = line_height_;
+
+#if defined (__WXOSX__)
+  --caret_height;
+#endif
+
+  text_area_->GetCaret()->SetSize(kCaretWidth, caret_height);
+
   UpdateCaretPosition();
 }
 
@@ -3019,6 +3035,10 @@ void TextWindow::UpdateCaretPosition() {
 
   int unscrolled_x = GetLineWidth(caret_point_.y, x_off, caret_point_.x);
   int unscrolled_y = (y - 1) * line_height_;
+
+#if defined (__WXOSX__)
+  ++unscrolled_y;
+#endif
 
   wxPoint p;
   CalcScrolledPosition(unscrolled_x, unscrolled_y, &p.x, &p.y);

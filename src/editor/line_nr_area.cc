@@ -29,6 +29,7 @@ bool LineNrArea::Create(wxWindow* parent, wxWindowID id) {
 void LineNrArea::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
   wxAutoBufferedPaintDC dc(this);
 #if !wxALWAYS_NATIVE_DOUBLE_BUFFER
+  //wxLogDebug("LineNrArea Not native double buffer.");
   dc.SetBackground(GetBackgroundColour());
   dc.Clear();
 #endif
