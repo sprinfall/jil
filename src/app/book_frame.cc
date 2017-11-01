@@ -1222,7 +1222,8 @@ void BookFrame::OnMenuTheme(wxCommandEvent& evt) {
 
   int index = evt.GetId() - ID_MENU_THEME_BEGIN;
   wxString theme_name = app.GetTheme(index);
-  if (theme_name != options_->theme) {
+
+  if (theme_name == options_->theme) {
     return;
   }
 
@@ -2532,7 +2533,6 @@ void BookFrame::LoadMenus() {
   wxMenu* file_menu = new wxMenu;
   // - New
   AppendMenuItem(file_menu, ID_MENU_FILE_NEW, kTrFileNew);
-
   // - Open
   file_menu->AppendSeparator();
   AppendMenuItem(file_menu, ID_MENU_FILE_OPEN, kTrFileOpen);
@@ -2541,10 +2541,12 @@ void BookFrame::LoadMenus() {
   AppendMenuItem(file_menu, ID_MENU_FILE_CLOSE, kTrFileClose);
   AppendMenuItem(file_menu, ID_MENU_FILE_CLOSE_ALL, kTrFileCloseAll);
   file_menu->AppendSeparator();
+  // - Save
   AppendMenuItem(file_menu, ID_MENU_FILE_SAVE, kTrFileSave);
   AppendMenuItem(file_menu, ID_MENU_FILE_SAVE_AS, kTrFileSaveAs);
   AppendMenuItem(file_menu, ID_MENU_FILE_SAVE_ALL, kTrFileSaveAll);
   file_menu->AppendSeparator();
+  // - Recent &Files
   recent_files_menu_ = new wxMenu;
   file_menu->AppendSubMenu(recent_files_menu_, kTrFileRecentFiles);
   UpdateRecentFilesMenu();

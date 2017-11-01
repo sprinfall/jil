@@ -71,8 +71,6 @@ void TextBook::ReapplyTheme() {
   BookCtrl::ReapplyTheme();
 
   page_window_->ReapplyTheme();
-  // TODO: Refresh inside page_window_->ReapplyTheme().
-  page_window_->Refresh();
 }
 
 void TextBook::SetFocus() {

@@ -3,7 +3,6 @@
 #pragma once
 
 // Find & replace panel.
-// TODO: Allow to set font.
 
 #include <list>
 #include "wx/control.h"

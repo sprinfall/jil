@@ -173,6 +173,8 @@ void TextWindow::ReapplyTheme() {
 
   line_nr_area_->SetBackgroundColour(style_->Get(Style::kNumber)->bg());
   text_area_->SetBackgroundColour(normal_bg);
+
+  Refresh();
 }
 
 bool TextWindow::HasFocus() const {
