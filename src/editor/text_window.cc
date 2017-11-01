@@ -2927,14 +2927,6 @@ wxRect TextWindow::ClientRectFromLineRange(wxWindow* area, const LineRange& line
 
   int scrolled_y = client_rect.y + GetScrolledY(line_height_ * (line_first - 1));
 
-<<<<<<< HEAD
-  const wxRect client_rect = area->GetClientRect();
-
-  return wxRect(0,
-                scrolled_y,
-                client_rect.width,
-                line_height_ * line_range_copy.LineCount());
-=======
   return wxRect(client_rect.x,
                 scrolled_y,
                 client_rect.width,
@@ -2944,7 +2936,6 @@ wxRect TextWindow::ClientRectFromLineRange(wxWindow* area, const LineRange& line
 LineRange TextWindow::LineRangeFromClientRect(const wxRect& client_rect) const {
   return LineRange(LineFromScrolledY(client_rect.GetTop()),
                    LineFromScrolledY(client_rect.GetBottom()));
->>>>>>> 118b41d44d9a23e9a0c0311fa678b886965c0e45
 }
 
 wxRect TextWindow::ClientRectAfterLine(wxWindow* area, Coord ln, bool included) const {
@@ -3064,7 +3055,6 @@ void TextWindow::HandleLineHeightChange() {
 
 #if JIL_USE_WX_CARET
   // Update caret size and position.
-<<<<<<< HEAD
   int caret_height = line_height_;
 
 #if defined (__WXOSX__)
@@ -3073,11 +3063,8 @@ void TextWindow::HandleLineHeightChange() {
 
   text_area_->GetCaret()->SetSize(kCaretWidth, caret_height);
 
-=======
-  text_area_->GetCaret()->SetSize(kCaretWidth, line_height_);
-#endif
+#endif  // JIL_USE_WX_CARET
 
->>>>>>> 118b41d44d9a23e9a0c0311fa678b886965c0e45
   UpdateCaretPosition();
 }
 
@@ -3162,21 +3149,18 @@ void TextWindow::UpdateCaretPosition() {
   int unscrolled_x = GetLineWidth(caret_point_.y, x_off, caret_point_.x);
   int unscrolled_y = (y - 1) * line_height_;
 
-<<<<<<< HEAD
 #if defined (__WXOSX__)
   ++unscrolled_y;
 #endif
 
-=======
 #if JIL_USE_WX_CARET
->>>>>>> 118b41d44d9a23e9a0c0311fa678b886965c0e45
   wxPoint p;
   CalcScrolledPosition(unscrolled_x, unscrolled_y, &p.x, &p.y);
   text_area_->GetCaret()->Move(p);
 #else
   caret_.pos.x = unscrolled_x;
   caret_.pos.y = unscrolled_y;
-#endif
+#endif  // JIL_USE_WX_CARET
 }
 
 //------------------------------------------------------------------------------
