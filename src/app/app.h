@@ -57,7 +57,12 @@ public:
   virtual ~App();
 
   virtual bool OnInit() override;
+
   virtual int OnExit() override;
+
+#if wxUSE_ON_FATAL_EXCEPTION
+  virtual void OnFatalException() override;
+#endif
 
   const Options& options() const {
     return options_;
@@ -137,6 +142,8 @@ private:
 #if JIL_SINGLE_INSTANCE
   bool InitIpc();
 #endif
+
+  void InitLogging();
 
   void LoadStatusFields();
 

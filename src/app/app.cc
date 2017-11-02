@@ -17,6 +17,7 @@ extern "C" {
 
 #include "wx/clipbrd.h"
 #include "wx/cmdline.h"
+#include "wx/debugrpt.h"
 #include "wx/dir.h"
 #include "wx/filename.h"
 #include "wx/image.h"
@@ -296,6 +297,11 @@ bool App::OnInit() {
     return false;
   }
 
+#if wxUSE_ON_FATAL_EXCEPTION
+  // OnFatalException() will be called on fatal exceptions.
+  wxHandleFatalExceptions();
+#endif
+
 #if JIL_SINGLE_INSTANCE
   if (!InitIpc()) {
     return false;
@@ -323,11 +329,7 @@ bool App::OnInit() {
     wxMkdir(user_data_dir, 0777);
   }
 
-  // Set log target to file.
-  wxString log_file_path = UserDataFile(wxT("Jil.log"));
-  log_file_ = wxFopen(log_file_path, "w+");
-  wxLog* default_log = wxLog::SetActiveTarget(new wxLogStderr(log_file_));
-  delete default_log;
+  InitLogging();
 
   LoadStatusFields();
 
@@ -399,6 +401,25 @@ int App::OnExit() {
 
   return wxApp::OnExit();
 }
+
+#if wxUSE_ON_FATAL_EXCEPTION
+
+void App::OnFatalException() {
+#if wxUSE_DEBUGREPORT
+  wxDebugReportCompress debug_report;
+
+  debug_report.SetCompressedFileDirectory(UserDataDir());
+
+  wxString name = wxDateTime::Now().Format(_T("dbgrpt_%Y%m%d_%H%M%S"));
+  debug_report.SetCompressedFileBaseName(name);
+
+  debug_report.AddAll(wxDebugReport::Context_Exception);
+  debug_report.Process();
+
+#endif // wxUSE_DEBUGREPORT
+}
+
+#endif // wxUSE_ON_FATAL_EXCEPTION
 
 int App::GetThemeCount() const {
   return static_cast<int>(theme_names_.size());
@@ -629,6 +650,14 @@ bool App::InitIpc() {
   return false;
 }
 
+void App::InitLogging() {
+  // Set log target to file.
+  wxString log_file_path = UserDataFile(wxT("Jil.log"));
+  log_file_ = wxFopen(log_file_path, "w+");
+  wxLog* default_log = wxLog::SetActiveTarget(new wxLogStderr(log_file_));
+  delete default_log;
+}
+
 void App::LoadStatusFields() {
   wxString status_fields_cfg_file = UserDataFile(kStatusFieldsCfgFile);
   if (!wxFileName::FileExists(status_fields_cfg_file)) {
@@ -649,7 +678,6 @@ void App::LoadStatusFields() {
   ParseStatusFields(list_setting, &status_fields_);
 }
 
-// TODO: Add version control.
 // If new options are added, increase the version number.
 // If version number is not consistent between resource file and user file,
 // always load resource file firstly.
