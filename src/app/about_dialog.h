@@ -9,8 +9,6 @@ class wxStaticText;
 namespace jil {
 
 class AboutDialog : public wxDialog {
-  DECLARE_EVENT_TABLE()
-
 public:
   AboutDialog(wxWindow* parent, wxWindowID id = wxID_ANY);
   virtual ~AboutDialog();

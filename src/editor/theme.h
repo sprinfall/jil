@@ -38,11 +38,10 @@ public:
     return colors_[id];
   }
 
+  // NOTE: Color could be invalid.
   void SetColor(int id, const wxColour& color) {
     assert(id >= 0 && id < color_size());
-    if (color.IsOk()) {  // TODO: No check?
-      colors_[id] = color;
-    }
+    colors_[id] = color;
   }
 
   const wxBitmap& GetImage(int id) const {

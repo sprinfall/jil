@@ -918,30 +918,19 @@ void App::LoadIcons() {
 
 #if defined(__WXMSW__)
 
-  // NOTE:
-  // wxWidgets seems not providing a function to get embedded icon resources
-  // by icon ID. Windows API is used instead.
-
-  HINSTANCE hinstance = ::GetModuleHandle(NULL);
-
   // NOTE: Only 16 and 32 are needed.
 
-  HICON hicon16 = ::LoadIcon(hinstance, MAKEINTRESOURCE(IDI_EDITOR_16));
-  if (hicon16 != NULL) {
-    wxIcon icon16;
-    if (icon16.CreateFromHICON(hicon16)) {
-      icons_.AddIcon(icon16);
-    }
+  wxIcon icon16 = MSWGetEmbeddedIcon(IDI_EDITOR_16);
+  if (icon16.IsOk()) {
+    icons_.AddIcon(icon16);
   }
 
-  HICON hicon32 = ::LoadIcon(hinstance, MAKEINTRESOURCE(IDI_EDITOR_32));
-  if (hicon32 != NULL) {
-    wxIcon icon32;
-    if (icon32.CreateFromHICON(hicon32)) {
-      icons_.AddIcon(icon32);
-    }
+  wxIcon icon32 = MSWGetEmbeddedIcon(IDI_EDITOR_32);
+  if (icon32.IsOk()) {
+    icons_.AddIcon(icon32);
   }
-#endif
+
+#endif  // __WXMSW__
 
 }
 

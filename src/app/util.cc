@@ -2,6 +2,7 @@
 
 
 #include "wx/filename.h"
+#include "wx/gdicmn.h"
 #include "wx/menu.h"
 #include "wx/msgdlg.h"
 #include "wx/stdpaths.h"
@@ -131,5 +132,27 @@ ui::SharedButtonStyle ButtonStyleFromTheme(editor::SharedTheme button_theme) {
 
   return button_style;
 }
+
+#if defined(__WXMSW__)
+
+// NOTE:
+// wxWidgets seems not providing a function to get embedded icon resources
+// by icon ID. Windows API is used instead.
+wxIcon MSWGetEmbeddedIcon(int icon_id) {
+  HINSTANCE hinstance = ::GetModuleHandle(NULL);
+
+  HICON hicon = ::LoadIcon(hinstance, MAKEINTRESOURCE(icon_id));
+  if (hicon != NULL) {
+    wxIcon icon;
+    if (icon.CreateFromHICON(hicon)) {
+      return icon;
+    }
+  }
+
+  return wxNullIcon;
+}
+
+#endif  // __WXMSW__
+
 
 } // namespace jil

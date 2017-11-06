@@ -85,6 +85,14 @@ bool IsTraditionalChinese(int lang);
 // Create a button style from button theme.
 ui::SharedButtonStyle ButtonStyleFromTheme(editor::SharedTheme button_theme);
 
+#if defined(__WXMSW__)
+
+// Get an icon by ID from resources.
+// \param icon_id IDI_EDITOR_16
+wxIcon MSWGetEmbeddedIcon(int icon_id);
+
+#endif  // __WXMSW__
+
 }  // namespace jil
 
 #endif  // JIL_UTIL_H_

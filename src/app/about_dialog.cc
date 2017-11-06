@@ -7,9 +7,6 @@
 
 namespace jil {
 
-BEGIN_EVENT_TABLE(AboutDialog, wxDialog)
-END_EVENT_TABLE()
-
 AboutDialog::AboutDialog(wxWindow* parent, wxWindowID id)
     : wxDialog(parent, id, kAppDisplayName) {
   

@@ -16,6 +16,7 @@ class LineNrArea : public wxPanel {
 
 public:
   explicit LineNrArea(TextWindow* text_window);
+
   bool Create(wxWindow* parent, wxWindowID id);
 
   // Override to accept no focus.

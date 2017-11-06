@@ -213,7 +213,7 @@ void StatusBar::OnPaint(wxPaintEvent& evt) {
   const wxRect rect = GetClientRect();
   wxRect update_rect = GetUpdateClientRect();
 
-  // Gradient filled Background.
+  // Gradient filled background.
   wxRect bg_rect(update_rect);
   bg_rect.y = rect.y + 1;
   bg_rect.height = rect.height - 1;
