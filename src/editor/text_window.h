@@ -569,7 +569,9 @@ protected:
 
   void UpdateTextSize();
 
-  void UpdateLineNrWidth();
+  // Update the width of line number area.
+  // \param font_change If the font has been changed or not.
+  void UpdateLineNrWidth(bool font_change);
 
   void UpdateVirtualSize();
 

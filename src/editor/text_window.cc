@@ -209,7 +209,7 @@ void TextWindow::SetTextFont(const wxFont& font) {
   UpdateLineHeight();
   HandleLineHeightChange();
 
-  UpdateLineNrWidth();
+  UpdateLineNrWidth(true);
 
   // If the line number width changes, layout the areas.
   if (old_line_nr_width != line_nr_width_) {
@@ -1136,7 +1136,7 @@ void TextWindow::DoShowHScrollbar() {
 }
 
 void TextWindow::DoShowNumber() {
-  UpdateLineNrWidth();
+  UpdateLineNrWidth(false);
   LayoutAreas();
   line_nr_area_->Refresh();
 }
@@ -3023,7 +3023,7 @@ bool TextWindow::HandleTextChange() {
 
   // Update line number area width since the number of lines might change.
   int old_line_nr_width = line_nr_width_;
-  UpdateLineNrWidth();
+  UpdateLineNrWidth(false);
 
   bool resized = false;
 
@@ -3078,16 +3078,21 @@ void TextWindow::UpdateTextSize() {
   }
 }
 
-void TextWindow::UpdateLineNrWidth() {
-  if (view_options_.show_number) {
-    wxString line_nr_str = wxString::Format(L"%d", buffer_->LineCount());
-    line_nr_area_->GetTextExtent(line_nr_str, &line_nr_width_, NULL);
-    line_nr_width_ += kLineNrPadding;
+void TextWindow::UpdateLineNrWidth(bool font_change) {
+  int ln_digits = 0;
+
+  if (!view_options_.show_number) {
+    ln_digits = 1;  // For displaying tilde (~).
   } else {
-    int tilde_width = 0;
-    line_nr_area_->GetTextExtent(kTilde, &tilde_width, NULL);
-    line_nr_width_ = tilde_width + kLineNrPadding;
+    ln_digits = base::GetDigits(buffer_->LineCount());
+    const int kMinDigits = 4;
+    if (ln_digits < kMinDigits) {  // At least 4 chars for better UX.
+      ln_digits = kMinDigits;
+    }
   }
+  
+  line_nr_width_ = line_nr_area_->GetCharWidth() * ln_digits;
+  line_nr_width_ += kLineNrPadding;
 }
 
 void TextWindow::UpdateVirtualSize() {

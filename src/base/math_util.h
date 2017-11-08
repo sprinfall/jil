@@ -27,6 +27,10 @@ const double kRadian90 = PI_1_2;
 const double kRadian180 = PI;
 const double kRadian270 = PI_3_2;
 
+// Get the digit count of the number.
+// 1 for number 0 ~ 9, 2 for number 10 ~ 99, etc.
+int GetDigits(int number);
+
 }  // namespace base
 
 #endif  // BASE_MATH_UTIL_H_

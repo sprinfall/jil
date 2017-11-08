@@ -17,6 +17,9 @@ LineNrArea::LineNrArea(TextWindow* text_window)
     : text_window_(text_window) {
 }
 
+LineNrArea::~LineNrArea() {
+}
+
 bool LineNrArea::Create(wxWindow* parent, wxWindowID id) {
   if (!wxPanel::Create(parent, id)) {
     return false;
