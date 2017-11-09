@@ -87,11 +87,14 @@ public:
     return status_fields_;
   }
 
-  // Save global options to <user_data_dir>/options.cfg
+  // Save global options to:
+  //   <user_data_dir>/options.cfg
   bool SaveUserGlobalOptions();
 
-  // Save editor options to <user_data_dir>/ftplugin/<ft_id>/options.cfg
-  bool SaveUserEditorOptions(const wxString& ft_id, const editor::Options& options);
+  // Save syntax specific options to:
+  //   <user_data_dir>/ftplugin/<ft_id>/options.cfg
+  bool SaveUserSyntaxSpecificOptions(const wxString& ft_id,
+                                     const editor::Options& options);
 
   bool ReloadTheme(const wxString& theme_name);
 

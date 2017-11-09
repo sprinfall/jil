@@ -483,12 +483,12 @@ bool SaveEditorOptionsFile(const wxString& cfg_file, const editor::Options& opti
   root_setting.SetBool(OPT_B_EXPAND_TAB, options.text.expand_tab);
   root_setting.SetBool(OPT_B_GUESS_TAB, options.text.guess_tab);
 
-  root_setting.SetString(OPT_S_DELIMITERS, wxString(options.text.delimiters).ToAscii().data());
+  root_setting.SetWxString(OPT_S_DELIMITERS, wxString(options.text.delimiters), false);
 
   // Indent keys
   Setting ik_setting = root_setting.Add(OPT_SA_INDENT_KEYS, Setting::kArray);
   for (const std::wstring& indent_key : options.text.indent_keys) {
-    ik_setting.Add(NULL, Setting::kString).SetString(wxString(indent_key).ToAscii().data());
+    ik_setting.Add(NULL, Setting::kString).SetWxString(wxString(indent_key), false);
   }
 
   // Extra indent options

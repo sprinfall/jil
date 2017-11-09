@@ -516,7 +516,8 @@ bool App::SaveUserGlobalOptions() {
   return SaveGlobalOptionsFile(options_file, options_);
 }
 
-bool App::SaveUserEditorOptions(const wxString& ft_id, const editor::Options& options) {
+bool App::SaveUserSyntaxSpecificOptions(const wxString& ft_id,
+                                        const editor::Options& options) {
   wxString ft_options_dir = UserDataDir(kFtPluginDir, ft_id);
 
   if (!editor::MakeDirFully(ft_options_dir)) {

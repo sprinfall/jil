@@ -102,8 +102,12 @@ EVT_MENU_RANGE(ID_MENU_EDIT_BEGIN, ID_MENU_EDIT_END - 1, BookFrame::OnMenuEdit)
 EVT_MENU_RANGE(ID_MENU_VIEW_BEGIN, ID_MENU_VIEW_END - 1, BookFrame::OnMenuView)
 EVT_MENU_RANGE(ID_MENU_TOOLS_BEGIN, ID_MENU_TOOLS_END - 1, BookFrame::OnMenuTools)
 
-EVT_MENU(wxID_PREFERENCES, BookFrame::OnGlobalPreferences)
-EVT_MENU_RANGE(ID_MENU_PREFS_EDITOR_BEGIN, ID_MENU_PREFS_EDITOR_END - 1, BookFrame::OnEditorPreferences)
+EVT_MENU(wxID_PREFERENCES, BookFrame::OnGlobalPrefs)
+
+EVT_MENU(ID_MENU_PREFS_SYNTAX_CURRENT, BookFrame::OnCurrentSyntaxPrefs)
+EVT_UPDATE_UI(ID_MENU_PREFS_SYNTAX_CURRENT, BookFrame::OnCurrentSyntaxPrefsUpdateUI)
+
+EVT_MENU_RANGE(ID_MENU_PREFS_SYNTAX_BEGIN, ID_MENU_PREFS_SYNTAX_END - 1, BookFrame::OnSyntaxSpecificPrefs)
 EVT_MENU_RANGE(ID_MENU_THEME_BEGIN, ID_MENU_THEME_END - 1, BookFrame::OnMenuTheme)
 
 EVT_MENU_RANGE(ID_MENU_HELP_BEGIN, ID_MENU_HELP_END - 1, BookFrame::OnMenuHelp)
@@ -1067,7 +1071,7 @@ void BookFrame::ShowAboutDialog() {
   about_dialog->ShowModal();
 }
 
-void BookFrame::OnGlobalPreferences(wxCommandEvent& WXUNUSED(evt)) {
+void BookFrame::OnGlobalPrefs(wxCommandEvent& WXUNUSED(evt)) {
   // Backup current options.
   Options old_options = *options_;
 
@@ -1150,10 +1154,34 @@ void BookFrame::ApplyTextFont(const wxFont& font) {
   }
 }
 
-void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
+void BookFrame::OnCurrentSyntaxPrefs(wxCommandEvent& evt) {
+  editor::TextBuffer* buffer = ActiveBuffer();
+  if (buffer != NULL) {
+    HandleSyntaxSpecificPrefs(buffer->ft_plugin());
+  }
+}
+
+void BookFrame::OnCurrentSyntaxPrefsUpdateUI(wxUpdateUIEvent& evt) {
+  editor::TextBuffer* buffer = ActiveBuffer();
+
+  if (buffer != NULL) {
+    evt.Enable(true);
+
+    wxString text = kTrPrefsCurrentSyntax;
+    text += wxT(" ( ");
+    text += buffer->ft_plugin()->name();
+    text += wxT(" )");
+    evt.SetText(text);
+  } else {
+    evt.Enable(false);
+    evt.SetText(kTrPrefsCurrentSyntax);
+  }
+}
+
+void BookFrame::OnSyntaxSpecificPrefs(wxCommandEvent& evt) {
   App& app = wxGetApp();
 
-  int index = evt.GetId() - ID_MENU_PREFS_EDITOR_BEGIN;
+  int index = evt.GetId() - ID_MENU_PREFS_SYNTAX_BEGIN;
   if (index < 0 || index >= app.GetFileTypeCount()) {
     return;
   }
@@ -1161,14 +1189,19 @@ void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
   const editor::FileType* ft = app.GetFileType(index);
   editor::FtPlugin* ft_plugin = app.GetFtPlugin(*ft);
 
+  HandleSyntaxSpecificPrefs(ft_plugin);
+}
+
+void BookFrame::HandleSyntaxSpecificPrefs(editor::FtPlugin* ft_plugin) {
   // Backup the old options.
   editor::Options old_options = ft_plugin->options();
 
   // This will be the new options.
   editor::Options options = ft_plugin->options();
 
-  wxString title = kTrOptions + wxT(" - ") + ft->name;
   pref::EditorDialog dialog(&options);
+
+  wxString title = kTrOptions + wxT(" - ") + ft_plugin->name();
   dialog.Create(this, wxID_ANY, title);
   dialog.CenterOnParent();
 
@@ -1178,16 +1211,16 @@ void BookFrame::OnEditorPreferences(wxCommandEvent& evt) {
 
   ft_plugin->set_options(options);
 
-  // Save options file.
-  app.SaveUserEditorOptions(ft_plugin->id(), options);
+  // Save syntax specific options to file.
+  wxGetApp().SaveUserSyntaxSpecificOptions(ft_plugin->id(), options);
 
-  // Apply changes to this file type.
-  ApplyEditorOptionChanges(ft->id, options, old_options);
+  // Apply changes to text pages/buffers of this syntax.
+  ApplySyntaxSpecificOptionChanges(ft_plugin->id(), options, old_options);
 }
 
-void BookFrame::ApplyEditorOptionChanges(const wxString& ft_id,
-                                         const editor::Options& options,
-                                         const editor::Options& old_options) {
+void BookFrame::ApplySyntaxSpecificOptionChanges(const wxString& ft_id,
+                                                 const editor::Options& options,
+                                                 const editor::Options& old_options) {
   bool view_options_changed = options.view != old_options.view;
 
   std::vector<TextPage*> text_pages = text_book_->TextPages();
@@ -2601,9 +2634,14 @@ void BookFrame::LoadMenus() {
 
   AppendMenuItem(prefs_menu, wxID_PREFERENCES, kTrPrefsGlobal);
 
-  wxMenu* editor_menu = new wxMenu;
-  prefs_menu->AppendSubMenu(editor_menu, kTrPrefsEditor);
-  InitFileTypeMenu(editor_menu, ID_MENU_PREFS_EDITOR_BEGIN);
+  wxMenu* syntax_specific_menu = new wxMenu;
+  prefs_menu->AppendSubMenu(syntax_specific_menu, kTrPrefsSyntaxSpecific);
+
+  // Current syntax.
+  syntax_specific_menu->Append(ID_MENU_PREFS_SYNTAX_CURRENT, kTrPrefsCurrentSyntax);
+  syntax_specific_menu->AppendSeparator();
+
+  InitFileTypeMenu(syntax_specific_menu, ID_MENU_PREFS_SYNTAX_BEGIN);
 
   prefs_menu->AppendSeparator();
 
@@ -2767,7 +2805,9 @@ void BookFrame::InitThemeMenu(wxMenu* theme_menu) {
 
 void BookFrame::InitFileTypeMenu(wxMenu* ft_menu, int id_begin) {
   App& app = wxGetApp();
+
   int count = wxMin(app.GetFileTypeCount(), kMaxFileTypes);
+
   for (int i = 0; i < count; ++i) {
     AppendMenuItem(ft_menu, id_begin + i, app.GetFileType(i)->name);
   }

@@ -112,9 +112,10 @@
 #define kTrToolsRescanLex     _("&Rescan Lex")
 #define kTrToolsErrors        _("&Errors")
 
-#define kTrPrefsGlobal        _("&Global")
-#define kTrPrefsEditor        _("&Syntax Specific")
-#define kTrPrefsTheme         _("&Theme")
+#define kTrPrefsGlobal                _("&Global")
+#define kTrPrefsSyntaxSpecific        _("&Syntax Specific")
+#define kTrPrefsCurrentSyntax         _("&Current syntax")
+#define kTrPrefsTheme                 _("&Theme")
 
 #define kTrHelpGitHub         wxT("&GitHub")
 

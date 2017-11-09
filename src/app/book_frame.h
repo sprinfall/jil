@@ -210,7 +210,7 @@ protected:
   void OnAbout(wxCommandEvent& evt);
   void ShowAboutDialog();
 
-  void OnGlobalPreferences(wxCommandEvent& evt);
+  void OnGlobalPrefs(wxCommandEvent& evt);
 
   // Compare global options and apply the changes.
   void ApplyGlobalOptionChanges(const Options& old_options);
@@ -218,12 +218,18 @@ protected:
   void ApplyLinePadding(int line_padding);
   void ApplyTextFont(const wxFont& font);
 
-  void OnEditorPreferences(wxCommandEvent& evt);
+  void OnCurrentSyntaxPrefs(wxCommandEvent& evt);
+  void OnCurrentSyntaxPrefsUpdateUI(wxUpdateUIEvent& evt);
+
+  void OnSyntaxSpecificPrefs(wxCommandEvent& evt);
+
+  // Show syntax specific options dialog.
+  void HandleSyntaxSpecificPrefs(editor::FtPlugin* ft_plugin);
 
   // Apply changes to the text pages/buffers of the given file type.
-  void ApplyEditorOptionChanges(const wxString& ft_id,
-                                const editor::Options& options,
-                                const editor::Options& old_options);
+  void ApplySyntaxSpecificOptionChanges(const wxString& ft_id,
+                                        const editor::Options& options,
+                                        const editor::Options& old_options);
 
   void OnMenuTheme(wxCommandEvent& evt);
   void ReloadTheme(const wxString& theme_name);
