@@ -48,6 +48,12 @@ $ make
 $ sudo make install
 ```
 
+***openSUSE***
+
+```
+sudo zypper gcc cmake extra-cmake-modules libwx_baseu-suse3 libwx_baseu-suse6 libwx_gtk3u_core-suse6 wxGTK3-3_2-devel
+```
+
 **Generate Makefiles**
 
 Suppose the source code is cloned to ~/jil, create a build directory next to it:
