@@ -3078,13 +3078,27 @@ void TextWindow::UpdateTextSize() {
   }
 }
 
+// copy from basemath
+int GetDigits(int number) {
+  assert(number >= 0);
+
+  int digits = 0;
+
+  do {
+    ++digits;
+    number /= 10;
+  } while (number > 0);
+
+  return digits;
+}
+
 void TextWindow::UpdateLineNrWidth(bool font_change) {
   int ln_digits = 0;
 
   if (!view_options_.show_number) {
     ln_digits = 1;  // For displaying tilde (~).
   } else {
-    ln_digits = base::GetDigits(buffer_->LineCount());
+    ln_digits = GetDigits(buffer_->LineCount());
     const int kMinDigits = 4;
     if (ln_digits < kMinDigits) {  // At least 4 chars for better UX.
       ln_digits = kMinDigits;

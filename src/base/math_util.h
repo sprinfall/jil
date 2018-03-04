@@ -4,7 +4,7 @@
 
 #include <cmath>
 
-namespace base {
+namespace basemath {
 
 const double PI = 3.14159265358979323846;
 const double PI_1_2 = 1.57079632679489661923;  // 1/2 PI

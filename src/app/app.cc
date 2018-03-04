@@ -237,14 +237,14 @@ class Server : public wxServer {
       return NULL;
     }
 
-    // Check that there are no modal dialogs active.
-    wxWindowList::Node* node = wxTopLevelWindows.GetFirst();
-    while (node != NULL) {
-      wxDialog* dialog = wxDynamicCast(node->GetData(), wxDialog);
+    // Check that there are no modal dialogs active. 
+    wxWindowList::compatibility_iterator it = wxTopLevelWindows.GetFirst();
+    while (it != NULL){
+      wxDialog* dialog = wxDynamicCast(it->GetData(), wxDialog);
       if (dialog != NULL && dialog->IsModal()) {
         return NULL;
       }
-      node = node->GetNext();
+      it = it->GetNext();
     }
 
     return new Connection;

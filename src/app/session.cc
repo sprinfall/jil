@@ -112,15 +112,20 @@ bool Session::Load(const wxString& cfg_file) {
   // Book frame
 
   Setting bf_setting = root_setting.Get(BOOK_FRAME, Setting::kGroup);
+
+
   if (bf_setting) {
+/*
 #if defined (__WXGTK__)
     GetSize(bf_setting, SIZE, &book_frame_size_);
 #else
     GetRect(bf_setting, RECT, &book_frame_rect_);
 #endif  // __WXGTK__
+*/
 
     book_frame_maximized_ = bf_setting.GetBool(MAXIMIZED);
   }
+
 
   //----------------------------------------------------------------------------
   // Find panel
@@ -183,6 +188,7 @@ bool Session::Save(const wxString& cfg_file) {
 
   Setting bf_setting = root_setting.Add(BOOK_FRAME, Setting::kGroup);
 
+/*
 #if defined (__WXGTK__)
   if (book_frame_size_ != wxDefaultSize) {
     SetSize(bf_setting, SIZE, book_frame_size_);
@@ -192,6 +198,7 @@ bool Session::Save(const wxString& cfg_file) {
     SetRect(bf_setting, RECT, book_frame_rect_);
   }
 #endif  // __WXGTK__
+*/
 
   bf_setting.SetBool(MAXIMIZED, book_frame_maximized_);
 

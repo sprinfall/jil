@@ -1,7 +1,7 @@
 #include "base/math_util.h"
 #include <cassert>
 
-namespace base {
+namespace basemath {
 
 int GetDigits(int number) {
   assert(number >= 0);
