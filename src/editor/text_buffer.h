@@ -724,7 +724,7 @@ private:
   Options options_;
 
   // Encoding of the file.
-  // The buffer itself always uses wchar_t as a charactor.
+  // The buffer itself always uses wchar_t as a character.
   Encoding file_encoding_;
 
   FileFormat file_format_;
