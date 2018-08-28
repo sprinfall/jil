@@ -1,11 +1,6 @@
-if(UNIX)
-    add_definitions(-D_GLIBCXX_USE_WCHAR_T -std=c++11)
-endif()
-
 # NOTE:
 # You have to build libconfig and install to home directory (~/include and ~/lib).
 # I don't add a cmake project for Mac because I don't know how to do it.
-#
 if(APPLE)
     set(LIBCONFIG_INCLUDE_DIR $ENV{HOME}/include)
     set(LIBCONFIG_LIBRARY_DIR $ENV{HOME}/lib)
@@ -14,99 +9,12 @@ if(APPLE)
     link_directories(${LIBCONFIG_LIBRARY_DIR})
 endif()
 
-set(PREF_SRCS
-    pref/common.cc
-    pref/common.h
-    pref/dialog_base.cc
-    pref/dialog_base.h
-    pref/editor_comment_page.cc
-    pref/editor_comment_page.h
-    pref/editor_dialog.cc
-    pref/editor_dialog.h
-    pref/editor_general_page.cc
-    pref/editor_general_page.h
-    pref/editor_indent_page.cc
-    pref/editor_indent_page.h
-    pref/global_dialog.cc
-    pref/global_dialog.h
-    pref/global_font_page.cc
-    pref/global_font_page.h
-    pref/global_general_page.cc
-    pref/global_general_page.h
-    pref/global_theme_page.cc
-    pref/global_theme_page.h
-    pref/option_list_ctrl.cc
-    pref/option_list_ctrl.h
-    )
+file(GLOB_RECURSE SRCS
+    RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
 
-set(SRCS
-    ${PREF_SRCS}
-    about_dialog.cc
-    about_dialog.h
-    app.cc
-    app.h
-    binding_config.cc
-    binding_config.h
-    book_ctrl.cc
-    book_ctrl.h
-    book_page.h
-    book_frame.cc
-    book_frame.h
-    compile_config.h
-    config.cc
-    config.h
-    defs.cc
-    defs.h
-    find_result_page.cc
-    find_result_page.h
-    find_panel.cc
-    find_panel.h
-    find_thread.cc
-    find_thread.h
-    font_util.cc
-    font_util.h
-    ft_config.cc
-    ft_config.h
-    goto_dialog.cc
-    goto_dialog.h
-    id.h
-    i18n_strings.h
-    i18n_util.h
-    lex_config.cc
-    lex_config.h
-    log.cc
-    log.h
-    navigation_dialog.cc
-    navigation_dialog.h
-    option.cc
-    option.h
-    option_config.cc
-    option_config.h
-    page_window.cc
-    page_window.h
-    popup_menu.cc
-    popup_menu.h
-    save.cc
-    save.h
-    session.cc
-    session.h
-    splitter.cc
-    splitter.h
-    status_bar.cc
-    status_bar.h
-    status_fields_config.cc
-    status_fields_config.h
-    text_book.cc
-    text_book.h
-    text_page.cc
-    text_page.h
-    theme_config.cc
-    theme_config.h
-    tool_book.cc
-    tool_book.h
-    util.cc
-    util.h
-    )
+GROUP_SOURCES_BY_DIR(SRCS)
 
 set(TARGET_NAME app)
 set(TARGET_OUTPUT_NAME jil)
@@ -126,8 +34,6 @@ endif()
 set(SRCS ${SRCS} ${JIL_RC})
 
 add_executable(${TARGET_NAME} WIN32 MACOSX_BUNDLE ${SRCS})
-
-COMMON_TARGET_SETTING(${TARGET_NAME} SRCS)
 
 set(EXTRA_LIBS
     base
@@ -212,4 +118,3 @@ elseif(UNIX)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/jilfiles/theme DESTINATION .)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/jilfiles/ftplugin DESTINATION .)
 endif()
-

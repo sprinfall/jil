@@ -1,11 +1,17 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.1.0)
+
+if(POLICY CMP0074)
+    # find_package() uses <PackageName>_ROOT variables.
+    # This policy was introduced in CMake version 3.12.
+    cmake_policy(SET CMP0074 NEW)
+endif()
+
 project(jil)
 
 option(JIL_ENABLE_UT "Enable unit test?" OFF)
 
 if(WIN32)
     option(JIL_ENABLE_VLD "Enable VLD (Visual Leak Detector)?" OFF)
-
     if(JIL_ENABLE_VLD)
         add_definitions(-DJIL_ENABLE_VLD)
     endif()
@@ -13,28 +19,19 @@ endif()
 
 add_definitions(-DUNICODE -D_UNICODE)
 
-# Require "qa" and "xml" for debug report.
-if(MSVC)
-    find_package(wxWidgets REQUIRED COMPONENTS core base qa xml)
-else()
-    # Require "net" for create server/client between two instances.
-    find_package(wxWidgets REQUIRED COMPONENTS core base net qa xml)
+if(WIN32)
+    # Disable warning on boost string algorithms.
+    add_definitions(-D_SCL_SECURE_NO_WARNINGS)
+
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
-include(${wxWidgets_USE_FILE})
-
-set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost)
-if(Boost_FOUND)
-    include_directories(${Boost_INCLUDE_DIRS})
-endif()
-
-if(JIL_ENABLE_UT)
-    enable_testing()
-endif()
+# C++ standard requirements.
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Group sources by dir.
-# Usage: source_group_by_dir(SRCS)
 macro(GROUP_SOURCES_BY_DIR source_files)
     set(sgbd_cur_dir ${CMAKE_CURRENT_BINARY_DIR})
     foreach(sgbd_file ${${source_files}})
@@ -51,33 +48,26 @@ macro(GROUP_SOURCES_BY_DIR source_files)
     endforeach()
 endmacro()
 
-# Add target property.
-# Usage: ADD_TARGET_PROPERTY(target COMPILE_FLAGS "/we1234")
-macro(ADD_TARGET_PROPERTY target_name property_key property_value)
-    get_target_property(CTS_COMPILE_FLAGS ${target_name} ${property_key} )
-    #	message("t:${target_name} k:${property_key} v:${property_value} ${CTS_COMPILE_FLAGS}")
-    if(CTS_COMPILE_FLAGS STREQUAL CTS_COMPILE_FLAGS-NOTFOUND)
-        SET_TARGET_PROPERTIES(${target_name} PROPERTIES
-            ${property_key} ${property_value})
-    else()
-        SET_TARGET_PROPERTIES(${target_name} PROPERTIES
-            ${property_key} "${CTS_COMPILE_FLAGS} ${property_value}")
-    endif()
-endmacro()
+# Require "qa" and "xml" for debug report.
+if(MSVC)
+    find_package(wxWidgets REQUIRED COMPONENTS core base qa xml)
+else()
+    # Require "net" for create server/client between two instances.
+    find_package(wxWidgets REQUIRED COMPONENTS core base net qa xml)
+endif()
 
-# Common target setting.
-# Usage: COMMON_TARGET_SETTING(target SRCS)
-macro(COMMON_TARGET_SETTING target_name source_list)
-    GROUP_SOURCES_BY_DIR(${source_list})
+include(${wxWidgets_USE_FILE})
 
-    if(WIN32)
-        if(MSVC)
-            # treat c4239 c4482 c4715 as error, as these can cause error on gcc
-            # disable c4407 c4290
-            ADD_TARGET_PROPERTY(${target_name} COMPILE_FLAGS "/we4239 /we4482 /we4715 /wd4407 /wd4290")
-        endif(MSVC)
-    endif()
-endmacro()
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_MULTITHREADED ON)
+find_package(Boost)
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+endif()
+
+if(JIL_ENABLE_UT)
+    enable_testing()
+endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/third_party/include)
@@ -85,10 +75,6 @@ include_directories(${PROJECT_SOURCE_DIR}/third_party/include/lua)
 if(WIN32)
     include_directories(${PROJECT_SOURCE_DIR}/third_party/win32/include)
     link_directories(${PROJECT_SOURCE_DIR}/third_party/win32/lib)
-endif()
-
-if(MSVC)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 add_definitions(-DLIBCONFIG_STATIC -DYY_NO_UNISTD_H -DYY_USE_CONST)

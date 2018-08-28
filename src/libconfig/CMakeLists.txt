@@ -13,10 +13,6 @@ set(SRCS
     wincompat.h
     )
 
-# Should be added at the top level CMakeList.txt because project "app" also
-# needs these definitions.
-#add_definitions(-DLIBCONFIG_STATIC -DYY_NO_UNISTD_H -DYY_USE_CONST)
-
 add_library(libconfig ${SRCS})
 
 if(MSVC)

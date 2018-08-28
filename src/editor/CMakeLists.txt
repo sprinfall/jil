@@ -1,7 +1,3 @@
-if(UNIX)
-    add_definitions(-D_GLIBCXX_USE_WCHAR_T -std=c++11)
-endif()
-
 set(SRCS
     action.cc
     action.h
@@ -59,8 +55,6 @@ set(SRCS
     )
 
 add_library(editor ${SRCS})
-
-COMMON_TARGET_SETTING(editor SRCS)
 
 # Unit test
 if(JIL_ENABLE_UT)

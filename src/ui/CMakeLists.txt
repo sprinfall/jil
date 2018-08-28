@@ -1,7 +1,3 @@
-if(UNIX)
-    add_definitions(-D_GLIBCXX_USE_WCHAR_T -std=c++11)
-endif()
-
 set(SRCS
     bitmap_button.cc
     bitmap_button.h
@@ -29,5 +25,3 @@ set(SRCS
     )
 
 add_library(ui ${SRCS})
-
-COMMON_TARGET_SETTING(ui SRCS)
