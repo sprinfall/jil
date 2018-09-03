@@ -2,8 +2,9 @@
 #define JIL_EDITOR_THEME_H_
 #pragma once
 
+#include <memory>
 #include <vector>
-#include "boost/shared_ptr.hpp"
+
 #include "wx/colour.h"
 #include "wx/bitmap.h"
 
@@ -11,7 +12,7 @@ namespace jil {
 namespace editor {
 
 class Theme;
-typedef boost::shared_ptr<Theme> SharedTheme;
+typedef std::shared_ptr<Theme> SharedTheme;
 
 class Theme {
 public:

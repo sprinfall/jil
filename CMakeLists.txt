@@ -58,8 +58,6 @@ endif()
 
 include(${wxWidgets_USE_FILE})
 
-set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_MULTITHREADED ON)
 find_package(Boost)
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
@@ -77,6 +75,20 @@ if(WIN32)
     link_directories(${PROJECT_SOURCE_DIR}/third_party/win32/lib)
 endif()
 
-add_definitions(-DLIBCONFIG_STATIC -DYY_NO_UNISTD_H -DYY_USE_CONST)
+include_directories(${PROJECT_SOURCE_DIR}/third_party/src)
+include_directories(${PROJECT_SOURCE_DIR}/third_party/src/lua)
+
+if(NOT APPLE)
+    add_definitions(-DLIBCONFIG_STATIC -DYY_NO_UNISTD_H -DYY_USE_CONST)
+    add_subdirectory(third_party/src/libconfig)
+endif()
+
+add_subdirectory(third_party/src/lua)
+add_subdirectory(third_party/src/pugixml)
+add_subdirectory(third_party/src/uchardet)
+
+if(JIL_ENABLE_UT)
+    add_subdirectory(third_party/src/gtest)
+endif()
 
 add_subdirectory(src)

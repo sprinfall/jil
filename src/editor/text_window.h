@@ -3,7 +3,7 @@
 #pragma once
 
 #include <list>
-#include <memory>  // std::shared_ptr
+#include <memory>
 #include <string>
 
 #include "wx/pen.h"

@@ -2,7 +2,8 @@
 #define JIL_UI_BUTTON_STYLE_H_
 #pragma once
 
-#include "boost/shared_ptr.hpp"
+#include <memory>
+
 #include "wx/colour.h"
 
 namespace jil {
@@ -45,7 +46,7 @@ private:
   wxColor colors_[PARTS][STATES];
 };
 
-typedef boost::shared_ptr<ButtonStyle> SharedButtonStyle;
+typedef std::shared_ptr<ButtonStyle> SharedButtonStyle;
 
 }  // namespace ui
 }  // namespace jil

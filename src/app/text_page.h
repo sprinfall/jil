@@ -2,7 +2,7 @@
 #define JIL_TEXT_PAGE_H_
 #pragma once
 
-#include <memory>  // std::shared_ptr
+#include <memory>
 
 #include "wx/gdicmn.h"
 #include "wx/string.h"
