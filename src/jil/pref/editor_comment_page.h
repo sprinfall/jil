@@ -1,9 +1,9 @@
 #ifndef JIL_PREF_EDITOR_COMMENT_PAGE_H_
 #define JIL_PREF_EDITOR_COMMENT_PAGE_H_
-#pragma once
+
+#include <vector>
 
 #include "wx/panel.h"
-#include <vector>
 
 class wxCheckBox;
 
@@ -17,13 +17,15 @@ namespace pref {
 
 class Editor_CommentPage : public wxPanel {
 public:
-  explicit Editor_CommentPage(editor::Options* options);
-  virtual ~Editor_CommentPage();
+  explicit Editor_CommentPage(editor::Options* options) : options_(options) {
+  }
+
+  ~Editor_CommentPage() override = default;
 
   bool Create(wxWindow* parent, wxWindowID id = wxID_ANY);
 
-  virtual bool TransferDataToWindow() override;
-  virtual bool TransferDataFromWindow() override;
+  bool TransferDataToWindow() override;
+  bool TransferDataFromWindow() override;
 
 protected:
   void CreateControls();

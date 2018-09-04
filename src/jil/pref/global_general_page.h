@@ -1,9 +1,10 @@
 #ifndef JIL_PREF_GLOBAL_GENERAL_PAGE_H_
 #define JIL_PREF_GLOBAL_GENERAL_PAGE_H_
-#pragma once
+
+#include <vector>
 
 #include "wx/panel.h"
-#include <vector>
+
 #include "editor/defs.h"
 
 class wxCheckBox;
@@ -18,13 +19,14 @@ namespace pref {
 
 class Global_GeneralPage : public wxPanel {
 public:
-  Global_GeneralPage(Options* options);
-  virtual ~Global_GeneralPage();
+  explicit Global_GeneralPage(Options* options);
+
+  ~Global_GeneralPage() override = default;
 
   bool Create(wxWindow* parent, wxWindowID id = wxID_ANY);
 
-  virtual bool TransferDataToWindow() override;
-  virtual bool TransferDataFromWindow() override;
+  bool TransferDataToWindow() override;
+  bool TransferDataFromWindow() override;
 
 private:
   void CreateControls();

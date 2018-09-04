@@ -1,13 +1,16 @@
-#ifndef JIL_PREF_OPTION_LIST_CTRL_H
-#define JIL_PREF_OPTION_LIST_CTRL_H
-#pragma once
+#ifndef JIL_PREF_OPTION_LIST_CTRL_H_
+#define JIL_PREF_OPTION_LIST_CTRL_H_
 
 // A replacement of wxPropertyGrid.
 
+#include <string>
 #include <vector>
+
 #include "boost/any.hpp"
-#include "wx/scrolwin.h"
+
 #include "wx/panel.h"
+#include "wx/scrolwin.h"
+
 #include "editor/option.h"
 
 class wxTextCtrl;
@@ -24,10 +27,11 @@ class OlcHeadPanel : public wxPanel {
 
 public:
   OlcHeadPanel(OptionListCtrl* option_list_ctrl, wxWindowID id);
-  virtual ~OlcHeadPanel();
+
+  ~OlcHeadPanel() override = default;
 
   // Let body panel have the focus.
-  virtual bool AcceptsFocus() const override {
+  bool AcceptsFocus() const override {
     return false;
   }
 
@@ -47,9 +51,10 @@ class OlcBodyPanel : public wxPanel {
 
 public:
   OlcBodyPanel(OptionListCtrl* option_list_ctrl, wxWindowID id);
-  virtual ~OlcBodyPanel();
 
-  virtual bool AcceptsFocus() const override {
+  ~OlcBodyPanel() override = default;
+
+  bool AcceptsFocus() const override {
     return true;
   }
 
@@ -186,4 +191,4 @@ private:
 }  // namespace pref
 }  // namespace jil
 
-#endif  // JIL_PREF_OPTION_LIST_CTRL_H
+#endif  // JIL_PREF_OPTION_LIST_CTRL_H_

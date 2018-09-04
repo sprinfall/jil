@@ -1,6 +1,5 @@
 #ifndef JIL_PREF_DIALOG_BASE_H_
 #define JIL_PREF_DIALOG_BASE_H_
-#pragma once
 
 #include "wx/dialog.h"
 
@@ -13,12 +12,13 @@ class DialogBase : public wxDialog {
   DECLARE_EVENT_TABLE()
 
 public:
-  virtual ~DialogBase();
+  virtual ~DialogBase() = default;
 
   bool Create(wxWindow* parent, wxWindowID id, const wxString& title);
 
 protected:
-  DialogBase();
+  DialogBase() : notebook_(NULL) {
+  }
 
   virtual void AddPages() = 0;
 

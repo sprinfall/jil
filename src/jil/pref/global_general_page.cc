@@ -27,12 +27,8 @@
 namespace jil {
 namespace pref {
 
-Global_GeneralPage::Global_GeneralPage(Options* options)
-    : options_(options) {
+Global_GeneralPage::Global_GeneralPage(Options* options) : options_(options) {
   InitFileEncodingTable();
-}
-
-Global_GeneralPage::~Global_GeneralPage() {
 }
 
 bool Global_GeneralPage::Create(wxWindow* parent, wxWindowID id) {
@@ -46,9 +42,12 @@ bool Global_GeneralPage::Create(wxWindow* parent, wxWindowID id) {
 }
 
 bool Global_GeneralPage::TransferDataToWindow() {
-  c_check_box_->SetValue((options_->cjk_filters & NS_FILTER_CHINESE) == NS_FILTER_CHINESE);
-  j_check_box_->SetValue((options_->cjk_filters & NS_FILTER_JAPANESE) == NS_FILTER_JAPANESE);
-  k_check_box_->SetValue((options_->cjk_filters & NS_FILTER_KOREAN) == NS_FILTER_KOREAN);
+  c_check_box_->SetValue((options_->cjk_filters & NS_FILTER_CHINESE) ==
+                         NS_FILTER_CHINESE);
+  j_check_box_->SetValue((options_->cjk_filters & NS_FILTER_JAPANESE) ==
+                         NS_FILTER_JAPANESE);
+  k_check_box_->SetValue((options_->cjk_filters & NS_FILTER_KOREAN) ==
+                         NS_FILTER_KOREAN);
 
   int fenc_index = IndexFileEncoding(options_->file_encoding);
   if (fenc_index == wxNOT_FOUND) {
@@ -66,9 +65,12 @@ bool Global_GeneralPage::TransferDataToWindow() {
 }
 
 bool Global_GeneralPage::TransferDataFromWindow() {
-  UpdateFlag(options_->cjk_filters, NS_FILTER_CHINESE, c_check_box_->IsChecked());
-  UpdateFlag(options_->cjk_filters, NS_FILTER_JAPANESE, j_check_box_->IsChecked());
-  UpdateFlag(options_->cjk_filters, NS_FILTER_KOREAN, k_check_box_->IsChecked());
+  UpdateFlag(options_->cjk_filters, NS_FILTER_CHINESE,
+             c_check_box_->IsChecked());
+  UpdateFlag(options_->cjk_filters, NS_FILTER_JAPANESE,
+             j_check_box_->IsChecked());
+  UpdateFlag(options_->cjk_filters, NS_FILTER_KOREAN,
+             k_check_box_->IsChecked());
 
   options_->file_encoding = file_encodings_[fenc_combo_box_->GetSelection()];
 
@@ -86,13 +88,16 @@ void Global_GeneralPage::CreateControls() {
 
   CreateEncodingSection(top_vsizer);
 
-  switch_cwd_check_box_ = new wxCheckBox(this, wxID_ANY, _("Switch current working directory"));
+  switch_cwd_check_box_ = new wxCheckBox(this, wxID_ANY,
+                                         _("Switch current working directory"));
   top_vsizer->Add(switch_cwd_check_box_, wxSizerFlags().Border(wxLTR));
 
-  restore_files_check_box_ = new wxCheckBox(this, wxID_ANY, _("Restore last open files"));
+  restore_files_check_box_ = new wxCheckBox(this, wxID_ANY,
+                                            _("Restore last open files"));
   top_vsizer->Add(restore_files_check_box_, wxSizerFlags().Border(wxLTR));
 
-  show_path_check_box_ = new wxCheckBox(this, wxID_ANY, _("Show file path in title bar"));
+  show_path_check_box_ = new wxCheckBox(this, wxID_ANY,
+                                        _("Show file path in title bar"));
   top_vsizer->Add(show_path_check_box_, wxSizerFlags().Border(wxALL));
 
   CreateLinePaddingSection(top_vsizer);
@@ -107,7 +112,8 @@ void Global_GeneralPage::CreateEncodingSection(wxSizer* top_vsizer) {
   //--------------------------------------------------------------------------
   // CJK
 
-  wxStaticText* cjk_label = new wxStaticText(box, wxID_ANY, _("Detect CJK encodings:"));
+  wxStaticText* cjk_label = new wxStaticText(box, wxID_ANY,
+                                             _("Detect CJK encodings:"));
 
   // NOTE: Don't separate Chinese to Simplified and Traditional. Keep it simple.
   c_check_box_ = new wxCheckBox(box, wxID_ANY, _("Chinese"));
@@ -131,7 +137,8 @@ void Global_GeneralPage::CreateEncodingSection(wxSizer* top_vsizer) {
   //--------------------------------------------------------------------------
   // File Encoding
 
-  wxStaticText* fenc_label = new wxStaticText(box, wxID_ANY, _("Default file encoding:"));
+  wxStaticText* fenc_label = new wxStaticText(box, wxID_ANY,
+                                              _("Default file encoding:"));
 
   fenc_combo_box_ = CreateReadonlyComboBox(box, wxID_ANY);
   fenc_combo_box_->SetMinSize(kMinComboBoxSize);
@@ -165,15 +172,15 @@ void Global_GeneralPage::CreateLinePaddingSection(wxSizer* top_vsizer) {
 }
 
 void Global_GeneralPage::InitFileEncodingTable() {
-  using namespace editor;
+  using editor::GetEncodingById;
 
-  file_encodings_.push_back(GetEncodingById(ENCODING_ISO_8859_1));
-  file_encodings_.push_back(GetEncodingById(ENCODING_UTF8));
-  file_encodings_.push_back(GetEncodingById(ENCODING_UTF8_BOM));
-  file_encodings_.push_back(GetEncodingById(ENCODING_UTF16_BE));
-  file_encodings_.push_back(GetEncodingById(ENCODING_UTF16_LE));
-  file_encodings_.push_back(GetEncodingById(ENCODING_GB18030));
-  file_encodings_.push_back(GetEncodingById(ENCODING_BIG5));
+  file_encodings_.push_back(GetEncodingById(editor::ENCODING_ISO_8859_1));
+  file_encodings_.push_back(GetEncodingById(editor::ENCODING_UTF8));
+  file_encodings_.push_back(GetEncodingById(editor::ENCODING_UTF8_BOM));
+  file_encodings_.push_back(GetEncodingById(editor::ENCODING_UTF16_BE));
+  file_encodings_.push_back(GetEncodingById(editor::ENCODING_UTF16_LE));
+  file_encodings_.push_back(GetEncodingById(editor::ENCODING_GB18030));
+  file_encodings_.push_back(GetEncodingById(editor::ENCODING_BIG5));
 }
 
 void Global_GeneralPage::InitFileEncodingComboBox(wxComboBox* combo_box) {

@@ -1,6 +1,5 @@
 #ifndef JIL_PREF_EDITOR_DIALOG_H_
 #define JIL_PREF_EDITOR_DIALOG_H_
-#pragma once
 
 #include "jil/pref/dialog_base.h"
 
@@ -9,17 +8,18 @@ class Options;
 }  // namespace editor
 
 namespace jil {
-
 namespace pref {
 
 // Editor (Syntax specific) preferences dialog.
 class EditorDialog : public DialogBase {
 public:
-  EditorDialog(editor::Options* options);
-  virtual ~EditorDialog();
+  explicit EditorDialog(editor::Options* options) : options_(options) {
+  }
+
+  ~EditorDialog() override = default;
 
 protected:
-  virtual void AddPages() override;
+  void AddPages() override;
 
 private:
   editor::Options* options_;

@@ -1,5 +1,5 @@
 if(JIL_ENABLE_UT)
-    add_subdirectory(indent_unittest)
+    add_subdirectory(editor_unittest)
 endif()
 
 add_subdirectory(base)

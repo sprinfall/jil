@@ -1,9 +1,9 @@
 #ifndef JIL_PREF_EDITOR_GENERAL_PAGE_H_
 #define JIL_PREF_EDITOR_GENERAL_PAGE_H_
-#pragma once
+
+#include <vector>
 
 #include "wx/panel.h"
-#include <vector>
 
 class wxCheckBox;
 class wxTextCtrl;
@@ -13,7 +13,6 @@ class Options;
 }  // namespace editor
 
 namespace jil {
-
 namespace pref {
 
 class Editor_GeneralPage : public wxPanel {
@@ -27,8 +26,8 @@ public:
 
   void SplitRulers(const wxString& rulers_str, std::vector<int>& rulers);
 
-  virtual bool TransferDataToWindow() override;
-  virtual bool TransferDataFromWindow() override;
+  bool TransferDataToWindow() override;
+  bool TransferDataFromWindow() override;
 
 protected:
   void CreateControls();

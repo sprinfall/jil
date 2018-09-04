@@ -1,5 +1,7 @@
 #include "jil/pref/editor_general_page.h"
 
+#include <algorithm>  // sort()
+
 #include "wx/checkbox.h"
 #include "wx/sizer.h"
 #include "wx/stattext.h"
@@ -42,7 +44,8 @@ wxString Editor_GeneralPage::JoinRulers(const std::vector<int>& rulers) {
   return rulers_str;
 }
 
-void Editor_GeneralPage::SplitRulers(const wxString& rulers_str, std::vector<int>& rulers) {
+void Editor_GeneralPage::SplitRulers(const wxString& rulers_str,
+                                     std::vector<int>& rulers) {
   wxArrayString ruler_strs = wxSplit(rulers_str, wxT(','));
   long ruler = 0;
   for (size_t i = 0; i < ruler_strs.size(); ++i) {
@@ -81,7 +84,7 @@ bool Editor_GeneralPage::TransferDataFromWindow() {
 
   // Remove ' ' and '\t' and duplicate elements.
   std::sort(delimiters.begin(), delimiters.end());  // std::unique needs this.
-  std::wstring::iterator end = std::remove(delimiters.begin(), delimiters.end(), L' ');
+  auto end = std::remove(delimiters.begin(), delimiters.end(), L' ');
   end = std::remove(delimiters.begin(), end, L'\t');
   end = std::unique(delimiters.begin(), end);
   if (end != delimiters.end()) {
@@ -107,10 +110,12 @@ void Editor_GeneralPage::CreateDisplaySection(wxSizer* top_vsizer) {
   ui::StaticBox* box = new ui::StaticBox(this, _("Display"));
   wxSizer* box_vsizer = new wxBoxSizer(wxVERTICAL);
 
-  show_hscrollbar_check_box_ = new wxCheckBox(box, wxID_ANY, _("Show horizontal scrollbar"));
+  show_hscrollbar_check_box_ = new wxCheckBox(box, wxID_ANY,
+                                              _("Show horizontal scrollbar"));
   box_vsizer->Add(show_hscrollbar_check_box_);
 
-  show_number_check_box_ = new wxCheckBox(box, wxID_ANY, _("Show line numbers"));
+  show_number_check_box_ = new wxCheckBox(box, wxID_ANY,
+                                          _("Show line numbers"));
   box_vsizer->Add(show_number_check_box_, wxSizerFlags().Border(wxTOP));
 
   show_space_check_box_ = new wxCheckBox(box, wxID_ANY, _("Show white spaces"));
@@ -138,7 +143,8 @@ void Editor_GeneralPage::CreateRulersSection(wxSizer* top_vsizer) {
 void Editor_GeneralPage::CreateDelimitersSection(wxSizer* top_vsizer) {
   wxStaticText* label = new wxStaticText(this, wxID_ANY, _("Delimiters:"));
   delimiters_text_ctrl_ = CreateTextCtrl(this, wxID_ANY, kStrTextSize);
-  delimiters_text_ctrl_->SetToolTip(_("Word delimiters (exluding ' ' and '\t')."));
+  delimiters_text_ctrl_->SetToolTip(
+      _("Word delimiters (excluding ' ' and '\t')."));
 
   wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
   hsizer->Add(label, wxSizerFlags().Center());

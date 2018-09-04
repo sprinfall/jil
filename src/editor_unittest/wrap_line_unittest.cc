@@ -1,18 +1,20 @@
 #include <iostream>
 #include <set>
+
+#include "gtest/gtest.h"
+
 #include "wx/gdicmn.h"
 #include "wx/font.h"
 #include "wx/fontenum.h"
-#include "base/compiler_specific.h"
-#include "gtest/gtest.h"
+
 #include "editor/text_extent.h"
 #include "editor/wrap.h"
 
-using namespace jil::editor;
+using namespace editor;
 
 class FontEnumerator : public wxFontEnumerator {
 public:
-  virtual bool OnFacename(const wxString& facename) OVERRIDE {
+  virtual bool OnFacename(const wxString& facename) override {
     facename_ = facename;
     return false;
   }
@@ -54,6 +56,7 @@ class WrapTest : public testing::Test {
   int char_width_;
 };
 
+/*
 TEST_F(WrapTest, Test1) {
   std::wstring line(L"ABCDEFG");
   const int client_width = 3 * char_width_;
@@ -63,7 +66,6 @@ TEST_F(WrapTest, Test1) {
   EXPECT_EQ(3, offsets[0]);
   EXPECT_EQ(6, offsets[1]);
 }
-/*
 TEST(WrapLine, Test2) {
   TextExtent text_extent;
   wxString line(_T("ABCDEFG"));

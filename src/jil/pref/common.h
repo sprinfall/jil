@@ -1,6 +1,5 @@
 #ifndef JIL_PREF_COMMON_H_
 #define JIL_PREF_COMMON_H_
-#pragma once
 
 // Preference utilities.
 
@@ -47,14 +46,15 @@ int StrToInt(const wxString& str);
 
 int ValidateInt(int i, int min, int max);
 
-wxStaticText* CreateStaticText(wxWindow* parent, const wxString& label, bool bold = false);
+wxStaticText* CreateStaticText(wxWindow* parent, const wxString& label,
+                               bool bold = false);
 
-wxSizer* CreateSeparator(wxWindow* parent, const wxString& label, bool bold = false);
+wxSizer* CreateSeparator(wxWindow* parent, const wxString& label,
+                         bool bold = false);
 
 wxComboBox* CreateReadonlyComboBox(wxWindow* parent, wxWindowID id);
 
-wxTextCtrl* CreateTextCtrl(wxWindow* parent,
-                           wxWindowID id,
+wxTextCtrl* CreateTextCtrl(wxWindow* parent, wxWindowID id,
                            const wxSize& size = wxDefaultSize,
                            const wxValidator& validator = wxDefaultValidator);
 

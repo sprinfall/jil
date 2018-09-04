@@ -1,6 +1,5 @@
 #ifndef JIL_PREF_GLOBAL_DIALOG_H_
 #define JIL_PREF_GLOBAL_DIALOG_H_
-#pragma once
 
 #include "jil/pref/dialog_base.h"
 
@@ -17,11 +16,13 @@ class GlobalDialog : public DialogBase {
   DECLARE_EVENT_TABLE()
 
 public:
-  explicit GlobalDialog(Options* options);
-  virtual ~GlobalDialog();
+  explicit GlobalDialog(Options* options) : options_(options) {
+  }
+
+  ~GlobalDialog() override = default;
 
 protected:
-  virtual void AddPages() override;
+  void AddPages() override;
 
   void OnNotebookPageChanged(wxBookCtrlEvent& evt);
 

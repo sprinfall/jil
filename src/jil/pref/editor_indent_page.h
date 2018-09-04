@@ -1,9 +1,9 @@
 #ifndef JIL_PREF_EDITOR_INDENT_PAGE_H_
 #define JIL_PREF_EDITOR_INDENT_PAGE_H_
-#pragma once
+
+#include <vector>
 
 #include "wx/panel.h"
-#include <vector>
 
 class wxCheckBox;
 class wxTextCtrl;
@@ -20,13 +20,15 @@ class OptionListCtrl;
 
 class Editor_IndentPage : public wxPanel {
 public:
-  explicit Editor_IndentPage(editor::Options* options);
-  virtual ~Editor_IndentPage();
+  explicit Editor_IndentPage(editor::Options* options) : options_(options) {
+  }
+
+  ~Editor_IndentPage() override = default;
 
   bool Create(wxWindow* parent, wxWindowID id = wxID_ANY);
 
-  virtual bool TransferDataToWindow() override;
-  virtual bool TransferDataFromWindow() override;
+  bool TransferDataToWindow() override;
+  bool TransferDataFromWindow() override;
 
 protected:
   void CreateControls();

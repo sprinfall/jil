@@ -1,9 +1,11 @@
 #include "jil/pref/option_list_ctrl.h"
+
 #include "wx/dcbuffer.h"
 #include "wx/log.h"
-#include "wx/sizer.h"
 #include "wx/settings.h"
+#include "wx/sizer.h"
 #include "wx/textctrl.h"
+
 #include "ui/util.h"
 
 namespace jil {
@@ -21,9 +23,6 @@ OlcHeadPanel::OlcHeadPanel(OptionListCtrl* option_list_ctrl, wxWindowID id)
     : wxPanel(option_list_ctrl, id)
     , option_list_ctrl_(option_list_ctrl) {
   SetBackgroundStyle(wxBG_STYLE_CUSTOM);
-}
-
-OlcHeadPanel::~OlcHeadPanel() {
 }
 
 void OlcHeadPanel::OnPaint(wxPaintEvent& evt) {
@@ -54,9 +53,6 @@ OlcBodyPanel::OlcBodyPanel(OptionListCtrl* option_list_ctrl, wxWindowID id)
     : wxPanel(option_list_ctrl, id)
     , option_list_ctrl_(option_list_ctrl) {
   SetBackgroundStyle(wxBG_STYLE_PAINT);
-}
-
-OlcBodyPanel::~OlcBodyPanel() {
 }
 
 void OlcBodyPanel::OnSize(wxSizeEvent& evt) {
@@ -100,7 +96,8 @@ OptionListCtrl::~OptionListCtrl() {
   options_.clear();
 }
 
-bool OptionListCtrl::Create(wxWindow* parent, int id, const wxSize& size, bool with_head, long style) {
+bool OptionListCtrl::Create(wxWindow* parent, int id, const wxSize& size,
+                            bool with_head, long style) {
   if (!wxScrolledWindow::Create(parent, id, wxDefaultPosition, size, style)) {
     return false;
   }
@@ -112,7 +109,8 @@ bool OptionListCtrl::Create(wxWindow* parent, int id, const wxSize& size, bool w
 
   InitColors();
 
-  row_height_ = row_padding_.y + GetCharHeight() + row_padding_.y + 1;  // + 1 for row bar
+  // + 1 for row bar
+  row_height_ = row_padding_.y + GetCharHeight() + row_padding_.y + 1;
 
   if (with_head) {
     head_panel_ = new OlcHeadPanel(this, wxID_ANY);
@@ -177,15 +175,24 @@ void OptionListCtrl::Init() {
 }
 
 void OptionListCtrl::InitColors() {
-  SetColor(COLOR_HEAD_FG, wxSystemSettings::GetColour(wxSYS_COLOUR_CAPTIONTEXT));
-  SetColor(COLOR_HEAD_BG, wxSystemSettings::GetColour(wxSYS_COLOUR_ACTIVECAPTION));
-  SetColor(COLOR_HEAD_BORDER, wxSystemSettings::GetColour(wxSYS_COLOUR_ACTIVEBORDER));
-  SetColor(COLOR_BODY_FG, wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOXTEXT));
-  SetColor(COLOR_BODY_FG_HL, wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT));
-  SetColor(COLOR_BODY_BG, wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOX));
-  SetColor(COLOR_BODY_BG_HL, wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT));
-  SetColor(COLOR_BODY_BG_HL_NOFOCUS, wxSystemSettings::GetColour(wxSYS_COLOUR_BTNSHADOW));
-  SetColor(COLOR_BODY_BORDER, wxSystemSettings::GetColour(wxSYS_COLOUR_ACTIVEBORDER));
+  SetColor(COLOR_HEAD_FG,
+           wxSystemSettings::GetColour(wxSYS_COLOUR_CAPTIONTEXT));
+  SetColor(COLOR_HEAD_BG,
+           wxSystemSettings::GetColour(wxSYS_COLOUR_ACTIVECAPTION));
+  SetColor(COLOR_HEAD_BORDER,
+           wxSystemSettings::GetColour(wxSYS_COLOUR_ACTIVEBORDER));
+  SetColor(COLOR_BODY_FG,
+           wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOXTEXT));
+  SetColor(COLOR_BODY_FG_HL,
+           wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT));
+  SetColor(COLOR_BODY_BG,
+           wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOX));
+  SetColor(COLOR_BODY_BG_HL,
+           wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT));
+  SetColor(COLOR_BODY_BG_HL_NOFOCUS,
+           wxSystemSettings::GetColour(wxSYS_COLOUR_BTNSHADOW));
+  SetColor(COLOR_BODY_BORDER,
+           wxSystemSettings::GetColour(wxSYS_COLOUR_ACTIVEBORDER));
 }
 
 editor::OptionPair* OptionListCtrl::GetOptionByRow(int row) {
@@ -283,7 +290,12 @@ void OptionListCtrl::OnBodyPaint(wxDC& dc) {
       if (row == selected_row_) {
         wxPen pen = dc.GetPen();  // Backup
         dc.SetPen(*wxTRANSPARENT_PEN);
-        dc.SetBrush(body_panel_->HasFocus() ? bg_hl_color : bg_hl_nofocus_color);
+
+        if (body_panel_->HasFocus()) {
+          dc.SetBrush(bg_hl_color);
+        } else {
+          dc.SetBrush(bg_hl_nofocus_color);
+        }
 
         dc.DrawRectangle(x, y, column.width, row_height_ - 1);
 
@@ -375,8 +387,10 @@ void OptionListCtrl::StartEditing(int row) {
   wxRect rect = GetColumnRect(row, Column::VALUE);
 
   if (text_ctrl_ == NULL) {
-    text_ctrl_ = new wxTextCtrl(body_panel_, wxID_ANY, option_pair->value.ToString(),
-                                rect.GetPosition(), rect.GetSize(), wxTE_PROCESS_ENTER);
+    text_ctrl_ = new wxTextCtrl(body_panel_, wxID_ANY,
+                                option_pair->value.ToString(),
+                                rect.GetPosition(), rect.GetSize(),
+                                wxTE_PROCESS_ENTER);
     Connect(text_ctrl_->GetId(),
             wxEVT_COMMAND_TEXT_ENTER,
             wxCommandEventHandler(OptionListCtrl::OnEditingDone));
@@ -399,7 +413,9 @@ void OptionListCtrl::FinishEditing() {
     return;
   }
 
-  editor::OptionPair* option_pair = static_cast<editor::OptionPair*>(client_data);
+  editor::OptionPair* option_pair =
+      static_cast<editor::OptionPair*>(client_data);
+
   int value_type = option_pair->value.type();
 
   wxString value_str = text_ctrl_->GetValue();

@@ -1,23 +1,20 @@
 #include "jil/pref/dialog_base.h"
+
 #include "wx/notebook.h"
 #include "wx/sizer.h"
+
 #include "jil/pref/common.h"
 
 namespace jil {
 namespace pref {
 
 BEGIN_EVENT_TABLE(DialogBase, wxDialog)
-EVT_BUTTON(wxID_OK,       DialogBase::OnButtonOK)
-EVT_BUTTON(wxID_CANCEL,   DialogBase::OnButtonCancel)
+EVT_BUTTON(wxID_OK, DialogBase::OnButtonOK)
+EVT_BUTTON(wxID_CANCEL, DialogBase::OnButtonCancel)
 END_EVENT_TABLE()
 
-DialogBase::DialogBase() : notebook_(NULL) {
-}
-
-DialogBase::~DialogBase() {
-}
-
-bool DialogBase::Create(wxWindow* parent, wxWindowID id, const wxString& title) {
+bool DialogBase::Create(wxWindow* parent, wxWindowID id,
+                        const wxString& title) {
   // Recursively call TransferDataFromWindow() and TransferDataToWindow().
   SetExtraStyle(GetExtraStyle() | wxWS_EX_VALIDATE_RECURSIVELY);
 

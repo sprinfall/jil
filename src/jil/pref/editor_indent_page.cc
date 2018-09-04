@@ -13,20 +13,13 @@
 #include "editor/option.h"
 
 #include "jil/defs.h"
-#include "jil/pref/option_list_ctrl.h"
 #include "jil/pref/common.h"
+#include "jil/pref/option_list_ctrl.h"
 
 namespace jil {
 namespace pref {
 
 static const wxSize kOptionListSize(-1, 120);
-
-Editor_IndentPage::Editor_IndentPage(editor::Options* options)
-  : options_(options) {
-}
-
-Editor_IndentPage::~Editor_IndentPage() {
-}
 
 bool Editor_IndentPage::Create(wxWindow* parent, wxWindowID id) {
   if (!wxPanel::Create(parent, id)) {
@@ -58,17 +51,21 @@ bool Editor_IndentPage::TransferDataToWindow() {
 
 bool Editor_IndentPage::TransferDataFromWindow() {
   int tab_stop = StrToInt(tab_stop_text_ctrl_->GetValue());
-  options_->text.tab_stop = ValidateInt(tab_stop, editor::kMinTabStop, editor::kMaxTabStop);
+  options_->text.tab_stop = ValidateInt(tab_stop, editor::kMinTabStop,
+                                        editor::kMaxTabStop);
 
   options_->text.expand_tab = expand_tab_check_box_->GetValue();
   options_->text.guess_tab = guess_check_box_->GetValue();
 
-  std::wstring indent_keys_str = indent_keys_text_ctrl_->GetValue().ToStdWstring();
+  std::wstring indent_keys_str = indent_keys_text_ctrl_->GetValue().
+      ToStdWstring();
   // Split
   std::vector<std::wstring> indent_keys;
-  boost::split(indent_keys, indent_keys_str, boost::is_any_of(L", "), boost::token_compress_on);
+  boost::split(indent_keys, indent_keys_str, boost::is_any_of(L", "),
+               boost::token_compress_on);
   // Remove empty strings.
-  std::vector<std::wstring>::iterator end = std::remove(indent_keys.begin(), indent_keys.end(), L"");
+  std::vector<std::wstring>::iterator end = std::remove(indent_keys.begin(),
+                                                        indent_keys.end(), L"");
   if (end != indent_keys.end()) {
     indent_keys.erase(end, indent_keys.end());
   }
@@ -89,12 +86,14 @@ void Editor_IndentPage::CreateControls() {
   CreateTabsSection(top_vsizer);
 
   // Indent keys
-  wxStaticText* indent_keys_label = new wxStaticText(this, wxID_ANY, _("Indent keys:"));
+  wxStaticText* indent_keys_label = new wxStaticText(this, wxID_ANY,
+                                                     _("Indent keys:"));
   indent_keys_text_ctrl_ = CreateTextCtrl(this, wxID_ANY, kStrTextSize);
   {
     wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
     hsizer->Add(indent_keys_label, wxSizerFlags().Center());
-    hsizer->Add(indent_keys_text_ctrl_, wxSizerFlags(1).Center().Border(wxLEFT));
+    hsizer->Add(indent_keys_text_ctrl_,
+                wxSizerFlags(1).Center().Border(wxLEFT));
 
     top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
   }
@@ -108,17 +107,21 @@ void Editor_IndentPage::CreateTabsSection(wxSizer* top_vsizer) {
   ui::StaticBox* box = new ui::StaticBox(this, _("Tabs"));
   wxSizer* box_vsizer = new wxBoxSizer(wxVERTICAL);
 
-  wxStaticText* tab_stop_label = new wxStaticText(box, wxID_ANY, _("Tab stop:"));
+  wxStaticText* tab_stop_label = new wxStaticText(box, wxID_ANY,
+                                                  _("Tab stop:"));
 
   wxIntegerValidator<int> validator(NULL, 0);
   validator.SetMin(editor::kMinTabStop);
   validator.SetMax(editor::kMaxTabStop);
 
-  tab_stop_text_ctrl_ = CreateTextCtrl(box, ID_TAB_STOP_TEXTCTRL, kNumTextSize, validator);
+  tab_stop_text_ctrl_ = CreateTextCtrl(box, ID_TAB_STOP_TEXTCTRL, kNumTextSize,
+                                       validator);
 
-  expand_tab_check_box_ = new wxCheckBox(box, ID_EXPAND_TAB_CHECKBOX, _("Expand tabs"));
+  expand_tab_check_box_ = new wxCheckBox(box, ID_EXPAND_TAB_CHECKBOX,
+                                         _("Expand tabs"));
 
-  guess_check_box_ = new wxCheckBox(box, ID_GUESS_CHECKBOX, _("Guess from existing lines"));
+  guess_check_box_ = new wxCheckBox(box, ID_GUESS_CHECKBOX,
+                                    _("Guess from existing lines"));
 
   {
     wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);

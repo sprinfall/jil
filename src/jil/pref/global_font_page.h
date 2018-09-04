@@ -1,11 +1,12 @@
 #ifndef JIL_PREF_GLOBAL_FONT_PAGE_H_
 #define JIL_PREF_GLOBAL_FONT_PAGE_H_
-#pragma once
 
 #include <set>
 #include <vector>
+
 #include "wx/panel.h"
 #include "wx/thread.h"
+
 #include "jil/defs.h"
 #include "jil/font_util.h"
 
@@ -28,18 +29,19 @@ class Global_FontPage : public wxPanel, public wxThreadHelper {
   DECLARE_EVENT_TABLE()
 
 public:
-  Global_FontPage(Options* options);
-  virtual ~Global_FontPage();
+  explicit Global_FontPage(Options* options);
+
+  ~Global_FontPage() override;
 
   bool Create(wxWindow* parent, wxWindowID id = wxID_ANY);
 
-  virtual bool TransferDataToWindow() override;
-  virtual bool TransferDataFromWindow() override;
+  bool TransferDataToWindow() override;
+  bool TransferDataFromWindow() override;
 
   void EnumerateFonts();
 
 protected:
-  virtual wxThread::ExitCode Entry() override;
+  wxThread::ExitCode Entry() override;
 
   void OnThreadUpdate(wxThreadEvent& evt);
 

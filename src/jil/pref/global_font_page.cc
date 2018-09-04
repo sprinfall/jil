@@ -20,8 +20,8 @@
 #include "ui/string_list_ctrl.h"
 
 #include "jil/option.h"
-#include "jil/util.h"
 #include "jil/pref/common.h"
+#include "jil/util.h"
 
 namespace jil {
 namespace pref {
@@ -32,7 +32,7 @@ static const wxString kFixedFontNameSuffix = wxT(" *");
 
 class FontEnumerator : public wxFontEnumerator {
 public:
-  virtual bool OnFacename(const wxString& facename) override {
+  bool OnFacename(const wxString& facename) override {
     if (facename[0] != wxT('@')) {
       facenames->push_back(facename);
     }
@@ -45,15 +45,16 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 
 BEGIN_EVENT_TABLE(Global_FontPage, wxPanel)
-EVT_LIST_ITEM_SELECTED(ID_FONT_LIST_CTRL, Global_FontPage::OnFontListSelectionChange)
-EVT_LIST_ITEM_DESELECTED(ID_FONT_LIST_CTRL, Global_FontPage::OnFontListSelectionChange)
+EVT_LIST_ITEM_SELECTED(ID_FONT_LIST_CTRL,
+                       Global_FontPage::OnFontListSelectionChange)
+EVT_LIST_ITEM_DESELECTED(ID_FONT_LIST_CTRL,
+                         Global_FontPage::OnFontListSelectionChange)
 EVT_COMBOBOX(ID_FONT_NAME_COMBOBOX, Global_FontPage::OnNameComboBox)
 EVT_COMBOBOX(ID_FONT_SIZE_COMBOBOX, Global_FontPage::OnSizeComboBox)
 EVT_BUTTON(ID_FONT_USE_DEFAULT_BUTTON, Global_FontPage::OnUseDefaultButton)
 END_EVENT_TABLE()
 
-Global_FontPage::Global_FontPage(Options* options)
-    : options_(options) {
+Global_FontPage::Global_FontPage(Options* options) : options_(options) {
   InitFonts();
 }
 
@@ -163,7 +164,8 @@ void Global_FontPage::CreateControls() {
   CreateTypeSection(top_vsizer);
   CreateFontSection(top_vsizer);
 
-  use_default_button_ = new wxButton(this, ID_FONT_USE_DEFAULT_BUTTON, _("Use default font"));
+  use_default_button_ = new wxButton(this, ID_FONT_USE_DEFAULT_BUTTON,
+                                     _("Use default font"));
   top_vsizer->Add(use_default_button_, wxSizerFlags().Right().Border(wxRIGHT));
   top_vsizer->AddSpacer(10);
 

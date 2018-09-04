@@ -14,13 +14,6 @@
 namespace jil {
 namespace pref {
 
-Editor_CommentPage::Editor_CommentPage(editor::Options* options)
-    : options_(options) {
-}
-
-Editor_CommentPage::~Editor_CommentPage() {
-}
-
 bool Editor_CommentPage::Create(wxWindow* parent, wxWindowID id) {
   if (!wxPanel::Create(parent, id)) {
     return false;
@@ -52,10 +45,12 @@ void Editor_CommentPage::CreateControls() {
   wxSizer* box_vsizer = new wxBoxSizer(wxVERTICAL);
 
   add_space_check_box_ = new wxCheckBox(box, wxID_ANY, _("Add space"));
-  respect_indent_check_box_ = new wxCheckBox(box, wxID_ANY, _("Respect line indent"));
+  respect_indent_check_box_ = new wxCheckBox(box, wxID_ANY,
+                                             _("Respect line indent"));
 
   box_vsizer->Add(add_space_check_box_, wxSizerFlags().Border(wxTOP));
-  box_vsizer->Add(respect_indent_check_box_, wxSizerFlags().Expand().Border(wxTOP));
+  box_vsizer->Add(respect_indent_check_box_,
+                  wxSizerFlags().Expand().Border(wxTOP));
 
   box->SetBodySizer(box_vsizer);
   top_vsizer->Add(box, wxSizerFlags().Expand().Border(wxALL));
@@ -63,5 +58,5 @@ void Editor_CommentPage::CreateControls() {
   SetSizerAndFit(top_vsizer);
 }
 
-}  // namespace jil
 }  // namespace pref
+}  // namespace jil

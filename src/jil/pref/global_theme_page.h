@@ -1,9 +1,10 @@
 #ifndef JIL_PREF_GLOBAL_THEME_PAGE_H_
 #define JIL_PREF_GLOBAL_THEME_PAGE_H_
-#pragma once
+
+#include <vector>
 
 #include "wx/panel.h"
-#include <vector>
+
 #include "editor/defs.h"
 
 class wxCheckBox;
@@ -18,18 +19,21 @@ namespace pref {
 
 class Global_ThemePage : public wxPanel {
 public:
-  Global_ThemePage(Options* options);
-  virtual ~Global_ThemePage();
+  explicit Global_ThemePage(Options* options) : options_(options) {
+  }
+
+  ~Global_ThemePage() override = default;
 
   bool Create(wxWindow* parent, wxWindowID id = wxID_ANY);
 
-  virtual bool TransferDataToWindow() override;
-  virtual bool TransferDataFromWindow() override;
+  bool TransferDataToWindow() override;
+  bool TransferDataFromWindow() override;
 
 private:
   void CreateControls();
 
-  void LayoutField(wxSizer* top_vsizer, wxStaticText* label, wxComboBox* combo_box);
+  void LayoutField(wxSizer* top_vsizer, wxStaticText* label,
+                   wxComboBox* combo_box);
 
 private:
   Options* options_;

@@ -18,13 +18,6 @@
 namespace jil {
 namespace pref {
 
-Global_ThemePage::Global_ThemePage(Options* options)
-    : options_(options) {
-}
-
-Global_ThemePage::~Global_ThemePage() {
-}
-
 bool Global_ThemePage::Create(wxWindow* parent, wxWindowID id) {
   if (!wxPanel::Create(parent, id)) {
     return false;
@@ -37,7 +30,8 @@ bool Global_ThemePage::Create(wxWindow* parent, wxWindowID id) {
 
 bool Global_ThemePage::TransferDataToWindow() {
   theme_combo_box_->SetStringSelection(options_->theme);
-  enlarge_icons_check_box_->SetValue(options_->icon_resolution == kHighResolution);
+  enlarge_icons_check_box_->SetValue(options_->icon_resolution ==
+                                     kHighResolution);
   return true;
 }
 
@@ -59,7 +53,8 @@ void Global_ThemePage::CreateControls() {
   //----------------------------------------------------------------------------
   // Color Scheme
 
-  wxStaticText* theme_label = new wxStaticText(this, wxID_ANY, _("Color scheme:"));
+  wxStaticText* theme_label = new wxStaticText(this, wxID_ANY,
+                                               _("Color scheme:"));
 
   theme_combo_box_ = CreateReadonlyComboBox(this, wxID_ANY);
 
@@ -74,14 +69,19 @@ void Global_ThemePage::CreateControls() {
   //----------------------------------------------------------------------------
   // Icon Resolution
 
-  enlarge_icons_check_box_ = new wxCheckBox(this, wxID_ANY, _("Enlarge icons for high resolution display"));
+  {
+    wxString label = _("Enlarge icons for high resolution display");
+    enlarge_icons_check_box_ = new wxCheckBox(this, wxID_ANY, label);
+  }
 
-  top_vsizer->Add(enlarge_icons_check_box_, wxSizerFlags().Left().Border(wxALL));
+  top_vsizer->Add(enlarge_icons_check_box_,
+                  wxSizerFlags().Left().Border(wxALL));
 
   SetSizerAndFit(top_vsizer);
 }
 
-void Global_ThemePage::LayoutField(wxSizer* top_vsizer, wxStaticText* label, wxComboBox* combo_box) {
+void Global_ThemePage::LayoutField(wxSizer* top_vsizer, wxStaticText* label,
+                                   wxComboBox* combo_box) {
   wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
   hsizer->Add(label, wxSizerFlags(1).CenterVertical());
   hsizer->Add(combo_box, wxSizerFlags(1).CenterVertical().Border(wxLEFT));

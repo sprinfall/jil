@@ -1,4 +1,5 @@
 #include "jil/pref/editor_dialog.h"
+
 #include "wx/notebook.h"
 
 #include "jil/pref/editor_general_page.h"
@@ -7,13 +8,6 @@
 
 namespace jil {
 namespace pref {
-
-EditorDialog::EditorDialog(editor::Options* options)
-    : options_(options) {
-}
-
-EditorDialog::~EditorDialog() {
-}
 
 void EditorDialog::AddPages() {
   Editor_GeneralPage* general_page = new Editor_GeneralPage(options_);

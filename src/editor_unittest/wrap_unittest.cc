@@ -1,11 +1,12 @@
 #include <memory>
-#include "editor/text_buffer.h"
-#include "editor/wrap.h"
-#include "editor/text_extent.h"
-#include "base/compiler_specific.h"
+
 #include "gtest/gtest.h"
 
-using namespace jil::editor;
+#include "editor/text_buffer.h"
+#include "editor/text_extent.h"
+#include "editor/wrap.h"
+
+using namespace editor;
 
 static const int kCharWidth = 9;
 /*

@@ -1,4 +1,5 @@
 #include "jil/pref/common.h"
+
 #include "wx/combobox.h"
 #include "wx/sizer.h"
 #include "wx/statline.h"
@@ -31,7 +32,8 @@ int ValidateInt(int i, int min, int max) {
   return i;
 }
 
-wxStaticText* CreateStaticText(wxWindow* parent, const wxString& label, bool bold) {
+wxStaticText* CreateStaticText(wxWindow* parent, const wxString& label,
+                               bool bold) {
   wxStaticText* static_text = new wxStaticText(parent, wxID_ANY, label);
   if (bold) {
     static_text->SetFont(static_text->GetFont().Bold());
@@ -50,14 +52,14 @@ wxSizer* CreateSeparator(wxWindow* parent, const wxString& label, bool bold) {
 }
 
 wxComboBox* CreateReadonlyComboBox(wxWindow* parent, wxWindowID id) {
-  return new wxComboBox(parent, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, wxCB_READONLY);
+  return new wxComboBox(parent, id, wxEmptyString, wxDefaultPosition,
+                        wxDefaultSize, 0, NULL, wxCB_READONLY);
 }
 
-wxTextCtrl* CreateTextCtrl(wxWindow* parent,
-                           wxWindowID id,
-                           const wxSize& size,
+wxTextCtrl* CreateTextCtrl(wxWindow* parent, wxWindowID id, const wxSize& size,
                            const wxValidator& validator) {
-  return new wxTextCtrl(parent, id, wxEmptyString, wxDefaultPosition, size, 0, validator);
+  return new wxTextCtrl(parent, id, wxEmptyString, wxDefaultPosition, size,
+                        0, validator);
 }
 
 }  // namespace pref
