@@ -1,7 +1,7 @@
 #include "ui/util.h"
+
 #include "wx/dc.h"
 
-namespace jil {
 namespace ui {
 
 const wxString kEllipsis = wxT("...");
@@ -51,4 +51,3 @@ wxSize GetBitmapSize(const wxBitmap& bitmap) {
 }
 
 }  // namespace ui
-}  // namespace jil

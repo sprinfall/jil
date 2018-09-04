@@ -1,13 +1,12 @@
-#ifndef JIL_EDITOR_WRAP_H_
-#define JIL_EDITOR_WRAP_H_
-#pragma once
+#ifndef EDITOR_WRAP_H_
+#define EDITOR_WRAP_H_
 
+#include <deque>
 #include <string>
 #include <vector>
-#include <deque>
+
 #include "editor/text_range.h"
 
-namespace jil {
 namespace editor {
 
 class TextBuffer;
@@ -255,6 +254,5 @@ private:
 };
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_WRAP_H_
+#endif  // EDITOR_WRAP_H_

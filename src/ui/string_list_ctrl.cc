@@ -1,16 +1,16 @@
 #include "ui/string_list_ctrl.h"
+
 #include "wx/dcbuffer.h"
 #include "wx/listctrl.h"
 #include "wx/settings.h"
 
-namespace jil {
 namespace ui {
 
 BEGIN_EVENT_TABLE(StringListCtrl, wxScrolledWindow)
-EVT_PAINT       (StringListCtrl::OnPaint)
-EVT_LEFT_DOWN   (StringListCtrl::OnMouseLeftDown)
-EVT_SET_FOCUS   (StringListCtrl::OnFocusChange)
-EVT_KILL_FOCUS  (StringListCtrl::OnFocusChange)
+EVT_PAINT(StringListCtrl::OnPaint)
+EVT_LEFT_DOWN(StringListCtrl::OnMouseLeftDown)
+EVT_SET_FOCUS(StringListCtrl::OnFocusChange)
+EVT_KILL_FOCUS(StringListCtrl::OnFocusChange)
 END_EVENT_TABLE()
 
 StringListCtrl::StringListCtrl()
@@ -21,7 +21,8 @@ StringListCtrl::StringListCtrl()
 StringListCtrl::~StringListCtrl() {
 }
 
-bool StringListCtrl::Create(wxWindow* parent, wxWindowID id, const wxSize& size, long style) {
+bool StringListCtrl::Create(wxWindow* parent, wxWindowID id, const wxSize& size,
+                            long style) {
   if (!wxScrolledWindow::Create(parent, id, wxDefaultPosition, size, style)) {
     return false;
   }
@@ -73,8 +74,8 @@ void StringListCtrl::InitColors() {
   SetColor(COLOR_BG, wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOX));
   SetColor(COLOR_BG_HL, wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT));
   SetColor(COLOR_FG, wxSystemSettings::GetColour(wxSYS_COLOUR_LISTBOXTEXT));
-  SetColor(COLOR_FG_HL, wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT));
-  //SetColor(COLOR_BORDER, wxSystemSettings::GetColour(wxSYS_COLOUR_ACTIVEBORDER));
+  SetColor(COLOR_FG_HL,
+           wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT));
 }
 
 wxSize StringListCtrl::DoGetBestSize() const {
@@ -92,7 +93,6 @@ void StringListCtrl::OnPaint(wxPaintEvent& evt) {
   PrepareDC(dc);
 
   dc.SetTextForeground(GetColor(COLOR_FG));
-  //dc.SetPen(GetColor(COLOR_BORDER));
   dc.SetFont(GetFont());
 
   wxRect rect = GetClientRect();
@@ -110,7 +110,8 @@ void StringListCtrl::OnPaint(wxPaintEvent& evt) {
   }
 }
 
-void StringListCtrl::DrawSelectedRow(wxDC& dc, const wxRect& row_rect, const wxString& label) {
+void StringListCtrl::DrawSelectedRow(wxDC& dc, const wxRect& row_rect,
+                                     const wxString& label) {
   // Backup
   wxPen pen = dc.GetPen();
 
@@ -148,12 +149,12 @@ void StringListCtrl::OnMouseLeftDown(wxMouseEvent& evt) {
 
     if (old_selected_index != wxNOT_FOUND) {
       PostEvent(old_selected_index, false);
-      //RefreshRow(old_selected_index);
+      // RefreshRow(old_selected_index);
     }
 
     if (selected_index_ != wxNOT_FOUND) {
       PostEvent(selected_index_, true);
-      //RefreshRow(selected_index_);
+      // RefreshRow(selected_index_);
     }
   }
 }
@@ -167,7 +168,8 @@ void StringListCtrl::OnFocusChange(wxFocusEvent& evt) {
 }
 
 void StringListCtrl::PostEvent(int index, bool select) {
-  wxEventType evt_type = select ? wxEVT_LIST_ITEM_SELECTED : wxEVT_LIST_ITEM_DESELECTED;
+  wxEventType evt_type =
+      select ? wxEVT_LIST_ITEM_SELECTED : wxEVT_LIST_ITEM_DESELECTED;
   wxListEvent evt(evt_type, GetId());
   evt.SetEventObject(this);
   evt.m_itemIndex = index;
@@ -175,4 +177,3 @@ void StringListCtrl::PostEvent(int index, bool select) {
 }
 
 }  // namespace ui
-}  // namespace jil

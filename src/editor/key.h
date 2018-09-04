@@ -1,12 +1,12 @@
-#ifndef JIL_EDITOR_KEY_H_
-#define JIL_EDITOR_KEY_H_
-#pragma once
+#ifndef EDITOR_KEY_H_
+#define EDITOR_KEY_H_
 
 #include <string>
+
 #include "wx/string.h"
+
 #include "editor/compile_config.h"
 
-namespace jil {
 namespace editor {
 
 // Jil determines key strokes based on key down event instead of char event.
@@ -29,12 +29,13 @@ public:
   Key() : data_(0) {
   }
 
-  Key(int code, int modifiers = wxMOD_NONE) {
+  explicit Key(int code, int modifiers = wxMOD_NONE) {
     Set(code, modifiers);
   }
 
 #if JIL_ENABLE_LEADER_KEY
-  Key(int leader_code, int leader_modifiers, int code, int modifiers = wxMOD_NONE) {
+  Key(int leader_code, int leader_modifiers, int code,
+      int modifiers = wxMOD_NONE) {
     Set(leader_code, leader_modifiers, code, modifiers);
   }
 #endif  // JIL_ENABLE_LEADER_KEY
@@ -64,7 +65,8 @@ public:
   }
 
 #if JIL_ENABLE_LEADER_KEY
-  void Set(int leader_code, int leader_modifiers, int code, int modifiers = wxMOD_NONE) {
+  void Set(int leader_code, int leader_modifiers, int code,
+           int modifiers = wxMOD_NONE) {
     data_ = Make(code, modifiers) | (Make(leader_code, leader_modifiers) << 16);
   }
 #endif  // JIL_ENABLE_LEADER_KEY
@@ -106,6 +108,5 @@ inline bool operator>(Key lhs, Key rhs) {
 }
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_KEY_H_
+#endif  // EDITOR_KEY_H_

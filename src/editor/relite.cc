@@ -1,12 +1,12 @@
 #include "editor/relite.h"
+
 #include <cassert>
 #include <cwctype>
+
 #include "editor/defs.h"
 #include "editor/util.h"
 
-namespace jil {
 namespace editor {
-
 namespace relite {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -36,7 +36,8 @@ static Repeat RepeatFromChar(wchar_t c) {
 static const std::wstring kDelimiters = L"!\"#$%&'()*+,-./:;<=>?@[\\]^`{|}~";
 
 // NOTE:
-// According to test, std::wstring.find() is much faster than std::binary_search.
+// According to test, std::wstring.find() is much faster than
+// std::binary_search.
 static bool IsDelimiter(wchar_t c) {
   if (IsSpace(c)) {
     return true;
@@ -46,7 +47,8 @@ static bool IsDelimiter(wchar_t c) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-size_t Atom::Match(const std::wstring& str, size_t off, bool ignore_case) const {
+size_t Atom::Match(const std::wstring& str, size_t off,
+                   bool ignore_case) const {
   size_t m = 0;
   size_t i = off;
 
@@ -125,7 +127,8 @@ bool Atom::MatchChar(wchar_t c, bool ignore_case) const {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-size_t Word::Match(const std::wstring& str, size_t off, bool ignore_case) const {
+size_t Word::Match(const std::wstring& str, size_t off,
+                   bool ignore_case) const {
   WcsNCmp cmp = ignore_case ? wcsnicmp : wcsncmp;
   if (SubStringEquals(str, off, text_, cmp)) {
     return off + text_.size();
@@ -147,7 +150,8 @@ Regex::~Regex() {
   nodes_.clear();
 }
 
-size_t Regex::Match(const std::wstring& str, size_t off, Sub* subs, size_t subs_count) const {
+size_t Regex::Match(const std::wstring& str, size_t off, Sub* subs,
+                    size_t subs_count) const {
   bool ignore_case = (flags_ & kIgnoreCase) != 0;
 
   size_t i = off;
@@ -404,4 +408,3 @@ void Regex::CompileWord(std::wstring& word) {
 }  // namespace relite
 
 }  // namespace editor
-}  // namespace jil

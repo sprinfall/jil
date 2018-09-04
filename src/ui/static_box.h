@@ -1,12 +1,10 @@
-#ifndef JIL_UI_STATIC_BOX_H_
-#define JIL_UI_STATIC_BOX_H_
-#pragma once
+#ifndef UI_STATIC_BOX_H_
+#define UI_STATIC_BOX_H_
 
 // A replacement of wxStaticBox.
 
 #include "wx/panel.h"
 
-namespace jil {
 namespace ui {
 
 class StaticBox : public wxPanel {
@@ -32,6 +30,5 @@ private:
 };
 
 }  // namespace ui
-}  // namespace jil
 
-#endif  // JIL_UI_STATIC_BOX_H_
+#endif  // UI_STATIC_BOX_H_

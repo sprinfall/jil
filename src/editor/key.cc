@@ -1,7 +1,7 @@
 #include "editor/key.h"
+
 #include "wx/accel.h"
 
-namespace jil {
 namespace editor {
 
 const std::string kShiftChars = "~!@#$%^&*()_+<>?:\"{}|";
@@ -73,7 +73,8 @@ wxString KeyCodeName(int key_code) {
   }
 }
 
-static wxString& AddKeyPart(wxString& str, const wxString& part, const wxString& sep = wxT("+")) {
+static wxString& AddKeyPart(wxString& str, const wxString& part,
+                            const wxString& sep = wxT("+")) {
   if (!str.empty()) {
     str += sep;
   }
@@ -182,4 +183,3 @@ wxString Key::ToString() const {
 }
 
 }  // namespace editor
-}  // namespace jil

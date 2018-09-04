@@ -1,11 +1,11 @@
 #include "editor/lex.h"
+
 #include "editor/util.h"
 
 #if JIL_LEX_USE_RELITE
 #include "editor/relite.h"
 #endif  // JIL_LEX_USE_RELITE
 
-namespace jil {
 namespace editor {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -64,7 +64,8 @@ RegexQuote::~RegexQuote() {
   ClearContainer(&quotes_);
 }
 
-size_t RegexQuote::MatchStart(const std::wstring& str, size_t off, std::wstring* concrete_end) const {
+size_t RegexQuote::MatchStart(const std::wstring& str, size_t off,
+                              std::wstring* concrete_end) const {
   // NOTE: For back reference in the quote end, only "\1" is supported.
   size_t br_pos = end_.find(L"\\1");
 
@@ -96,8 +97,9 @@ size_t RegexQuote::MatchStart(const std::wstring& str, size_t off, std::wstring*
   // NOTE (20140718): Using member variable doesn't improve performance.
   MatchResult m;
 
-  std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
-  bool result = std::regex_search(str.begin() + off, str.end(), m, *start_re_, flags);
+  auto flags = std::regex_constants::match_default;
+  bool result = std::regex_search(str.begin() + off, str.end(), m, *start_re_,
+                                  flags);
   if (!result) {
     return off;
   }
@@ -160,6 +162,7 @@ size_t Regex::Match(const std::wstring& str, size_t off) const {
   assert(off < str.length());
 
 #if JIL_LEX_USE_RELITE
+
   if (!re_->valid()) {
     return off;
   }
@@ -168,8 +171,9 @@ size_t Regex::Match(const std::wstring& str, size_t off) const {
   return match_off;
 
 #else
+
   std::match_results<std::wstring::const_iterator> m;
-  std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
+  auto flags = std::regex_constants::match_default;
 
   bool result = std::regex_search(str.begin() + off, str.end(), m, *re_, flags);
   if (!result) {
@@ -187,4 +191,3 @@ size_t Regex::Match(const std::wstring& str, size_t off) const {
 }
 
 }  // namespace editor
-}  // namespace jil

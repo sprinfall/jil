@@ -1,31 +1,29 @@
-#ifndef JIL_EDITOR_TEXT_BUFFER_H_
-#define JIL_EDITOR_TEXT_BUFFER_H_
-#pragma once
+#ifndef EDITOR_TEXT_BUFFER_H_
+#define EDITOR_TEXT_BUFFER_H_
 
-#include <string>
-#include <vector>
+#include <deque>
 #include <list>
 #include <map>
-#include <deque>
+#include <string>
+#include <vector>
 
 #include "wx/datetime.h"
-#include "wx/string.h"
 #include "wx/filename.h"
 #include "wx/fontenc.h"
+#include "wx/string.h"
 
 #include "editor/compile_config.h"
 #include "editor/defs.h"
 #include "editor/option.h"
 #include "editor/text_line.h"
 #include "editor/text_listener.h"
-#include "editor/text_range.h"
 #include "editor/text_point.h"
+#include "editor/text_range.h"
 
 // Note about wrap:
 // Wrap is an operation of the view instead of the model,
 // because wrap needs to know the text client width.
 
-namespace jil {
 namespace editor {
 
 class Action;
@@ -259,7 +257,8 @@ public:
 
   TextPoint InsertString(const TextPoint& point, const std::wstring& str);
 
-  void DeleteString(const TextPoint& point, Coord count, std::wstring* str = NULL);
+  void DeleteString(const TextPoint& point, Coord count,
+                    std::wstring* str = NULL);
 
   // The new line will be with the given line number.
   void InsertLine(Coord ln, const std::wstring& line_data = L"");
@@ -273,7 +272,6 @@ public:
   TextPoint InsertRectText(const TextPoint& point, const std::wstring& text);
 
   // Delete the text in the given range.
-  // NOTE: Use 
   void DeleteText(const TextRange& range, std::wstring* text = NULL);
 
   void DeleteRectText(const TextRange& range, std::wstring* text = NULL);
@@ -366,7 +364,6 @@ public:
   //----------------------------------------------------------------------------
   // Bracket and key pairs: (), {}, [], <>, begin/end, etc.
 
-  // TODO
   // The char at the given point should be one of (){}[]<>.
   // If the char at the given point is:
   // - (, find ) forward
@@ -374,7 +371,8 @@ public:
   // - etc.
   // Return invalid point if no match is found or the char at the given point
   // is not a bracket.
-  //TextPoint MatchBracket(const TextPoint& point) const;
+  // TODO
+  // TextPoint MatchBracket(const TextPoint& point) const;
 
   // Get the outer bracket pair range around the given point.
   // Example:
@@ -422,12 +420,14 @@ public:
   // Examples:
   //   UnpairedRightKey(point, L'{', L'}')
   //   UnpairedRightKey(point, L'(', L')')
-  TextPoint UnpairedRightKey(const TextPoint& point, wchar_t l_key, wchar_t r_key) const;
+  TextPoint UnpairedRightKey(const TextPoint& point, wchar_t l_key,
+                             wchar_t r_key) const;
 
   //----------------------------------------------------------------------------
   // Seek
 
-  TextPoint Seek(const TextPoint& point, TextUnit text_unit, SeekType seek_type);
+  TextPoint Seek(const TextPoint& point, TextUnit text_unit,
+                 SeekType seek_type);
 
   //----------------------------------------------------------------------------
   // Action operations, undo/redo.
@@ -534,7 +534,8 @@ private:
 
   TextRange FindRegex(const std::wregex& re, const TextRange& range) const;
 
-  TextRange FindRegexReversely(const std::wregex& re, const TextRange& range) const;
+  TextRange FindRegexReversely(const std::wregex& re,
+                               const TextRange& range) const;
 
   // Find all occurrences of a plain string in the given range.
   void FindPlainStringAll(const std::wstring& str,
@@ -650,7 +651,8 @@ private:
   Coord WordBegin(const TextPoint& point, bool include_space);
   Coord WordEnd(const TextPoint& point, bool include_space);
 
-  void SplitWords(const std::wstring& line_data, bool include_space, std::vector<std::wstring>* words);
+  void SplitWords(const std::wstring& line_data, bool include_space,
+                  std::vector<std::wstring>* words);
 
   //----------------------------------------------------------------------------
   // Undo / Redo
@@ -670,7 +672,8 @@ private:
   // undo more practical.
   void MergeInsertCharActions();
 
-  bool MergeDeleteActions(const wxDateTime& now, DeleteAction* delete_action, Action* prev_action);
+  bool MergeDeleteActions(const wxDateTime& now, DeleteAction* delete_action,
+                          Action* prev_action);
 
   //----------------------------------------------------------------------------
   // Lex
@@ -678,7 +681,7 @@ private:
   // Scan lex for the given line.
   // \param quote As input, it's the previous unclosed quote; as output, it's
   //   the unclosed quote after scan lex for this line.
-  void ScanLex(TextLine* line, Quote*& quote);
+  void ScanLex(TextLine* line, Quote*& quote);  // NOLINT
 
   // Scan lex from a given line with the optional previous unclosed quote.
   void ScanLex(Coord start_ln, Quote* quote);
@@ -801,6 +804,5 @@ private:
 };
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_TEXT_BUFFER_H_
+#endif  // EDITOR_TEXT_BUFFER_H_

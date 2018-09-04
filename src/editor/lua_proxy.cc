@@ -5,7 +5,6 @@
 #include "editor/text_buffer.h"
 #include "editor/text_line.h"
 
-namespace jil {
 namespace editor {
 
 void InitLua(lua_State* lua_state) {
@@ -90,4 +89,3 @@ luabridge::LuaRef GetLuaValue(lua_State* lua_state, const char* ns, const char* 
 }
 
 }  // namespace editor
-}  // namespace jil

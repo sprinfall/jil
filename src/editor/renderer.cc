@@ -1,11 +1,14 @@
 #include "editor/renderer.h"
+
 #include <algorithm>  // std::min
+
 #ifdef __WXMSW__
+// Must be included before "wx/dc.h"!
 #include "wx/msw/private.h"
 #endif  // __WXMSW__
+
 #include "wx/dc.h"
 
-namespace jil {
 namespace editor {
 
 Renderer::Renderer(wxDC* dc) : dc_(dc) {
@@ -57,7 +60,8 @@ void Renderer::SetStyle(const wxBrush& brush, const wxPen& pen, bool backup) {
   SetPen(pen, backup);
 }
 
-void Renderer::SetStyle(const wxColour& brush_color, const wxColour& pen_color, bool backup) {
+void Renderer::SetStyle(const wxColour& brush_color, const wxColour& pen_color,
+                        bool backup) {
   if (brush_color.IsOk()) {
     SetBrush(wxBrush(brush_color), backup);
   } else {
@@ -97,7 +101,8 @@ void Renderer::RestoreStyle() {
   dc_->SetPen(pen_);
 }
 
-void Renderer::DrawText(const std::wstring& text, Coord off, Coord len, int x, int y, int* w) {
+void Renderer::DrawText(const std::wstring& text, Coord off, Coord len,
+                        int x, int y, int* w) {
   assert(len > 0);
 
 #ifdef __WXMSW__
@@ -188,4 +193,3 @@ void Renderer::UpdateCharSize() {
 }
 
 }  // namespace editor
-}  // namespace jil

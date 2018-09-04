@@ -1,6 +1,6 @@
 #include "indent_unittest/indent_test_base.h"
 
-using namespace jil::editor;
+using namespace editor;
 
 class IndentTest_C : public IndentTestBase {
 public:

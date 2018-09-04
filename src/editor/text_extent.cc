@@ -10,7 +10,6 @@
 #include "editor/tab.h"
 #include "editor/text_line.h"
 
-namespace jil {
 namespace editor {
 
 TextExtent::TextExtent() : dc_(NULL) {
@@ -171,4 +170,3 @@ Coord TextExtent::IndexCharRecursively(int tab_stop,
 }
 
 }  // namespace editor
-}  // namespace jil

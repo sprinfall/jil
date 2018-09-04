@@ -1,6 +1,5 @@
 #include "ui/button_style.h"
 
-namespace jil {
 namespace ui {
 
 void ButtonStyle::Fix() {
@@ -15,4 +14,3 @@ void ButtonStyle::Fix() {
 }
 
 }  // namespace ui
-}  // namespace jil

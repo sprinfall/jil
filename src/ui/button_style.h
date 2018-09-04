@@ -1,12 +1,10 @@
-#ifndef JIL_UI_BUTTON_STYLE_H_
-#define JIL_UI_BUTTON_STYLE_H_
-#pragma once
+#ifndef UI_BUTTON_STYLE_H_
+#define UI_BUTTON_STYLE_H_
 
 #include <memory>
 
 #include "wx/colour.h"
 
-namespace jil {
 namespace ui {
 
 class ButtonStyle {
@@ -49,6 +47,5 @@ private:
 typedef std::shared_ptr<ButtonStyle> SharedButtonStyle;
 
 }  // namespace ui
-}  // namespace jil
 
-#endif  // JIL_UI_BUTTON_STYLE_H_
+#endif  // UI_BUTTON_STYLE_H_

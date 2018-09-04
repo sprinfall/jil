@@ -1,17 +1,17 @@
-#ifndef JIL_EDITOR_TEXT_EXTENT_H_
-#define JIL_EDITOR_TEXT_EXTENT_H_
-#pragma once
+#ifndef EDITOR_TEXT_EXTENT_H_
+#define EDITOR_TEXT_EXTENT_H_
 
 #include <string>
+
 #include "wx/defs.h"
 #include "wx/gdicmn.h"
 #include "wx/string.h"
+
 #include "editor/text_point.h"
 
 class wxFont;
 class wxMemoryDC;
 
-namespace jil {
 namespace editor {
 
 class TextLine;
@@ -74,6 +74,5 @@ private:
 };
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_TEXT_EXTENT_H_
+#endif  // EDITOR_TEXT_EXTENT_H_

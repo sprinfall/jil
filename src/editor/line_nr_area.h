@@ -1,12 +1,10 @@
-#ifndef JIL_EDITOR_LINE_NR_AREA_H_
-#define JIL_EDITOR_LINE_NR_AREA_H_
-#pragma once
+#ifndef EDITOR_LINE_NR_AREA_H_
+#define EDITOR_LINE_NR_AREA_H_
 
 // Line number area displays the line numbers, fold marks, etc.
 
 #include "wx/panel.h"
 
-namespace jil {
 namespace editor {
 
 class TextWindow;
@@ -23,7 +21,7 @@ public:
 
   // Override to accept no focus.
   // Text area should always be focused.
-  virtual bool AcceptsFocus() const override {
+  bool AcceptsFocus() const override {
     return false;
   }
 
@@ -38,6 +36,5 @@ private:
 };
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_LINE_NR_AREA_H_
+#endif  // EDITOR_LINE_NR_AREA_H_

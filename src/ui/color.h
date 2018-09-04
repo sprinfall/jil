@@ -1,10 +1,8 @@
-#ifndef JIL_UI_COLOR_H_
-#define JIL_UI_COLOR_H_
-#pragma once
+#ifndef UI_COLOR_H_
+#define UI_COLOR_H_
 
 #include "wx/colour.h"
 
-namespace jil {
 namespace ui {
 
 struct Color {
@@ -89,6 +87,5 @@ wxColour IncColor(const wxColour& from, unsigned char delta);
 wxColour DecColor(const wxColour& from, unsigned char delta);
 
 }  // namespace ui
-}  // namespace jil
 
-#endif  // JIL_UI_COLOR_H_
+#endif  // UI_COLOR_H_

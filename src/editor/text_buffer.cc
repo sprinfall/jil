@@ -1,17 +1,23 @@
 #include "editor/text_buffer.h"
+
 #include <cassert>
 #include <regex>
 #include <utility>
+
 #include "boost/algorithm/string.hpp"
+
 #include "uchardet/nscore.h"
 #include "uchardet/nsUniversalDetector.h"
-#include "wx/log.h"
+
 #include "wx/filesys.h"
+#include "wx/log.h"
+
 #include "base/string_util.h"
+
 #include "editor/action.h"
 #include "editor/compile_config.h"
-#include "editor/ft_plugin.h"
 #include "editor/file_io.h"
+#include "editor/ft_plugin.h"
 #include "editor/lex.h"
 #include "editor/util.h"
 
@@ -21,7 +27,6 @@
 #define JIL_TEST_TIME_SET_TEXT 0
 #define JIL_TEST_TIME_SCAN_LEX 0
 
-namespace jil {
 namespace editor {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -35,12 +40,14 @@ static bool IsBracketL(wchar_t c) {
          c == L'<';
 }
 
-//static bool IsBracketR(wchar_t c) {
-//  return c == L')' ||
-//         c == L'}' ||
-//         c == L']' ||
-//         c == L'>';
-//}
+#if 0
+static bool IsBracketR(wchar_t c) {
+  return c == L')' ||
+    c == L'}' ||
+    c == L']' ||
+    c == L'>';
+}
+#endif  // 0
 
 static Bracket BracketL(wchar_t c) {
   switch (c) {
@@ -155,7 +162,8 @@ while (SplitLines(text, i, &count, &step)) {
   i += step;
 }
 */
-static bool SplitLines(const std::wstring& text, size_t i, size_t* count, size_t* step) {
+static bool SplitLines(const std::wstring& text, size_t i, size_t* count,
+                       size_t* step) {
   const size_t text_size = text.size();
   if (i >= text_size) {
     return false;
@@ -185,7 +193,8 @@ static bool SplitLines(const std::wstring& text, size_t i, size_t* count, size_t
 
 // If wxWidgets pre-defines the conv, reuse it and don't delete it. E.g., reuse
 // wxConvISO8859_1 instead of "new wxCSConv(wxFONTENCODING_ISO8859_1)".
-static wxMBConv* GetCsConv(const Encoding& encoding, const char** bom, bool* need_delete) {
+static wxMBConv* GetCsConv(const Encoding& encoding, const char** bom,
+                           bool* need_delete) {
   *need_delete = true;
   wxMBConv* conv = NULL;
 
@@ -239,7 +248,7 @@ public:
   bool PureAscii() const { return mInputState == ePureAscii; }
 
 protected:
-  virtual void Report(const char* charset) override {
+  void Report(const char* charset) override {
     charset_ = charset;
     boost::algorithm::to_lower(charset_);
   }
@@ -248,7 +257,8 @@ private:
   std::string charset_;
 };
 
-// Read the bytes from a file, detect the encoding, then convert to std::wstring.
+// Read the bytes from a file, detect the encoding, then convert to
+// std::wstring.
 static FileError ReadFile(const wxString& file_path,
                           int cjk_filters,
                           std::wstring* text,
@@ -302,7 +312,8 @@ static FileError ReadFile(const wxString& file_path,
   }
 
   // Get the size in wchar_t.
-  size_t wlen = conv->ToWChar(NULL, 0, bytes.c_str() + bom_size, bytes.size() - bom_size);
+  size_t wlen = conv->ToWChar(NULL, 0, bytes.c_str() + bom_size,
+                              bytes.size() - bom_size);
 
   if (wlen == wxCONV_FAILED) {
     if (conv_need_delete) {
@@ -314,7 +325,8 @@ static FileError ReadFile(const wxString& file_path,
 
   if (wlen > 0) {
     text->resize(wlen);
-    conv->ToWChar(&(*text)[0], wlen, bytes.c_str() + bom_size, bytes.size() - bom_size);
+    conv->ToWChar(&(*text)[0], wlen, bytes.c_str() + bom_size,
+                  bytes.size() - bom_size);
     if ((*text)[wlen - 1] == L'\0') {
       text->erase(wlen - 1);
     }
@@ -330,12 +342,12 @@ static FileError ReadFile(const wxString& file_path,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-TextBuffer::TextBuffer(size_t id, FtPlugin* ft_plugin, const Encoding& file_encoding)
+TextBuffer::TextBuffer(size_t id, FtPlugin* ft_plugin,
+                       const Encoding& file_encoding)
     : id_(id)
     , ft_plugin_(ft_plugin)
     , options_(ft_plugin->options())
     , file_encoding_(file_encoding) {
-
   Init();
 
   // A new file has an empty line.
@@ -368,7 +380,7 @@ bool TextBuffer::LoadFile(const wxFileName& fn, int cjk_filters) {
   SetText(text, false);  // TODO: notify
 
   // TODO: notify
-  file_encoding_ = encoding;  
+  file_encoding_ = encoding;
   file_name_object_ = fn;
 
   return true;
@@ -400,7 +412,8 @@ FileError TextBuffer::SaveFile() {
     size_t count = conv->FromWChar(NULL, 0, text.c_str(), text.size());
     if (count == wxCONV_FAILED) {
       // Can't save in original encoding.
-      // Example: Original encoding is ASCII, but non-ASCII characters are added.
+      // Example: Original encoding is ASCII, but non-ASCII characters are
+      // added.
       // Save in UTF-8 instead.
       if (conv_need_delete) {
         delete conv;
@@ -578,7 +591,8 @@ OptionValue TextBuffer::GetIndentOption(const std::string& key) const {
   return OptionValue();
 }
 
-void TextBuffer::SetIndentOption(const std::string& key, const OptionValue& value) {
+void TextBuffer::SetIndentOption(const std::string& key,
+                                 const OptionValue& value) {
   OptionTable& indent_options = options_.text.indent_options;
   for (size_t i = 0; i < indent_options.size(); ++i) {
     if (key == indent_options[i].key) {
@@ -692,7 +706,8 @@ bool TextBuffer::IsLineEmpty(Coord ln, bool ignore_spaces) const {
   return Line(ln)->IsEmpty(ignore_spaces);
 }
 
-bool TextBuffer::AreLinesAllEmpty(const LineRange& line_range, bool ignore_spaces) const {
+bool TextBuffer::AreLinesAllEmpty(const LineRange& line_range,
+                                  bool ignore_spaces) const {
   for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
     if (!IsLineEmpty(ln, ignore_spaces)) {
       return false;
@@ -719,7 +734,8 @@ void TextBuffer::GetText(const TextRange& range, std::wstring* text) const {
   const TextPoint& point_end = range.point_end();
 
   if (point_begin.y == point_end.y) {
-    *text = Line(point_begin.y)->Sub(point_begin.x, point_end.x - point_begin.x);
+    *text = Line(point_begin.y)->Sub(point_begin.x,
+                                     point_end.x - point_begin.x);
     return;
   }
 
@@ -971,7 +987,8 @@ void TextBuffer::DeleteChar(const TextPoint& point, wchar_t* c) {
   }
 }
 
-TextPoint TextBuffer::InsertString(const TextPoint& point, const std::wstring& str) {
+TextPoint TextBuffer::InsertString(const TextPoint& point,
+                                   const std::wstring& str) {
   TextLine* line = Line(point.y);
 
   RemoveLineLength(line);
@@ -983,7 +1000,8 @@ TextPoint TextBuffer::InsertString(const TextPoint& point, const std::wstring& s
   return TextPoint(point.x + str.size(), point.y);
 }
 
-void TextBuffer::DeleteString(const TextPoint& point, Coord count, std::wstring* str) {
+void TextBuffer::DeleteString(const TextPoint& point, Coord count,
+ std::wstring* str) {
   TextLine* line = Line(point.y);
 
   RemoveLineLength(line);
@@ -1037,7 +1055,8 @@ void TextBuffer::DeleteLine(Coord ln, std::wstring* line_data) {
   }
 }
 
-TextPoint TextBuffer::InsertText(const TextPoint& point, const std::wstring& text) {
+TextPoint TextBuffer::InsertText(const TextPoint& point,
+                                 const std::wstring& text) {
   bool need_scan_lex = scan_lex_;
   if (need_scan_lex) {
     scan_lex_ = false;
@@ -1076,7 +1095,8 @@ TextPoint TextBuffer::InsertText(const TextPoint& point, const std::wstring& tex
   if (need_notify) {
     ThawNotify();
 
-    // NOTE: Notify LineAdded first so that wrap infos can be updated before LineUpdated.
+    // Notify |LineAdded| first so that wrap infos can be updated before
+    // |LineUpdated|.
     if (line_count > 0) {
       Notify(kLineAdded, LineChangeData(point.y + 1, point.y + line_count));
     }
@@ -1086,7 +1106,8 @@ TextPoint TextBuffer::InsertText(const TextPoint& point, const std::wstring& tex
   return insert_point;
 }
 
-TextPoint TextBuffer::InsertRectText(const TextPoint& point, const std::wstring& text) {
+TextPoint TextBuffer::InsertRectText(const TextPoint& point,
+                                     const std::wstring& text) {
   bool need_scan_lex = scan_lex_;
   if (need_scan_lex) {
     scan_lex_ = false;
@@ -1186,15 +1207,18 @@ void TextBuffer::DeleteText(const TextRange& range, std::wstring* text) {
   if (need_scan_lex) {
     scan_lex_ = true;
 
-    ScanLexOnLineDeleted(LineRange(range.line_first() + 1, range.point_end().y));
+    ScanLexOnLineDeleted(LineRange(range.line_first() + 1,
+                                   range.point_end().y));
     ScanLexOnLineUpdated(LineRange(range.line_first()));
   }
 
   if (need_notify) {
     ThawNotify();
 
-    // NOTE: Notify LineDeleted first so that wrap infos can be updated before LineUpdated.
-    Notify(kLineDeleted, LineChangeData(range.line_first() + 1, range.point_end().y));
+    // Notify |LineDeleted| first so that wrap infos can be updated before
+    // |LineUpdated|.
+    Notify(kLineDeleted, LineChangeData(range.line_first() + 1,
+                                        range.point_end().y));
     Notify(kLineUpdated, LineChangeData(range.line_first()));
   }
 }
@@ -1248,7 +1272,8 @@ void TextBuffer::DeleteRectText(const TextRange& range, std::wstring* text) {
   }
 }
 
-void TextBuffer::HandleLineChange(LineChangeType type, Coord first_ln, Coord last_ln) {
+void TextBuffer::HandleLineChange(LineChangeType type, Coord first_ln,
+                                  Coord last_ln) {
   if (scan_lex_ && ft_plugin_->IsLexAvailable()) {
     if (type == kLineUpdated) {
       ScanLexOnLineUpdated(LineRange(first_ln, last_ln));
@@ -1360,19 +1385,14 @@ void TextBuffer::ReplaceStringAll(const std::wstring& str,
 // Listener
 
 void TextBuffer::AttachListener(TextListener* listener) {
-  if (std::find(listeners_.begin(), listeners_.end(), listener) == listeners_.end()) {
+  if (std::find(listeners_.begin(), listeners_.end(), listener) ==
+      listeners_.end()) {
     listeners_.push_back(listener);
   }
 }
 
-// NOTE:
-// The following std::remove doesn't work:
-//   std::remove(listeners_.begin(), listeners_.end(), listener);
-// You should do it like this:
-//   listeners_.erase(std::remove(listeners_.begin(), listeners_.end(), listener), listeners_.end());
-// See: http://en.cppreference.com/w/cpp/algorithm/remove
 void TextBuffer::DetachListener(TextListener* listener) {
-  Listeners::iterator it = std::find(listeners_.begin(), listeners_.end(), listener);
+  auto it = std::find(listeners_.begin(), listeners_.end(), listener);
   if (it != listeners_.end()) {
     listeners_.erase(it);
   }
@@ -1442,40 +1462,42 @@ Coord TextBuffer::GetExpectedIndent(Coord ln) const {
 
 //------------------------------------------------------------------------------
 
+#if 0
 // TODO
-//TextPoint TextBuffer::MatchBracket(const TextPoint& point) const {
-//  const TextLine* line = Line(point.y);
-//  Bracket bracket = BracketL(line->Char(point.x));
-//  if (bracket != kNoBracket) {  // ( { [ <
-//    return UnmatchedBracketR(point, bracket);
-//  } else {
-//    bracket = BracketR(line->Char(point.x));
-//    if (bracket != kNoBracket) {  // ) } ] >
-//    }
-//  }
-//  /*
-//  TextPoint open_point = point;
-//
-//  const std::wstring& line_data = LineData(point.y);
-//  Coord x = point.x - 1;
-//  for (; x >= 0; --x) {
-//    if (line_data[x] == open) {
-//      return TextPoint(x, point.y);
-//    }
-//  }
-//
-//  for (Coord y = point.y - 1; y > 0; --y) {
-//    const std::wstring& line_data = LineData(y);
-//    Coord x = LineLength(y) - 1;
-//    for (; x >= 0; --x) {
-//      if (line_data[x] == open) {
-//        return TextPoint(x, y);
-//      }
-//    }
-//  }*/
-//
-//  return kInvPoint;
-//}
+TextPoint TextBuffer::MatchBracket(const TextPoint& point) const {
+  const TextLine* line = Line(point.y);
+  Bracket bracket = BracketL(line->Char(point.x));
+  if (bracket != kNoBracket) {  // ( { [ <
+    return UnmatchedBracketR(point, bracket);
+  } else {
+    bracket = BracketR(line->Char(point.x));
+    if (bracket != kNoBracket) {  // ) } ] >
+    }
+  }
+  /*
+  TextPoint open_point = point;
+
+  const std::wstring& line_data = LineData(point.y);
+  Coord x = point.x - 1;
+  for (; x >= 0; --x) {
+    if (line_data[x] == open) {
+      return TextPoint(x, point.y);
+    }
+  }
+
+  for (Coord y = point.y - 1; y > 0; --y) {
+    const std::wstring& line_data = LineData(y);
+    Coord x = LineLength(y) - 1;
+    for (; x >= 0; --x) {
+      if (line_data[x] == open) {
+        return TextPoint(x, y);
+      }
+    }
+  }*/
+
+  return kInvPoint;
+}
+#endif  // 0
 
 TextRange TextBuffer::BracketPairOuterRange(const TextPoint& point) const {
   TextPoint point_l = UnmatchedBracketL(point);
@@ -1584,7 +1606,8 @@ TextPoint TextBuffer::UnpairedLeftKey(const TextPoint& point,
   const TextLine* line = Line(y);
 
   for (Coord x = point.x - 1; x >= 0; --x) {
-    if (line->Char(x) == r_key && line->GetLex(x).IsEmpty()) {  // Embedded pair.
+    if (line->Char(x) == r_key && line->GetLex(x).IsEmpty()) {
+      // Embedded pair.
       ++counter;
     } else if (line->Char(x) == l_key && line->GetLex(x).IsEmpty()) {
       if (counter == 0) {
@@ -1600,7 +1623,8 @@ TextPoint TextBuffer::UnpairedLeftKey(const TextPoint& point,
     for (--y; y > 0; --y) {
       const TextLine* line = Line(y);
       for (Coord x = line->Length() - 1; x >= 0; --x) {
-        if (line->Char(x) == r_key && line->GetLex(x).IsEmpty()) {  // Embedded pair.
+        if (line->Char(x) == r_key && line->GetLex(x).IsEmpty()) {
+          // Embedded pair.
           ++counter;
         } else if (line->Char(x) == l_key && line->GetLex(x).IsEmpty()) {
           if (counter == 0) {
@@ -1627,14 +1651,16 @@ TextPoint TextBuffer::Lua_UnpairedLeftKey(const TextPoint& point,
 }
 
 // TODO
-TextPoint TextBuffer::UnpairedRightKey(const TextPoint& point, wchar_t l_key, wchar_t r_key) const {
+TextPoint TextBuffer::UnpairedRightKey(const TextPoint& point, wchar_t l_key,
+                                       wchar_t r_key) const {
   return kInvPoint;
 }
 
 //----------------------------------------------------------------------------
 // Seek
 
-TextPoint TextBuffer::Seek(const TextPoint& point, TextUnit text_unit, SeekType seek_type) {
+TextPoint TextBuffer::Seek(const TextPoint& point, TextUnit text_unit,
+                           SeekType seek_type) {
   switch (text_unit) {
   case kChar:
     if (seek_type == kPrev) {
@@ -1894,7 +1920,6 @@ void TextBuffer::Init() {
   prev_delete_action_time_ = wxDateTime::UNow();
 
   ClearLineLength();
-
 }
 
 //------------------------------------------------------------------------------
@@ -2082,7 +2107,6 @@ TextRange TextBuffer::FindRegexString(const std::wstring& str,
   }
 
   try {
-    // NOTE: Throw std::regex_error if the supplied regular expression is not valid.
     std::wregex re(str, re_flags);
     if (reversely) {
       return FindRegexReversely(re, range);
@@ -2097,7 +2121,8 @@ TextRange TextBuffer::FindRegexString(const std::wstring& str,
   return TextRange();
 }
 
-TextRange TextBuffer::FindRegex(const std::wregex& re, const TextRange& range) const {
+TextRange TextBuffer::FindRegex(const std::wregex& re,
+                                const TextRange& range) const {
   const TextPoint& p_begin = range.point_begin();
   const TextPoint& p_end = range.point_end();
 
@@ -2130,7 +2155,8 @@ TextRange TextBuffer::FindRegex(const std::wregex& re, const TextRange& range) c
   return TextRange();
 }
 
-TextRange TextBuffer::FindRegexReversely(const std::wregex& re, const TextRange& range) const {
+TextRange TextBuffer::FindRegexReversely(const std::wregex& re,
+                                         const TextRange& range) const {
   const TextPoint& p_begin = range.point_begin();
   const TextPoint& p_end = range.point_end();
 
@@ -2172,22 +2198,26 @@ void TextBuffer::FindPlainStringAll(const std::wstring& str,
 
   // The range contains only one line.
   if (range.LineCount() == 1) {
-    FindLineStringAll(it, range.x_begin(), range.x_end(), str, case_sensitive, match_word, result_ranges);
+    FindLineStringAll(it, range.x_begin(), range.x_end(), str, case_sensitive,
+                      match_word, result_ranges);
     return;
   }
 
   // Find in the first line of the range.
-  FindLineStringAll(it, range.x_begin(), kInvCoord, str, case_sensitive, match_word, result_ranges);
+  FindLineStringAll(it, range.x_begin(), kInvCoord, str, case_sensitive,
+                    match_word, result_ranges);
 
   TextLines::const_iterator end_it = GetLineIter(range.line_last());
 
   // Find in the middle lines of the range.
   for (++it; it != end_it; ++it) {
-    FindLineStringAll(it, 0, kInvCoord, str, case_sensitive, match_word, result_ranges);
+    FindLineStringAll(it, 0, kInvCoord, str, case_sensitive, match_word,
+                      result_ranges);
   }
 
   // Find in the last line of the range.
-  FindLineStringAll(it, 0, range.x_end(), str, case_sensitive, match_word, result_ranges);
+  FindLineStringAll(it, 0, range.x_end(), str, case_sensitive, match_word,
+                    result_ranges);
 }
 
 void TextBuffer::FindRegexStringAll(const std::wstring& str,
@@ -2244,7 +2274,8 @@ void TextBuffer::FindRegexAll(const TextLine* line,
                               const std::wregex& re,
                               std::list<TextRange>* result_ranges) const {
   CharRange char_range;
-  while (x_begin < line->Length() && line->FindRegex(re, x_begin, x_end, &char_range)) {
+  while (x_begin < line->Length() &&
+         line->FindRegex(re, x_begin, x_end, &char_range)) {
     if (!char_range.IsEmpty()) {
       result_ranges->push_back(TextRange(ln, char_range));
     }
@@ -2339,8 +2370,6 @@ void TextBuffer::ReplacePlainStringAll(const std::wstring& str,
   if (result_ranges.empty()) {
     return;
   }
-
-
 }
 
 // TODO
@@ -2376,7 +2405,8 @@ Coord TextBuffer::StringFind(const std::wstring& str,
 
       if (!ft_plugin_->IsSpaceOrDelimiter(sub[sub.size() - 1])) {
         Coord k = i + sub_size;
-        if (k < CoordCast(str.size()) && !ft_plugin_->IsSpaceOrDelimiter(str[k])) {
+        if (k < CoordCast(str.size()) &&
+            !ft_plugin_->IsSpaceOrDelimiter(str[k])) {
           continue;
         }
       }
@@ -2413,7 +2443,8 @@ Coord TextBuffer::StringFindReversely(const std::wstring& str,
 
       if (!ft_plugin_->IsSpaceOrDelimiter(sub[sub.size() - 1])) {
         Coord k = i + sub_size;
-        if (k < CoordCast(str.size()) && !ft_plugin_->IsSpaceOrDelimiter(str[k])) {
+        if (k < CoordCast(str.size()) &&
+            !ft_plugin_->IsSpaceOrDelimiter(str[k])) {
           continue;
         }
       }
@@ -2842,7 +2873,9 @@ void TextBuffer::MergeInsertCharActions() {
   ClearContainer(&recent_ic_actions_);
 }
 
-bool TextBuffer::MergeDeleteActions(const wxDateTime& now, DeleteAction* delete_action, Action* prev_action) {
+bool TextBuffer::MergeDeleteActions(const wxDateTime& now,
+                                    DeleteAction* delete_action,
+                                    Action* prev_action) {
   if (prev_action == NULL) {
     return false;
   }
@@ -2856,7 +2889,8 @@ bool TextBuffer::MergeDeleteActions(const wxDateTime& now, DeleteAction* delete_
     return false;
   }
 
-  if (prev_delete_action->CaretPointAfterExec() != delete_action->caret_point()) {
+  if (prev_delete_action->CaretPointAfterExec() !=
+      delete_action->caret_point()) {
     return false;  // Not continuous.
   }
 
@@ -2909,7 +2943,8 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
 
     if (quote != NULL) {  // Check quote end.
       size_t quote_i = i;
-      if (!quote->end().empty() && SubStringEquals(line_data, i, quote->end())) {
+      if (!quote->end().empty() &&
+          SubStringEquals(line_data, i, quote->end())) {
         quote_i += quote->end().length();
 
         if (i == 0 || !IsUnescapedBackSlash(line_data, i - 1)) {  // Quote ends.
@@ -2992,7 +3027,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
           prev_le = le;
           continue;
         }
-         
+
         if (prev_le.len > 0) {
           // Look back to check if the previous word.
           // FIXME: If the previous word is operators, only one single
@@ -3093,7 +3128,8 @@ Coord TextBuffer::ScanLexTillQuoteEnd(Coord start_ln, Quote* quote) {
 }
 
 void TextBuffer::ScanLexOnLineUpdated(const LineRange& line_range) {
-  wxLogDebug(wxT("TextBuffer::ScanLexOnLineUpdated(%s)"), line_range.ToString().c_str());
+  wxLogDebug(wxT("TextBuffer::ScanLexOnLineUpdated(%s)"),
+             line_range.ToString().c_str());
 
   // Check previous unended quote.
   Quote* quote = NULL;
@@ -3101,7 +3137,8 @@ void TextBuffer::ScanLexOnLineUpdated(const LineRange& line_range) {
     quote = Line(line_range.first() - 1)->UnendedQuote(true);
   }
 
-  wxLogDebug("  - Scan lex from line %d to %d", line_range.first(), line_range.last());
+  wxLogDebug("  - Scan lex from line %d to %d", line_range.first(),
+             line_range.last());
 
   for (Coord ln = line_range.first(); ln < line_range.last(); ++ln) {
     ScanLex(Line(ln), quote);
@@ -3134,12 +3171,14 @@ void TextBuffer::ScanLexOnLineUpdated(const LineRange& line_range) {
       ScanLex(stop_ln + 1, quote);
     }
 
-    wxLogDebug("  - Scan lex from line %d to %d", line_range.last() + 1, stop_ln);
+    wxLogDebug("  - Scan lex from line %d to %d", line_range.last() + 1,
+               stop_ln);
   }
 }
 
 void TextBuffer::ScanLexOnLineAdded(const LineRange& line_range) {
-  wxLogDebug(wxT("TextBuffer::ScanLexOnLineAdded(%s)"), line_range.ToString().c_str());
+  wxLogDebug(wxT("TextBuffer::ScanLexOnLineAdded(%s)"),
+             line_range.ToString().c_str());
 
   // Check previous unended quote.
   Quote* quote = NULL;
@@ -3149,7 +3188,8 @@ void TextBuffer::ScanLexOnLineAdded(const LineRange& line_range) {
     quote_before = quote;
   }
 
-  wxLogDebug("  - Scan lex from line %d to %d", line_range.first(), line_range.last());
+  wxLogDebug("  - Scan lex from line %d to %d", line_range.first(),
+             line_range.last());
 
   for (Coord ln = line_range.first(); ln <= line_range.last(); ++ln) {
     ScanLex(Line(ln), quote);
@@ -3160,12 +3200,14 @@ void TextBuffer::ScanLexOnLineAdded(const LineRange& line_range) {
     wxLogDebug("  - Last line quote changes: %d", line_range.last());
     Coord stop_ln = ScanLexTillQuoteEnd(line_range.last() + 1, quote);
 
-    wxLogDebug("  - Scan lex from line %d to %d", line_range.last() + 1, stop_ln);
+    wxLogDebug("  - Scan lex from line %d to %d", line_range.last() + 1,
+               stop_ln);
   }
 }
 
 void TextBuffer::ScanLexOnLineDeleted(const LineRange& line_range) {
-  wxLogDebug(wxT("TextBuffer::ScanLexOnLineDeleted(%s)"), line_range.ToString().c_str());
+  wxLogDebug(wxT("TextBuffer::ScanLexOnLineDeleted(%s)"),
+             line_range.ToString().c_str());
 
   Quote* quote = NULL;
   if (line_range.first() > 1) {
@@ -3185,7 +3227,8 @@ void TextBuffer::ScanLexOnLineDeleted(const LineRange& line_range) {
 
     if (next_quote != quote) {
       Coord stop_ln = ScanLexTillQuoteEnd(line_range.first(), quote);
-      wxLogDebug("  - Scan lex from line %d to %d", line_range.first(), stop_ln);
+      wxLogDebug("  - Scan lex from line %d to %d", line_range.first(),
+                 stop_ln);
     }
   }
 }
@@ -3249,4 +3292,3 @@ TextBuffer::TextLines::const_iterator TextBuffer::GetLineIter(Coord ln) const {
 }
 
 }  // namespace editor
-}  // namespace jil

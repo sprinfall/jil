@@ -1,10 +1,11 @@
 #include "editor/ft_plugin.h"
+
 #if !JIL_MATCH_WORD_WITH_HASH
 #include <algorithm>
 #endif
+
 #include "editor/lex.h"
 
-namespace jil {
 namespace editor {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -171,7 +172,8 @@ bool FtPlugin::MatchAnyof(const std::wstring& str,
 #endif  // JIL_MATCH_WORD_WITH_HASH
 }
 
-size_t FtPlugin::MatchQuote(const std::wstring& str, size_t off, Quote** quote) const {
+size_t FtPlugin::MatchQuote(const std::wstring& str, size_t off,
+                            Quote** quote) const {
   // Firstly, match regex quotes.
   if (!regex_quotes_.empty()) {
     std::wstring concrete_end;
@@ -209,7 +211,8 @@ size_t FtPlugin::MatchQuote(const std::wstring& str, size_t off, Quote** quote) 
   return off;
 }
 
-size_t FtPlugin::MatchRegex(const std::wstring& str, size_t off, Lex* lex) const {
+size_t FtPlugin::MatchRegex(const std::wstring& str, size_t off,
+                            Lex* lex) const {
   for (size_t i = 0; i < regexs_.size(); ++i) {
     size_t matched_off = regexs_[i]->Match(str, off);
     if (matched_off > off) {
@@ -220,10 +223,12 @@ size_t FtPlugin::MatchRegex(const std::wstring& str, size_t off, Lex* lex) const
   return off;
 }
 
-bool FtPlugin::MatchPrefix(const std::wstring& str, size_t off, size_t len, Lex* lex) const {
+bool FtPlugin::MatchPrefix(const std::wstring& str, size_t off, size_t len,
+                           Lex* lex) const {
   for (size_t i = 0; i < prefixes_.size(); ++i) {
     const std::wstring& word = prefixes_[i].first;
-    if (len >= word.size() && wcsncmp_(&str[off], word.c_str(), word.size()) == 0) {
+    if (len >= word.size() &&
+        wcsncmp_(&str[off], word.c_str(), word.size()) == 0) {
       *lex = prefixes_[i].second;
       return true;
     }
@@ -240,7 +245,8 @@ bool FtPlugin::MatchPrefix(const std::wstring& str, size_t off, size_t len, Lex*
   return false;
 }
 
-bool FtPlugin::MatchPrev(const std::wstring& str, size_t off, size_t len, Lex* lex) const {
+bool FtPlugin::MatchPrev(const std::wstring& str, size_t off, size_t len,
+                         Lex* lex) const {
   for (size_t i = 0; i < prevs_.size(); ++i) {
     if (len == prevs_[i].first.size() &&
         wcsncmp_(&str[off], prevs_[i].first.c_str(), len) == 0) {
@@ -251,7 +257,8 @@ bool FtPlugin::MatchPrev(const std::wstring& str, size_t off, size_t len, Lex* l
   return false;
 }
 
-bool FtPlugin::MatchNext(const std::wstring& str, size_t off, size_t len, Lex* lex) const {
+bool FtPlugin::MatchNext(const std::wstring& str, size_t off, size_t len,
+                         Lex* lex) const {
   for (size_t i = 0; i < nexts_.size(); ++i) {
     if (len == nexts_[i].first.size() &&
         wcsncmp_(&str[off], nexts_[i].first.c_str(), len) == 0) {
@@ -288,4 +295,3 @@ bool FtPlugin::MatchIndentKey(const std::wstring& str,
 }
 
 }  // namespace editor
-}  // namespace jil

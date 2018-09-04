@@ -1,6 +1,5 @@
-#ifndef JIL_EDITOR_LEX_H_
-#define JIL_EDITOR_LEX_H_
-#pragma once
+#ifndef EDITOR_LEX_H_
+#define EDITOR_LEX_H_
 
 #include "editor/compile_config.h"
 
@@ -10,9 +9,9 @@
 
 #include <string>
 #include <vector>
+
 #include "editor/defs.h"
 
-namespace jil {
 namespace editor {
 
 #if JIL_LEX_USE_RELITE
@@ -92,7 +91,7 @@ public:
   Lex() : data_(0) {
   }
 
-  Lex(int major, int minor = 0) {
+  explicit Lex(int major, int minor = 0) {
     Set(major, minor);
   }
 
@@ -269,7 +268,8 @@ public:
              int flags);
   virtual ~RegexQuote();
 
-  size_t MatchStart(const std::wstring& str, size_t off, std::wstring* concrete_end) const;
+  size_t MatchStart(const std::wstring& str, size_t off,
+                    std::wstring* concrete_end) const;
 
   // Add a concrete quote.
   void AddQuote(Quote* quote) const {
@@ -334,6 +334,5 @@ public:
 };
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_LEX_H_
+#endif  // EDITOR_LEX_H_

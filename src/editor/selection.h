@@ -1,11 +1,9 @@
-#ifndef JIL_EDITOR_SELECTION_H_
-#define JIL_EDITOR_SELECTION_H_
-#pragma once
+#ifndef EDITOR_SELECTION_H_
+#define EDITOR_SELECTION_H_
 
 #include "editor/defs.h"
 #include "editor/text_range.h"
 
-namespace jil {
 namespace editor {
 
 // Text selection.
@@ -79,6 +77,5 @@ public:
 };
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_SELECTION_H_
+#endif  // EDITOR_SELECTION_H_

@@ -1,10 +1,8 @@
-#ifndef JIL_EDITOR_TEXT_AREA_H_
-#define JIL_EDITOR_TEXT_AREA_H_
-#pragma once
+#ifndef EDITOR_TEXT_AREA_H_
+#define EDITOR_TEXT_AREA_H_
 
 #include "wx/panel.h"
 
-namespace jil {
 namespace editor {
 
 class TextWindow;
@@ -17,7 +15,7 @@ public:
   bool Create(wxWindow* parent, wxWindowID id);
 
   // Override to scroll line nr area together.
-  virtual void ScrollWindow(int dx, int dy, const wxRect* rect = NULL) override;
+  void ScrollWindow(int dx, int dy, const wxRect* rect = NULL) override;
 
 protected:
   void OnPaint(wxPaintEvent& evt);
@@ -34,6 +32,5 @@ private:
 };
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_TEXT_AREA_H_
+#endif  // EDITOR_TEXT_AREA_H_

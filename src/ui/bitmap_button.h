@@ -1,6 +1,5 @@
-#ifndef JIL_UI_BITMAP_BUTTON_H_
-#define JIL_UI_BITMAP_BUTTON_H_
-#pragma once
+#ifndef UI_BITMAP_BUTTON_H_
+#define UI_BITMAP_BUTTON_H_
 
 // A replacement of wxBitmapButton.
 // Note:
@@ -9,9 +8,9 @@
 //   Macro: EVT_BUTTON(id, func)
 
 #include "ui/bitmap_button_base.h"
-#include "wx/button.h" // For wxEVT_BUTTON, etc.
 
-namespace jil {
+#include "wx/button.h"  // For wxEVT_BUTTON, etc.
+
 namespace ui {
 
 class BitmapButton : public BitmapButtonBase {
@@ -27,10 +26,9 @@ public:
 protected:
   ButtonStyle::State GetState() const override;
 
-  virtual void PostEvent() override;
+  void PostEvent() override;
 };
 
 }  // namespace ui
-}  // namespace jil
 
-#endif  // JIL_UI_BITMAP_BUTTON_H_
+#endif  // UI_BITMAP_BUTTON_H_

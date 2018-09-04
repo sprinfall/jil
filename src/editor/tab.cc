@@ -1,7 +1,6 @@
 #include "editor/tab.h"
 #include "editor/defs.h"
 
-namespace jil {
 namespace editor {
 
 void TabbedLineFast(int tab_stop, std::wstring* line) {
@@ -42,4 +41,3 @@ Coord TabbedLineLength(int tab_stop, const std::wstring& line, Coord count) {
 }
 
 }  // namespace editor
-}  // namespace jil

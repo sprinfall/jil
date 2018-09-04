@@ -1,10 +1,8 @@
-#ifndef JIL_EDITOR_TEXT_LISTENER_H_
-#define JIL_EDITOR_TEXT_LISTENER_H_
-#pragma once
+#ifndef EDITOR_TEXT_LISTENER_H_
+#define EDITOR_TEXT_LISTENER_H_
 
 #include "editor/text_range.h"
 
-namespace jil {
 namespace editor {
 
 enum LineChangeType {
@@ -30,7 +28,7 @@ enum ChangeType {
 class LineChangeData : public LineRange {
 public:
   // Single line.
-  LineChangeData(Coord first_line = 0, Coord last_line = 0)
+  explicit LineChangeData(Coord first_line = 0, Coord last_line = 0)
       : LineRange(first_line, last_line) {
   }
 
@@ -46,12 +44,12 @@ public:
   virtual ~TextListener() {
   }
 
-  virtual void OnBufferLineChange(LineChangeType type, const LineChangeData& data) = 0;
+  virtual void OnBufferLineChange(LineChangeType type,
+                                  const LineChangeData& data) = 0;
 
   virtual void OnBufferChange(ChangeType type) = 0;
 };
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_TEXT_LISTENER_H_
+#endif  // EDITOR_TEXT_LISTENER_H_

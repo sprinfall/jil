@@ -1,6 +1,5 @@
-#ifndef JIL_EDITOR_COMPILE_CONFIG_H_
-#define JIL_EDITOR_COMPILE_CONFIG_H_
-#pragma once
+#ifndef EDITOR_COMPILE_CONFIG_H_
+#define EDITOR_COMPILE_CONFIG_H_
 
 #include "wx/defs.h"
 
@@ -30,4 +29,4 @@
 
 #endif  // JIL_ENABLE_LEADER_KEY
 
-#endif  // JIL_EDITOR_COMPILE_CONFIG_H_
+#endif  // EDITOR_COMPILE_CONFIG_H_

@@ -1,6 +1,5 @@
-#ifndef JIL_EDITOR_TEXT_LINE_H_
-#define JIL_EDITOR_TEXT_LINE_H_
-#pragma once
+#ifndef EDITOR_TEXT_LINE_H_
+#define EDITOR_TEXT_LINE_H_
 
 #include <list>
 #include <regex>
@@ -13,11 +12,10 @@ extern "C" {
 }
 
 #include "editor/compile_config.h"
+#include "editor/lex.h"
 #include "editor/text_point.h"
 #include "editor/text_range.h"
-#include "editor/lex.h"
 
-namespace jil {
 namespace editor {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -230,7 +228,8 @@ public:
     return quote_elems_;
   }
 
-  bool GetQuoteElem(Coord off, const QuoteElem** start, const QuoteElem** end) const;
+  bool GetQuoteElem(Coord off, const QuoteElem** start,
+                    const QuoteElem** end) const;
 
   const QuoteElem* FirstUnstartedQuoteEnd() const;
   const QuoteElem* LastUnendedQuoteStart() const;
@@ -292,6 +291,5 @@ private:
 };
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_TEXT_LINE_H_
+#endif  // EDITOR_TEXT_LINE_H_

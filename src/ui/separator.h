@@ -1,5 +1,5 @@
-#ifndef JIL_UI_SEPARATOR_H_
-#define JIL_UI_SEPARATOR_H_
+#ifndef UI_SEPARATOR_H_
+#define UI_SEPARATOR_H_
 
 // Separator line.
 // A replacement of wxStaticLine.
@@ -9,12 +9,11 @@
 
 #include "wx/panel.h"
 
-namespace jil {
 namespace ui {
 
 class Separator: public wxPanel {
 public:
-  Separator(wxWindow* parent, int size = 1, bool horizontal = true)
+  explicit Separator(wxWindow* parent, int size = 1, bool horizontal = true)
       : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxNO_BORDER)
       , size_(size)
       , horizontal_(horizontal) {
@@ -28,12 +27,12 @@ public:
   }
 
   // Don't accept focus.
-  virtual bool AcceptsFocus() const override {
+  bool AcceptsFocus() const override {
     return false;
   }
 
 protected:
-  virtual wxSize DoGetBestSize() const {
+  wxSize DoGetBestSize() const override {
     if (horizontal_) {
       return wxSize(-1, size_);
     } else {
@@ -47,6 +46,5 @@ private:
 };
 
 }  // namespace ui
-}  // namespace jil
 
-#endif  // JIL_UI_SEPARATOR_H_
+#endif  // UI_SEPARATOR_H_

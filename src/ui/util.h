@@ -1,6 +1,5 @@
-#ifndef JIL_UI_UTIL_H_
-#define JIL_UI_UTIL_H_
-#pragma once
+#ifndef UI_UTIL_H_
+#define UI_UTIL_H_
 
 #include "wx/gdicmn.h"
 #include "wx/string.h"
@@ -8,7 +7,6 @@
 class wxBitmap;
 class wxDC;
 
-namespace jil {
 namespace ui {
 
 extern const wxString kEllipsis;  // ...
@@ -24,6 +22,5 @@ void DrawTextInRect(wxDC& dc, const wxString& text, const wxRect& rect);
 wxSize GetBitmapSize(const wxBitmap& bitmap);
 
 }  // namespace ui
-}  // namespace jil
 
-#endif  // JIL_UI_UTIL_H_
+#endif  // UI_UTIL_H_

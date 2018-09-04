@@ -1,11 +1,10 @@
-#ifndef JIL_EDITOR_TEXT_RANGE_H_
-#define JIL_EDITOR_TEXT_RANGE_H_
-#pragma once
+#ifndef EDITOR_TEXT_RANGE_H_
+#define EDITOR_TEXT_RANGE_H_
 
 #include <cassert>
+
 #include "editor/text_point.h"
 
-namespace jil {
 namespace editor {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -14,7 +13,7 @@ namespace editor {
 // STL style begin/end range: [begin, end).
 class CharRange {
 public:
-  CharRange(Coord begin = 0, Coord end = 0);
+  explicit CharRange(Coord begin = 0, Coord end = 0);
 
   Coord begin() const { return begin_; }
   void set_begin(Coord begin) { begin_ = begin; }
@@ -59,7 +58,7 @@ inline bool operator!=(const CharRange& lhs, const CharRange& rhs) {
 // [first, last] with first <= last.
 class LineRange {
 public:
-  LineRange(Coord first = 0, Coord last = 0)
+  explicit LineRange(Coord first = 0, Coord last = 0)
       : first_(first), last_(last) {
     if (last_ < first_) {
       last_ = first_;
@@ -250,6 +249,5 @@ inline bool operator<(const TextRange& lhs, const TextRange& rhs) {
 }
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_TEXT_RANGE_H_
+#endif  // EDITOR_TEXT_RANGE_H_

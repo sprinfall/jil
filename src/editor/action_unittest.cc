@@ -7,7 +7,7 @@
 #include "editor/util.h"
 #include "gtest/gtest.h"
 
-using namespace jil::editor;
+using namespace editor;
 
 static const FileType kFtTxt("txt", "Text");
 static const Encoding kEncoding = GetEncodingById(ENCODING_ISO_8859_1);

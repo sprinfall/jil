@@ -1,6 +1,5 @@
-#ifndef JIL_UI_STRING_LIST_CTRL_H_
-#define JIL_UI_STRING_LIST_CTRL_H_
-#pragma once
+#ifndef UI_STRING_LIST_CTRL_H_
+#define UI_STRING_LIST_CTRL_H_
 
 // NOTE:
 // StringListCtrl emits the same event class (wxListEvent) as wxListCtrl:
@@ -8,9 +7,9 @@
 //   - Macros: EVT_LIST_ITEM_SELECTED, EVT_LIST_ITEM_DESELECTED
 
 #include <vector>
+
 #include "wx/scrolwin.h"
 
-namespace jil {
 namespace ui {
 
 class StringListCtrl : public wxScrolledWindow {
@@ -30,7 +29,7 @@ public:
   StringListCtrl();
   virtual ~StringListCtrl();
 
-  virtual bool AcceptsFocus() const override {
+  bool AcceptsFocus() const override {
     return true;
   }
 
@@ -62,7 +61,7 @@ public:
 protected:
   void InitColors();
 
-  virtual wxSize DoGetBestSize() const override;
+  wxSize DoGetBestSize() const override;
 
   void OnPaint(wxPaintEvent& evt);
   void OnMouseLeftDown(wxMouseEvent& evt);
@@ -86,6 +85,5 @@ private:
 };
 
 }  // namespace ui
-}  // namespace jil
 
-#endif  // JIL_UI_STRING_LIST_CTRL_H_
+#endif  // UI_STRING_LIST_CTRL_H_

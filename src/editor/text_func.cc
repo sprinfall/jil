@@ -8,7 +8,6 @@
 #include "editor/text_window.h"
 #include "editor/action.h"
 
-namespace jil {
 namespace editor {
 
 void Move(TextWindow* tw, TextUnit text_unit, SeekType seek_type) {
@@ -392,4 +391,3 @@ void Uncomment(TextWindow* tw) {
 }
 
 }  // namespace editor
-}  // namespace jil

@@ -24,7 +24,7 @@ protected:
   static void LoadIndentFunc(const wxString& ft_id);
 
   // Call this in SetUpTestCase() of sub-class.
-  static void StaticSetUp(const jil::editor::FileType& ft);
+  static void StaticSetUp(const editor::FileType& ft);
 
   // Call this in TearDownTestCase() of sub-class.
   static void StaticTearDown();
@@ -35,9 +35,9 @@ protected:
   int GetExpectedIndent(int ln);
 
   static lua_State* lua_state;
-  static jil::editor::FtPlugin* ft_plugin;
+  static editor::FtPlugin* ft_plugin;
 
-  jil::editor::TextBuffer* buffer_;
+  editor::TextBuffer* buffer_;
 };
 
 #define ASSERT_LINE(ln)\

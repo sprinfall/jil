@@ -1,23 +1,24 @@
 #include "ui/button_base.h"
+
 #include "wx/dcbuffer.h"
+
 #include "ui/color.h"
 
-namespace jil {
 namespace ui {
 
 IMPLEMENT_CLASS(ButtonBase, wxControl);
 
 BEGIN_EVENT_TABLE(ButtonBase, wxControl)
-EVT_PAINT               (ButtonBase::OnPaint)
-EVT_LEFT_DOWN           (ButtonBase::OnMouseLeftDown)
-EVT_LEFT_UP             (ButtonBase::OnMouseLeftUp)
-EVT_LEFT_DCLICK         (ButtonBase::OnMouseLeftDClick)
-EVT_ENTER_WINDOW        (ButtonBase::OnMouseEnter)
-EVT_LEAVE_WINDOW        (ButtonBase::OnMouseLeave)
-EVT_MOUSE_CAPTURE_LOST  (ButtonBase::OnMouseCaptureLost)
-EVT_KEY_UP              (ButtonBase::OnKeyUp)
-EVT_SET_FOCUS           (ButtonBase::OnSetFocus)
-EVT_KILL_FOCUS          (ButtonBase::OnKillFocus)
+EVT_PAINT(ButtonBase::OnPaint)
+EVT_LEFT_DOWN(ButtonBase::OnMouseLeftDown)
+EVT_LEFT_UP(ButtonBase::OnMouseLeftUp)
+EVT_LEFT_DCLICK(ButtonBase::OnMouseLeftDClick)
+EVT_ENTER_WINDOW(ButtonBase::OnMouseEnter)
+EVT_LEAVE_WINDOW(ButtonBase::OnMouseLeave)
+EVT_MOUSE_CAPTURE_LOST(ButtonBase::OnMouseCaptureLost)
+EVT_KEY_UP(ButtonBase::OnKeyUp)
+EVT_SET_FOCUS(ButtonBase::OnSetFocus)
+EVT_KILL_FOCUS(ButtonBase::OnKillFocus)
 END_EVENT_TABLE()
 
 ButtonBase::ButtonBase(SharedButtonStyle style)
@@ -35,7 +36,8 @@ ButtonBase::~ButtonBase() {
 }
 
 bool ButtonBase::Create(wxWindow* parent, wxWindowID id) {
-  if (!wxControl::Create(parent, id, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)) {
+  if (!wxControl::Create(parent, id, wxDefaultPosition, wxDefaultSize,
+                         wxBORDER_NONE)) {
     return false;
   }
 
@@ -190,4 +192,3 @@ void ButtonBase::OnKillFocus(wxFocusEvent& evt) {
 }
 
 }  // namespace ui
-}  // namespace jil

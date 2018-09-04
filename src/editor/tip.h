@@ -1,15 +1,14 @@
-#ifndef JIL_EDITOR_TIP_H_
-#define JIL_EDITOR_TIP_H_
-#pragma once
+#ifndef EDITOR_TIP_H_
+#define EDITOR_TIP_H_
 
 // Customized tool tip.
 
-#include <vector>
 #include <memory>
+#include <vector>
+
 #include "wx/frame.h"
 #include "wx/timer.h"
 
-namespace jil {
 namespace editor {
 
 struct TipModel {
@@ -103,6 +102,5 @@ protected:
 };
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_TIP_H_
+#endif  // EDITOR_TIP_H_

@@ -1,8 +1,9 @@
 #include "ui/bitmap_button_base.h"
+
 #include "wx/dcbuffer.h"
+
 #include "ui/util.h"
 
-namespace jil {
 namespace ui {
 
 IMPLEMENT_CLASS(BitmapButtonBase, ButtonBase);
@@ -36,7 +37,8 @@ void BitmapButtonBase::SetBitmaps(const wxBitmap& bitmap) {
   SetBitmaps(bitmap, bitmap, bitmap, bitmap);
 }
 
-void BitmapButtonBase::SetBitmapsND(const wxBitmap& normal, const wxBitmap& disabled) {
+void BitmapButtonBase::SetBitmapsND(const wxBitmap& normal,
+                                    const wxBitmap& disabled) {
   SetBitmaps(normal, normal, normal, disabled);
 }
 
@@ -67,4 +69,3 @@ void BitmapButtonBase::DrawFg(wxDC& dc, ButtonStyle::State state) {
 }
 
 }  // namespace ui
-}  // namespace jil

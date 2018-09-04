@@ -1,18 +1,18 @@
-#ifndef JIL_EDITOR_RENDERER_H_
-#define JIL_EDITOR_RENDERER_H_
-#pragma once
+#ifndef EDITOR_RENDERER_H_
+#define EDITOR_RENDERER_H_
 
 #include <string>
-#include "wx/gdicmn.h"
-#include "wx/colour.h"
+
 #include "wx/brush.h"
-#include "wx/pen.h"
+#include "wx/colour.h"
 #include "wx/font.h"
+#include "wx/gdicmn.h"
+#include "wx/pen.h"
+
 #include "editor/defs.h"
 
 class wxDC;
 
-namespace jil {
 namespace editor {
 
 class Renderer {
@@ -33,7 +33,8 @@ public:
 
   void SetStyle(const wxBrush& brush, const wxPen& pen, bool backup);
 
-  void SetStyle(const wxColour& brush_color, const wxColour& pen_color, bool backup);
+  void SetStyle(const wxColour& brush_color, const wxColour& pen_color,
+                bool backup);
 
   void BackupBrush();
   void RestoreBrush();
@@ -44,7 +45,8 @@ public:
   void BackupStyle();
   void RestoreStyle();
 
-  void DrawText(const std::wstring& text, Coord off, Coord len, int x, int y, int* w = NULL);
+  void DrawText(const std::wstring& text, Coord off, Coord len, int x, int y,
+                int* w = NULL);
 
   void DrawLine(int x1, int y1, int x2, int y2);
 
@@ -76,6 +78,5 @@ private:
 };
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_RENDERER_H_
+#endif  // EDITOR_RENDERER_H_

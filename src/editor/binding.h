@@ -1,6 +1,5 @@
-#ifndef JIL_EDITOR_BINDING_H_
-#define JIL_EDITOR_BINDING_H_
-#pragma once
+#ifndef EDITOR_BINDING_H_
+#define EDITOR_BINDING_H_
 
 // Binding, or key mapping, binds key(s) to command.
 
@@ -9,18 +8,16 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "boost/function.hpp"
+
 #include "editor/key.h"
 #include "editor/text_func.h"
 
-namespace jil {
 namespace editor {
 
 // Void function interface.
 class VoidFunc {
 public:
-  virtual ~VoidFunc() {
-  }
+  virtual ~VoidFunc() = default;
 
   virtual void Exec() = 0;
 };
@@ -30,14 +27,13 @@ class VoidFuncWrap : public VoidFunc {
   typedef void(*Func)();
 
 public:
-  VoidFuncWrap(Func func) : func_(func) {
+  explicit VoidFuncWrap(Func func) : func_(func) {
   }
 
-  virtual ~VoidFuncWrap() {
-  }
+  ~VoidFuncWrap() override = default;
 
 protected:
-  virtual void Exec() override {
+  void Exec() override {
     if (func_ != NULL) {
       (*func_)();
     }
@@ -64,14 +60,16 @@ struct VoidCmd {
 
 class Binding {
 public:
-  Binding();
+  Binding() = default;
+
   ~Binding();
 
   void AddTextCmd(const std::string& name, TextFunc* func, int menu);
   void AddVoidCmd(const std::string& name, VoidFunc* func, int menu);
 
   // Bind the keys to the command with the given name.
-  bool BindKeys(const std::string& name, const std::vector<Key>& keys, int modes);
+  bool BindKeys(const std::string& name, const std::vector<Key>& keys,
+                int modes);
 
   // Build the map from menu to (function, key) pair.
   void BindMenus();
@@ -151,6 +149,5 @@ private:
 };
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_BINDING_H_
+#endif  // EDITOR_BINDING_H_

@@ -1,11 +1,10 @@
-#ifndef JIL_UI_BUTTON_BASE_H_
-#define JIL_UI_BUTTON_BASE_H_
-#pragma once
+#ifndef UI_BUTTON_BASE_H_
+#define UI_BUTTON_BASE_H_
 
 #include "wx/control.h"
+
 #include "ui/button_style.h"
 
-namespace jil {
 namespace ui {
 
 class ButtonBase : public wxControl {
@@ -27,12 +26,12 @@ public:
 
   bool Create(wxWindow* parent, wxWindowID id);
 
-  virtual bool Enable(bool enable) override;
+  bool Enable(bool enable) override;
 
-  virtual bool AcceptsFocus() const override {
+  bool AcceptsFocus() const override {
     return accepts_focus_;
   }
-  virtual bool AcceptsFocusFromKeyboard() const override {
+  bool AcceptsFocusFromKeyboard() const override {
     return accepts_focus_;
   }
 
@@ -99,6 +98,5 @@ protected:
 };
 
 }  // namespace ui
-}  // namespace jil
 
-#endif  // JIL_UI_BUTTON_BASE_H_
+#endif  // UI_BUTTON_BASE_H_

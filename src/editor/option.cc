@@ -3,7 +3,6 @@
 #define TRUE_STR wxT("true")
 #define FALSE_STR wxT("false")
 
-namespace jil {
 namespace editor {
 
 wxString OptionValue::ToString() const {
@@ -63,4 +62,3 @@ bool operator==(const ViewOptions& lhs, const ViewOptions& rhs) {
 }
 
 }  // namespace editor
-}  // namespace jil

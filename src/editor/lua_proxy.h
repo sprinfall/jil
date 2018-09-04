@@ -1,6 +1,7 @@
-#ifndef JIL_EDITOR_LUA_PROXY_H_
-#define JIL_EDITOR_LUA_PROXY_H_
-#pragma once
+#ifndef EDITOR_LUA_PROXY_H_
+#define EDITOR_LUA_PROXY_H_
+
+#include <string>
 
 extern "C" {
 #include "lua.h"
@@ -10,7 +11,6 @@ extern "C" {
 
 class wxString;
 
-namespace jil {
 namespace editor {
 
 // Bind classes, functions and variables to Lua.
@@ -24,9 +24,9 @@ bool LoadLuaFile(lua_State* lua_state,
 luabridge::LuaRef GetLuaValue(lua_State* lua_state, const char* name);
 
 // Get lua value with the given name under the global table 'ns'.
-luabridge::LuaRef GetLuaValue(lua_State* lua_state, const char* ns, const char* name);
+luabridge::LuaRef GetLuaValue(lua_State* lua_state, const char* ns,
+                              const char* name);
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_LUA_PROXY_H_
+#endif  // EDITOR_LUA_PROXY_H_

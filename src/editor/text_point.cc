@@ -1,6 +1,5 @@
 #include "editor/text_point.h"
 
-namespace jil {
 namespace editor {
 
 bool operator<(const TextPoint& lhs, const TextPoint& rhs) {
@@ -18,4 +17,3 @@ bool operator<(const TextPoint& lhs, const TextPoint& rhs) {
 }
 
 }  // namespace editor
-}  // namespace jil

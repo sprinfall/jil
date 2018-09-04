@@ -7,7 +7,6 @@
 
 #define kTextAreaStyle (wxBORDER_NONE | wxWANTS_CHARS)
 
-namespace jil {
 namespace editor {
 
 BEGIN_EVENT_TABLE(TextArea, wxPanel)
@@ -99,4 +98,3 @@ void TextArea::OnKillFocus(wxFocusEvent& evt) {
 }
 
 }  // namespace editor
-}  // namespace jil

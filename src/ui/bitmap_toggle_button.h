@@ -1,13 +1,12 @@
-#ifndef JIL_UI_BITMAP_TOGGLE_BUTTON_H_
-#define JIL_UI_BITMAP_TOGGLE_BUTTON_H_
-#pragma once
+#ifndef UI_BITMAP_TOGGLE_BUTTON_H_
+#define UI_BITMAP_TOGGLE_BUTTON_H_
 
 // A replacement of wxBitmapToggleButton.
 
 #include "ui/bitmap_button_base.h"
+
 #include "wx/tglbtn.h"  // For wxEVT_TOGGLEBUTTON, etc.
 
-namespace jil {
 namespace ui {
 
 // Note:
@@ -49,7 +48,7 @@ public:
 protected:
   ButtonStyle::State GetState() const override;
 
-  virtual void PostEvent() override;
+  void PostEvent() override;
 
 private:
   bool toggle_;
@@ -57,6 +56,5 @@ private:
 };
 
 }  // namespace ui
-}  // namespace jil
 
-#endif  // JIL_UI_BITMAP_TOGGLE_BUTTON_H_
+#endif  // UI_BITMAP_TOGGLE_BUTTON_H_

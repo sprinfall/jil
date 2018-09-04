@@ -1,10 +1,8 @@
-#ifndef JIL_EDITOR_TEXT_FUNC_H_
-#define JIL_EDITOR_TEXT_FUNC_H_
-#pragma once
+#ifndef EDITOR_TEXT_FUNC_H_
+#define EDITOR_TEXT_FUNC_H_
 
 #include "editor/defs.h"
 
-namespace jil {
 namespace editor {
 
 class TextWindow;
@@ -46,10 +44,9 @@ public:
       : func_(func), text_unit_(text_unit), seek_type_(seek_type) {
   }
 
-  virtual ~SeekableTextFuncWrap() {
-  }
+  virtual ~SeekableTextFuncWrap() = default;
 
-  virtual void Exec(TextWindow* tw) override {
+  void Exec(TextWindow* tw) override {
     if (func_ != NULL) {
       (*func_)(tw, text_unit_, seek_type_);
     }
@@ -75,7 +72,7 @@ public:
   }
 
 protected:
-  virtual void Exec(TextWindow* tw) override {
+  void Exec(TextWindow* tw) override {
     if (func_ != NULL) {
       (*func_)(tw);
     }
@@ -112,6 +109,5 @@ void Comment(TextWindow* tw);
 void Uncomment(TextWindow* tw);
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_TEXT_FUNC_H_
+#endif  // EDITOR_TEXT_FUNC_H_

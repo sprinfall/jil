@@ -5,7 +5,7 @@
 #include "editor/util.h"
 #include "gtest/gtest.h"
 
-using namespace jil::editor;
+using namespace editor;
 
 static const FileType kFtTxt("txt", "Text");
 static const Encoding kEncoding = GetEncodingById(ENCODING_ISO_8859_1);
@@ -125,8 +125,8 @@ TEST(TextBuffer, SetText) {
 
 TEST(TextBuffer, PrevNonEmptyLine) {
   FtPlugin ft_plugin(FileType("cpp", "C++"), NULL);
-  ft_plugin.AddQuote(new Quote(kLexComment, L"//", L"", kQuoteEscapeEol));
-  ft_plugin.AddQuote(new Quote(kLexComment, L"/*", L"*/", kQuoteMultiLine));
+  ft_plugin.AddQuote(new Quote(Lex(kLexComment), L"//", L"", kQuoteEscapeEol));
+  ft_plugin.AddQuote(new Quote(Lex(kLexComment), L"/*", L"*/", kQuoteMultiLine));
   TextBuffer buffer(0, &ft_plugin, kEncoding);
 
   buffer.AppendLine(L"int i;");  // Line 2
@@ -252,12 +252,12 @@ TEST(TextBuffer, Notify) {
 
 TEST(TextBuffer, UnpairedLeftKey) {
   FtPlugin ft_plugin(FileType("cpp", "C++"), NULL);
-  ft_plugin.AddQuote(new Quote(kLexComment, L"//", L"", kQuoteEscapeEol));
-  ft_plugin.AddQuote(new Quote(kLexComment, L"/*", L"*/", kQuoteMultiLine));
+  ft_plugin.AddQuote(new Quote(Lex(kLexComment), L"//", L"", kQuoteEscapeEol));
+  ft_plugin.AddQuote(new Quote(Lex(kLexComment), L"/*", L"*/", kQuoteMultiLine));
   ft_plugin.AddQuote(new Quote(Lex(kLexConstant, kLexConstantString), L"\"", L"\"", kQuoteEscapeEol));
 
   TextBuffer buffer(0, &ft_plugin, kEncoding);
-  buffer.AppendLine(L"(    ");         // Line 2
+  buffer.AppendLine(L"(    ");  // Line 2
 
   TextPoint point(buffer.LineLength(2), 2);
   EXPECT_EQ(TextPoint(0, 2), buffer.UnpairedLeftKey(point, L'(', L')', true));

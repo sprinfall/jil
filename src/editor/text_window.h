@@ -1,10 +1,10 @@
-#ifndef JIL_EDITOR_TEXT_WINDOW_H_
-#define JIL_EDITOR_TEXT_WINDOW_H_
-#pragma once
+#ifndef EDITOR_TEXT_WINDOW_H_
+#define EDITOR_TEXT_WINDOW_H_
 
 #include <list>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "wx/pen.h"
 #include "wx/scrolwin.h"
@@ -23,7 +23,6 @@ class wxMenuItem;
 class wxTimer;
 class wxTimerEvent;
 
-namespace jil {
 namespace editor {
 
 class Action;
@@ -101,10 +100,10 @@ public:
   // Focus
 
   // Override to consider the text area's focus state.
-  virtual bool HasFocus() const override;
+  bool HasFocus() const override;
 
   // Override to set focus to text area.
-  virtual void SetFocus() override;
+  void SetFocus() override;
 
   //----------------------------------------------------------------------------
 
@@ -131,8 +130,9 @@ public:
   //----------------------------------------------------------------------------
 
   //  TextListener OVERRIDE
-  virtual void OnBufferLineChange(LineChangeType type, const LineChangeData& data) override;
-  virtual void OnBufferChange(ChangeType type) override;
+  void OnBufferLineChange(LineChangeType type,
+                          const LineChangeData& data) override;
+  void OnBufferChange(ChangeType type) override;
 
   //----------------------------------------------------------------------------
   // Options
@@ -300,7 +300,8 @@ public:
   // \param line_step Caret point is changed by line step action.
   // \param scroll Scroll to the caret point if it's not in the client area.
   // \vspace Allow virtual space.
-  void UpdateCaretPoint(const TextPoint& point, bool line_step, bool scroll, bool vspace);
+  void UpdateCaretPoint(const TextPoint& point, bool line_step, bool scroll,
+                        bool vspace);
 
   //----------------------------------------------------------------------------
   // Selection
@@ -404,7 +405,8 @@ protected:
   void DrawWrappedTextLine(Renderer& renderer, Coord ln, int x, int& y);
   void DrawWrappedTextLineSelection(Renderer& renderer, Coord ln, int x, int y);
   void DrawWrappedTextLineWithLex(Renderer& renderer, Coord ln, int x, int& y);
-  void DrawWrappedTextLineWithoutLex(Renderer& renderer, Coord ln, int x, int& y);
+  void DrawWrappedTextLineWithoutLex(Renderer& renderer, Coord ln, int x,
+                                     int& y);
 
   // NOTE: Tabs and different text styles are handled here.
   void DrawTextLine(Renderer& renderer, const TextLine* line, int x, int y);
@@ -525,7 +527,8 @@ protected:
   TextPoint CalcCaretPoint(const wxPoint& pos, bool vspace);
 
   // Get the client rect of text or line nr area from the given line range.
-  wxRect ClientRectFromLineRange(wxWindow* area, const LineRange& line_range) const;
+  wxRect ClientRectFromLineRange(wxWindow* area,
+                                 const LineRange& line_range) const;
 
   // Get the line range from the given client rect.
   // NOTE:
@@ -557,7 +560,8 @@ protected:
   void RefreshLineNrByLine(Coord ln, bool update = false);
 
   // Refresh the line number area of a range of lines.
-  void RefreshLineNrByLineRange(const LineRange& line_range, bool update = false);
+  void RefreshLineNrByLineRange(const LineRange& line_range,
+                                bool update = false);
 
   //----------------------------------------------------------------------------
 
@@ -591,7 +595,8 @@ protected:
   // The caret point will be updated to the point_to.
   // And point_from might > point_to.
   // \param vspace Allow virtual space or not when update the caret point.
-  void SetSelection(const TextPoint& point_from, const TextPoint& point_to, bool vspace);
+  void SetSelection(const TextPoint& point_from, const TextPoint& point_to,
+                    bool vspace);
 
   // Extend the current selection to the given point.
   // The caret point will be updated to the point_to.
@@ -608,13 +613,15 @@ protected:
   //----------------------------------------------------------------------------
 
   // Get the width of the sub-line (substr(off1, off2 - off1)).
-  int GetLineWidth(const TextLine* line, Coord off1, Coord off2 = kInvCoord) const;
+  int GetLineWidth(const TextLine* line, Coord off1,
+                   Coord off2 = kInvCoord) const;
   int GetLineWidth(Coord ln, Coord off1, Coord off2 = kInvCoord) const;
 
   // The char index might > line length if vspace is true.
   Coord GetCharIndex(Coord ln, int client_x, bool vspace) const;
 
-  Coord GetWrappedCharIndex(Coord ln, Coord wrapped_sub_ln, int client_x, bool vspace) const;
+  Coord GetWrappedCharIndex(Coord ln, Coord wrapped_sub_ln, int client_x,
+                            bool vspace) const;
 
   int GetUnscrolledX(int scrolled_x) const;
   int GetUnscrolledY(int scrolled_y) const;
@@ -637,6 +644,7 @@ protected:
                              int id,
                              const wxString& label,
                              wxItemKind kind = wxITEM_NORMAL);
+
 protected:
   TextBuffer* buffer_;
 
@@ -766,10 +774,9 @@ DECLARE_EVENT_TYPE(kTextWindowEvent, 0)
 END_DECLARE_EVENT_TYPES()
 
 }  // namespace editor
-}  // namespace jil
 
 #define EVT_TEXT_WINDOW(id, func)\
-  DECLARE_EVENT_TABLE_ENTRY(jil::editor::kTextWindowEvent, id, -1, \
+  DECLARE_EVENT_TABLE_ENTRY(editor::kTextWindowEvent, id, -1, \
   wxCommandEventHandler(func), (wxObject*)NULL),
 
-#endif  // JIL_EDITOR_TEXT_WINDOW_H_
+#endif  // EDITOR_TEXT_WINDOW_H_

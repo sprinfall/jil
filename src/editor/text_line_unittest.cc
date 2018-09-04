@@ -1,7 +1,7 @@
 #include "editor/text_line.h"
 #include "gtest/gtest.h"
 
-using namespace jil::editor;
+using namespace editor;
 
 TEST(TextLine, Char) {
   TextLine line(0, L"a b\tc");

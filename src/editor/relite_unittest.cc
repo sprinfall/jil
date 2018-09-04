@@ -1,7 +1,7 @@
 #include "editor/relite.h"
 #include "gtest/gtest.h"
 
-using namespace jil::editor;
+using namespace editor;
 
 TEST(LiteRegex, Match_Basic) {
   std::wstring pattern = L"#\\s*elif\\s+!?\\s*defined";

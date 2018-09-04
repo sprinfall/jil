@@ -39,7 +39,6 @@
 // - Text font is changed
 // - Wrap changes
 
-namespace jil {
 namespace editor {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3370,4 +3369,3 @@ wxMenuItem* TextWindow::AppendMenuItem(wxMenu* menu,
 }
 
 }  // namespace editor
-}  // namespace jil

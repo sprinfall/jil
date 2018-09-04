@@ -1,16 +1,17 @@
-#ifndef JIL_EDITOR_ACTION_H_
-#define JIL_EDITOR_ACTION_H_
-#pragma once
+#ifndef EDITOR_ACTION_H_
+#define EDITOR_ACTION_H_
 
 // Support undo & redo based on Command pattern.
 
 #include <list>
+#include <utility>
 #include <vector>
+
 #include "wx/string.h"
+
 #include "editor/defs.h"
 #include "editor/text_range.h"
 
-namespace jil {
 namespace editor {
 
 class LexComment;
@@ -21,8 +22,7 @@ class TextBuffer;
 // Base class for actions operating a range of text.
 class RangeAction {
 public:
-  virtual ~RangeAction() {
-  }
+  virtual ~RangeAction() = default;
 
   const TextRange& range() const { return range_; }
   TextDir dir() const { return dir_; }
@@ -61,48 +61,26 @@ class Action {
 public:
   virtual ~Action();
 
-  bool saved() const {
-    return saved_;
-  }
-  void set_saved(bool saved) {
-    saved_ = saved;
-  }
+  bool saved() const { return saved_; }
+  void set_saved(bool saved) { saved_ = saved; }
 
-  const TextPoint& point() const {
-    return point_;
-  }
-  void set_point(const TextPoint& point) {
-    point_ = point;
-  }
+  const TextPoint& point() const { return point_; }
+  void set_point(const TextPoint& point) { point_ = point; }
 
-  const TextPoint& delta_point() const {
-    return delta_point_;
-  }
+  const TextPoint& delta_point() const { return delta_point_; }
 
-  const TextPoint& caret_point() const {
-    return caret_point_;
-  }
+  const TextPoint& caret_point() const { return caret_point_; }
   void set_caret_point(const TextPoint& caret_point) {
     caret_point_ = caret_point;
   }
 
-  bool update_caret() const {
-    return update_caret_;
-  }
-  void set_update_caret(bool update_caret) {
-    update_caret_ = update_caret;
-  }
+  bool update_caret() const { return update_caret_; }
+  void set_update_caret(bool update_caret) { update_caret_ = update_caret; }
 
-  bool effective() const {
-    return effective_;
-  }
+  bool effective() const { return effective_; }
 
-  bool grouped() const {
-    return grouped_;
-  }
-  void set_grouped(bool grouped) {
-    grouped_ = grouped;
-  }
+  bool grouped() const { return grouped_; }
+  void set_grouped(bool grouped) { grouped_ = grouped; }
 
   virtual void Exec() = 0;
   virtual void Undo() = 0;
@@ -111,9 +89,7 @@ public:
     return point_ + delta_point_;
   }
 
-  virtual RangeAction* AsRangeAction() {
-    return NULL;
-  }
+  virtual RangeAction* AsRangeAction() { return NULL; }
 
 protected:
   Action(TextBuffer* buffer, const TextPoint& point);
@@ -163,10 +139,11 @@ protected:
 class GroupAction : public Action {
 public:
   explicit GroupAction(TextBuffer* buffer);
-  virtual ~GroupAction();
 
-  virtual void Exec() override;
-  virtual void Undo() override;
+  ~GroupAction() override;
+
+  void Exec() override;
+  void Undo() override;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -174,15 +151,16 @@ public:
 class InsertCharAction : public Action {
 public:
   InsertCharAction(TextBuffer* buffer, const TextPoint& point, wchar_t c);
-  virtual ~InsertCharAction();
+
+  ~InsertCharAction() override;
 
   TextDir dir() const { return dir_; }
   void set_dir(TextDir dir) { dir_ = dir; }
 
   wchar_t c() const { return c_; }
 
-  virtual void Exec() override;
-  virtual void Undo() override;
+  void Exec() override;
+  void Undo() override;
 
 private:
   // Normally the dir is forward.
@@ -210,10 +188,11 @@ public:
   InsertStringAction(TextBuffer* buffer,
                      const TextPoint& point,
                      const std::wstring& str);
-  virtual ~InsertStringAction();
 
-  virtual void Exec() override;
-  virtual void Undo() override;
+  ~InsertStringAction() override;
+
+  void Exec() override;
+  void Undo() override;
 
 private:
   std::wstring str_;
@@ -226,12 +205,13 @@ public:
   InsertTextAction(TextBuffer* buffer,
                    const TextPoint& point,
                    const std::wstring& text);
-  virtual ~InsertTextAction();
 
-  virtual void Exec() override;
-  virtual void Undo() override;
+  ~InsertTextAction() override;
 
-  virtual TextPoint CaretPointAfterExec() const override;
+  void Exec() override;
+  void Undo() override;
+
+  TextPoint CaretPointAfterExec() const override;
 
   void set_use_delta_x(bool use_delta_x) {
     use_delta_x_ = use_delta_x;
@@ -261,12 +241,13 @@ public:
                const TextPoint& point,
                TextUnit text_unit,
                SeekType seek_type);
-  virtual ~DeleteAction();
 
-  virtual void Exec() override;
-  virtual void Undo() override;
+  ~DeleteAction() override;
 
-  virtual TextPoint CaretPointAfterExec() const override;
+  void Exec() override;
+  void Undo() override;
+
+  TextPoint CaretPointAfterExec() const override;
 
   TextUnit text_unit() const { return text_unit_; }
   SeekType seek_type() const { return seek_type_; }
@@ -296,21 +277,19 @@ private:
 
 class DeleteRangeAction : public Action, public RangeAction {
 public:
-  DeleteRangeAction(TextBuffer* buffer,
-                    const TextRange& range,
-                    TextDir dir,
-                    bool rect,
-                    bool selected);
-  virtual ~DeleteRangeAction();
+  DeleteRangeAction(TextBuffer* buffer, const TextRange& range, TextDir dir,
+                    bool rect, bool selected);
 
-  virtual void Exec() override;
-  virtual void Undo() override;
+  ~DeleteRangeAction() override;
 
-  virtual RangeAction* AsRangeAction() override {
+  void Exec() override;
+  void Undo() override;
+
+  RangeAction* AsRangeAction() override {
     return this;
   }
 
-  virtual TextRange SelectionAfterExec() const override {
+  TextRange SelectionAfterExec() const override {
     // No selection after execution.
     return TextRange();
   }
@@ -328,15 +307,13 @@ private:
 // TODO: Rect range.
 class IncreaseIndentAction : public Action, public RangeAction {
 public:
-  IncreaseIndentAction(TextBuffer* buffer,
-                       const TextRange& range,
-                       TextDir dir,
-                       bool rect,
-                       bool selected);
-  virtual ~IncreaseIndentAction();
+  IncreaseIndentAction(TextBuffer* buffer, const TextRange& range, TextDir dir,
+                       bool rect, bool selected);
 
-  virtual void Exec() override;
-  virtual void Undo() override;
+  ~IncreaseIndentAction() override;
+
+  void Exec() override;
+  void Undo() override;
 
   // Example:
   // This is the line to be indented.
@@ -345,11 +322,11 @@ public:
   //     This is the line to be indented.
   //                ^
   // The line is indented, and the caret is also "indented".
-  virtual TextPoint CaretPointAfterExec() const override {
+  TextPoint CaretPointAfterExec() const override {
     return caret_point_ + delta_point_;
   }
 
-  virtual RangeAction* AsRangeAction() override {
+  RangeAction* AsRangeAction() override {
     return this;
   }
 
@@ -374,7 +351,7 @@ public:
   //     This is line two to be indented.
   // ********************
   // The selection is also "indented".
-  virtual TextRange SelectionAfterExec() const override;
+  TextRange SelectionAfterExec() const override;
 
 private:
   std::wstring spaces_;
@@ -386,21 +363,19 @@ private:
 // TODO: Rect range.
 class DecreaseIndentAction : public Action, public RangeAction {
 public:
-  DecreaseIndentAction(TextBuffer* buffer,
-                       const TextRange& range,
-                       TextDir dir,
-                       bool rect,
-                       bool selected);
-  virtual ~DecreaseIndentAction();
+  DecreaseIndentAction(TextBuffer* buffer, const TextRange& range, TextDir dir,
+                       bool rect, bool selected);
 
-  virtual void Exec() override;
-  virtual void Undo() override;
+  ~DecreaseIndentAction() override;
 
-  virtual TextPoint CaretPointAfterExec() const override;
+  void Exec() override;
+  void Undo() override;
 
-  virtual RangeAction* AsRangeAction() override { return this; }
+  TextPoint CaretPointAfterExec() const override;
 
-  virtual TextRange SelectionAfterExec() const override;
+  RangeAction* AsRangeAction() override { return this; }
+
+  TextRange SelectionAfterExec() const override;
 
 private:
   // Return true if the indent is changed.
@@ -416,12 +391,13 @@ private:
 class AutoIndentLineAction : public Action {
 public:
   AutoIndentLineAction(TextBuffer* buffer, Coord ln);
-  virtual ~AutoIndentLineAction();
 
-  virtual void Exec() override;
-  virtual void Undo() override;
+  ~AutoIndentLineAction() override;
 
-  virtual TextPoint CaretPointAfterExec() const override;
+  void Exec() override;
+  void Undo() override;
+
+  TextPoint CaretPointAfterExec() const override;
 
 private:
   Coord ln_;
@@ -434,21 +410,19 @@ private:
 // Automatically indent a range of lines.
 class AutoIndentAction : public Action, public RangeAction {
 public:
-  AutoIndentAction(TextBuffer* buffer,
-                   const TextRange& range,
-                   TextDir dir,
-                   bool rect,
-                   bool selected);
-  virtual ~AutoIndentAction();
+  AutoIndentAction(TextBuffer* buffer, const TextRange& range, TextDir dir,
+                   bool rect, bool selected);
 
-  virtual void Exec() override;
-  virtual void Undo() override;
+  ~AutoIndentAction() override;
 
-  virtual TextPoint CaretPointAfterExec() const override;
+  void Exec() override;
+  void Undo() override;
 
-  virtual RangeAction* AsRangeAction() override { return this; }
+  TextPoint CaretPointAfterExec() const override;
 
-  virtual TextRange SelectionAfterExec() const override;
+  RangeAction* AsRangeAction() override { return this; }
+
+  TextRange SelectionAfterExec() const override;
 
 private:
   // Return true if the indent is changed.
@@ -464,23 +438,21 @@ private:
 // Comment a range of text.
 class CommentAction : public Action, public RangeAction {
 public:
-  CommentAction(TextBuffer* buffer,
-                const TextRange& range,
-                TextDir dir,
-                bool rect,
-                bool selected);
-  virtual ~CommentAction();
+  CommentAction(TextBuffer* buffer, const TextRange& range, TextDir dir,
+                bool rect, bool selected);
 
-  virtual void Exec() override;
-  virtual void Undo() override;
+  ~CommentAction() override;
 
-  virtual TextPoint CaretPointAfterExec() const override;
+  void Exec() override;
+  void Undo() override;
 
-  virtual RangeAction* AsRangeAction() override {
+  TextPoint CaretPointAfterExec() const override;
+
+  RangeAction* AsRangeAction() override {
     return this;
   }
 
-  virtual TextRange SelectionAfterExec() const override;
+  TextRange SelectionAfterExec() const override;
 
 private:
   bool IsComment(const TextPoint& point) const;
@@ -511,23 +483,21 @@ private:
 // Uncomment a range of text.
 class UncommentAction : public Action, public RangeAction {
 public:
-  UncommentAction(TextBuffer* buffer,
-                  const TextRange& range,
-                  TextDir dir,
-                  bool rect,
-                  bool selected);
-  virtual ~UncommentAction();
+  UncommentAction(TextBuffer* buffer, const TextRange& range, TextDir dir,
+                  bool rect, bool selected);
 
-  virtual void Exec() override;
-  virtual void Undo() override;
+  ~UncommentAction() override;
 
-  virtual TextPoint CaretPointAfterExec() const override;
+  void Exec() override;
+  void Undo() override;
 
-  virtual RangeAction* AsRangeAction() override {
+  TextPoint CaretPointAfterExec() const override;
+
+  RangeAction* AsRangeAction() override {
     return this;
   }
 
-  virtual TextRange SelectionAfterExec() const override;
+  TextRange SelectionAfterExec() const override;
 
 private:
   bool IsComment(const TextPoint& point) const;
@@ -556,13 +526,14 @@ private:
 // TODO: Support to retab only the selected range of text?
 class RetabAction : public Action {
 public:
-  RetabAction(TextBuffer* buffer);
-  virtual ~RetabAction();
+  explicit RetabAction(TextBuffer* buffer);
 
-  virtual void Exec() override;
-  virtual void Undo() override;
+  ~RetabAction() override;
 
-  virtual TextPoint CaretPointAfterExec() const override;
+  void Exec() override;
+  void Undo() override;
+
+  TextPoint CaretPointAfterExec() const override;
 
 private:
   void ToSpaces(Coord ln, int tab_stop);
@@ -583,15 +554,15 @@ private:
 // Set the file format, or line endings.
 class SetFileFormatAction : public Action {
 public:
-  SetFileFormatAction(TextBuffer* buffer,
-                      const TextPoint& point,
+  SetFileFormatAction(TextBuffer* buffer, const TextPoint& point,
                       FileFormat file_format);
-  virtual ~SetFileFormatAction();
 
-  virtual void Exec() override;
-  virtual void Undo() override;
+  ~SetFileFormatAction() override;
 
-  virtual TextPoint CaretPointAfterExec() const override {
+  void Exec() override;
+  void Undo() override;
+
+  TextPoint CaretPointAfterExec() const override {
     return caret_point_;
   }
 
@@ -609,6 +580,5 @@ private:
 };
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_ACTION_H_
+#endif  // EDITOR_ACTION_H_

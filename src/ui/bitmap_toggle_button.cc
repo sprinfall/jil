@@ -1,6 +1,5 @@
 #include "ui/bitmap_toggle_button.h"
 
-namespace jil {
 namespace ui {
 
 IMPLEMENT_CLASS(BitmapToggleButton, BitmapButtonBase);
@@ -46,4 +45,3 @@ void BitmapToggleButton::PostEvent() {
 }
 
 }  // namespace ui
-}  // namespace jil

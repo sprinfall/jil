@@ -1,6 +1,5 @@
-#ifndef JIL_UI_LABEL_H_
-#define JIL_UI_LABEL_H_
-#pragma once
+#ifndef UI_LABEL_H_
+#define UI_LABEL_H_
 
 // A replacement of wxStaticText.
 // The difference is that Label emits wxEVT_BUTTON on click.
@@ -8,7 +7,6 @@
 
 #include "wx/control.h"
 
-namespace jil {
 namespace ui {
 
 class Label : public wxControl {
@@ -18,7 +16,7 @@ public:
   Label(wxWindow* parent, wxWindowID id, const wxString& label);
   virtual ~Label();
 
-  virtual bool AcceptsFocus() const override {
+  bool AcceptsFocus() const override {
     return accept_focus_;
   }
 
@@ -29,7 +27,7 @@ public:
 protected:
   void InitPadding();
 
-  virtual wxSize DoGetBestSize() const override;
+  wxSize DoGetBestSize() const override;
 
   void OnPaint(wxPaintEvent& evt);
 
@@ -42,6 +40,5 @@ private:
 };
 
 }  // namespace ui
-}  // namespace jil
 
-#endif  // JIL_UI_LABEL_H_
+#endif  // UI_LABEL_H_

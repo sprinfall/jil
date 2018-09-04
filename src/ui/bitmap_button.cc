@@ -1,6 +1,5 @@
 #include "ui/bitmap_button.h"
 
-namespace jil {
 namespace ui {
 
 IMPLEMENT_CLASS(BitmapButton, BitmapButtonBase);
@@ -41,4 +40,3 @@ void BitmapButton::PostEvent() {
 }
 
 }  // namespace ui
-}  // namespace jil

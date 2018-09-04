@@ -1,14 +1,13 @@
-#ifndef JIL_EDITOR_DEFS_H_
-#define JIL_EDITOR_DEFS_H_
-#pragma once
+#ifndef EDITOR_DEFS_H_
+#define EDITOR_DEFS_H_
 
 #include <string>
+
 #include "wx/defs.h"
 #include "wx/fontenc.h"
-#include "wx/string.h"
 #include "wx/intl.h"
+#include "wx/string.h"
 
-namespace jil {
 namespace editor {
 
 const size_t kNpos = static_cast<size_t>(-1);
@@ -32,8 +31,7 @@ inline Coord CoordCast<size_t>(size_t value) {
 
 // Font size range.
 struct FontRange {
-  FontRange(int _min = 0, int _max = 0)
-      : min(_min), max(_max) {
+  explicit FontRange(int _min = 0, int _max = 0) : min(_min), max(_max) {
   }
 
   bool IsEmpty() const {
@@ -100,7 +98,6 @@ public:
 
   FileType(const FileType& rhs)
       : id(rhs.id), name(rhs.name) {
-
   }
 
   wxString id;
@@ -230,6 +227,5 @@ const int kUnreadyWindowSize = 100;  // px
 typedef int (*WcsNCmp)(const wchar_t*, const wchar_t*, size_t);
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_DEFS_H_
+#endif  // EDITOR_DEFS_H_

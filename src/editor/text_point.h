@@ -1,16 +1,15 @@
-#ifndef JIL_EDITOR_TEXT_POINT_H_
-#define JIL_EDITOR_TEXT_POINT_H_
-#pragma once
+#ifndef EDITOR_TEXT_POINT_H_
+#define EDITOR_TEXT_POINT_H_
 
 #include "wx/string.h"
+
 #include "editor/defs.h"
 
-namespace jil {
 namespace editor {
 
 class TextPoint {
 public:
-  TextPoint(Coord x_ = -1, Coord y_ = 0)
+  explicit TextPoint(Coord x_ = -1, Coord y_ = 0)
       : x(x_), y(y_) {
   }
 
@@ -74,6 +73,5 @@ inline TextPoint& operator+=(TextPoint& lhs, const TextPoint& rhs) {
 }
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_TEXT_POINT_H_
+#endif  // EDITOR_TEXT_POINT_H_

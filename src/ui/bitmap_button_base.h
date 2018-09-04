@@ -1,12 +1,11 @@
-#ifndef JIL_UI_BITMAP_BUTTON_BASE_H_
-#define JIL_UI_BITMAP_BUTTON_BASE_H_
-#pragma once
+#ifndef UI_BITMAP_BUTTON_BASE_H_
+#define UI_BITMAP_BUTTON_BASE_H_
 
 #include "wx/bitmap.h"
 #include "wx/control.h"
+
 #include "ui/button_base.h"
 
-namespace jil {
 namespace ui {
 
 class BitmapButtonBase : public ButtonBase {
@@ -33,15 +32,14 @@ public:
   void SetBitmapsND(const wxBitmap& normal, const wxBitmap& disabled);
 
 protected:
-  virtual wxSize DoGetBestSize() const override;
+  wxSize DoGetBestSize() const override;
 
-  virtual void DrawFg(wxDC& dc, ButtonStyle::State state) override;
+  void DrawFg(wxDC& dc, ButtonStyle::State state) override;
 
 protected:
   wxBitmap bitmaps_[ButtonStyle::STATES];
 };
 
 }  // namespace ui
-}  // namespace jil
 
-#endif  // JIL_UI_BITMAP_BUTTON_BASE_H_
+#endif  // UI_BITMAP_BUTTON_BASE_H_

@@ -4,5 +4,5 @@ endif()
 
 add_subdirectory(base)
 add_subdirectory(editor)
-add_subdirectory(app)
 add_subdirectory(ui)
+add_subdirectory(jil)

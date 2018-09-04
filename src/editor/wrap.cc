@@ -3,7 +3,6 @@
 #include "editor/text_extent.h"
 #include "editor/text_buffer.h"
 
-namespace jil {
 namespace editor {
 
 static size_t __WrapLine(int tab_stop,
@@ -332,4 +331,3 @@ LineRange WrapHelper::UnwrapLineRange(
 }
 
 }  // namespace editor
-}  // namespace jil

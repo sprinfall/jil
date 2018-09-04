@@ -1,20 +1,12 @@
 #include "ui/text_button.h"
+
 #include "wx/dcclient.h"
 
-namespace jil {
 namespace ui {
 
 IMPLEMENT_CLASS(TextButton, ButtonBase);
 
-TextButton::TextButton(SharedButtonStyle style)
-    : ButtonBase(style) {
-}
-
-TextButton::~TextButton() {
-}
-
-bool TextButton::Create(wxWindow* parent,
-                        wxWindowID id,
+bool TextButton::Create(wxWindow* parent, wxWindowID id,
                         const wxString& label) {
   if (!ButtonBase::Create(parent, id)) {
     return false;
@@ -68,4 +60,3 @@ void TextButton::PostEvent() {
 }
 
 }  // namespace ui
-}  // namespace jil

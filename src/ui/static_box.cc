@@ -1,11 +1,11 @@
 #include "ui/static_box.h"
+
 #include "wx/dcclient.h"
 #include "wx/sizer.h"
 
-namespace jil {
 namespace ui {
 
- static const wxColour kBorderColour(213, 223, 229);
+static const wxColour kBorderColour(213, 223, 229);
 
 BEGIN_EVENT_TABLE(StaticBox, wxPanel)
 EVT_PAINT(StaticBox::OnPaint)
@@ -79,4 +79,3 @@ void StaticBox::OnPaint(wxPaintEvent& evt) {
 }
 
 }  // namespace ui
-}  // namespace jil

@@ -1,7 +1,6 @@
 #include "editor/text_range.h"
 #include <algorithm>  // std::min/max
 
-namespace jil {
 namespace editor {
 
 CharRange::CharRange(Coord begin, Coord end)
@@ -142,4 +141,3 @@ wxString TextRange::ToString() const {
 }
 
 }  // namespace editor
-}  // namespace jil

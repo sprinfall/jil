@@ -1,12 +1,10 @@
-#ifndef JIL_UI_TEXT_BUTTON_H_
-#define JIL_UI_TEXT_BUTTON_H_
-#pragma once
+#ifndef UI_TEXT_BUTTON_H_
+#define UI_TEXT_BUTTON_H_
 
 // A button displaying text label.
 
 #include "ui/button_base.h"
 
-namespace jil {
 namespace ui {
 
 class TextButton : public ButtonBase {
@@ -14,22 +12,23 @@ class TextButton : public ButtonBase {
   DECLARE_NO_COPY_CLASS(TextButton)
 
 public:
-  explicit TextButton(SharedButtonStyle style);
-  virtual ~TextButton();
+  explicit TextButton(SharedButtonStyle style) : ButtonBase(style) {
+  }
+
+  ~TextButton() override = default;
 
   bool Create(wxWindow* parent, wxWindowID id, const wxString& label);
 
 protected:
-  virtual wxSize DoGetBestSize() const override;
+  wxSize DoGetBestSize() const override;
 
-  virtual ButtonStyle::State GetState() const override;
+  ButtonStyle::State GetState() const override;
 
-  virtual void DrawFg(wxDC& dc, ButtonStyle::State state) override;
+  void DrawFg(wxDC& dc, ButtonStyle::State state) override;
 
-  virtual void PostEvent() override;
+  void PostEvent() override;
 };
 
 }  // namespace ui
-}  // namespace jil
 
-#endif  // JIL_UI_TEXT_BUTTON_H_
+#endif  // UI_TEXT_BUTTON_H_

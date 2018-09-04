@@ -11,7 +11,6 @@ extern "C" {
 #include "editor/tab.h"
 #include "editor/util.h"
 
-namespace jil {
 namespace editor {
 
 //------------------------------------------------------------------------------
@@ -202,7 +201,7 @@ bool TextLine::EndWith(wchar_t c,
       }
 
       const LexElem* le = *it;
-      if (le->off + le->len >= len && le->lex == kLexComment) {
+      if (le->off + le->len >= len && le->lex == Lex(kLexComment)) {
         len = le->off;
       } else {
         break;
@@ -253,7 +252,7 @@ bool TextLine::EndWith(const std::wstring& str,
       }
 
       const LexElem* le = *it;
-      if (le->off + le->len >= len && le->lex == kLexComment) {
+      if (le->off + le->len >= len && le->lex == Lex(kLexComment)) {
         len = le->off;
       } else {
         break;
@@ -925,4 +924,3 @@ int TextLine::CountTabs(const std::wstring& str, size_t off, size_t count) const
 }
 
 }  // namespace editor
-}  // namespace jil

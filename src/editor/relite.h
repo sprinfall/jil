@@ -1,13 +1,11 @@
-#ifndef JIL_EDITOR_RELITE_H_
-#define JIL_EDITOR_RELITE_H_
-#pragma once
+#ifndef EDITOR_RELITE_H_
+#define EDITOR_RELITE_H_
 
 // Super fast regex only used for lex scanning.
 
 #include <string>
 #include <vector>
 
-namespace jil {
 namespace editor {
 
 namespace relite {
@@ -70,19 +68,18 @@ public:
   };
 
 public:
-  Atom(Type type, wchar_t c = 0) : type_(type), c_(c) {
+  explicit Atom(Type type, wchar_t c = 0) : type_(type), c_(c) {
   }
 
   virtual ~Atom() {
   }
 
-  virtual Atom* AsAtom() override  {
+  Atom* AsAtom() override  {
     return this;
   }
 
-  virtual size_t Match(const std::wstring& str,
-                       size_t off,
-                       bool ignore_case) const override;
+  size_t Match(const std::wstring& str, size_t off,
+               bool ignore_case) const override;
 
   Type type() const {
     return type_;
@@ -117,9 +114,8 @@ public:
   virtual ~Word() {
   }
 
-  virtual size_t Match(const std::wstring& str,
-                       size_t off,
-                       bool ignore_case) const override;
+  size_t Match(const std::wstring& str, size_t off,
+               bool ignore_case) const override;
 
 private:
   std::wstring text_;
@@ -129,9 +125,8 @@ private:
 
 class Group : public Node {
 public:
-  virtual size_t Match(const std::wstring& str,
-                       size_t off,
-                       bool ignore_case) const override {
+  size_t Match(const std::wstring& str, size_t off,
+               bool ignore_case) const override {
     return off;  // Group doesn't match anything.
   }
 };
@@ -178,7 +173,6 @@ private:
 }  // namespace relite
 
 }  // namespace editor
-}  // namespace jil
 
 
-#endif  // JIL_EDITOR_RELITE_H_
+#endif  // EDITOR_RELITE_H_

@@ -4,7 +4,6 @@
 #include "wx/intl.h"
 #include "base/string_util.h"
 
-namespace jil {
 namespace editor {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -216,4 +215,3 @@ bool MakeDirFully(const wxString& dir) {
 }
 
 }  // namespace editor
-}  // namespace jil

@@ -3,7 +3,6 @@
 #include "editor/compile_config.h"
 #include "editor/text_window.h"
 
-namespace jil {
 namespace editor {
 
 BEGIN_EVENT_TABLE(LineNrArea, wxPanel)
@@ -60,4 +59,3 @@ void LineNrArea::OnMouseCaptureLost(wxMouseCaptureLostEvent& evt) {
 }
 
 }  // namespace editor
-}  // namespace jil

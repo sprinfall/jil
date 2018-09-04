@@ -1,10 +1,10 @@
 #include "editor/action.h"
-#include <algorithm>
-#include <utility>
-#include "editor/text_buffer.h"
-#include "editor/ft_plugin.h"
 
-namespace jil {
+#include <algorithm>
+
+#include "editor/ft_plugin.h"
+#include "editor/text_buffer.h"
+
 namespace editor {
 
 Action::Action(TextBuffer* buffer, const TextPoint& point)
@@ -1333,4 +1333,3 @@ void SetFileFormatAction::Undo() {
 }
 
 }  // namespace editor
-}  // namespace jil

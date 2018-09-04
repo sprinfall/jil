@@ -1,14 +1,12 @@
-#ifndef JIL_EDITOR_THEME_H_
-#define JIL_EDITOR_THEME_H_
-#pragma once
+#ifndef EDITOR_THEME_H_
+#define EDITOR_THEME_H_
 
 #include <memory>
 #include <vector>
 
-#include "wx/colour.h"
 #include "wx/bitmap.h"
+#include "wx/colour.h"
 
-namespace jil {
 namespace editor {
 
 class Theme;
@@ -76,6 +74,5 @@ private:
 };
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_THEME_H_
+#endif  // EDITOR_THEME_H_

@@ -1,14 +1,14 @@
-#ifndef JIL_EDITOR_UTIL_H_
-#define JIL_EDITOR_UTIL_H_
-#pragma once
+#ifndef EDITOR_UTIL_H_
+#define EDITOR_UTIL_H_
 
 #include <string>
-#include "wx/string.h"
+
 #include "wx/datetime.h"
 #include "wx/gdicmn.h"
+#include "wx/string.h"
+
 #include "editor/defs.h"
 
-namespace jil {
 namespace editor {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -18,7 +18,8 @@ inline bool IsSpace(wchar_t c) {
 }
 
 // Returns true if any str.substr(off, n) == sub.
-bool SubStringEquals(const std::wstring& str, size_t off, const std::wstring& sub, WcsNCmp cmp = wcsncmp);
+bool SubStringEquals(const std::wstring& str, size_t off,
+                     const std::wstring& sub, WcsNCmp cmp = wcsncmp);
 
 // Count char c after index i.
 // Example: CountCharAfter(L"abc***d", 2, L'*') returns 3.
@@ -61,7 +62,7 @@ void ClearContainer(C* c) {
 //   SomeLogFunc(time_it.result_msg());
 class TimeIt {
 public:
-  TimeIt(const wxString& msg = wxEmptyString);
+  explicit TimeIt(const wxString& msg = wxEmptyString);
 
   void Start();
   void End();
@@ -105,6 +106,5 @@ bool IsClipboardEmpty();
 bool MakeDirFully(const wxString& dir);
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_UTIL_H_
+#endif  // EDITOR_UTIL_H_

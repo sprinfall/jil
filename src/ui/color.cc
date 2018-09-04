@@ -1,7 +1,7 @@
 #include "ui/color.h"
+
 #include "wx/gdicmn.h"
 
-namespace jil {
 namespace ui {
 
 wxColour Color::Get(const wxChar* const name) {
@@ -98,4 +98,3 @@ wxColour DecColor(const wxColour& from, unsigned char delta) {
 }
 
 }  // namespace ui
-}  // namespace jil

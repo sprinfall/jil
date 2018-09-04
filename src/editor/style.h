@@ -1,14 +1,14 @@
-#ifndef JIL_EDITOR_STYLE_H_
-#define JIL_EDITOR_STYLE_H_
-#pragma once
+#ifndef EDITOR_STYLE_H_
+#define EDITOR_STYLE_H_
 
 #include <vector>
+
 #include "wx/colour.h"
 #include "wx/font.h"
 #include "wx/string.h"
+
 #include "editor/lex.h"
 
-namespace jil {
 namespace editor {
 
 class StyleValue {
@@ -97,6 +97,5 @@ private:
 };
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_STYLE_H_
+#endif  // EDITOR_STYLE_H_

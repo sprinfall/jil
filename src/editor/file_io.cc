@@ -1,8 +1,8 @@
 #include "editor/file_io.h"
+
 #include "wx/defs.h"
 #include "wx/wxcrt.h"
 
-namespace jil {
 namespace editor {
 
 int ReadBytes(const wxString& filename, std::string* bytes, size_t max_bytes) {
@@ -52,7 +52,8 @@ int ReadBytes(const wxString& filename, std::string* bytes, size_t max_bytes) {
   return result;
 }
 
-int SaveBytes(const wxString& filename, const char* bom, const std::string& bytes) {
+int SaveBytes(const wxString& filename, const char* bom,
+              const std::string& bytes) {
   FILE* file = wxFopen(filename, wxT("wb"));
   if (file == NULL) {
     return 1;
@@ -78,4 +79,3 @@ int SaveBytes(const wxString& filename, const char* bom, const std::string& byte
 }
 
 }  // namespace editor
-}  // namespace jil

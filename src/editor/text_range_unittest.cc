@@ -1,7 +1,7 @@
 #include "editor/text_range.h"
 #include "gtest/gtest.h"
 
-using namespace jil::editor;
+using namespace editor;
 
 TEST(LineRange, IntersectWith_Empty) {
   LineRange lr1;

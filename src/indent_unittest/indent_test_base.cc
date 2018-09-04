@@ -1,6 +1,6 @@
 #include "indent_unittest/indent_test_base.h"
 
-using namespace jil::editor;
+using namespace editor;
 
 static const Encoding kEncoding = GetEncodingById(ENCODING_ISO_8859_1);
 

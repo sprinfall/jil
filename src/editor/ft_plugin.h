@@ -1,6 +1,5 @@
-#ifndef JIL_EDITOR_FT_PLUGIN_H_
-#define JIL_EDITOR_FT_PLUGIN_H_
-#pragma once
+#ifndef EDITOR_FT_PLUGIN_H_
+#define EDITOR_FT_PLUGIN_H_
 
 // There's no big performance improvement of using hash map to match ANYOF.
 // Test with scanning a C++ file with about 15,000 lines of code:
@@ -9,6 +8,7 @@
 #define JIL_MATCH_WORD_WITH_HASH 0
 
 #include <map>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -29,7 +29,6 @@ extern "C" {
 #include "editor/option.h"
 #include "editor/util.h"
 
-namespace jil {
 namespace editor {
 
 // Example: ("true", Lex(kLexConstant, kLexConstantBool))
@@ -101,7 +100,8 @@ public:
   void AddNext(Lex lex, const std::wstring& next);
 
   // Check if str.substr(off, len) is a anyof.
-  bool MatchAnyof(const std::wstring& str, size_t off, size_t len, Lex* lex) const;
+  bool MatchAnyof(const std::wstring& str, size_t off, size_t len,
+                  Lex* lex) const;
 
   // Check if any str.substr(off, x) is a quote start.
   // Return the end index of the quote start or @off if no quote start matched.
@@ -111,13 +111,16 @@ public:
   // Return the end index of the matching or @off if no matching is found.
   size_t MatchRegex(const std::wstring& str, size_t off, Lex* lex) const;
 
-  bool MatchPrefix(const std::wstring& str, size_t off, size_t len, Lex* lex) const;
+  bool MatchPrefix(const std::wstring& str, size_t off, size_t len,
+                   Lex* lex) const;
 
   // Return true if str.substr(off, len) matches any prev rules.
-  bool MatchPrev(const std::wstring& str, size_t off, size_t len, Lex* lex) const;
+  bool MatchPrev(const std::wstring& str, size_t off, size_t len,
+                 Lex* lex) const;
 
   // Return true if str.substr(off, len) matches any next rules.
-  bool MatchNext(const std::wstring& str, size_t off, size_t len, Lex* lex) const;
+  bool MatchNext(const std::wstring& str, size_t off, size_t len,
+                 Lex* lex) const;
 
   const LexComment& sline_comment() const {
     return sline_comment_;
@@ -193,6 +196,5 @@ private:
 };
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_FT_PLUGIN_H_
+#endif  // EDITOR_FT_PLUGIN_H_

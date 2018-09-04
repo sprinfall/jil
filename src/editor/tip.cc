@@ -6,7 +6,6 @@
 #include "wx/display.h"
 #include "wx/log.h"
 
-namespace jil {
 namespace editor {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -279,4 +278,3 @@ static wxPoint CalcBestPosition(wxWindow* owner, const wxSize& tip_size) {
 }
 
 }  // namespace editor
-}  // namespace jil

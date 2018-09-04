@@ -1,14 +1,14 @@
-#ifndef JIL_EDITOR_OPTION_H_
-#define JIL_EDITOR_OPTION_H_
-#pragma once
+#ifndef EDITOR_OPTION_H_
+#define EDITOR_OPTION_H_
 
 #include <map>
 #include <string>
 #include <vector>
+
 #include "boost/any.hpp"
+
 #include "editor/defs.h"
 
-namespace jil {
 namespace editor {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -23,8 +23,7 @@ public:
   };
 
 public:
-  OptionValue()
-      : type_(kNone) {
+  OptionValue() : type_(kNone) {
   }
 
   OptionValue(const OptionValue& rhs)
@@ -151,7 +150,7 @@ public:
   // Similar to Vim option "indentkeys".
   // E.g., '}' for C/C++, "endif" for Vim Script, etc.
   std::vector<std::wstring> indent_keys;
-   
+
   // Extra indent options.
   // E.g., indent_namespace, indent_case for C++.
   OptionTable indent_options;
@@ -227,7 +226,7 @@ public:
 
 class TabOptions {
 public:
-  TabOptions(int _tab_stop = 0, bool _expand_tab = false)
+  explicit TabOptions(int _tab_stop = 0, bool _expand_tab = false)
       : tab_stop(_tab_stop), expand_tab(_expand_tab) {
   }
 
@@ -236,6 +235,5 @@ public:
 };
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_OPTION_H_
+#endif  // EDITOR_OPTION_H_

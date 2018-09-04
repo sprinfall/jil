@@ -1,13 +1,13 @@
 #include "ui/label.h"
+
 #include "wx/dcclient.h"
 
-namespace jil {
 namespace ui {
 
 BEGIN_EVENT_TABLE(Label, wxControl)
-EVT_PAINT     (Label::OnPaint)
-EVT_LEFT_DOWN (Label::OnLeftDown)
-EVT_LEFT_UP   (Label::OnLeftUp)
+EVT_PAINT(Label::OnPaint)
+EVT_LEFT_DOWN(Label::OnLeftDown)
+EVT_LEFT_UP(Label::OnLeftUp)
 END_EVENT_TABLE();
 
 Label::Label(wxWindow* parent, wxWindowID id, const wxString& label)
@@ -70,4 +70,3 @@ void Label::OnLeftUp(wxMouseEvent& evt) {
 }
 
 }  // namespace ui
-}  // namespace jil

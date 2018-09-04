@@ -1,7 +1,6 @@
 #include "editor/style.h"
 #include "editor/util.h"
 
-namespace jil {
 namespace editor {
 
 Style::Style() : values_(kItemCount) {
@@ -54,4 +53,3 @@ const StyleValue* Style::Get(Lex lex) const {
 }
 
 }  // namespace editor
-}  // namespace jil

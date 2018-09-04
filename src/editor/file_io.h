@@ -1,12 +1,10 @@
-#ifndef JIL_EDITOR_FILE_IO_H_
-#define JIL_EDITOR_FILE_IO_H_
-#pragma once
+#ifndef EDITOR_FILE_IO_H_
+#define EDITOR_FILE_IO_H_
 
 #include <string>
 
 class wxString;
 
-namespace jil {
 namespace editor {
 
 // Read file in bytes.
@@ -18,9 +16,9 @@ int ReadBytes(const wxString& filename,
 // Save file in bytes.
 // The bytes could be empty.
 // Return 0 on success, 1 on IO error.
-int SaveBytes(const wxString& filename, const char* bom, const std::string& bytes);
+int SaveBytes(const wxString& filename, const char* bom,
+              const std::string& bytes);
 
 }  // namespace editor
-}  // namespace jil
 
-#endif  // JIL_EDITOR_FILE_IO_H_
+#endif  // EDITOR_FILE_IO_H_
