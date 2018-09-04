@@ -143,7 +143,7 @@ wxColour Setting::GetColor(const char* name) const {
 bool Setting::GetFont(const char* name, wxString* face_name, int* point_size) const {
   Setting font_setting = Get(name);
   if (font_setting && font_setting.type() == kGroup) {
-    *face_name = wxString::FromUTF8(font_setting.GetString("name"));
+    *face_name = font_setting.GetWxString("name", true);
     *point_size = font_setting.GetInt("size");
     return true;
   }
