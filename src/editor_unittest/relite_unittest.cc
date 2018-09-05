@@ -11,7 +11,7 @@ TEST(LiteRegex, Match_Basic) {
   EXPECT_TRUE(regex.valid());
 
   std::wstring str = L"#elif defined";
-  size_t off = regex.Match(str, 0);
+  std::size_t off = regex.Match(str, 0);
   EXPECT_EQ(str.size(), off);
 
   str = L"# \telif   defined";
@@ -35,7 +35,7 @@ TEST(LiteRegex, Match_RepeatNormalChar) {
   EXPECT_TRUE(regex.valid());
 
   std::wstring str = L"http://";
-  size_t off = regex.Match(str, 0);
+  std::size_t off = regex.Match(str, 0);
   EXPECT_EQ(str.size(), off);
 
   str = L"https://";
@@ -51,7 +51,7 @@ TEST(LiteRegex, Match_Wildcard) {
   EXPECT_TRUE(regex.valid());
 
   std::wstring str = L"#include <string>";
-  size_t off = regex.Match(str, 0);
+  std::size_t off = regex.Match(str, 0);
   EXPECT_EQ(str.size(), off);
 }
 
@@ -63,7 +63,7 @@ TEST(LiteRegex, Match_Boundary) {
   EXPECT_TRUE(regex.valid());
 
   std::wstring str = L"#elif defined";
-  size_t off = regex.Match(str, 0);
+  std::size_t off = regex.Match(str, 0);
   EXPECT_EQ(str.size(), off);
 
   str = L"#elif defined ";
@@ -93,7 +93,7 @@ TEST(LiteRegex, Match_SubExpression) {
   relite::Sub sub;
 
   std::wstring str = L"--[===[";
-  size_t off = regex.Match(str, 0, &sub, 1);
+  std::size_t off = regex.Match(str, 0, &sub, 1);
   EXPECT_EQ(str.size(), off);
   EXPECT_EQ(3, sub.off);
   EXPECT_EQ(3, sub.len);
@@ -113,7 +113,7 @@ TEST(LiteRegex, Match_MultiSubExpression) {
 
   {
     relite::Sub subs[2];
-    size_t off = regex.Match(str, 0, subs, 2);
+    std::size_t off = regex.Match(str, 0, subs, 2);
     EXPECT_EQ(str.size(), off);
     EXPECT_EQ(3, subs[0].off);
     EXPECT_EQ(3, subs[0].len);
@@ -123,14 +123,14 @@ TEST(LiteRegex, Match_MultiSubExpression) {
 
   {
     relite::Sub sub;
-    size_t off = regex.Match(str, 0, &sub, 1);
+    std::size_t off = regex.Match(str, 0, &sub, 1);
     EXPECT_EQ(str.size(), off);
     EXPECT_EQ(3, sub.off);
     EXPECT_EQ(3, sub.len);
   }
 
   {
-    size_t off = regex.Match(str, 0);
+    std::size_t off = regex.Match(str, 0);
     EXPECT_EQ(str.size(), off);
   }
 }
@@ -154,13 +154,13 @@ TEST(LiteRegex, Match_IgnoreCase) {
 
   {
     std::wstring str = L"aaa";
-    size_t off = regex.Match(str, 0);
+    std::size_t off = regex.Match(str, 0);
     EXPECT_EQ(str.size(), off);
   }
 
   {
     std::wstring str = L"AAA";
-    size_t off = regex.Match(str, 0);
+    std::size_t off = regex.Match(str, 0);
     EXPECT_EQ(str.size(), off);
   }
 }
@@ -177,7 +177,7 @@ TEST(LiteRegex, Match_End) {
     EXPECT_TRUE(regex.valid());
 
     std::wstring str = L"test";
-    size_t off = regex.Match(str, 0);
+    std::size_t off = regex.Match(str, 0);
     EXPECT_EQ(str.size(), off);
 
     str = L"  test";
@@ -194,7 +194,7 @@ TEST(LiteRegex, Match_End) {
     EXPECT_TRUE(regex.valid());
 
     std::wstring str = L"test   ";
-    size_t off = regex.Match(str, 4);
+    std::size_t off = regex.Match(str, 4);
     EXPECT_EQ(str.size(), off);
 
     str = L"  x";

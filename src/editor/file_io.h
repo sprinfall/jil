@@ -3,7 +3,7 @@
 
 #include <string>
 
-class wxString;
+#include "wx/string.h"
 
 namespace editor {
 
@@ -11,7 +11,7 @@ namespace editor {
 // Return 0 on success, 1 on IO error and 2 on exceeding bytes limit.
 int ReadBytes(const wxString& filename,
               std::string* bytes,
-              size_t max_bytes = std::string::npos);
+              std::size_t max_bytes = std::string::npos);
 
 // Save file in bytes.
 // The bytes could be empty.

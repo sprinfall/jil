@@ -105,7 +105,7 @@ void PopupMenu::OnPaint(wxPaintEvent& evt) {
 
   dc.SetTextForeground(theme_->GetColor(COLOR_FG));
 
-  for (size_t i = 0; i < items_.size(); ++i) {
+  for (std::size_t i = 0; i < items_.size(); ++i) {
     if (i != select_index_) {
       wxRect item_rect = item_rects_[i];
       if (update_rect.Intersects(item_rect)) {
@@ -128,7 +128,7 @@ void PopupMenu::OnMouseLeftUp(wxMouseEvent& evt) {
   }
   ReleaseMouse();
 
-  size_t index = GetIndexByPos(evt.GetPosition());
+  std::size_t index = GetIndexByPos(evt.GetPosition());
 
   if (index != kNpos) {
     // Post an event to parent window.
@@ -148,7 +148,7 @@ void PopupMenu::OnMouseLeftUp(wxMouseEvent& evt) {
 }
 
 void PopupMenu::OnMouseMotion(wxMouseEvent& evt) {
-  size_t index = GetIndexByPos(evt.GetPosition());
+  std::size_t index = GetIndexByPos(evt.GetPosition());
 
   if (select_index_ == index) {
     return;
@@ -206,7 +206,7 @@ void PopupMenu::AdjustSizeAndPosition() {
 }
 
 void PopupMenu::UpdateItemRects() {
-  for (size_t i = 0; i < items_.size(); ++i) {
+  for (std::size_t i = 0; i < items_.size(); ++i) {
     int col = i / rows_;
     int row = i % rows_;
 
@@ -238,8 +238,8 @@ void PopupMenu::CalcRowsCols() {
   }
 }
 
-size_t PopupMenu::GetIndexByPos(const wxPoint& pos) const {
-  for (size_t i = 0; i < item_rects_.size(); ++i) {
+std::size_t PopupMenu::GetIndexByPos(const wxPoint& pos) const {
+  for (std::size_t i = 0; i < item_rects_.size(); ++i) {
     if (item_rects_[i].Contains(pos)) {
       return i;
     }

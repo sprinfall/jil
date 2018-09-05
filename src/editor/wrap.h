@@ -74,7 +74,7 @@ public:
   // Return the sub ln.
   Coord GetSubLineNr(Coord x, Coord* sub_off = NULL) const;
 
-  size_t GetOffset(Coord sub_ln) const {
+  std::size_t GetOffset(Coord sub_ln) const {
     assert(sub_ln >= 1 && sub_ln <= WrapCount() + 1);
     return sub_ln == 1 ? 0 : offsets_[sub_ln - 1];
   }

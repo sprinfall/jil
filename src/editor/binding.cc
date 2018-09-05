@@ -3,11 +3,11 @@
 namespace editor {
 
 Binding::~Binding() {
-  for (size_t i = 0; i < text_cmds_.size(); ++i) {
+  for (std::size_t i = 0; i < text_cmds_.size(); ++i) {
     delete text_cmds_[i].func;
   }
 
-  for (size_t i = 0; i < void_cmds_.size(); ++i) {
+  for (std::size_t i = 0; i < void_cmds_.size(); ++i) {
     delete void_cmds_[i].func;
   }
 }
@@ -34,7 +34,7 @@ bool Binding::BindKeys(const std::string& name, const std::vector<Key>& keys,
                        int modes) {
 #if JIL_ENABLE_LEADER_KEY
   // Save leader key.
-  for (size_t i = 0; i < keys.size(); ++i) {
+  for (std::size_t i = 0; i < keys.size(); ++i) {
     Key leader_key = keys[i].leader();
     if (!leader_key.IsEmpty() && !IsLeaderKey(leader_key)) {
       leader_keys_.push_back(leader_key);
@@ -47,7 +47,7 @@ bool Binding::BindKeys(const std::string& name, const std::vector<Key>& keys,
   if (text_cmd != NULL) {
     text_cmd->keys = keys;
 
-    for (size_t i = 0; i < keys.size(); ++i) {
+    for (std::size_t i = 0; i < keys.size(); ++i) {
       if ((modes & kNormalMode) != 0) {
         normal_text_keys_[keys[i]] = std::make_pair(text_cmd->func,
                                                     text_cmd->menu);
@@ -67,7 +67,7 @@ bool Binding::BindKeys(const std::string& name, const std::vector<Key>& keys,
   if (void_cmd != NULL) {
     void_cmd->keys = keys;
 
-    for (size_t i = 0; i < keys.size(); ++i) {
+    for (std::size_t i = 0; i < keys.size(); ++i) {
       void_keys_[keys[i]] = std::make_pair(void_cmd->func, void_cmd->menu);
     }
 
@@ -80,7 +80,7 @@ bool Binding::BindKeys(const std::string& name, const std::vector<Key>& keys,
 void Binding::BindMenus() {
   Key key;
 
-  for (size_t i = 0; i < text_cmds_.size(); ++i) {
+  for (std::size_t i = 0; i < text_cmds_.size(); ++i) {
     TextCmd& text_cmd = text_cmds_[i];
     if (text_cmd.menu != 0) {
       if (text_cmd.keys.empty()) {
@@ -92,7 +92,7 @@ void Binding::BindMenus() {
     }
   }
 
-  for (size_t i = 0; i < void_cmds_.size(); ++i) {
+  for (std::size_t i = 0; i < void_cmds_.size(); ++i) {
     VoidCmd& void_cmd = void_cmds_[i];
     if (void_cmd.menu != 0) {
       if (void_cmd.keys.empty()) {
@@ -174,7 +174,7 @@ bool Binding::IsLeaderKey(Key key) const {
 #endif  // JIL_ENABLE_LEADER_KEY
 
 TextCmd* Binding::GetTextCmdByName(const std::string& name) {
-  for (size_t i = 0; i < text_cmds_.size(); ++i) {
+  for (std::size_t i = 0; i < text_cmds_.size(); ++i) {
     if (name == text_cmds_[i].name) {
       return &text_cmds_[i];
     }
@@ -183,7 +183,7 @@ TextCmd* Binding::GetTextCmdByName(const std::string& name) {
 }
 
 VoidCmd* Binding::GetVoidCmdByName(const std::string& name) {
-  for (size_t i = 0; i < void_cmds_.size(); ++i) {
+  for (std::size_t i = 0; i < void_cmds_.size(); ++i) {
     if (name == void_cmds_[i].name) {
       return &void_cmds_[i];
     }

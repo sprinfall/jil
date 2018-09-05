@@ -61,7 +61,7 @@ public:
   //----------------------------------------------------------------------------
   // Find panel
 
-  void set_find_history_limit(size_t find_history_limit) {
+  void set_find_history_limit(std::size_t find_history_limit) {
     find_history_limit_ = find_history_limit;
   }
 
@@ -150,7 +150,8 @@ public:
   }
 
 private:
-  bool AddHistoryString(std::list<wxString>& strings, const wxString& s, size_t limit);
+  bool AddHistoryString(std::list<wxString>& strings, const wxString& s,
+                        std::size_t limit);
 
   void SaveSplitTree(SplitNode* n, Setting* setting);
   SplitNode* RestoreSplitTree(Setting setting);
@@ -173,7 +174,7 @@ private:
   std::list<wxString> replace_strings_;
 
   // Max number of find/replace strings to save.
-  size_t find_history_limit_;
+  std::size_t find_history_limit_;
 
   // Find flags.
   // See enum FindFlag.

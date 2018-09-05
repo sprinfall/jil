@@ -18,7 +18,7 @@ inline bool IsSpace(wchar_t c) {
 }
 
 // Returns true if any str.substr(off, n) == sub.
-bool SubStringEquals(const std::wstring& str, size_t off,
+bool SubStringEquals(const std::wstring& str, std::size_t off,
                      const std::wstring& sub, WcsNCmp cmp = wcsncmp);
 
 // Count char c after index i.
@@ -29,7 +29,7 @@ Coord CountCharAfter(const std::wstring& str, Coord i, wchar_t c);
 // Examples:
 // "\\"[1] -> false
 // "a\"[1] -> true
-bool IsUnescapedBackSlash(const std::wstring& str, size_t i);
+bool IsUnescapedBackSlash(const std::wstring& str, std::size_t i);
 
 // When luabridge::LuaException is raised from executing the function defined
 // in a lua script (e.g., indent.lua), the what() function of the exception

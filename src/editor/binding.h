@@ -100,11 +100,11 @@ public:
   bool IsLeaderKey(Key key) const;
 #endif  // JIL_ENABLE_LEADER_KEY
 
-  size_t GetVoidCmdCount() const {
+  std::size_t GetVoidCmdCount() const {
     return void_cmds_.size();
   }
 
-  const VoidCmd& GetVoidCmd(size_t i) const {
+  const VoidCmd& GetVoidCmd(std::size_t i) const {
     assert(i < void_cmds_.size());
     return void_cmds_[i];
   }

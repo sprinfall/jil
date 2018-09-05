@@ -190,7 +190,7 @@ void Global_GeneralPage::InitFileEncodingComboBox(wxComboBox* combo_box) {
 }
 
 int Global_GeneralPage::IndexFileEncoding(editor::Encoding& encoding) const {
-  for (size_t i = 0; i < file_encodings_.size(); ++i) {
+  for (std::size_t i = 0; i < file_encodings_.size(); ++i) {
     if (file_encodings_[i] == encoding) {
       return static_cast<int>(i);
     }

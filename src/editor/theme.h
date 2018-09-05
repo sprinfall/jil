@@ -14,11 +14,10 @@ typedef std::shared_ptr<Theme> SharedTheme;
 
 class Theme {
 public:
-  explicit Theme(size_t theme_size)
-      : themes_(theme_size) {
+  explicit Theme(std::size_t theme_size) : themes_(theme_size) {
   }
 
-  Theme(size_t theme_size, size_t color_size, size_t image_size)
+  Theme(std::size_t theme_size, std::size_t color_size, std::size_t image_size)
       : themes_(theme_size), colors_(color_size), images_(image_size) {
   }
 

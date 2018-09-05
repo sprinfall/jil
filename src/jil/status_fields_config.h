@@ -8,8 +8,6 @@
 #include "jil/config.h"
 #include "jil/status_bar.h"
 
-class wxString;
-
 namespace jil {
 
 typedef std::vector<StatusBar::FieldInfo> FieldInfos;

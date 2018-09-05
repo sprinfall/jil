@@ -19,7 +19,7 @@ TEST(TextBuffer, CharIterator) {
   std::wstring text = L"1st line\n2nd line\n3rd line\n4th line";
   buffer.SetText(text);
 
-  size_t i = 0;
+  std::size_t i = 0;
   TextBuffer::CharIterator ci(buffer.CharBegin());
   for (; ci != buffer.CharEnd(); ++ci, ++i) {
     EXPECT_EQ(text[i], *ci);

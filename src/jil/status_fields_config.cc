@@ -19,7 +19,7 @@ static StatusBar::FieldId ParseFieldId(const std::string& field_id_str) {
     "space",
   };
 
-  for (size_t i = 0; i < StatusBar::kField_Count; ++i) {
+  for (std::size_t i = 0; i < StatusBar::kField_Count; ++i) {
     if (field_id_str == kFieldIds[i]) {
       return static_cast<StatusBar::FieldId>(i);
     }

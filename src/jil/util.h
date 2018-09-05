@@ -17,7 +17,7 @@ class wxWindow;
 namespace jil {
 
 // Allocate a new id for text buffer.
-size_t NewBufferId();
+std::size_t NewBufferId();
 
 class WorkingDirSwitcher {
  public:

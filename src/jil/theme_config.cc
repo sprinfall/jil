@@ -1,20 +1,26 @@
 #include "jil/theme_config.h"
+
 #include <string>
 #include <vector>
+
 #include "boost/algorithm/string.hpp"
+
 #include "wx/dir.h"
 #include "wx/filename.h"
 #include "wx/log.h"
+
 #include "ui/color.h"
+
 #include "editor/lex.h"
 #include "editor/style.h"
 #include "editor/text_window.h"
-#include "jil/navigation_dialog.h"
-#include "jil/defs.h"
-#include "jil/config.h"
+
 #include "jil/book_ctrl.h"
 #include "jil/book_frame.h"
+#include "jil/config.h"
+#include "jil/defs.h"
 #include "jil/find_panel.h"
+#include "jil/navigation_dialog.h"
 #include "jil/option_config.h"
 #include "jil/status_bar.h"
 
@@ -45,7 +51,7 @@ static void ReadStyle(Setting setting, StyleValue* style_value) {
                  boost::is_any_of(", "),
                  boost::token_compress_on);
 
-    for (size_t i = 0; i < splitted_font_str.size(); ++i) {
+    for (std::size_t i = 0; i < splitted_font_str.size(); ++i) {
       std::string& f = splitted_font_str[i];
       if (f == "italic") {
         font |= Style::kItalic;

@@ -1,13 +1,18 @@
 #include "jil/option_config.h"
+
 #include <vector>
+
 #include "boost/algorithm/string.hpp"
 #include "uchardet/nscore.h"
 #include "uchardet/nsUniversalDetector.h"
+
 #include "wx/log.h"
 #include "wx/filename.h"
 #include "wx/settings.h"
-#include "editor/util.h"
+
 #include "editor/option.h"
+#include "editor/util.h"
+
 #include "jil/config.h"
 #include "jil/defs.h"
 #include "jil/font_util.h"
@@ -60,9 +65,10 @@ static int StrToCjkFilters(const std::string& cjk) {
   int cjk_filters = 0;
 
   std::vector<std::string> cjk_values;
-  boost::split(cjk_values, cjk, boost::is_any_of(", "), boost::token_compress_on);
+  boost::split(cjk_values, cjk, boost::is_any_of(", "),
+               boost::token_compress_on);
 
-  for (size_t i = 0; i < cjk_values.size(); ++i) {
+  for (std::size_t i = 0; i < cjk_values.size(); ++i) {
     if (cjk_values[i] == "cs") {
       cjk_filters |= NS_FILTER_CHINESE_SIMPLIFIED;
     } else if (cjk_values[i] == "ct") {

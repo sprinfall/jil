@@ -1,14 +1,17 @@
 #include "editor/util.h"
+
 #include "wx/clipbrd.h"
 #include "wx/filename.h"
 #include "wx/intl.h"
+
 #include "base/string_util.h"
 
 namespace editor {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool SubStringEquals(const std::wstring& str, size_t off, const std::wstring& sub, WcsNCmp cmp) {
+bool SubStringEquals(const std::wstring& str, std::size_t off,
+                     const std::wstring& sub, WcsNCmp cmp) {
   if (off + sub.length() <= str.length()) {
     if (cmp(sub.c_str(), &str[off], sub.length()) == 0) {
       return true;
@@ -28,9 +31,9 @@ Coord CountCharAfter(const std::wstring& str, Coord i, wchar_t c) {
   return j - i - 1;
 }
 
-bool IsUnescapedBackSlash(const std::wstring& str, size_t i) {
+bool IsUnescapedBackSlash(const std::wstring& str, std::size_t i) {
   // Count '\' backward. It's unescaped if the number is odd.
-  size_t count = 0;
+  std::size_t count = 0;
 
   while (str[i] == L'\\') {
     ++count;
@@ -44,7 +47,7 @@ bool IsUnescapedBackSlash(const std::wstring& str, size_t i) {
 }
 
 bool ParseLuaError(const std::string& what, int* ln, std::string* msg) {
-  size_t p1 = what.find_last_of(':');
+  std::size_t p1 = what.find_last_of(':');
   if (p1 == std::string::npos) {
     return false;
   }
@@ -56,7 +59,7 @@ bool ParseLuaError(const std::string& what, int* ln, std::string* msg) {
   }
   --p1;
 
-  size_t p2 = what.find_last_of(':', p1);
+  std::size_t p2 = what.find_last_of(':', p1);
   if (p2 == std::string::npos) {
     return false;
   }

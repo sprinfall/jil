@@ -276,7 +276,7 @@ bool FindPanel::SetFont(const wxFont& font) {
   bool result = wxPanel::SetFont(font);
 
   wxWindowList& children = GetChildren();
-  for (size_t i = 0; i < children.GetCount(); ++i) {
+  for (std::size_t i = 0; i < children.GetCount(); ++i) {
     children[i]->SetFont(font);
     children[i]->Refresh();
   }
@@ -546,9 +546,9 @@ void FindPanel::OnReplaceTextHistoryMenu(wxCommandEvent& evt) {
 }
 
 void FindPanel::HandleHistoryMenu(const std::list<wxString>& history_strings,
-                                  int menu_id,
-                                  wxTextCtrl* text_ctrl) {
-  size_t index = static_cast<size_t>(menu_id - ID_MENU_FIND_HISTORY_BEGIN);
+                                  int menu_id, wxTextCtrl* text_ctrl) {
+  std::size_t index = static_cast<std::size_t>(menu_id -
+                                               ID_MENU_FIND_HISTORY_BEGIN);
   if (index >= history_strings.size()) {
     return;
   }

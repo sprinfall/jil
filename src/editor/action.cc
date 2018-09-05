@@ -224,11 +224,10 @@ bool DeleteAction::Merge(DeleteAction* next_delete_action) {
 }
 
 TextPoint DeleteAction::Seek(const TextPoint& point,
-                             TextUnit text_unit,
-                             SeekType seek_type,
-                             size_t count) const {
+                             TextUnit text_unit, SeekType seek_type,
+                             std::size_t count) const {
   TextPoint seek_point = point;
-  for (size_t c = 0; c < count; ++c) {
+  for (std::size_t c = 0; c < count; ++c) {
     seek_point = buffer_->Seek(seek_point, text_unit, seek_type);
   }
   return seek_point;

@@ -42,8 +42,8 @@ static wxString DoGetDefaultFontName() {
     wxT("Courier New"),
   };
 
-  size_t count = sizeof(kBestFonts) / sizeof(wxString);
-  for (size_t i = 0; i < count; ++i) {
+  std::size_t count = sizeof(kBestFonts) / sizeof(wxString);
+  for (std::size_t i = 0; i < count; ++i) {
     if (fe.facenames.find(kBestFonts[i]) != fe.facenames.end()) {
       return kBestFonts[i];
     }

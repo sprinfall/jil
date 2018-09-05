@@ -124,12 +124,13 @@ static bool CheckBracket(wchar_t c,
   return false;
 }
 
-static FileFormat CheckEol(const std::wstring& text, size_t* first_line_size) {
-  const size_t text_size = text.size();
+static FileFormat CheckEol(const std::wstring& text,
+                           std::size_t* first_line_size) {
+  const std::size_t text_size = text.size();
 
   FileFormat eol = FF_NONE;
 
-  size_t i = 0;
+  std::size_t i = 0;
   for (; i < text_size; ++i) {
     if (text[i] == CR) {
       if (i + 1 < text_size && text[i + 1] == LF) {
@@ -154,22 +155,22 @@ static FileFormat CheckEol(const std::wstring& text, size_t* first_line_size) {
 #if JIL_SPLIT_LINES_WITH_FUNC
 /* Usage:
 std::wstring text(L"a\nb\n\nc\n");
-size_t i = 0;
-size_t count = 0;
-size_t step = 0;
+std::size_t i = 0;
+std::size_t count = 0;
+std::size_t step = 0;
 while (SplitLines(text, i, &count, &step)) {
   text.substr(i, count);
   i += step;
 }
 */
-static bool SplitLines(const std::wstring& text, size_t i, size_t* count,
-                       size_t* step) {
-  const size_t text_size = text.size();
+static bool SplitLines(const std::wstring& text, std::size_t i,
+                       std::size_t* count, std::size_t* step) {
+  const std::size_t text_size = text.size();
   if (i >= text_size) {
     return false;
   }
 
-  size_t k = i;
+  std::size_t k = i;
   for (; k < text_size; ++k) {
     if (text[k] == CR || text[k] == LF) {
       break;
@@ -275,7 +276,7 @@ static FileError ReadFile(const wxString& file_path,
 #define READ_BUF_SIZE 1024
   char buf[READ_BUF_SIZE];
 
-  size_t read_size = 0;
+  std::size_t read_size = 0;
   while ((read_size = fread(buf, 1, READ_BUF_SIZE, file)) > 0) {
     bytes.append(buf, read_size);
   }
@@ -302,7 +303,7 @@ static FileError ReadFile(const wxString& file_path,
     return kEncodingError;  // Should never be here!
   }
 
-  size_t bom_size = 0;
+  std::size_t bom_size = 0;
   if (bom != NULL) {
     if (bom == UTF_8_BOM_BYTES) {
       bom_size = 3;
@@ -312,8 +313,8 @@ static FileError ReadFile(const wxString& file_path,
   }
 
   // Get the size in wchar_t.
-  size_t wlen = conv->ToWChar(NULL, 0, bytes.c_str() + bom_size,
-                              bytes.size() - bom_size);
+  std::size_t wlen = conv->ToWChar(NULL, 0, bytes.c_str() + bom_size,
+                                   bytes.size() - bom_size);
 
   if (wlen == wxCONV_FAILED) {
     if (conv_need_delete) {
@@ -342,7 +343,7 @@ static FileError ReadFile(const wxString& file_path,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-TextBuffer::TextBuffer(size_t id, FtPlugin* ft_plugin,
+TextBuffer::TextBuffer(std::size_t id, FtPlugin* ft_plugin,
                        const Encoding& file_encoding)
     : id_(id)
     , ft_plugin_(ft_plugin)
@@ -409,7 +410,7 @@ FileError TextBuffer::SaveFile() {
 
     // Get the size in bytes.
     // FIXME: Cannot use std::auto_ptr! Strange!
-    size_t count = conv->FromWChar(NULL, 0, text.c_str(), text.size());
+    std::size_t count = conv->FromWChar(NULL, 0, text.c_str(), text.size());
     if (count == wxCONV_FAILED) {
       // Can't save in original encoding.
       // Example: Original encoding is ASCII, but non-ASCII characters are
@@ -583,7 +584,7 @@ bool TextBuffer::GuessTabOptions(TabOptions* tab_options) const {
 
 OptionValue TextBuffer::GetIndentOption(const std::string& key) const {
   const OptionTable& indent_options = options_.text.indent_options;
-  for (size_t i = 0; i < indent_options.size(); ++i) {
+  for (std::size_t i = 0; i < indent_options.size(); ++i) {
     if (key == indent_options[i].key) {
       return indent_options[i].value;
     }
@@ -594,7 +595,7 @@ OptionValue TextBuffer::GetIndentOption(const std::string& key) const {
 void TextBuffer::SetIndentOption(const std::string& key,
                                  const OptionValue& value) {
   OptionTable& indent_options = options_.text.indent_options;
-  for (size_t i = 0; i < indent_options.size(); ++i) {
+  for (std::size_t i = 0; i < indent_options.size(); ++i) {
     if (key == indent_options[i].key) {
       indent_options[i].value = value;
       return;
@@ -651,7 +652,7 @@ TextLine* TextBuffer::LastLine() const {
   return lines_[lines_.size() - 1];
 }
 
-const TextLine* TextBuffer::LineById(size_t id) const {
+const TextLine* TextBuffer::LineById(std::size_t id) const {
   TextLines::const_iterator it = lines_.begin();
   for (; it != lines_.end(); ++it) {
     if ((*it)->id() == id) {
@@ -661,7 +662,7 @@ const TextLine* TextBuffer::LineById(size_t id) const {
   return NULL;
 }
 
-Coord TextBuffer::LineNrFromId(size_t id) const {
+Coord TextBuffer::LineNrFromId(std::size_t id) const {
   TextLines::const_iterator it = lines_.begin();
   for (; it != lines_.end(); ++it) {
     if ((*it)->id() == id) {
@@ -694,7 +695,7 @@ wchar_t TextBuffer::Char(const TextPoint& point) const {
   return Line(point.y)->Char(point.x);
 }
 
-size_t TextBuffer::LineId(Coord ln) const {
+std::size_t TextBuffer::LineId(Coord ln) const {
   return Line(ln)->id();
 }
 
@@ -723,7 +724,7 @@ Lex TextBuffer::GetLex(const TextPoint& point) const {
 void TextBuffer::GetText(std::wstring* text) const {
   std::wstring eol = GetEol(file_format_);
   *text = lines_[0]->data();
-  for (size_t i = 1; i < lines_.size(); ++i) {
+  for (std::size_t i = 1; i < lines_.size(); ++i) {
     *text += eol;
     *text += lines_[i]->data();
   }
@@ -793,8 +794,8 @@ void TextBuffer::SetText(const std::wstring& text, bool notify) {
   time_it.Start();
 #endif  // JIL_TEST_TIME_SET_TEXT
 
-  size_t i = 0;
-  size_t first_line_size = 0;
+  std::size_t i = 0;
+  std::size_t first_line_size = 0;
   FileFormat ff = CheckEol(text, &first_line_size);
   if (ff != FF_NONE) {
     // The file has more than one line.
@@ -808,8 +809,8 @@ void TextBuffer::SetText(const std::wstring& text, bool notify) {
   }
 
 #if JIL_SPLIT_LINES_WITH_FUNC
-  size_t count = 0;
-  size_t step = 0;
+  std::size_t count = 0;
+  std::size_t step = 0;
   while (SplitLines(text, i, &count, &step)) {
     DoAppendLine(&text[i], count);
     i += step;
@@ -1067,10 +1068,10 @@ TextPoint TextBuffer::InsertText(const TextPoint& point,
     FreezeNotify();
   }
 
-  size_t line_count = 0;
+  std::size_t line_count = 0;
   TextPoint insert_point = point;
-  size_t p = 0;
-  for (size_t i = 0; i < text.size(); ++i) {
+  std::size_t p = 0;
+  for (std::size_t i = 0; i < text.size(); ++i) {
     if (text[i] == LF) {
       insert_point = InsertString(insert_point, text.substr(p, i - p));
       insert_point = InsertChar(insert_point, LF);
@@ -1118,11 +1119,11 @@ TextPoint TextBuffer::InsertRectText(const TextPoint& point,
     FreezeNotify();
   }
 
-  size_t line_count = 0;
+  std::size_t line_count = 0;
   TextPoint insert_point = point;
 
-  size_t p = 0;
-  for (size_t i = 0; i < text.size(); ++i) {
+  std::size_t p = 0;
+  for (std::size_t i = 0; i < text.size(); ++i) {
     if (text[i] == LF) {
       InsertString(insert_point, text.substr(p, i - p));
       ++insert_point.y;
@@ -1399,13 +1400,13 @@ void TextBuffer::DetachListener(TextListener* listener) {
 }
 
 void TextBuffer::Notify(LineChangeType type, const LineChangeData& data) {
-  for (size_t i = 0; i < listeners_.size(); ++i) {
+  for (std::size_t i = 0; i < listeners_.size(); ++i) {
     listeners_[i]->OnBufferLineChange(type, data);
   }
 }
 
 void TextBuffer::Notify(ChangeType type) {
-  for (size_t i = 0; i < listeners_.size(); ++i) {
+  for (std::size_t i = 0; i < listeners_.size(); ++i) {
     listeners_[i]->OnBufferChange(type);
   }
 }
@@ -1900,7 +1901,7 @@ Coord TextBuffer::GetMaxLineLength() const {
   if (!long_line_length_map_.empty()) {
     return CoordCast((--long_line_length_map_.end())->first);
   }
-  size_t i = kLongLineBoundary;
+  std::size_t i = kLongLineBoundary;
   while (i > 0 && line_length_table_[i] == 0) {
     --i;
   }
@@ -2566,7 +2567,7 @@ TextPoint TextBuffer::SeekPrevWord(const TextPoint& point) {
     }
   } else {  // point.x > 0
     begin_point.y = point.y;
-    size_t i = WordBegin(TextPoint(point.x - 1, point.y), true);
+    std::size_t i = WordBegin(TextPoint(point.x - 1, point.y), true);
     begin_point.x = i;
   }
 
@@ -2589,7 +2590,7 @@ TextPoint TextBuffer::SeekNextWord(const TextPoint& point) {
       end_point.x = Line(end_point.y)->FindNonSpace();
     }
   } else {  // point.x < line_length
-    size_t i = WordEnd(point, true);
+    std::size_t i = WordEnd(point, true);
     end_point.Set(i, point.y);
   }
 
@@ -2727,11 +2728,11 @@ Coord TextBuffer::WordEnd(const TextPoint& point, bool include_space) {
 void TextBuffer::SplitWords(const std::wstring& line_data,
                             bool include_space,
                             std::vector<std::wstring>* words) {
-  size_t p = 0;
-  size_t length = line_data.size();
+  std::size_t p = 0;
+  std::size_t length = line_data.size();
   wchar_t c;
 
-  for (size_t i = 0; i < length; ) {
+  for (std::size_t i = 0; i < length;) {
     p = i;
     c = line_data[i];
 
@@ -2844,7 +2845,7 @@ void TextBuffer::MergeInsertCharActions() {
 
   std::wstring str;
   str.resize(recent_ic_actions_.size());
-  for (size_t i = 0; i < recent_ic_actions_.size(); ++i) {
+  for (std::size_t i = 0; i < recent_ic_actions_.size(); ++i) {
     str[i] = recent_ic_actions_[i]->c();
   }
 
@@ -2852,7 +2853,7 @@ void TextBuffer::MergeInsertCharActions() {
   SplitWords(str, true, &words);
 
   // p: Insert char action index.
-  for (size_t i = 0, p = 0; i < words.size(); ++i) {
+  for (std::size_t i = 0, p = 0; i < words.size(); ++i) {
     TextPoint point = recent_ic_actions_[p]->point();
 
     Action* action = NULL;
@@ -2914,15 +2915,15 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
 
   const std::wstring& line_data = line->data();
 
-  const size_t line_length = line_data.length();
+  const std::size_t line_length = line_data.length();
 
   // quote != NULL: this line continues the last quote.
-  size_t quote_off = quote != NULL ? 0 : kNpos;
+  std::size_t quote_off = quote != NULL ? 0 : kNpos;
 
   LexElem le;  // Current lex element.
   LexElem prev_le;  // Previous lex element.
 
-  size_t i = 0;
+  std::size_t i = 0;
 
   if (quote != NULL && !quote->multi_line() && quote->end().empty()) {
     // Single line quote ending with EOL, don't have to step forward by char.
@@ -2942,7 +2943,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
     le.Reset();
 
     if (quote != NULL) {  // Check quote end.
-      size_t quote_i = i;
+      std::size_t quote_i = i;
       if (!quote->end().empty() &&
           SubStringEquals(line_data, i, quote->end())) {
         quote_i += quote->end().length();
@@ -2963,7 +2964,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
         ++i;
       }
     } else {  // Check quote start.
-      size_t quote_i = ft_plugin_->MatchQuote(line_data, i, &quote);
+      std::size_t quote_i = ft_plugin_->MatchQuote(line_data, i, &quote);
 
       if (quote_i > i) {  // Quote starts.
         quote_off = i;
@@ -2985,7 +2986,7 @@ void TextBuffer::ScanLex(TextLine* line, Quote*& quote) {
         // Match regex.
         // Suppose "regex" always starts from the first non-space char.
         // This might be an ISSUE for some file types.
-        size_t regex_i = ft_plugin_->MatchRegex(line_data, i, &le.lex);
+        std::size_t regex_i = ft_plugin_->MatchRegex(line_data, i, &le.lex);
         if (regex_i > i) {
           le.len = regex_i - i;
           prev_le = le;
@@ -3271,7 +3272,7 @@ void TextBuffer::RemoveLineLength(TextLine* line) {
 }
 
 void TextBuffer::ClearLineLength() {
-  for (size_t i = 0; i <= kLongLineBoundary; ++i) {
+  for (std::size_t i = 0; i <= kLongLineBoundary; ++i) {
     line_length_table_[i] = 0;
   }
   long_line_length_map_.clear();

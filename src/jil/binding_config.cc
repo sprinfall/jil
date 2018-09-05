@@ -93,12 +93,12 @@ const wxKeyCode kSortedKeyCodes[kKeyCount] = {
   WXK_UP,
 };
 
-size_t IndexKeyName(const char* keyname) {
-  size_t i = 0;
-  size_t j = kKeyCount;
+std::size_t IndexKeyName(const char* keyname) {
+  std::size_t i = 0;
+  std::size_t j = kKeyCount;
 
   while (j > i) {
-    size_t m = i + (j - i) / 2;
+    std::size_t m = i + (j - i) / 2;
     int cmp = strcmp(keyname, kSortedKeyNames[m]);
     if (cmp == 0) {
       return m;
@@ -126,7 +126,7 @@ int ParseKeycode(const std::string& keycode_str, int* modifiers) {
       keycode = toupper(keycode);  // Virtual key is in upper case.
     } else {
       // Example: $ -> Shift+4
-      size_t pos = editor::kShiftChars.find(keycode);
+      std::size_t pos = editor::kShiftChars.find(keycode);
       if (pos != std::string::npos) {
         keycode = editor::kNonShiftChars[pos];
         *modifiers |= wxMOD_SHIFT;
@@ -141,7 +141,7 @@ int ParseKeycode(const std::string& keycode_str, int* modifiers) {
     return keycode;
   }
 
-  size_t i = IndexKeyName(keycode_str.c_str());
+  std::size_t i = IndexKeyName(keycode_str.c_str());
   if (i != kKeyCount) {
     return kSortedKeyCodes[i];
   }
@@ -156,8 +156,8 @@ int ParseKeycode(const std::string& keycode_str, int* modifiers) {
 // For the second example, the first simicolon is the keycode while the second
 // semicolon is the key delimiter. That's why we don't use a general tokenizer.
 void SplitKeys(const std::string& keys_str, std::vector<std::string>* splited_keys_str) {
-  size_t p = 0;
-  size_t i = 0;
+  std::size_t p = 0;
+  std::size_t i = 0;
   for (; i < keys_str.size(); ++i) {
     if (keys_str[i] == ';') {
       if (i > p) {
@@ -175,9 +175,9 @@ void SplitKeys(const std::string& keys_str, std::vector<std::string>* splited_ke
 }
 
 bool ParseKeyStroke(const std::string& key_str, int* code, int* modifiers) {
-  size_t offset = 0;
+  std::size_t offset = 0;
   while (true) {
-    size_t plus = key_str.find_first_of('+', offset);
+    std::size_t plus = key_str.find_first_of('+', offset);
     if (plus != std::string::npos) {
       *modifiers = *modifiers | ParseModifier(key_str.substr(offset, plus - offset));
     } else {
@@ -203,7 +203,7 @@ bool ParseKey(const std::string& key_str, Key* key) {
 
 #if JIL_ENABLE_LEADER_KEY
   // Check leader key.
-  size_t comma = key_str.find_first_of(',');
+  std::size_t comma = key_str.find_first_of(',');
   if (comma != std::string::npos) {
     if (comma > 0 && key_str[comma - 1] == '+') {
       comma = key_str.find_first_of(',', comma + 1);
@@ -241,7 +241,7 @@ std::vector<Key> ParseKeys(const std::string& keys_str) {
   SplitKeys(keys_str, &splited_keys_str);
 
   Key key;
-  for (size_t i = 0; i < splited_keys_str.size(); ++i) {
+  for (std::size_t i = 0; i < splited_keys_str.size(); ++i) {
     if (!ParseKey(splited_keys_str[i], &key)) {
       keys.clear();
       break;

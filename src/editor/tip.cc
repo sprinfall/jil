@@ -44,7 +44,7 @@ protected:
   virtual wxSize DoGetBestSize() const {
     int max_width = 0;
 
-    for (size_t i = 0; i < tip_model_->tips.size(); ++i) {
+    for (std::size_t i = 0; i < tip_model_->tips.size(); ++i) {
       int tip_w = 0;
       GetTextExtent(tip_model_->tips[i], &tip_w, NULL, NULL, NULL);
 
@@ -66,10 +66,10 @@ protected:
     dc.SetFont(GetFont());
     dc.Clear();
 
-    size_t rows = 0;
+    std::size_t rows = 0;
 
     int y = kPaddingY;
-    for (size_t i = 0; i < tip_model_->tips.size(); ++i) {
+    for (std::size_t i = 0; i < tip_model_->tips.size(); ++i) {
       dc.DrawText(tip_model_->tips[i], kPaddingX, y);
       ++rows;
       y += line_height_ + kPaddingY;

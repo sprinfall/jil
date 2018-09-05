@@ -122,7 +122,7 @@ static wxString SingleKeyName(int key_data) {
 
   // Example: Shift+4 -> $
   if ((modifiers & wxMOD_SHIFT) != 0) {
-    size_t pos = kNonShiftChars.find(static_cast<char>(code));
+    std::size_t pos = kNonShiftChars.find(static_cast<char>(code));
     if (pos != std::string::npos) {
       code = kShiftChars[pos];
       modifiers = modifiers & ~wxMOD_SHIFT;

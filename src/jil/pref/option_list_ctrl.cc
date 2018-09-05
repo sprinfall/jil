@@ -90,7 +90,7 @@ OptionListCtrl::OptionListCtrl() {
 }
 
 OptionListCtrl::~OptionListCtrl() {
-  for (size_t i = 0; i < options_.size(); ++i) {
+  for (std::size_t i = 0; i < options_.size(); ++i) {
     delete options_[i];
   }
   options_.clear();
@@ -197,7 +197,7 @@ void OptionListCtrl::InitColors() {
 
 editor::OptionPair* OptionListCtrl::GetOptionByRow(int row) {
   assert(row > 0);
-  size_t i = row - 1;
+  std::size_t i = row - 1;
   if (i < options_.size()) {
     return options_[i];
   }
@@ -232,7 +232,7 @@ void OptionListCtrl::OnHeadPaint(wxDC& dc) {
 
   int x = rect.x;
 
-  for (size_t i = 0; i < Column::COUNT; ++i) {
+  for (std::size_t i = 0; i < Column::COUNT; ++i) {
     Column& column = columns_[i];
 
     wxRect column_rect(x, rect.y, column.width, row_height_);
@@ -453,7 +453,7 @@ void OptionListCtrl::RefreshRow(int row) {
 }
 
 void OptionListCtrl::RefreshRowByKey(const std::string& key) {
-  for (size_t i = 0; i < options_.size(); ++i) {
+  for (std::size_t i = 0; i < options_.size(); ++i) {
     if (options_[i]->key == key) {
       int row = static_cast<int>(i) + 1;
       RefreshRow(row);

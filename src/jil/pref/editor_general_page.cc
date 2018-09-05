@@ -48,7 +48,7 @@ void Editor_GeneralPage::SplitRulers(const wxString& rulers_str,
                                      std::vector<int>& rulers) {
   wxArrayString ruler_strs = wxSplit(rulers_str, wxT(','));
   long ruler = 0;
-  for (size_t i = 0; i < ruler_strs.size(); ++i) {
+  for (std::size_t i = 0; i < ruler_strs.size(); ++i) {
     if (ruler_strs[i].ToLong(&ruler)) {
       if (ruler > 0) {
         rulers.push_back(static_cast<int>(ruler));

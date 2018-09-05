@@ -37,7 +37,7 @@ public:
     max_rows_ = max_rows;
   }
 
-  size_t select_index() const {
+  std::size_t select_index() const {
     return select_index_;
   }
 
@@ -56,7 +56,7 @@ protected:
 private:
   void AdjustSize();
 
-  size_t GetIndexByPos(const wxPoint& pos) const;
+  std::size_t GetIndexByPos(const wxPoint& pos) const;
 
 private:
   editor::SharedTheme theme_;
@@ -67,7 +67,7 @@ private:
   // Active text pages.
   std::vector<TextPage*> text_pages_;
 
-  size_t select_index_;
+  std::size_t select_index_;
 
   int column_width_;  // In pixel
 

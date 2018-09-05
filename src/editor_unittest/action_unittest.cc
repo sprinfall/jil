@@ -342,7 +342,7 @@ TEST(RetabAction, ToSpaces) {
   action.set_caret_point(caret_point);
   action.set_update_caret(true);
 
-  for (size_t i = 0; i < 2; ++i) {
+  for (std::size_t i = 0; i < 2; ++i) {
     action.Exec();
 
     EXPECT_EQ(L"", buffer.Line(2)->GetIndentStr());
@@ -384,7 +384,7 @@ TEST(RetabAction, ToTabs) {
   action.set_caret_point(caret_point);
   action.set_update_caret(true);
 
-  for (size_t i = 0; i < 2; ++i) {
+  for (std::size_t i = 0; i < 2; ++i) {
     action.Exec();
 
     EXPECT_EQ(L"", buffer.Line(2)->GetIndentStr());

@@ -1,23 +1,25 @@
 #include "editor/text_area.h"
+
 #include "wx/dcbuffer.h"
 #include "wx/log.h"
-#include "editor/text_window.h"
+
 #include "editor/line_nr_area.h"
 #include "editor/renderer.h"
+#include "editor/text_window.h"
 
 #define kTextAreaStyle (wxBORDER_NONE | wxWANTS_CHARS)
 
 namespace editor {
 
 BEGIN_EVENT_TABLE(TextArea, wxPanel)
-EVT_PAINT               (TextArea::OnPaint)
-EVT_SIZE                (TextArea::OnSize)
-EVT_MOUSE_EVENTS        (TextArea::OnMouse)
-EVT_KEY_DOWN            (TextArea::OnKeyDown)
-EVT_CHAR                (TextArea::OnChar)
-EVT_MOUSE_CAPTURE_LOST  (TextArea::OnMouseCaptureLost)
-EVT_SET_FOCUS           (TextArea::OnSetFocus)
-EVT_KILL_FOCUS          (TextArea::OnKillFocus)
+EVT_PAINT(TextArea::OnPaint)
+EVT_SIZE(TextArea::OnSize)
+EVT_MOUSE_EVENTS(TextArea::OnMouse)
+EVT_KEY_DOWN(TextArea::OnKeyDown)
+EVT_CHAR(TextArea::OnChar)
+EVT_MOUSE_CAPTURE_LOST(TextArea::OnMouseCaptureLost)
+EVT_SET_FOCUS(TextArea::OnSetFocus)
+EVT_KILL_FOCUS(TextArea::OnKillFocus)
 END_EVENT_TABLE()
 
 TextArea::TextArea(TextWindow* text_window)
@@ -48,7 +50,7 @@ void TextArea::ScrollWindow(int dx, int dy, const wxRect* rect) {
 void TextArea::OnPaint(wxPaintEvent& evt) {
   wxAutoBufferedPaintDC dc(this);
 #if !wxALWAYS_NATIVE_DOUBLE_BUFFER
-  //wxLogDebug("TextArea native double buffer");
+  // wxLogDebug("TextArea native double buffer");
   dc.SetBackground(GetBackgroundColour());
   dc.Clear();
 #endif

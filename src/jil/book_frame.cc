@@ -273,7 +273,7 @@ void BookFrame::OpenFiles(const wxArrayString& file_names, bool silent) {
   text_book_->StartBatch();
 
   bool active = true;
-  for (size_t i = 0; i < file_names.size(); ++i) {
+  for (std::size_t i = 0; i < file_names.size(); ++i) {
     // Don't update Recent Files menu for performance. Update it later.
     if (DoOpenFile(file_names[i], active, silent, true, false) != NULL) {
       active = false;  // Activate the first opened file.
@@ -425,7 +425,7 @@ void BookFrame::FileSaveAs() {
 
 void BookFrame::FileSaveAll() {
   std::vector<TextPage*> text_pages = text_book_->TextPages();
-  for (size_t i = 0; i < text_pages.size(); ++i) {
+  for (std::size_t i = 0; i < text_pages.size(); ++i) {
     if (text_pages[i] != NULL) {
       DoSaveBuffer(text_pages[i]->buffer());
     }
@@ -626,7 +626,7 @@ void BookFrame::FindAllInAllPages(const std::wstring& str, int flags) {
   ClearFindResult(fr_page);
 
   std::vector<TextPage*> text_pages = text_book_->TextPages();
-  for (size_t i = 0; i < text_pages.size(); ++i) {
+  for (std::size_t i = 0; i < text_pages.size(); ++i) {
     FindAll(str, flags, text_pages[i]->buffer(), true, fr_page->buffer());
   }
 }
@@ -750,7 +750,7 @@ void BookFrame::ReplaceAllInAllPages(const std::wstring& str,
   wxBusyCursor busy;
 
   std::vector<TextPage*> text_pages = text_book_->TextPages();
-  for (size_t i = 0; i < text_pages.size(); ++i) {
+  for (std::size_t i = 0; i < text_pages.size(); ++i) {
     ReplaceAll(str, replace_str, flags, text_pages[i]);
   }
 
@@ -1047,7 +1047,7 @@ void BookFrame::OnMenuFile(wxCommandEvent& evt) {
 }
 
 void BookFrame::OnMenuFileRecentFile(wxCommandEvent& evt) {
-  size_t i = evt.GetId() - ID_MENU_FILE_RECENT_FILE_0;
+  std::size_t i = evt.GetId() - ID_MENU_FILE_RECENT_FILE_0;
   if (i >= recent_files_.size()) {
     return;
   }
@@ -1400,7 +1400,7 @@ void BookFrame::OnClose(wxCloseEvent& evt) {
   // Remember opened files.
   session_->ClearOpenedFiles();
   std::vector<TextPage*> text_pages = text_book_->TextPages();
-  for (size_t i = 0; i < text_pages.size(); ++i) {
+  for (std::size_t i = 0; i < text_pages.size(); ++i) {
     if (!text_pages[i]->buffer()->new_created()) {
       wxString file_path = text_pages[i]->buffer()->file_path_name();
       int stack_index = text_book_->GetStackIndex(text_pages[i]);
@@ -2329,7 +2329,7 @@ void BookFrame::AddFrMatchLines(editor::TextBuffer* buffer,
 
   // Get max line number's string size.
   Coord max_ln = result_ranges.back().point_end().y;
-  size_t max_ln_size = base::LexicalCast<std::string>(max_ln).size();
+  std::size_t max_ln_size = base::LexicalCast<std::string>(max_ln).size();
 
   Lex nr_lex(kLexConstant, kLexConstantNumber);
   Lex id_lex(kLexIdentifier);
@@ -2372,8 +2372,8 @@ void BookFrame::AddFrMatchLines(editor::TextBuffer* buffer,
     }
 
     // Highlight the matched sub-string.
-    size_t off = range.point_begin().x + max_ln_size + 1;
-    size_t len = range.point_end().x - range.point_begin().x;
+    std::size_t off = range.point_begin().x + max_ln_size + 1;
+    std::size_t len = range.point_end().x - range.point_begin().x;
     fr_line->AddLexElem(off, len, id_lex);
 
     prev_ln = ln;
@@ -2381,7 +2381,7 @@ void BookFrame::AddFrMatchLines(editor::TextBuffer* buffer,
 }
 
 void BookFrame::AddFrMatchCountLine(editor::TextBuffer* buffer,
-                                    size_t count,
+                                    std::size_t count,
                                     editor::TextBuffer* fr_buffer) {
   std::wstring match_count = L">> ";
   match_count += base::LexicalCast<std::wstring>(count);
@@ -2441,7 +2441,7 @@ void BookFrame::OnFindThreadEvent(wxThreadEvent& evt) {
 }
 
 void BookFrame::OnReplaceThreadEvent(wxThreadEvent& evt) {
-  size_t buffer_id = evt.GetInt();
+  std::size_t buffer_id = evt.GetInt();
 
   if (buffer_id == wxNOT_FOUND) {
     text_book_->EndBatch();
@@ -2458,7 +2458,7 @@ void BookFrame::OnReplaceThreadEvent(wxThreadEvent& evt) {
 
   // Create text page for the new buffer.
   wxCriticalSectionLocker locker(replaced_buffers_cs_);
-  std::map<size_t, editor::TextBuffer*>::iterator it = replaced_buffers_.find(buffer_id);
+  auto it = replaced_buffers_.find(buffer_id);
   if (it != replaced_buffers_.end()) {
     editor::TextBuffer* new_buffer = it->second;
     replaced_buffers_.erase(it);
@@ -2674,8 +2674,8 @@ void BookFrame::LoadMenus() {
 void BookFrame::SetAccelForVoidCmds() {
   std::vector<wxAcceleratorEntry> accel_entries;
 
-  size_t void_cmd_count = binding_->GetVoidCmdCount();
-  for (size_t i = 0; i < void_cmd_count; ++i) {
+  std::size_t void_cmd_count = binding_->GetVoidCmdCount();
+  for (std::size_t i = 0; i < void_cmd_count; ++i) {
     const editor::VoidCmd& void_cmd = binding_->GetVoidCmd(i);
 
     if (void_cmd.menu != 0) {
@@ -2818,21 +2818,21 @@ void BookFrame::UpdateRecentFilesMenu() {
     return;
   }
 
-  size_t count = recent_files_menu_->GetMenuItemCount();
-  size_t expected_count = recent_files_.size();
+  std::size_t count = recent_files_menu_->GetMenuItemCount();
+  std::size_t expected_count = recent_files_.size();
   if (count > expected_count) {
-    for (size_t i = expected_count; i < count; ++i) {
+    for (std::size_t i = expected_count; i < count; ++i) {
       recent_files_menu_->Destroy(ID_MENU_FILE_RECENT_FILE_0 + i);
     }
   } else if (count < expected_count) {
-    for (size_t i = count; i < expected_count; ++i) {
+    for (std::size_t i = count; i < expected_count; ++i) {
       int id = ID_MENU_FILE_RECENT_FILE_0 + i;
       AppendMenuItem(recent_files_menu_, id, wxT("t"));
     }
   }
 
   std::list<wxString>::iterator it = recent_files_.begin();
-  for (size_t i = 0; i < expected_count; ++i, ++it) {
+  for (std::size_t i = 0; i < expected_count; ++i, ++it) {
     int id = ID_MENU_FILE_RECENT_FILE_0 + i;
     // NOTE (2016-06-05): Assert fail if use "%d" instead of "%lu" on Linux.
     wxString label = wxString::Format(wxT("%lu. "), i) + *it;
@@ -2845,7 +2845,7 @@ void BookFrame::UpdateRecentFilesMenu() {
 
 TextPage* BookFrame::TextPageByFileName(const wxFileName& fn_object) const {
   std::vector<TextPage*> text_pages = text_book_->TextPages();
-  for (size_t i = 0; i < text_pages.size(); ++i) {
+  for (std::size_t i = 0; i < text_pages.size(); ++i) {
     if (fn_object == text_pages[i]->buffer()->file_name_object()) {
       return text_pages[i];
     }
@@ -2853,9 +2853,9 @@ TextPage* BookFrame::TextPageByFileName(const wxFileName& fn_object) const {
   return NULL;
 }
 
-TextPage* BookFrame::TextPageByBufferId(size_t buffer_id) const {
+TextPage* BookFrame::TextPageByBufferId(std::size_t buffer_id) const {
   std::vector<TextPage*> text_pages = text_book_->TextPages();
-  for (size_t i = 0; i < text_pages.size(); ++i) {
+  for (std::size_t i = 0; i < text_pages.size(); ++i) {
     if (buffer_id == text_pages[i]->buffer()->id()) {
       return text_pages[i];
     }
@@ -2915,7 +2915,7 @@ void BookFrame::SwitchStackPage(bool forward) {
   navigation_dialog.SetTextPages(text_pages, forward);
   navigation_dialog.ShowModal();
 
-  size_t index = navigation_dialog.select_index();
+  std::size_t index = navigation_dialog.select_index();
   if (index < text_pages.size()) {
     text_book_->ActivatePage(text_pages[index], true);
   }
@@ -2924,7 +2924,8 @@ void BookFrame::SwitchStackPage(bool forward) {
 //------------------------------------------------------------------------------
 // File - Open, Save
 
-editor::TextBuffer* BookFrame::CreateBuffer(const wxFileName& fn, size_t id, bool scan_lex) {
+editor::TextBuffer* BookFrame::CreateBuffer(const wxFileName& fn,
+                                            std::size_t id, bool scan_lex) {
   using namespace editor;
 
   FtPlugin* ft_plugin = wxGetApp().GetFtPluginByFileName(fn);

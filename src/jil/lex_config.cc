@@ -84,7 +84,7 @@ Lex ParseLex(const char* lex_str) {
   std::string major_str = lex_str;
   std::string minor_str;
 
-  size_t dot_index = major_str.find('.', 0);
+  std::size_t dot_index = major_str.find('.', 0);
   if (dot_index != std::string::npos) {
     minor_str = major_str.substr(dot_index + 1);
     major_str = major_str.substr(0, dot_index);

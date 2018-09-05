@@ -192,7 +192,7 @@ public:
   //                    E.g., Close All But This.
   void RemoveAllPages(bool from_destroy, const BookPage* except_page = NULL);
 
-  size_t PageCount() const {
+  std::size_t PageCount() const {
     return tabs_.size();
   }
 
@@ -291,7 +291,7 @@ protected:
   //----------------------------------------------------------------------------
 
   // Get tab iterator by index.
-  TabIter TabIterByIndex(size_t index);
+  TabIter TabIterByIndex(std::size_t index);
 
   // Get tab iterator by x position.
   // \param tab_rect Optional output of the tab rect.
@@ -367,7 +367,7 @@ protected:
   TabList stack_tabs_;
 
   // Number of visible tabs.
-  size_t visible_tabs_count_;
+  std::size_t visible_tabs_count_;
 
   // The tab on which the mouse is hovering.
   Tab* hover_tab_;

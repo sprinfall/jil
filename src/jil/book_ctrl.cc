@@ -556,7 +556,7 @@ void BookCtrl::OnTabPaint(wxDC& dc, wxPaintEvent& evt) {
       } else {
         if (label_rect.width > ellipsis_width_) {
           int max_width = label_rect.width - ellipsis_width_;
-          size_t i = ui::TailorLabel(dc, label, max_width);
+          std::size_t i = ui::TailorLabel(dc, label, max_width);
           label = label.Mid(0, i) + ui::kEllipsis;
           dc.DrawText(label, label_rect.x, label_rect.y);
         }
@@ -830,14 +830,14 @@ BookCtrl::TabIter BookCtrl::MakeTabVisible(TabIter it, bool check, bool refresh)
   }
 
   if (check) {
-    size_t index = std::distance(tabs_.begin(), it);
+    std::size_t index = std::distance(tabs_.begin(), it);
     if (index < visible_tabs_count_) {
       return it;  // Already visible.
     }
   }
 
   Tab* tab = *it;
-  size_t count = visible_tabs_count_;
+  std::size_t count = visible_tabs_count_;
 
   while (true) {
     // Insert the tab AFTER the last visible tab.
@@ -871,7 +871,7 @@ BookCtrl::TabIter BookCtrl::MakeActiveTabVisible(bool refresh) {
 
 //------------------------------------------------------------------------------
 
-BookCtrl::TabIter BookCtrl::TabIterByIndex(size_t index) {
+BookCtrl::TabIter BookCtrl::TabIterByIndex(std::size_t index) {
   if (index >= tabs_.size()) {
     return tabs_.end();
   }

@@ -41,7 +41,7 @@ bool Editor_IndentPage::TransferDataToWindow() {
 
   option_list_ctrl_->StartBatch();
   editor::OptionTable& indent_options = options_->text.indent_options;
-  for (size_t i = 0; i < indent_options.size(); ++i) {
+  for (std::size_t i = 0; i < indent_options.size(); ++i) {
     option_list_ctrl_->AddOption(indent_options[i]);
   }
   option_list_ctrl_->EndBatch();

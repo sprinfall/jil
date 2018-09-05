@@ -39,11 +39,11 @@ public:
     return internal_file_types_;
   }
 
-  size_t GetCount() const {
+  std::size_t GetCount() const {
     return file_types_.size();
   }
 
-  const editor::FileType* GetByIndex(size_t index) const {
+  const editor::FileType* GetByIndex(std::size_t index) const {
     assert(index < file_types_.size());
     return file_types_[index];
   }

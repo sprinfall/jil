@@ -13,13 +13,9 @@ GotoDialog::GotoDialog(wxWindow* parent, wxWindowID id)
   // Allow integer only. (Better to use unsigned int.)
   wxIntegerValidator<int> val(&line_, wxNUM_VAL_DEFAULT);
 
-  line_text_ctrl_ = new wxTextCtrl(this,
-                                   wxID_ANY,
-                                   wxEmptyString,
-                                   wxDefaultPosition,
-                                   wxSize(300, -1),
-                                   0,
-                                   val);
+  line_text_ctrl_ = new wxTextCtrl(this, wxID_ANY, wxEmptyString,
+                                   wxDefaultPosition, wxSize(300, -1),
+                                   0, val);
 
   wxButton* ok_button = new wxButton(this, wxID_OK, _("OK"));
   wxButton* cancel_button = new wxButton(this, wxID_CANCEL, _("Cancel"));

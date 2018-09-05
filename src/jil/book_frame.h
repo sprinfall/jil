@@ -383,8 +383,7 @@ private:
                        std::list<editor::TextRange>& result_ranges,
                        editor::TextBuffer* fr_buffer);
 
-  void AddFrMatchCountLine(editor::TextBuffer* buffer,
-                           size_t count,
+  void AddFrMatchCountLine(editor::TextBuffer* buffer, std::size_t count,
                            editor::TextBuffer* fr_buffer);
 
   // The find result won't be selected and the caret point won't be updated
@@ -443,7 +442,7 @@ private:
 
   TextPage* TextPageByFileName(const wxFileName& fn_object) const;
 
-  TextPage* TextPageByBufferId(size_t buffer_id) const;
+  TextPage* TextPageByBufferId(std::size_t buffer_id) const;
 
   // Remove all text pages from text book.
   // \param from_destroy It's going to be destroyed.
@@ -458,7 +457,8 @@ private:
   // File - Open, Save
 
   // Create a buffer according to the given file name.
-  editor::TextBuffer* CreateBuffer(const wxFileName& fn, size_t id, bool scan_lex);
+  editor::TextBuffer* CreateBuffer(const wxFileName& fn, std::size_t id,
+                                   bool scan_lex);
 
   TextPage* DoOpenFile(const wxString& file_name,
                        bool active,
@@ -529,7 +529,7 @@ private:
   wxCriticalSection find_thread_cs_;
 
   // Temporary buffers which have been changed by the replace thread.
-  std::map<size_t, editor::TextBuffer*> replaced_buffers_;
+  std::map<std::size_t, editor::TextBuffer*> replaced_buffers_;
 
   // Critical section to guard the replaced buffers.
   wxCriticalSection replaced_buffers_cs_;

@@ -1,17 +1,16 @@
 #include "editor/wrap.h"
+
 #include "wx/log.h"
+
 #include "editor/text_extent.h"
 #include "editor/text_buffer.h"
 
 namespace editor {
 
-static size_t __WrapLine(int tab_stop,
-                         TextExtent* text_extent,
-                         const TextLine* line,
-                         size_t off,
-                         size_t begin,
-                         size_t end,
-                         Coord max_width) {
+static std::size_t __WrapLine(int tab_stop, TextExtent* text_extent,
+                              const TextLine* line, std::size_t off,
+                              std::size_t begin, std::size_t end,
+                              Coord max_width) {
   if (begin >= end) {
     return std::wstring::npos;
   }
@@ -39,7 +38,7 @@ WrapOffsets WrapLineByChar(int tab_stop,
                            TextExtent* text_extent,
                            Coord max_width) {
   WrapOffsets offsets;
-  size_t wrap = 0;
+  std::size_t wrap = 0;
   while (true) {
     wrap = __WrapLine(tab_stop,
                       text_extent,
@@ -84,8 +83,8 @@ std::vector<CharRange> WrapInfo::GetSubRanges() const {
   std::vector<CharRange> sub_ranges;
   sub_ranges.resize(offsets_.size() + 1);
 
-  size_t off = 0;
-  size_t i = 0;
+  std::size_t off = 0;
+  std::size_t i = 0;
   for (; i < offsets_.size(); ++i) {
     sub_ranges[i].Set(off, offsets_[i]);
     off = offsets_[i];
@@ -99,7 +98,7 @@ std::vector<CharRange> WrapInfo::GetSubRanges() const {
 Coord WrapInfo::GetSubLineNr(Coord x, Coord* sub_off) const {
   Coord sub_ln = 1;
 
-  for (size_t i = 0; i < offsets_.size(); ++i) {
+  for (std::size_t i = 0; i < offsets_.size(); ++i) {
     if (x <= offsets_[i]) {
       break;
     }

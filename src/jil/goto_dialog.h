@@ -13,9 +13,7 @@ class GotoDialog : public wxDialog {
   GotoDialog(wxWindow* parent, wxWindowID id);
   virtual ~GotoDialog();
 
-  int line() const {
-    return line_;
-  }
+  int line() const { return line_; }
 
  private:
   wxTextCtrl* line_text_ctrl_;

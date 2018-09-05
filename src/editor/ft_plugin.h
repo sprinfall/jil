@@ -100,26 +100,28 @@ public:
   void AddNext(Lex lex, const std::wstring& next);
 
   // Check if str.substr(off, len) is a anyof.
-  bool MatchAnyof(const std::wstring& str, size_t off, size_t len,
+  bool MatchAnyof(const std::wstring& str, std::size_t off, std::size_t len,
                   Lex* lex) const;
 
   // Check if any str.substr(off, x) is a quote start.
   // Return the end index of the quote start or @off if no quote start matched.
-  size_t MatchQuote(const std::wstring& str, size_t off, Quote** quote) const;
+  std::size_t MatchQuote(const std::wstring& str, std::size_t off,
+                         Quote** quote) const;
 
   // Check if any str.substr(off, x) matches a regex.
   // Return the end index of the matching or @off if no matching is found.
-  size_t MatchRegex(const std::wstring& str, size_t off, Lex* lex) const;
+  std::size_t MatchRegex(const std::wstring& str, std::size_t off,
+                         Lex* lex) const;
 
-  bool MatchPrefix(const std::wstring& str, size_t off, size_t len,
+  bool MatchPrefix(const std::wstring& str, std::size_t off, std::size_t len,
                    Lex* lex) const;
 
   // Return true if str.substr(off, len) matches any prev rules.
-  bool MatchPrev(const std::wstring& str, size_t off, size_t len,
+  bool MatchPrev(const std::wstring& str, std::size_t off, std::size_t len,
                  Lex* lex) const;
 
   // Return true if str.substr(off, len) matches any next rules.
-  bool MatchNext(const std::wstring& str, size_t off, size_t len,
+  bool MatchNext(const std::wstring& str, std::size_t off, std::size_t len,
                  Lex* lex) const;
 
   const LexComment& sline_comment() const {
@@ -147,7 +149,8 @@ public:
     return !lua_indent_errors_.empty();
   }
 
-  bool MatchIndentKey(const std::wstring& str, size_t off, size_t len) const;
+  bool MatchIndentKey(const std::wstring& str, std::size_t off,
+                      std::size_t len) const;
 
 private:
   FileType file_type_;

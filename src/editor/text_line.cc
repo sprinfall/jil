@@ -15,17 +15,17 @@ namespace editor {
 
 //------------------------------------------------------------------------------
 
-TextLine::TextLine(size_t id, const wchar_t* data, size_t len)
+TextLine::TextLine(std::size_t id, const wchar_t* data, std::size_t len)
     : id_(id), data_(data, len), tabs_(0) {
   tabs_ = CountTabs(data_);
 }
 
-TextLine::TextLine(size_t id, const wchar_t* data)
+TextLine::TextLine(std::size_t id, const wchar_t* data)
     : id_(id), data_(data), tabs_(0) {
   tabs_ = CountTabs(data_);
 }
 
-TextLine::TextLine(size_t id, const std::wstring& data)
+TextLine::TextLine(std::size_t id, const std::wstring& data)
     : id_(id), data_(data), tabs_(0) {
   tabs_ = CountTabs(data_);
 }
@@ -106,7 +106,7 @@ Coord TextLine::FindLastChar(wchar_t c, bool ignore_comment, Coord off) const {
 }
 
 Coord TextLine::FindChar(wchar_t c, Coord off) const {
-  size_t i = data_.find(c, off);
+  std::size_t i = data_.find(c, off);
   if (i == std::wstring::npos) {
     return kInvCoord;
   }
@@ -125,7 +125,7 @@ bool TextLine::StartWith(wchar_t c,
                          bool ignore_comment,
                          bool ignore_space,
                          Coord* off) const {
-  size_t i = 0;
+  std::size_t i = 0;
 
   if (ignore_space && !IsSpace(c)) {
     for (; i < data_.size() && IsSpace(data_[i]); ++i) {}
@@ -157,7 +157,7 @@ bool TextLine::StartWith(const std::wstring& str,
     return StartWith(str[0], ignore_comment, ignore_space, off);
   }
 
-  size_t i = 0;
+  std::size_t i = 0;
 
   if (ignore_space && !IsSpace(str[0])) {
     for (; i < data_.size() && IsSpace(data_[i]); ++i) {}
@@ -299,7 +299,7 @@ bool TextLine::IsEolEscaped(bool no_comment_or_string) const {
   if (data_.empty()) {
     return false;
   }
-  size_t off = data_.size() - 1;
+  std::size_t off = data_.size() - 1;
   if (IsUnescapedBackSlash(data_, off)) {
     if (no_comment_or_string) {
       if (IsCommentOrString(off)) {
@@ -510,7 +510,7 @@ void TextLine::Append(const std::wstring& str) {
   tabs_ += CountTabs(str);
 }
 
-TextLine* TextLine::Split(Coord off, size_t line_id) {
+TextLine* TextLine::Split(Coord off, std::size_t line_id) {
   assert(off <= Length());
 
   TextLine* new_line = NULL;
@@ -528,7 +528,7 @@ TextLine* TextLine::Split(Coord off, size_t line_id) {
 //------------------------------------------------------------------------------
 // Lex
 
-void TextLine::AddLexElem(size_t off, size_t len, Lex lex) {
+void TextLine::AddLexElem(std::size_t off, std::size_t len, Lex lex) {
   // Merge continuous same lex elements.
   if (!lex_elems_.empty()) {
     LexElem* prev_le = lex_elems_.back();
@@ -607,7 +607,7 @@ bool TextLine::IsSpaceOnly() const {
     return false;
   }
 
-  for (size_t i = 0; i < data_.size(); ++i) {
+  for (std::size_t i = 0; i < data_.size(); ++i) {
     if (!IsSpace(data_[i])) {
       return false;
     }
@@ -680,7 +680,8 @@ bool TextLine::IsLexOnly(Lex lex) const {
   return true;
 }
 
-void TextLine::AddQuoteElem(Quote* quote, size_t off, size_t len, QuotePart part) {
+void TextLine::AddQuoteElem(Quote* quote, std::size_t off, std::size_t len,
+                            QuotePart part) {
   QuoteElem qe = { quote, CoordCast(off), CoordCast(len), part };
   quote_elems_.push_back(qe);
 }
@@ -908,14 +909,16 @@ bool TextLine::Lua_equal(const std::string& str,
   return Equal(wstr, ignore_comment, ignore_space);
 }
 
-Coord TextLine::Lua_getUnpairedLeftKey(char l_key, char r_key, Coord off) const {
+Coord TextLine::Lua_getUnpairedLeftKey(char l_key, char r_key,
+                                       Coord off) const {
   return UnpairedLeftKey((wchar_t)l_key, (wchar_t)r_key, off);
 }
 
-int TextLine::CountTabs(const std::wstring& str, size_t off, size_t count) const {
+int TextLine::CountTabs(const std::wstring& str, std::size_t off,
+                        std::size_t count) const {
   int tabs = 0;
-  size_t end = count == std::wstring::npos ? str.size() : (off + count);
-  for (size_t i = off; i < end; ++i) {
+  std::size_t end = count == std::wstring::npos ? str.size() : (off + count);
+  for (std::size_t i = off; i < end; ++i) {
     if (str[i] == kTabChar) {
       ++tabs;
     }

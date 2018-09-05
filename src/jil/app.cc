@@ -436,7 +436,7 @@ int App::GetFileTypeCount() const {
 
 const editor::FileType* App::GetFileType(int index) const {
   assert(index >= 0 && index < GetFileTypeCount());
-  return ft_config_.GetByIndex(static_cast<size_t>(index));
+  return ft_config_.GetByIndex(static_cast<std::size_t>(index));
 }
 
 const editor::FileType& App::FileTypeFromFileName(const wxFileName& fn) const {
@@ -444,7 +444,7 @@ const editor::FileType& App::FileTypeFromFileName(const wxFileName& fn) const {
 }
 
 editor::FtPlugin* App::GetFtPlugin(const editor::FileType& ft) {
-  for (size_t i = 0; i < ft_plugins_.size(); ++i) {
+  for (std::size_t i = 0; i < ft_plugins_.size(); ++i) {
     if (ft.id == ft_plugins_[i]->id()) {
       return ft_plugins_[i];
     }
@@ -553,8 +553,8 @@ void App::OnInitCmdLine(wxCmdLineParser& parser) {
 bool App::OnCmdLineParsed(wxCmdLineParser& parser) {
   wxApp::OnCmdLineParsed(parser);
 
-  size_t param_count = parser.GetParamCount();
-  for (size_t i = 0; i < param_count; ++i) {
+  std::size_t param_count = parser.GetParamCount();
+  for (std::size_t i = 0; i < param_count; ++i) {
     cmdline_files_.push_back(parser.GetParam(i));
   }
 

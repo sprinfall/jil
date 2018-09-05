@@ -75,10 +75,10 @@ public:
   wxString file_path;
 
   // For new buffers/files which don't have file path.
-  size_t buffer_id;
+  std::size_t buffer_id;
 
   // Source line id.
-  size_t line_id;
+  std::size_t line_id;
 };
 
 // Top level theme IDs.

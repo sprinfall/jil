@@ -16,8 +16,8 @@
 
 namespace jil {
 
-size_t NewBufferId() {
-  static size_t buffer_id = kOtherBufferId;
+std::size_t NewBufferId() {
+  static std::size_t buffer_id = kOtherBufferId;
   return buffer_id++;
 }
 

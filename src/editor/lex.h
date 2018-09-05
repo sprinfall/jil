@@ -233,7 +233,7 @@ public:
     ignore_case_ = ignore_case;
   }
 
-  size_t MatchStart(const std::wstring& str, size_t off) const;
+  std::size_t MatchStart(const std::wstring& str, std::size_t off) const;
 
 protected:
   Lex lex_;
@@ -268,8 +268,8 @@ public:
              int flags);
   virtual ~RegexQuote();
 
-  size_t MatchStart(const std::wstring& str, size_t off,
-                    std::wstring* concrete_end) const;
+  std::size_t MatchStart(const std::wstring& str, std::size_t off,
+                         std::wstring* concrete_end) const;
 
   // Add a concrete quote.
   void AddQuote(Quote* quote) const {
@@ -308,7 +308,7 @@ public:
     return lex_;
   }
 
-  size_t Match(const std::wstring& str, size_t off) const;
+  std::size_t Match(const std::wstring& str, std::size_t off) const;
 
 private:
   Lex lex_;

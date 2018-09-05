@@ -42,7 +42,7 @@ public:
     max_rows_ = max_rows;
   }
 
-  size_t select_index() const {
+  std::size_t select_index() const {
     return select_index_;
   }
 
@@ -70,7 +70,7 @@ private:
   // Calculate the actual number of rows and columns.
   void CalcRowsCols();
 
-  size_t GetIndexByPos(const wxPoint& pos) const;
+  std::size_t GetIndexByPos(const wxPoint& pos) const;
 
 private:
   editor::SharedTheme theme_;
@@ -83,7 +83,7 @@ private:
 
   int row_height_;
 
-  size_t select_index_;
+  std::size_t select_index_;
 
   int column_width_;
 
@@ -117,11 +117,11 @@ public:
     return new PopupMenuEvent(*this);
   }
 
-  size_t index() const {
+  std::size_t index() const {
     return index_;
   }
 
-  void set_index(size_t index) {
+  void set_index(std::size_t index) {
     index_ = index;
   }
 
@@ -134,7 +134,7 @@ public:
   }
 
 private:
-  size_t index_;
+  std::size_t index_;
   wxString label_;
 };
 

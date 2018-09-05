@@ -47,9 +47,9 @@ void FtPlugin::SetIgnoreCase(bool ignore_case) {
 }
 
 void FtPlugin::AddAnyof(Lex lex, const std::wstring& joined_words) {
-  size_t p = 0;
+  std::size_t p = 0;
 
-  for (size_t i = 0; i < joined_words.size(); ++i) {
+  for (std::size_t i = 0; i < joined_words.size(); ++i) {
     if (joined_words[i] == L' ') {
       if (i > p) {
 #if JIL_MATCH_WORD_WITH_HASH
@@ -130,10 +130,8 @@ void FtPlugin::AddNext(Lex lex, const std::wstring& next) {
   nexts_.push_back(std::make_pair(next, lex));
 }
 
-bool FtPlugin::MatchAnyof(const std::wstring& str,
-                          size_t off,
-                          size_t len,
-                          Lex* lex) const {
+bool FtPlugin::MatchAnyof(const std::wstring& str, std::size_t off,
+                          std::size_t len, Lex* lex) const {
 #if JIL_MATCH_WORD_WITH_HASH
   WordLexMap::const_iterator it = anyofs_.find(str.substr(off, len));
   if (it == anyofs_.end()) {
@@ -146,9 +144,9 @@ bool FtPlugin::MatchAnyof(const std::wstring& str,
   // Binary search the word.
   // Use wcsncmp to avoid a string copy of the word.
 
-  size_t i = 0;
-  size_t j = 0;
-  size_t k = anyofs_.size();
+  std::size_t i = 0;
+  std::size_t j = 0;
+  std::size_t k = anyofs_.size();
 
   while (j < k) {
     i = j + (k - j) / 2;
@@ -172,15 +170,16 @@ bool FtPlugin::MatchAnyof(const std::wstring& str,
 #endif  // JIL_MATCH_WORD_WITH_HASH
 }
 
-size_t FtPlugin::MatchQuote(const std::wstring& str, size_t off,
-                            Quote** quote) const {
+std::size_t FtPlugin::MatchQuote(const std::wstring& str, std::size_t off,
+                                 Quote** quote) const {
   // Firstly, match regex quotes.
   if (!regex_quotes_.empty()) {
     std::wstring concrete_end;
 
-    for (size_t i = 0; i < regex_quotes_.size(); ++i) {
+    for (std::size_t i = 0; i < regex_quotes_.size(); ++i) {
       RegexQuote* regex_quote = regex_quotes_[i];
-      size_t matched_off = regex_quote->MatchStart(str, off, &concrete_end);
+      std::size_t matched_off = regex_quote->MatchStart(str, off,
+                                                        &concrete_end);
 
       if (matched_off > off) {
         // Create a concrete quote from this regex quote.
@@ -200,8 +199,8 @@ size_t FtPlugin::MatchQuote(const std::wstring& str, size_t off,
     }
   }
 
-  for (size_t i = 0; i < quotes_.size(); ++i) {
-    size_t matched_off = quotes_[i]->MatchStart(str, off);
+  for (std::size_t i = 0; i < quotes_.size(); ++i) {
+    std::size_t matched_off = quotes_[i]->MatchStart(str, off);
     if (matched_off > off) {
       *quote = quotes_[i];
       return matched_off;
@@ -211,10 +210,10 @@ size_t FtPlugin::MatchQuote(const std::wstring& str, size_t off,
   return off;
 }
 
-size_t FtPlugin::MatchRegex(const std::wstring& str, size_t off,
-                            Lex* lex) const {
-  for (size_t i = 0; i < regexs_.size(); ++i) {
-    size_t matched_off = regexs_[i]->Match(str, off);
+std::size_t FtPlugin::MatchRegex(const std::wstring& str, std::size_t off,
+                                 Lex* lex) const {
+  for (std::size_t i = 0; i < regexs_.size(); ++i) {
+    std::size_t matched_off = regexs_[i]->Match(str, off);
     if (matched_off > off) {
       *lex = regexs_[i]->lex();
       return matched_off;
@@ -223,8 +222,8 @@ size_t FtPlugin::MatchRegex(const std::wstring& str, size_t off,
   return off;
 }
 
-bool FtPlugin::MatchPrefix(const std::wstring& str, size_t off, size_t len,
-                           Lex* lex) const {
+bool FtPlugin::MatchPrefix(const std::wstring& str, std::size_t off,
+                           std::size_t len, Lex* lex) const {
   for (size_t i = 0; i < prefixes_.size(); ++i) {
     const std::wstring& word = prefixes_[i].first;
     if (len >= word.size() &&
@@ -234,8 +233,8 @@ bool FtPlugin::MatchPrefix(const std::wstring& str, size_t off, size_t len,
     }
   }
 
-  for (size_t i = 0; i < regex_prefixes_.size(); ++i) {
-    size_t matched_off = regex_prefixes_[i]->Match(str, off);
+  for (std::size_t i = 0; i < regex_prefixes_.size(); ++i) {
+    std::size_t matched_off = regex_prefixes_[i]->Match(str, off);
     if (matched_off > off && matched_off <= off + len) {
       *lex = regex_prefixes_[i]->lex();
       return true;
@@ -245,9 +244,9 @@ bool FtPlugin::MatchPrefix(const std::wstring& str, size_t off, size_t len,
   return false;
 }
 
-bool FtPlugin::MatchPrev(const std::wstring& str, size_t off, size_t len,
-                         Lex* lex) const {
-  for (size_t i = 0; i < prevs_.size(); ++i) {
+bool FtPlugin::MatchPrev(const std::wstring& str, std::size_t off,
+                         std::size_t len, Lex* lex) const {
+  for (std::size_t i = 0; i < prevs_.size(); ++i) {
     if (len == prevs_[i].first.size() &&
         wcsncmp_(&str[off], prevs_[i].first.c_str(), len) == 0) {
       *lex = prevs_[i].second;
@@ -257,9 +256,9 @@ bool FtPlugin::MatchPrev(const std::wstring& str, size_t off, size_t len,
   return false;
 }
 
-bool FtPlugin::MatchNext(const std::wstring& str, size_t off, size_t len,
-                         Lex* lex) const {
-  for (size_t i = 0; i < nexts_.size(); ++i) {
+bool FtPlugin::MatchNext(const std::wstring& str, std::size_t off,
+                         std::size_t len, Lex* lex) const {
+  for (std::size_t i = 0; i < nexts_.size(); ++i) {
     if (len == nexts_[i].first.size() &&
         wcsncmp_(&str[off], nexts_[i].first.c_str(), len) == 0) {
       *lex = nexts_[i].second;
@@ -279,11 +278,10 @@ void FtPlugin::AddLuaIndentError(int ln, const std::string& msg) {
   }
 }
 
-bool FtPlugin::MatchIndentKey(const std::wstring& str,
-                              size_t off,
-                              size_t len) const {
+bool FtPlugin::MatchIndentKey(const std::wstring& str, std::size_t off,
+                              std::size_t len) const {
   const std::vector<std::wstring>& indent_keys = options_.text.indent_keys;
-  for (size_t i = 0; i < indent_keys.size(); ++i) {
+  for (std::size_t i = 0; i < indent_keys.size(); ++i) {
     if (indent_keys[i].size() == len) {
       if (wcsncmp_(&str[off], indent_keys[i].c_str(), len) == 0) {
         return true;

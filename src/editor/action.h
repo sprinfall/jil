@@ -252,8 +252,8 @@ public:
   TextUnit text_unit() const { return text_unit_; }
   SeekType seek_type() const { return seek_type_; }
 
-  size_t count() const { return count_; }
-  void set_count(size_t count) { count_ = count; }
+  std::size_t count() const { return count_; }
+  void set_count(std::size_t count) { count_ = count; }
 
   bool SameKind(const DeleteAction& rhs) const;
 
@@ -264,13 +264,13 @@ private:
   TextPoint Seek(const TextPoint& point,
                  TextUnit text_unit,
                  SeekType seek_type,
-                 size_t count) const;
+                 std::size_t count) const;
 
 private:
   std::wstring text_;
   TextUnit text_unit_;
   SeekType seek_type_;
-  size_t count_;
+  std::size_t count_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

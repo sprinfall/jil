@@ -21,7 +21,7 @@ Quote::Quote(Lex lex,
 Quote::~Quote() {
 }
 
-size_t Quote::MatchStart(const std::wstring& str, size_t off) const {
+std::size_t Quote::MatchStart(const std::wstring& str, std::size_t off) const {
   WcsNCmp cmp = ignore_case_ ? wcsnicmp : wcsncmp;
   if (SubStringEquals(str, off, start_, cmp)) {
     return off + start_.length();
@@ -64,10 +64,10 @@ RegexQuote::~RegexQuote() {
   ClearContainer(&quotes_);
 }
 
-size_t RegexQuote::MatchStart(const std::wstring& str, size_t off,
-                              std::wstring* concrete_end) const {
+std::size_t RegexQuote::MatchStart(const std::wstring& str, std::size_t off,
+                                   std::wstring* concrete_end) const {
   // NOTE: For back reference in the quote end, only "\1" is supported.
-  size_t br_pos = end_.find(L"\\1");
+  std::size_t br_pos = end_.find(L"\\1");
 
 #if JIL_LEX_USE_RELITE
   if (!start_re_->valid()) {
@@ -75,7 +75,7 @@ size_t RegexQuote::MatchStart(const std::wstring& str, size_t off,
   }
 
   relite::Sub sub;
-  size_t match_off = start_re_->Match(str, off, &sub, 1);
+  std::size_t match_off = start_re_->Match(str, off, &sub, 1);
 
   if (match_off == off) {
     return off;
@@ -110,9 +110,9 @@ size_t RegexQuote::MatchStart(const std::wstring& str, size_t off,
     }
 
     std::wstring br;
-    size_t sub_len = std::distance(m[1].first, m[1].second);
+    std::size_t sub_len = std::distance(m[1].first, m[1].second);
     if (sub_len > 0) {
-      size_t sub_off = std::distance(str.begin(), m[1].first);
+      std::size_t sub_off = std::distance(str.begin(), m[1].first);
       br = str.substr(sub_off, sub_len);
     }
 
@@ -154,7 +154,7 @@ Regex::~Regex() {
   }
 }
 
-size_t Regex::Match(const std::wstring& str, size_t off) const {
+std::size_t Regex::Match(const std::wstring& str, std::size_t off) const {
   if (re_ == NULL) {
     return off;
   }
@@ -167,7 +167,7 @@ size_t Regex::Match(const std::wstring& str, size_t off) const {
     return off;
   }
 
-  size_t match_off = re_->Match(str, off);
+  std::size_t match_off = re_->Match(str, off);
   return match_off;
 
 #else
@@ -180,7 +180,7 @@ size_t Regex::Match(const std::wstring& str, size_t off) const {
     return off;
   }
 
-  size_t matched_length = std::distance(m[0].first, m[0].second);
+  std::size_t matched_length = std::distance(m[0].first, m[0].second);
   if (matched_length > 0) {
     return off + matched_length;
   }

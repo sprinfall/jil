@@ -123,10 +123,10 @@ private:
   // If the field is not found, the rect will be empty.
   wxRect GetFieldRect(FieldId id) const;
 
-  wxRect GetFieldRectByIndex(size_t index) const;
+  wxRect GetFieldRectByIndex(std::size_t index) const;
 
   void RefreshFieldById(FieldId id);
-  void RefreshFieldByIndex(size_t index);
+  void RefreshFieldByIndex(std::size_t index);
 
   const FieldInfo* GetFieldByPos(int pos_x) const;
 

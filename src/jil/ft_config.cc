@@ -159,7 +159,7 @@ void FtConfig::MapToFt(const wxString& keys_str,
                        editor::FileType* ft,
                        FileTypeMap& ft_map) {
   wxArrayString keys = wxSplit(keys_str, wxT(','));
-  for (size_t i = 0; i < keys.size(); ++i) {
+  for (std::size_t i = 0; i < keys.size(); ++i) {
     wxString key = keys[i];
     if (ft_map.find(key) == ft_map.end()) {
       ft_map[key] = ft;

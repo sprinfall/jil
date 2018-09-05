@@ -1535,7 +1535,7 @@ void TextWindow::HandleTextPaint(Renderer& renderer) {
   if (!view_options_.rulers.empty()) {
     renderer.SetPen(wxPen(theme_->GetColor(COLOR_RULER)), true);
 
-    for (size_t i = 0; i < view_options_.rulers.size(); ++i) {
+    for (std::size_t i = 0; i < view_options_.rulers.size(); ++i) {
       int ruler_x = x + char_size_.x * view_options_.rulers[i];
       renderer.DrawLineV(ruler_x, y1, y2);
     }
@@ -1607,7 +1607,7 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
     if (!view_options_.rulers.empty()) {
       renderer.SetPen(wxPen(theme_->GetColor(COLOR_RULER)), true);
 
-      for (size_t i = 0; i < view_options_.rulers.size(); ++i) {
+      for (std::size_t i = 0; i < view_options_.rulers.size(); ++i) {
         int ruler_x = x + char_size_.x * view_options_.rulers[i];
         renderer.DrawLineV(ruler_x, y1, y2);
       }
@@ -1637,7 +1637,7 @@ void TextWindow::HandleWrappedTextPaint(Renderer& renderer) {
       renderer.SetPen(wxPen(theme_->GetColor(COLOR_RULER)), true);
 
       int y2 = y + h;
-      for (size_t i = 0; i < view_options_.rulers.size(); ++i) {
+      for (std::size_t i = 0; i < view_options_.rulers.size(); ++i) {
         int ruler_x = x + char_size_.x * view_options_.rulers[i];
         renderer.DrawLineV(ruler_x, y, y2);
       }

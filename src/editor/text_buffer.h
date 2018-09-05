@@ -61,7 +61,8 @@ public:
 
   //----------------------------------------------------------------------------
 
-  TextBuffer(size_t id, FtPlugin* ft_plugin, const Encoding& file_encoding);
+  TextBuffer(std::size_t id, FtPlugin* ft_plugin,
+             const Encoding& file_encoding);
 
   ~TextBuffer();
 
@@ -90,9 +91,7 @@ public:
 
   //----------------------------------------------------------------------------
 
-  size_t id() const {
-    return id_;
-  }
+  std::size_t id() const { return id_; }
 
   // Example: "E:\doc\example.txt"
   wxString file_path_name() const;
@@ -215,10 +214,10 @@ public:
 
   TextLine* LastLine() const;
 
-  const TextLine* LineById(size_t id) const;
+  const TextLine* LineById(std::size_t id) const;
 
   // Return kInvCoord if the line with the given ID doesn't exist.
-  Coord LineNrFromId(size_t id) const;
+  Coord LineNrFromId(std::size_t id) const;
 
   // Return the previous non-empty line.
   // \param skip_comment Skip comment lines.
@@ -229,7 +228,7 @@ public:
   // Return the char at the given point.
   wchar_t Char(const TextPoint& point) const;
 
-  size_t LineId(Coord ln) const;
+  std::size_t LineId(Coord ln) const;
 
   Coord LineLength(Coord ln) const;
 
@@ -325,7 +324,7 @@ public:
   void AttachListener(TextListener* listener);
   void DetachListener(TextListener* listener);
 
-  size_t ListenerCount() const {
+  std::size_t ListenerCount() const {
     return listeners_.size();
   }
 
@@ -493,7 +492,7 @@ private:
     DoAppendLine(new TextLine(NewLineId(), line_data));
   }
 
-  void DoAppendLine(const wchar_t* data, size_t length) {
+  void DoAppendLine(const wchar_t* data, std::size_t length) {
     DoAppendLine(new TextLine(NewLineId(), data, length));
   }
 
@@ -508,7 +507,7 @@ private:
 
   //----------------------------------------------------------------------------
 
-  size_t NewLineId() {
+  std::size_t NewLineId() {
     return ++line_id_;
   }
 
@@ -591,7 +590,7 @@ private:
                              const TextRange& range,
                              bool case_sensitive);
 
-  typedef int (*CmpFunc)(const wchar_t*, const wchar_t*, size_t);
+  typedef int(*CmpFunc)(const wchar_t*, const wchar_t*, std::size_t);
 
   // STL and Boost.Algorithm both suck!
   // Find the sub in the range [begin, end) of str.
@@ -715,7 +714,7 @@ private:
   // Unique ID of this text buffer.
   // You can't use file full path to identify text buffers uniquely because a
   // new created text buffer doesn't have file name before it's saved.
-  size_t id_;
+  std::size_t id_;
 
   wxFileName file_name_object_;
 
@@ -739,7 +738,7 @@ private:
   // Text buffer consists of text lines.
   TextLines lines_;
 
-  size_t line_id_;
+  std::size_t line_id_;
 
   // A text buffer has one or more listeners.
   // Different listeners may want to listen to different changes of the buffer.
@@ -763,7 +762,7 @@ private:
   // When buffer is saved, the undo actions are moved to this list.
   std::list<Action*> saved_undo_actions_;
 
-  size_t last_saved_undo_count_;
+  std::size_t last_saved_undo_count_;
 
   // Continuously inserted chars should be undone by word. Keep the recent
   // insert char actions to merge to insert string actions later.

@@ -10,22 +10,22 @@
 
 namespace editor {
 
-const size_t kNpos = static_cast<size_t>(-1);
+const std::size_t kNpos = static_cast<std::size_t>(-1);
 
 // Coordinate for text by char and line.
-// NOTE: Don't use unsigned type (e.g., size_t) for Coord!
+// NOTE: Don't use unsigned type (e.g., std::size_t) for Coord!
 typedef int Coord;
 
 const Coord kInvCoord = -1;
 
-// Explicitly cast Coord, e.g., from size_t.
+// Explicitly cast Coord, e.g., from std::size_t.
 template <typename T>
 inline Coord CoordCast(T value) {
   return static_cast<Coord>(value);
 }
 
 template <>
-inline Coord CoordCast<size_t>(size_t value) {
+inline Coord CoordCast<std::size_t>(std::size_t value) {
   return static_cast<Coord>(value);
 }
 
@@ -224,7 +224,7 @@ const int kUnreadyWindowSize = 100;  // px
 #define wcsnicmp wcsncasecmp
 #endif
 
-typedef int (*WcsNCmp)(const wchar_t*, const wchar_t*, size_t);
+typedef int(*WcsNCmp)(const wchar_t*, const wchar_t*, std::size_t);
 
 }  // namespace editor
 

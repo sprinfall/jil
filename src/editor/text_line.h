@@ -22,30 +22,20 @@ namespace editor {
 
 class TextLine {
 public:
-  TextLine(size_t id, const wchar_t* data, size_t len);
+  TextLine(std::size_t id, const wchar_t* data, std::size_t len);
 
   // Construct with a '\0' terminated C string.
-  TextLine(size_t id, const wchar_t* data);
+  TextLine(std::size_t id, const wchar_t* data);
 
-  TextLine(size_t id, const std::wstring& data);
+  TextLine(std::size_t id, const std::wstring& data);
 
   ~TextLine();
 
-  size_t id() const {
-    return id_;
-  }
+  std::size_t id() const { return id_; }
+  void set_id(std::size_t id) { id_ = id; }
 
-  void set_id(size_t id) {
-    id_ = id;
-  }
-
-  const std::wstring& data() const {
-    return data_;
-  }
-
-  const boost::any& extra_data() const {
-    return extra_data_;
-  }
+  const std::wstring& data() const { return data_; }
+  const boost::any& extra_data() const { return extra_data_; }
 
   void set_extra_data(const boost::any& extra_data) {
     extra_data_ = extra_data;
@@ -168,7 +158,7 @@ public:
   void Clear(std::wstring* line_data = NULL);
 
   // Split at the given offset and return the new line.
-  TextLine* Split(Coord off, size_t line_id);
+  TextLine* Split(Coord off, std::size_t line_id);
 
   //----------------------------------------------------------------------------
   // Lex
@@ -177,7 +167,7 @@ public:
     AddLexElem(lex_elem.off, lex_elem.len, lex_elem.lex);
   }
 
-  void AddLexElem(size_t off, size_t len, Lex lex);
+  void AddLexElem(std::size_t off, std::size_t len, Lex lex);
 
   // Return true if there was any lex element.
   bool ClearLexElems();
@@ -214,7 +204,8 @@ public:
   // Used by IsCommentOnly and IsStringOnly.
   bool IsLexOnly(Lex lex) const;
 
-  void AddQuoteElem(Quote* quote, size_t off, size_t len, QuotePart part);
+  void AddQuoteElem(Quote* quote, std::size_t off, std::size_t len,
+                    QuotePart part);
 
   // Return true if there was any quote element.
   bool ClearQuoteElems();
@@ -268,12 +259,11 @@ public:
   Coord Lua_getUnpairedLeftKey(char l_key, char r_key, Coord off) const;
 
 private:
-  int CountTabs(const std::wstring& str,
-                size_t off = 0,
-                size_t count = std::wstring::npos) const;
+  int CountTabs(const std::wstring& str, std::size_t off = 0,
+                std::size_t count = std::wstring::npos) const;
 
 private:
-  size_t id_;
+  std::size_t id_;
   std::wstring data_;
 
   std::list<LexElem*> lex_elems_;

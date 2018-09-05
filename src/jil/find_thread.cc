@@ -31,8 +31,8 @@ wxThread::ExitCode FindThreadBase::Entry() {
     return 0;
   }
 
-  size_t count = files_.GetCount();
-  for (size_t i = 0; i < count; ++i) {
+  std::size_t count = files_.GetCount();
+  for (std::size_t i = 0; i < count; ++i) {
     if (TestDestroy()) {
       break;
     }

@@ -292,7 +292,7 @@ void DecreaseIndent(TextWindow* tw) {
 struct XmlStringWriter : public pugi::xml_writer {
   std::wstring result;
 
-  virtual void write(const void* data, size_t size) override {
+  virtual void write(const void* data, std::size_t size) override {
     result += std::wstring(static_cast<const wchar_t*>(data),
                            size / sizeof(wchar_t));
   }

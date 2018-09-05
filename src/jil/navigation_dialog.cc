@@ -123,7 +123,7 @@ void NavigationDialog::OnPaint(wxPaintEvent& evt) {
   dc.SetFont(GetFont());
   dc.SetTextForeground(theme_->GetColor(COLOR_FG));
 
-  for (size_t i = 0; i < text_pages_.size(); ++i) {
+  for (std::size_t i = 0; i < text_pages_.size(); ++i) {
     if (i != select_index_) {
       wxRect text_rect = text_rects_[i];
       text_rect.Deflate(kPaddingX, kPaddingY);
@@ -146,7 +146,7 @@ void NavigationDialog::OnActivate(wxActivateEvent& evt) {
 }
 
 void NavigationDialog::OnMouseLeftUp(wxMouseEvent& evt) {
-  size_t index = GetIndexByPos(evt.GetPosition());
+  std::size_t index = GetIndexByPos(evt.GetPosition());
 
   if (index != kNpos) {
     select_index_ = index;
@@ -157,7 +157,7 @@ void NavigationDialog::OnMouseLeftUp(wxMouseEvent& evt) {
 }
 
 void NavigationDialog::OnMouseMotion(wxMouseEvent& evt) {
-  size_t index = GetIndexByPos(evt.GetPosition());
+  std::size_t index = GetIndexByPos(evt.GetPosition());
 
   if (index != kNpos) {
     wxSetCursor(wxCursor(wxCURSOR_HAND));
@@ -242,7 +242,7 @@ void NavigationDialog::AdjustSize() {
   title_rect_ = wxRect(margin_.x, margin_.y, w, title_h);
   path_rect_ = wxRect(margin_.x, margin_.y + h - path_h, w, path_h);
 
-  for (size_t i = 0; i < text_pages_.size(); ++i) {
+  for (std::size_t i = 0; i < text_pages_.size(); ++i) {
     int col = i / max_rows_;
     int row = i % max_rows_;
 
@@ -252,8 +252,8 @@ void NavigationDialog::AdjustSize() {
   }
 }
 
-size_t NavigationDialog::GetIndexByPos(const wxPoint& pos) const {
-  for (size_t i = 0; i < text_rects_.size(); ++i) {
+std::size_t NavigationDialog::GetIndexByPos(const wxPoint& pos) const {
+  for (std::size_t i = 0; i < text_rects_.size(); ++i) {
     if (text_rects_[i].Contains(pos)) {
       return i;
     }

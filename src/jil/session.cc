@@ -237,8 +237,9 @@ bool Session::Save(const wxString& cfg_file) {
   return config.Save(cfg_file);
 }
 
-bool Session::AddHistoryString(std::list<wxString>& strings, const wxString& s, size_t limit) {
-  std::list<wxString>::iterator it = std::find(strings.begin(), strings.end(), s);
+bool Session::AddHistoryString(std::list<wxString>& strings, const wxString& s,
+                               std::size_t limit) {
+  auto it = std::find(strings.begin(), strings.end(), s);
 
   if (it == strings.end()) {
     // Doesn't exist.

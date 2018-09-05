@@ -47,10 +47,10 @@ static bool IsDelimiter(wchar_t c) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-size_t Atom::Match(const std::wstring& str, size_t off,
-                   bool ignore_case) const {
-  size_t m = 0;
-  size_t i = off;
+std::size_t Atom::Match(const std::wstring& str, std::size_t off,
+                        bool ignore_case) const {
+  std::size_t m = 0;
+  std::size_t i = off;
 
   for (; m < repeat_.max && i < str.size(); ++m) {
     if (!MatchChar(str[i], ignore_case)) {
@@ -127,8 +127,8 @@ bool Atom::MatchChar(wchar_t c, bool ignore_case) const {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-size_t Word::Match(const std::wstring& str, size_t off,
-                   bool ignore_case) const {
+std::size_t Word::Match(const std::wstring& str, std::size_t off,
+                        bool ignore_case) const {
   WcsNCmp cmp = ignore_case ? wcsnicmp : wcsncmp;
   if (SubStringEquals(str, off, text_, cmp)) {
     return off + text_.size();
@@ -144,23 +144,23 @@ Regex::Regex(const std::wstring& pattern, int flags)
 }
 
 Regex::~Regex() {
-  for (size_t i = 0; i < nodes_.size(); ++i) {
+  for (std::size_t i = 0; i < nodes_.size(); ++i) {
     delete nodes_[i];
   }
   nodes_.clear();
 }
 
-size_t Regex::Match(const std::wstring& str, size_t off, Sub* subs,
-                    size_t subs_count) const {
+std::size_t Regex::Match(const std::wstring& str, std::size_t off, Sub* subs,
+                         std::size_t subs_count) const {
   bool ignore_case = (flags_ & kIgnoreCase) != 0;
 
-  size_t i = off;
-  size_t match_i = kNpos;
+  std::size_t i = off;
+  std::size_t match_i = kNpos;
 
   bool grouped = false;
-  size_t sub_index = 0;
+  std::size_t sub_index = 0;
 
-  for (size_t n = 0; n < nodes_.size(); ++n) {
+  for (std::size_t n = 0; n < nodes_.size(); ++n) {
     Node* node = nodes_[n];
 
     Group* group = dynamic_cast<Group*>(node);
@@ -183,8 +183,8 @@ size_t Regex::Match(const std::wstring& str, size_t off, Sub* subs,
     if (atom != NULL && !atom->Determinable() && n + 1 < nodes_.size()) {
       // Get the index range for matching the next node.
       const Repeat& repeat = atom->repeat();
-      size_t from = i + repeat.min;
-      size_t to = repeat.max == kNpos ? kNpos : i + repeat.max;
+      std::size_t from = i + repeat.min;
+      std::size_t to = repeat.max == kNpos ? kNpos : i + repeat.max;
 
       match_i = Match(str, from, to, nodes_[n + 1], ignore_case);
       if (match_i == kNpos) {
@@ -216,13 +216,11 @@ size_t Regex::Match(const std::wstring& str, size_t off, Sub* subs,
   return i;
 }
 
-size_t Regex::Match(const std::wstring& str,
-                    size_t from,
-                    size_t to,
-                    const Node* node,
-                    bool ignore_case) const {
-  for (size_t i = from; i <= to && i < str.size(); ++i) {
-    size_t match_i = node->Match(str, i, ignore_case);
+std::size_t Regex::Match(const std::wstring& str, std::size_t from,
+                         std::size_t to, const Node* node,
+                         bool ignore_case) const {
+  for (std::size_t i = from; i <= to && i < str.size(); ++i) {
+    std::size_t match_i = node->Match(str, i, ignore_case);
     if (match_i > i && match_i != kNpos) {
       return match_i;
     }
@@ -235,9 +233,9 @@ bool Regex::Compile() {
   bool grouped = false;
   std::wstring word;
 
-  const size_t size = pattern_.size();
+  const std::size_t size = pattern_.size();
 
-  for (size_t i = 0; i < size; ++i) {
+  for (std::size_t i = 0; i < size; ++i) {
     wchar_t c = pattern_[i];
 
     switch (c) {

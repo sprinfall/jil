@@ -11,7 +11,7 @@ namespace ui {
 
 extern const wxString kEllipsis;  // ...
 
-size_t TailorLabel(const wxDC& dc, const wxString& label, int max_width);
+std::size_t TailorLabel(const wxDC& dc, const wxString& label, int max_width);
 
 // Draw text in the rect.
 // The text will be truncated and ellipsis will be appended if it's too long.

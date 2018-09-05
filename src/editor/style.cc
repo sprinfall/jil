@@ -13,7 +13,7 @@ Style::Style() : values_(kItemCount) {
 Style::~Style() {
   ClearContainer(&values_);
 
-  for (size_t i = 0; i < kLexMajorTypeCount; ++i) {
+  for (std::size_t i = 0; i < kLexMajorTypeCount; ++i) {
     ClearContainer(&lex_values_[i]);
   }
 }
@@ -28,7 +28,7 @@ void Style::Set(int item, const wxColour& fg, const wxColour& bg, int font) {
 
 void Style::Set(Lex lex, const wxColour& fg, const wxColour& bg, int font) {
   Values& values = lex_values_[lex.major()];
-  if (static_cast<size_t>(lex.minor()) >= values.size()) {
+  if (static_cast<std::size_t>(lex.minor()) >= values.size()) {
     values.resize(lex.minor() + 1);
   }
   if (values[lex.minor()] == NULL) {
@@ -44,7 +44,7 @@ const StyleValue* Style::Get(Lex lex) const {
     return NULL;
   }
 
-  if (static_cast<size_t>(lex.minor()) < values.size() &&
+  if (static_cast<std::size_t>(lex.minor()) < values.size() &&
       values[lex.minor()] != NULL) {
     return values[lex.minor()];
   }
