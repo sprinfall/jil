@@ -1,4 +1,5 @@
 !include LogicLib.nsh
+!include FileFunc.nsh
 
 ; Use the new visual style on XP and later.
 XPStyle on
@@ -60,12 +61,12 @@ Section "Jil Text"
   SetOutPath $INSTDIR
 
   File "..\..\data\jilfiles\binding.cfg"
-  File "..\..\data\jilfiles\file_types.cfg"
+  File "..\..\data\jilfiles\ft.cfg"
   File "..\..\data\jilfiles\options.cfg"
   File "..\..\data\jilfiles\status_fields.cfg"
 
   ; For the item in system Programs and Features list.
-  File "..\..\src\app\icon\editor.ico"
+  File "..\..\src\jil\icon\editor.ico"
 
   File "${EXE_NAME}"
 
@@ -105,7 +106,7 @@ Section "Uninstall"
   RMDir /r "$INSTDIR\theme"
 
   Delete "$INSTDIR\binding.cfg"
-  Delete "$INSTDIR\file_types.cfg"
+  Delete "$INSTDIR\ft.cfg"
   Delete "$INSTDIR\options.cfg"
   Delete "$INSTDIR\status_fields.cfg"
   Delete "$INSTDIR\editor.ico"
