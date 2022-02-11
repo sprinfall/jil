@@ -60,7 +60,7 @@ $ mkdir ~/jilbuild
 Generate Unix makefiles with CMake:
 ```
 $ cd ~/jilbuild
-$ cmake -G"Unix Makefiles" -DCMAKE_INSTALL_PREFIX=~/jilbuild/src/app ../jil
+$ cmake -G"Unix Makefiles" -DCMAKE_INSTALL_PREFIX=~/jilbuild/src/jil ../jil
 ```
 
 **Build & Install**

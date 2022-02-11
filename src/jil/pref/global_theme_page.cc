@@ -83,8 +83,8 @@ void Global_ThemePage::CreateControls() {
 void Global_ThemePage::LayoutField(wxSizer* top_vsizer, wxStaticText* label,
                                    wxComboBox* combo_box) {
   wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-  hsizer->Add(label, wxSizerFlags(1).CenterVertical());
-  hsizer->Add(combo_box, wxSizerFlags(1).CenterVertical().Border(wxLEFT));
+  hsizer->Add(label, wxSizerFlags(1).Align(wxALIGN_CENTRE_VERTICAL));
+  hsizer->Add(combo_box, wxSizerFlags(1).Align(wxALIGN_CENTRE_VERTICAL).Border(wxLEFT));
   top_vsizer->Add(hsizer, wxSizerFlags().Expand().Border(wxALL));
 }
 
