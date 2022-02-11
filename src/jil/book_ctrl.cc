@@ -437,7 +437,7 @@ void BookCtrl::CreateTabPanel() {
   wxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
   hsizer->AddStretchSpacer(1);
   hsizer->AddSpacer(tab_space_x_);
-  hsizer->Add(tab_expand_button_, wxSizerFlags().CenterVertical());
+  hsizer->Add(tab_expand_button_, wxSizerFlags().Align(wxALIGN_CENTRE_VERTICAL));
   hsizer->AddSpacer(tab_panel_padding_x_);
   tab_panel_->SetSizer(hsizer);
 }
