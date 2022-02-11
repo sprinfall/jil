@@ -1,5 +1,7 @@
 # Jil Text
 
+**NOTE: This project is only for study purpose and it's dead. I will not push any update. Sorry!**
+
 Yet another text editor developed with C++ and wxWidgets.
 
 ![alt main_window](doc/screenshots/main.png)
