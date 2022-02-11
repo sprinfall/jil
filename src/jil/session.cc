@@ -35,6 +35,29 @@
 
 namespace jil {
 
+static bool GetSize(Setting parent, const char* name, wxSize* size) {
+  Setting size_setting = parent.Get(name);
+  if (!size_setting) {
+    return false;
+  }
+
+  if (size_setting.type() != Setting::kArray || size_setting.size() != 2) {
+    return false;
+  }
+
+  size->x = size_setting[0].GetInt();
+  size->y = size_setting[1].GetInt();
+
+  return true;
+}
+
+static void SetSize(Setting parent, const char* name, const wxSize& size) {
+  parent.Remove(name);
+  Setting size_setting = parent.Add(name, Setting::kArray);
+  size_setting.Add(NULL, Setting::kInt).SetInt(size.x);
+  size_setting.Add(NULL, Setting::kInt).SetInt(size.y);
+}
+
 static bool GetRect(Setting parent, const char* name, wxRect* rect) {
   Setting rect_setting = parent.Get(name);
   if (!rect_setting) {
